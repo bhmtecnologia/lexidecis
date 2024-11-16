@@ -1,0 +1,67 @@
+/* Reset básico já é tratado pelo Bootstrap */
+
+/* Estilos globais adicionais */
+body {
+    background-color: #f4f6f8; /* Mantém a cor de fundo personalizada */
+    color: #333;
+}
+
+/* Botão para mostrar o cabeçalho quando oculto */
+#show-header-button {
+    z-index: 1050; /* Acima do modal (z-index do Bootstrap para modals é 1050) */
+    display: none; /* Inicialmente oculto */
+}
+
+#show-header-button.show {
+    display: block;
+}
+
+/* Ajuste do padding do main quando o cabeçalho está oculto */
+main {
+    transition: padding-top 0.3s ease-in-out;
+}
+
+header.hidden + main {
+    padding-top: 20px; /* Reduz o padding quando o cabeçalho está oculto */
+}
+
+/* Estilos dos itens de chat */
+.chat-item {
+    cursor: pointer;
+}
+
+.chat-item:hover {
+    background-color: rgba(59, 129, 246, 0.1); /* Fundo levemente azul no hover */
+}
+
+.chat-item.selected {
+    background-color: #3B81F6; /* Fundo azul para o item selecionado */
+    color: white;
+}
+
+/* Destacar texto de busca */
+.highlight {
+    background-color: yellow;
+    font-weight: bold;
+}
+
+/* Estilos para a lista de GPTs no modal */
+#gpt-list .list-group-item {
+    cursor: pointer;
+}
+
+#gpt-list .list-group-item:hover {
+    background-color: #f1f1f1;
+}
+
+#gpt-list .list-group-item.selected {
+    background-color: #3B81F6;
+    color: white;
+}
+
+/* Responsividade adicional, se necessário */
+@media (max-width: 768px) {
+    #show-header-button {
+        padding: 8px 12px;
+    }
+}

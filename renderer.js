@@ -4,9 +4,9 @@ import Chatbot from "https://cdn.jsdelivr.net/npm/flowise-embed/dist/web.js";
    1. Configurações e Constantes
    ================================ */
 const CONFIG = {
-    userId: 8,
+    userId: 4,
     companyName: 'bhm',
-    userName: 'matheus',
+    userName: 'bruno',
     flowiseChatflowId: 'fd33f1f1-5543-4cf6-b22f-485bf1bedeb5',
     flowiseApiHost: 'https://flowise.prod.bhm.tec.br',
     flowiseToken: 'auQmNz8lRPkUqRrU1X86Kkfx_DICm92uCA8Pr8Vz8wc',
@@ -117,8 +117,6 @@ class StateManager {
     setGPTConfig(config) {
         this.gptConfig = config;
     }
-
-    // Outras funções de gerenciamento de estado conforme necessário
 }
 
 /* ==========================
@@ -128,23 +126,50 @@ class UIManager {
     constructor(apiService, stateManager) {
         this.apiService = apiService;
         this.stateManager = stateManager;
-        this.modal = new bootstrap.Modal(document.getElementById('gpt-modal'));
+        const gptModalElement = document.getElementById('gpt-modal');
+        if (gptModalElement) {
+            this.modal = new bootstrap.Modal(gptModalElement);
+        }
         this.setupUIEvents();
     }
 
     /* --- Configuração de Eventos da UI --- */
     setupUIEvents() {
-        // Botões do cabeçalho
-        document.getElementById('hide-header-button').addEventListener('click', () => this.hideHeader());
-        document.getElementById('show-header-button').addEventListener('click', () => this.showHeader());
+        // Botões do cabeçalho (hide-header-button e show-header-button)
+        const hideHeaderButton = document.getElementById('hide-header-button');
+        const showHeaderButton = document.getElementById('show-header-button');
+
+        if (hideHeaderButton) {
+            hideHeaderButton.addEventListener('click', () => this.hideHeader());
+        }
+
+        if (showHeaderButton) {
+            showHeaderButton.addEventListener('click', () => this.showHeader());
+        }
 
         // Campo de pesquisa e botão de limpar na lista de chats
-        document.getElementById('search-input').addEventListener('input', () => this.filterChatList());
-        document.getElementById('clear-search-button').addEventListener('click', () => this.clearSearch());
+        const searchInput = document.getElementById('search-input');
+        const clearSearchButton = document.getElementById('clear-search-button');
 
-        // Botões da Navbar
-        document.getElementById('new-chat-button').addEventListener('click', () => this.createNewChat());
-        document.getElementById('select-gpt-button').addEventListener('click', () => this.openModal());
+        if (searchInput) {
+            searchInput.addEventListener('input', () => this.filterChatList());
+        }
+
+        if (clearSearchButton) {
+            clearSearchButton.addEventListener('click', () => this.clearSearch());
+        }
+
+        // Botões da Sidebar
+        const newChatButton = document.getElementById('new-chat-button');
+        const selectGPTButton = document.getElementById('select-gpt-button');
+
+        if (newChatButton) {
+            newChatButton.addEventListener('click', () => this.createNewChat());
+        }
+
+        if (selectGPTButton) {
+            selectGPTButton.addEventListener('click', () => this.openModal());
+        }
 
         // Eventos do Dropdown de Configurações (exemplo de logout)
         const logoutItem = document.querySelector('.dropdown-item[href="#logout"]');
@@ -156,9 +181,15 @@ class UIManager {
         }
 
         // Evento de fechamento do modal via Bootstrap
-        document.getElementById('gpt-modal').addEventListener('hidden.bs.modal', () => {
-            document.getElementById('select-gpt-button').focus();
-        });
+        const gptModal = document.getElementById('gpt-modal');
+        if (gptModal) {
+            gptModal.addEventListener('hidden.bs.modal', () => {
+                const selectGPTButton = document.getElementById('select-gpt-button');
+                if (selectGPTButton) {
+                    selectGPTButton.focus();
+                }
+            });
+        }
     }
 
     /* --- Funções de Carregamento e População de Menus --- */
@@ -190,10 +221,17 @@ class UIManager {
                     throw new Error('Tipo desconhecido para a propriedade "data".');
                 }
 
+                // Verifique se dataArray é um array
+                if (!Array.isArray(dataArray)) {
+                    console.error('dataArray não é um array:', dataArray);
+                    this.showError('Erro ao processar os dados da lista de chats.');
+                    return;
+                }
+
                 // Atualizar estado
                 this.stateManager.chats = dataArray.map(chat => ({
                     ...chat,
-                    date: chat.last_modified || null
+                    date: chat.last_modified || new Date().toISOString()
                 })).filter(chat => chat.date !== null);
 
                 // Popular o menu de chats
@@ -209,6 +247,10 @@ class UIManager {
 
     populateChatMenu(chatsToDisplay) {
         const chatList = document.getElementById('chat-list');
+        if (!chatList) {
+            console.error('Elemento chat-list não encontrado.');
+            return;
+        }
         chatList.innerHTML = '';
 
         if (!chatsToDisplay || chatsToDisplay.length === 0) {
@@ -318,11 +360,9 @@ class UIManager {
         chatItems.forEach(item => {
             if (item.dataset.chatId === chatId) {
                 item.classList.add('active');
-                item.classList.remove('text-dark', 'bg-light');
                 localStorage.setItem('selectedChatId', chatId);
             } else {
                 item.classList.remove('active');
-                item.classList.add('text-dark', 'bg-light');
             }
         });
     }
@@ -389,7 +429,12 @@ class UIManager {
 
             // Remover o chatbot anterior e inserir um novo
             const chatbotContainer = document.getElementById('chatbot-container');
-            chatbotContainer.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
+            if (chatbotContainer) {
+                chatbotContainer.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
+            } else {
+                console.error('Elemento chatbot-container não encontrado.');
+                return;
+            }
 
             // Definir o systemMessage fixo a partir das configurações do GPT
             const fixedSystemMessage = { 
@@ -434,9 +479,12 @@ class UIManager {
                     chatWindow: {
                         showTitle: true,
                         title: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.name : 'Escolha um GPT',
+                        titleAvatarSrc:  "https://www.bhm.tec.br/images/152x152/10788698/favicon.png",
                         welcomeMessage: 'Como posso ajudar?',
+                        backgroundColor: '#ffffff',
                         fontSize: 15,
                         starterPrompts: ['Quem é você?', 'O que sabe fazer?'],
+                        clearChatOnReload: false, // If set to true, the chat will be cleared when the page reloads
                         botMessage: {
                             backgroundColor: "#ffffff",
                             textColor: "#303235",
@@ -462,6 +510,10 @@ class UIManager {
                         },
                         feedback: {
                             color: '#303235',
+                        },
+                        dateTimeToggle: {
+                            date: true,
+                            time: true,
                         },
                         footer: {
                             textColor: '#303235',
@@ -527,7 +579,11 @@ class UIManager {
     /* --- Funções de Seleção de GPT --- */
     async openModal() {
         await this.loadGPTList();
-        this.modal.show();
+        if (this.modal) {
+            this.modal.show();
+        } else {
+            console.error('Modal não está inicializado.');
+        }
     }
 
     async loadGPTList() {
@@ -548,6 +604,10 @@ class UIManager {
 
     populateGPTMenu(gpts) {
         const gptList = document.getElementById('gpt-list');
+        if (!gptList) {
+            console.error('Elemento gpt-list não encontrado.');
+            return;
+        }
         gptList.innerHTML = ''; // Limpar lista existente
 
         if (!gpts || gpts.length === 0) {
@@ -608,7 +668,9 @@ class UIManager {
         localStorage.setItem('gptConfig', JSON.stringify(this.stateManager.gptConfig));
 
         // Fechar o modal
-        this.modal.hide();
+        if (this.modal) {
+            this.modal.hide();
+        }
     }
 
     async fetchGPTConfig(gptId) {
@@ -688,7 +750,9 @@ class UIManager {
         this.stateManager.setSessionId(newSessionId);
 
         const chatbotContainer = document.getElementById('chatbot-container');
-        chatbotContainer.innerHTML = '';
+        if (chatbotContainer) {
+            chatbotContainer.innerHTML = '';
+        }
 
         await this.initializeChatbot();
     }
@@ -767,26 +831,14 @@ class UIManager {
 
     /* --- Funções de Log e Erro --- */
     logUserInput(userInput) {
-        const userInputLogs = document.getElementById('userInputLogs');
-        if (userInputLogs) {
-            userInputLogs.textContent = JSON.stringify({ userInput }, null, 2);
-        }
         console.log({ userInput });
     }
 
     logMessages(messages) {
-        const messagesLogs = document.getElementById('messagesLogs');
-        if (messagesLogs) {
-            messagesLogs.textContent = JSON.stringify({ messages }, null, 2);
-        }
         console.log({ messages });
     }
 
     async handleLoadingState(loading) {
-        const loadingLogs = document.getElementById('loadingLogs');
-        if (loadingLogs) {
-            loadingLogs.textContent = JSON.stringify({ loading }, null, 2);
-        }
         console.log({ loading });
 
         if (loading) {
@@ -845,49 +897,27 @@ class UIManager {
 
     /* --- Funções de Seleção Padrão e Persistência --- */
     async selectDefaultGPT(gptId) {
+        // Implemente a lógica para selecionar um GPT padrão
+        console.log(`Selecione o GPT padrão com ID: ${gptId}`);
+        await this.loadGPTList();
         const gptList = document.getElementById('gpt-list');
-        const gptItems = gptList.querySelectorAll('.gpt-list-item');
-
-        let defaultGPT = null;
-
-        gptItems.forEach(item => {
-            if (item.dataset.gptId === gptId.toString()) {
-                defaultGPT = item;
+        if (gptList) {
+            const defaultGPTItem = gptList.querySelector(`.gpt-list-item[data-gpt-id="${gptId}"]`);
+            if (defaultGPTItem) {
+                defaultGPTItem.click();
+            } else {
+                console.warn('GPT padrão não encontrado na lista.');
             }
-        });
-
-        if (defaultGPT) {
-            defaultGPT.click();
-            console.log(`GPT com gpt_id ${gptId} selecionado por padrão.`);
-        } else {
-            console.warn(`GPT com gpt_id ${gptId} não encontrado na lista.`);
         }
     }
 
     /* --- Funções de Controle de Cabeçalho --- */
     hideHeader() {
-        const header = document.getElementById('main-header');
-        header.classList.add('d-none');
-        document.getElementById('show-header-button').classList.remove('d-none');
-        this.adjustMainPadding(false);
+        // Se não estiver usando o cabeçalho, esta função pode ser omitida
     }
 
     showHeader() {
-        const header = document.getElementById('main-header');
-        header.classList.remove('d-none');
-        document.getElementById('show-header-button').classList.add('d-none');
-        this.adjustMainPadding(true);
-    }
-
-    adjustMainPadding(isHeaderVisible) {
-        const main = document.querySelector('main');
-        if (isHeaderVisible) {
-            main.classList.remove('mt-3');
-            main.classList.add('mt-5'); // Mantém a margem-top do Bootstrap para cabeçalho fixo
-        } else {
-            main.classList.remove('mt-5');
-            main.classList.add('mt-3'); // Reduz a margem-top quando o cabeçalho está oculto
-        }
+        // Se não estiver usando o cabeçalho, esta função pode ser omitida
     }
 
     /* --- Funções de Logout --- */
@@ -897,9 +927,6 @@ class UIManager {
         // Por exemplo, redirecionar para a página de login
         window.location.href = '/login';
     }
-
-    /* --- Outras Funções Necessárias --- */
-    // Implementar outras funções conforme necessário
 }
 
 /* ==========================
@@ -923,17 +950,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!stateManager.selectedGPT) {
         await uiManager.initializeChatbot();
     }
-
-    // Configurar eventos de pesquisa
-    const searchInputField = document.getElementById('search-input');
-    const clearSearchButton = document.getElementById('clear-search-button');
-
-    searchInputField.addEventListener('input', () => uiManager.filterChatList());
-
-    clearSearchButton.addEventListener('click', () => {
-        searchInputField.value = '';
-        clearSearchButton.classList.remove('d-block');
-        uiManager.populateChatMenu(uiManager.stateManager.chats);
-        searchInputField.focus();
-    });
 });

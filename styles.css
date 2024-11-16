@@ -1,67 +1,224 @@
-/* Reset básico já é tratado pelo Bootstrap */
+/* Reset de margens e paddings */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box; /* Garante que borda e padding não expandam o tamanho do elemento */
+}
 
-/* Estilos globais adicionais */
+/* Estilo global */
 body {
-    background-color: #f4f6f8; /* Mantém a cor de fundo personalizada */
+    display: flex;
+    min-height: 100vh;
+    background-color: #f4f6f8;
     color: #333;
 }
 
-/* Botão para mostrar o cabeçalho quando oculto */
-#show-header-button {
-    z-index: 1050; /* Acima do modal (z-index do Bootstrap para modals é 1050) */
-    display: none; /* Inicialmente oculto */
+/* Sidebar */
+#sidebarMenu {
+    min-width: 250px;
+    max-width: 250px;
+    background-color: #343a40;
+    color: white;
+    transition: all 0.3s;
 }
 
-#show-header-button.show {
-    display: block;
+#sidebarMenu .nav-link {
+    color: rgba(255, 255, 255, 0.9);
 }
 
-/* Ajuste do padding do main quando o cabeçalho está oculto */
-main {
-    transition: padding-top 0.3s ease-in-out;
-}
-
-header.hidden + main {
-    padding-top: 20px; /* Reduz o padding quando o cabeçalho está oculto */
-}
-
-/* Estilos dos itens de chat */
-.chat-item {
-    cursor: pointer;
-}
-
-.chat-item:hover {
-    background-color: rgba(59, 129, 246, 0.1); /* Fundo levemente azul no hover */
-}
-
-.chat-item.selected {
-    background-color: #3B81F6; /* Fundo azul para o item selecionado */
+#sidebarMenu .nav-link:hover {
+    background-color: #495057;
     color: white;
 }
 
-/* Destacar texto de busca */
+#sidebarMenu .input-group .form-control {
+    background-color: #495057;
+    color: white;
+    border: none;
+}
+
+#sidebarMenu .input-group .input-group-text {
+    background-color: #495057;
+    border: none;
+    color: white;
+}
+
+#sidebarMenu .list-group-item {
+    background-color: #343a40;
+    color: rgba(255, 255, 255, 0.9);
+    border: none;
+}
+
+#sidebarMenu .list-group-item:hover {
+    background-color: #495057;
+    color: white;
+}
+
+#sidebarMenu .list-group-item.selected {
+    background-color: #3B81F6;
+    color: white;
+}
+
+#sidebarMenu .input-group .btn {
+    color: white;
+    background-color: #495057;
+    border: none;
+}
+
+#sidebarMenu hr {
+    border-top: 1px solid #495057;
+}
+
+/* Botão de mostrar/ocultar a sidebar */
+#sidebarToggle {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 40px;
+    height: 40px;
+    background-color: #495057;
+    border: none;
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+#sidebarToggle:hover {
+    background-color: #3B81F6;
+}
+
+/* Conteúdo principal */
+.content {
+    flex-grow: 1;
+    padding: 0;
+    display: flex;
+}
+
+/* Chatbot container */
+#chatbot-container {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* Cabeçalho do organizador de datas */
+.list-group-item.fw-bold.text-muted {
+    background-color: transparent !important;
+    border: none;
+    border-bottom: 1px solid #dcdcdc;
+    color: #888 !important;
+    padding: 5px 10px;
+    font-weight: bold;
+    text-align: left;
+    font-size: 0.85rem;
+}
+
+/* Itens de chat */
+.chat-item {
+    cursor: pointer;
+    border: none;
+}
+
+.chat-item:hover {
+    background-color: rgba(59, 129, 246, 0.1);
+}
+
+.chat-item.active {
+    background-color: #3B81F6;
+    color: white;
+}
+
+/* Botão de limpar busca */
+#clear-search-button {
+    display: none;
+    cursor: pointer;
+}
+
+#clear-search-button.d-block {
+    display: inline-block;
+}
+
+/* Estilo para destacar texto na busca */
 .highlight {
     background-color: yellow;
     font-weight: bold;
 }
 
-/* Estilos para a lista de GPTs no modal */
-#gpt-list .list-group-item {
+/* Modal */
+.modal-content {
+    border: 2px solid purple;
+}
+
+/* Container de erros */
+#error-container {
+    border: 2px solid orange;
+}
+
+/* Classes adicionais movidas do HTML inline */
+
+/* Altura total para a sidebar */
+.full-height {
+    height: 100vh;
+}
+
+/* Limitação de altura da lista de chats */
+.chat-list {
+    max-height: 60%;
+    overflow-y: auto;
+}
+
+/* Estilo do chatbot */
+.chatbot {
+    --bot-bg-color: #ffffff; /* Fundo das mensagens do bot */
+    --bot-text-color: #303235; /* Texto das mensagens do bot */
+    --user-bg-color: #f7f8ff; /* Fundo das mensagens do usuário */
+    --user-text-color: #000000; /* Texto das mensagens do usuário */
+    --input-bg-color: #ffffff; /* Fundo do campo de texto */
+    --input-text-color: #303235; /* Texto do campo de texto */
+    --send-btn-color: #3B81F6; /* Cor do botão de envio */
+    --footer-text-color: #303235; /* Texto do rodapé */
+}
+
+.chatbot .bot-message {
+    background-color: var(--bot-bg-color);
+    color: var(--bot-text-color);
+}
+
+.chatbot .user-message {
+    background-color: var(--user-bg-color);
+    color: var(--user-text-color);
+}
+
+.chatbot .text-input {
+    background-color: var(--input-bg-color);
+    color: var(--input-text-color);
+    border: 1px solid #dcdcdc;
+    border-radius: 4px;
+    padding: 10px;
+}
+
+.chatbot .send-button {
+    background-color: var(--send-btn-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
     cursor: pointer;
 }
 
-#gpt-list .list-group-item:hover {
-    background-color: #f1f1f1;
+.chatbot .send-button:hover {
+    background-color: #2a6acb; /* Tom mais escuro para hover */
 }
 
-#gpt-list .list-group-item.selected {
-    background-color: #3B81F6;
-    color: white;
-}
-
-/* Responsividade adicional, se necessário */
-@media (max-width: 768px) {
-    #show-header-button {
-        padding: 8px 12px;
-    }
+.chatbot .footer {
+    color: var(--footer-text-color);
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 10px 0;
+    border-top: 1px solid #dcdcdc;
 }

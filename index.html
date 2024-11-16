@@ -14,20 +14,20 @@
 </head>
 <body>
     <!-- Sidebar -->
-    <nav id="sidebarMenu" class="sidebar d-flex flex-column p-3 full-height">
+    <nav id="sidebarMenu" class="sidebar d-flex flex-column p-3">
         <a href="#" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
             <img src="https://www.bhm.tec.br/images/152x152/10788698/favicon.png" alt="Logo" width="30" height="30" class="me-2">
             <span class="fs-4">BHM Tecnologia</span>
         </a>
         <hr>
-        <!-- Campo de pesquisa e lista de chats -->
+        <!-- Campo de pesquisa -->
         <div class="input-group mb-3">
             <span class="input-group-text" id="search-icon"><i class="bi bi-search"></i></span>
             <input type="text" class="form-control" id="search-input" placeholder="Pesquisar chats..." aria-label="Pesquisar chats" aria-describedby="search-icon">
             <button class="btn btn-outline-secondary" type="button" id="clear-search-button">&times;</button>
         </div>
         <!-- Lista de chats com rolagem automática -->
-        <ul id="chat-list" class="list-group chat-list">
+        <ul id="chat-list" class="list-group chat-list overflow-auto custom-chat-list-height">
             <!-- A lista de chats será populada dinamicamente -->
         </ul>
         <hr>
@@ -97,15 +97,25 @@
     <script type="module" src="renderer.js"></script>
     <!-- Inicialização dos Tooltips e Funcionalidade da Sidebar -->
     <script>
-        // Inicialização dos tooltips
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-          return new bootstrap.Tooltip(tooltipTriggerEl)
-        })
+        document.addEventListener('DOMContentLoaded', function () {
+            // Inicialização dos tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            });
 
-        // Funcionalidade de toggler da Sidebar
-        document.getElementById('sidebarToggle').addEventListener('click', function () {
-            document.getElementById('sidebarMenu').classList.toggle('active');
+            // Funcionalidade de toggler da Sidebar
+            var toggleButton = document.getElementById('sidebarToggle');
+            var sidebar = document.getElementById('sidebarMenu');
+
+            if (toggleButton && sidebar) {
+                toggleButton.addEventListener('click', function () {
+                    sidebar.classList.toggle('active');
+                    document.body.classList.toggle('sidebar-active'); // Adiciona/Remove a classe no body
+                });
+            } else {
+                console.error('Elementos sidebarToggle ou sidebarMenu não encontrados.');
+            }
         });
     </script>
 </body>

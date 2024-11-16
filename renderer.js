@@ -477,7 +477,10 @@ class UIManager {
                 chatflowConfig: chatflowConfig,
                 theme: {
                     chatWindow: {
-                        showTitle: true,
+                        button: {
+                            backgroundColor: "black"
+                          },
+                        showTitle: false,
                         title: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.name : 'Escolha um GPT',
                         titleAvatarSrc:  "https://www.bhm.tec.br/images/152x152/10788698/favicon.png",
                         welcomeMessage: 'Como posso ajudar?',
@@ -501,7 +504,7 @@ class UIManager {
                             placeholder: 'Mensagem para o LexiDecis',
                             backgroundColor: '#ffffff',                    
                             textColor: '#303235',
-                            sendButtonColor: '#3B81F6',
+                            sendButtonColor: '#000000',
                             maxChars: 1500,
                             maxCharsWarningMessage: 'Você excedeu o limite de caracteres. Por favor, insira menos de 1500 caracteres.',
                             autoFocus: true,

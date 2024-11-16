@@ -9,8 +9,11 @@
 body {
     display: flex;
     min-height: 100vh;
-    background-color: #f4f6f8;
+    background-color: #f4f6f8; /* Cor de fundo consistente */
     color: #333;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Previne rolagem global */
 }
 
 /* Sidebar */
@@ -19,59 +22,47 @@ body {
     max-width: 250px;
     background-color: #343a40;
     color: white;
-    transition: all 0.3s;
+    transition: transform 0.3s ease;
+    transform: translateX(0);
+    position: fixed;
+    height: 100vh;
+    overflow-y: auto;
+    z-index: 1000;
 }
 
-#sidebarMenu .nav-link {
-    color: rgba(255, 255, 255, 0.9);
+#sidebarMenu.active {
+    transform: translateX(-100%);
 }
 
-#sidebarMenu .nav-link:hover {
-    background-color: #495057;
-    color: white;
+/* Conteúdo Principal */
+.content {
+    margin-left: 250px; /* Espaço para a sidebar */
+    transition: margin-left 0.3s ease, width 0.3s ease;
+    width: calc(100% - 250px);
+    background-color: #f4f6f8; /* Cor de fundo consistente */
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden; /* Previne rolagem indesejada */
 }
 
-#sidebarMenu .input-group .form-control {
-    background-color: #495057;
-    color: white;
-    border: none;
+body.sidebar-active .content {
+    margin-left: 0;
+    width: 100%;
 }
 
-#sidebarMenu .input-group .input-group-text {
-    background-color: #495057;
-    border: none;
-    color: white;
+/* Container do Chatbot */
+#chatbot-container {
+    flex-grow: 1; /* Permite que o chatbot ocupe todo o espaço disponível */
+    width: 100%;
+    height: 100%;
+    background-color: #ffffff; /* Defina a cor de fundo desejada */
+    overflow-y: auto; /* Permite rolagem se necessário */
 }
 
-#sidebarMenu .list-group-item {
-    background-color: #343a40;
-    color: rgba(255, 255, 255, 0.9);
-    border: none;
-}
-
-#sidebarMenu .list-group-item:hover {
-    background-color: #495057;
-    color: white;
-}
-
-#sidebarMenu .list-group-item.selected {
-    background-color: #3B81F6;
-    color: white;
-}
-
-#sidebarMenu .input-group .btn {
-    color: white;
-    background-color: #495057;
-    border: none;
-}
-
-#sidebarMenu hr {
-    border-top: 1px solid #495057;
-}
-
-/* Botão de mostrar/ocultar a sidebar */
+/* Botão de toggle da Sidebar */
 #sidebarToggle {
-    position: absolute;
+    position: fixed;
     top: 10px;
     left: 10px;
     width: 40px;
@@ -84,53 +75,12 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 1100; /* Acima da sidebar */
+    transition: background-color 0.3s ease;
 }
 
 #sidebarToggle:hover {
     background-color: #3B81F6;
-}
-
-/* Conteúdo principal */
-.content {
-    flex-grow: 1;
-    padding: 0;
-    display: flex;
-}
-
-/* Chatbot container */
-#chatbot-container {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-}
-
-/* Cabeçalho do organizador de datas */
-.list-group-item.fw-bold.text-muted {
-    background-color: transparent !important;
-    border: none;
-    border-bottom: 1px solid #dcdcdc;
-    color: #888 !important;
-    padding: 5px 10px;
-    font-weight: bold;
-    text-align: left;
-    font-size: 0.85rem;
-}
-
-/* Itens de chat */
-.chat-item {
-    cursor: pointer;
-    border: none;
-}
-
-.chat-item:hover {
-    background-color: rgba(59, 129, 246, 0.1);
-}
-
-.chat-item.active {
-    background-color: #3B81F6;
-    color: white;
 }
 
 /* Botão de limpar busca */
@@ -145,8 +95,9 @@ body {
 
 /* Estilo para destacar texto na busca */
 .highlight {
-    background-color: yellow;
+    background-color: #ffeb3b; /* Amarelo mais vibrante */
     font-weight: bold;
+    border-radius: 2px;
 }
 
 /* Modal */
@@ -159,64 +110,173 @@ body {
     border: 2px solid orange;
 }
 
-/* Classes adicionais movidas do HTML inline */
+/* Outros estilos específicos... */
 
-/* Altura total para a sidebar */
-.full-height {
-    height: 100vh;
+/* Ajustes para responsividade */
+@media (max-width: 768px) {
+    /* Quando a tela é pequena, a sidebar está oculta por padrão */
+    #sidebarMenu {
+        transform: translateX(-100%);
+    }
+    
+    body.sidebar-active #sidebarMenu {
+        transform: translateX(0);
+    }
+   /* Reset de margens e paddings */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box; /* Garante que borda e padding não expandam o tamanho do elemento */
 }
 
-/* Limitação de altura da lista de chats */
-.chat-list {
-    max-height: 60%;
-    overflow-y: auto;
+/* Estilo global */
+body {
+    display: flex;
+    min-height: 100vh;
+    background-color: #f4f6f8; /* Cor de fundo consistente */
+    color: #333;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Previne rolagem global */
 }
 
-/* Estilo do chatbot */
-.chatbot {
-    --bot-bg-color: #ffffff; /* Fundo das mensagens do bot */
-    --bot-text-color: #303235; /* Texto das mensagens do bot */
-    --user-bg-color: #f7f8ff; /* Fundo das mensagens do usuário */
-    --user-text-color: #000000; /* Texto das mensagens do usuário */
-    --input-bg-color: #ffffff; /* Fundo do campo de texto */
-    --input-text-color: #303235; /* Texto do campo de texto */
-    --send-btn-color: #3B81F6; /* Cor do botão de envio */
-    --footer-text-color: #303235; /* Texto do rodapé */
-}
-
-.chatbot .bot-message {
-    background-color: var(--bot-bg-color);
-    color: var(--bot-text-color);
-}
-
-.chatbot .user-message {
-    background-color: var(--user-bg-color);
-    color: var(--user-text-color);
-}
-
-.chatbot .text-input {
-    background-color: var(--input-bg-color);
-    color: var(--input-text-color);
-    border: 1px solid #dcdcdc;
-    border-radius: 4px;
-    padding: 10px;
-}
-
-.chatbot .send-button {
-    background-color: var(--send-btn-color);
+/* Sidebar */
+#sidebarMenu {
+    min-width: 250px;
+    max-width: 250px;
+    background-color: #343a40;
     color: white;
+    transition: transform 0.3s ease;
+    transform: translateX(0);
+    position: fixed;
+    height: 100vh;
+    overflow-y: hidden; /* Gerencia a rolagem internamente */
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Lista de Chats */
+#chat-list {
+    height: 70%; /* Define a altura para 70% da sidebar */
+    overflow-y: auto; /* Adiciona barra de rolagem quando necessário */
+}
+
+/* Conteúdo Principal */
+.content {
+    margin-left: 250px; /* Espaço para a sidebar */
+    transition: margin-left 0.3s ease, width 0.3s ease;
+    width: calc(100% - 250px);
+    background-color: #f4f6f8; /* Cor de fundo consistente */
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden; /* Previne rolagem indesejada */
+}
+
+/* Ajuste quando a sidebar está ativa */
+body.sidebar-active .content {
+    margin-left: 0;
+    width: 100%;
+}
+
+/* Container do Chatbot */
+#chatbot-container {
+    flex-grow: 1; /* Permite que o chatbot ocupe todo o espaço disponível */
+    width: 100%;
+    height: 100%;
+    background-color: #ffffff; /* Defina a cor de fundo desejada */
+    overflow-y: auto; /* Permite rolagem se necessário */
+}
+
+/* Botão de toggle da Sidebar */
+#sidebarToggle {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    width: 40px;
+    height: 40px;
+    background-color: #495057;
     border: none;
-    border-radius: 4px;
-    padding: 8px 16px;
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100; /* Acima da sidebar */
+    transition: background-color 0.3s ease;
+}
+
+#sidebarToggle:hover {
+    background-color: #3B81F6;
+}
+
+/* Botão de limpar busca */
+#clear-search-button {
+    display: none;
     cursor: pointer;
 }
 
-.chatbot .send-button:hover {
-    background-color: #2a6acb; /* Tom mais escuro para hover */
+#clear-search-button.d-block {
+    display: inline-block;
 }
 
-.chatbot .footer {
-    color: var(--footer-text-color);
+/* Estilo para destacar texto na busca */
+.highlight {
+    background-color: #ffeb3b; /* Amarelo mais vibrante */
+    font-weight: bold;
+    border-radius: 2px;
+}
+
+/* Modal */
+.modal-content {
+    border: 2px solid purple;
+}
+
+/* Container de erros */
+#error-container {
+    border: 2px solid orange;
+}
+
+/* Outros estilos específicos... */
+
+/* Classe personalizada para definir a altura da lista de chats */
+.custom-chat-list-height {
+    height: 70%;
+}
+
+/* Ajustes para responsividade */
+@media (max-width: 768px) {
+    /* Quando a tela é pequena, a sidebar está oculta por padrão */
+    #sidebarMenu {
+        transform: translateX(-100%);
+    }
+    
+    body.sidebar-active #sidebarMenu {
+        transform: translateX(0);
+    }
+    
+    .content {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    body.sidebar-active .content {
+        margin-left: 250px;
+        width: calc(100% - 250px);
+    }
+} 
+    .content {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    body.sidebar-active .content {
+        margin-left: 250px;
+        width: calc(100% - 250px);
+    }
+}
     font-size: 0.9rem;
     text-align: center;
     padding: 10px 0;

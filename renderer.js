@@ -1,4 +1,4 @@
-import Chatbot from "https://cdn.jsdelivr.net/npm/flowise-embed/dist/web.js";
+import Chatbot from "./web.js";
 
 /* ================================
    1. Configurações e Constantes
@@ -478,9 +478,9 @@ class UIManager {
                 theme: {
                     chatWindow: {
                         button: {
-                            backgroundColor: "black"
+                            backgroundColor: "#000000"
                           },
-                        showTitle: false,
+                        showTitle: true,
                         title: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.name : 'Escolha um GPT',
                         titleAvatarSrc:  "https://www.bhm.tec.br/images/152x152/10788698/favicon.png",
                         welcomeMessage: 'Como posso ajudar?',

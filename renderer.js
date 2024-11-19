@@ -754,6 +754,7 @@ class UIManager {
 
         const chatbotContainer = document.getElementById('chatbot-container');
         if (chatbotContainer) {
+            console.log('Iniciando Flowise FullChatbot');
             chatbotContainer.innerHTML = '';
         }
 
@@ -791,7 +792,7 @@ class UIManager {
                 this.stateManager.pineconeNamespace = this.stateManager.gptConfig.pinecone.pineconeNamespace?.pinecone_0 || "";
             }
 
-            await this.initializeChatbot();
+            //await this.initializeChatbot(); //verificar se o chat nao está sendo puxado duplicado, e ver se remover da erro
         } else {
             await this.selectDefaultGPT(1);
         }
@@ -803,7 +804,7 @@ class UIManager {
             const selectedChat = this.stateManager.chats.find(chat => chat.id === selectedChatId);
             if (selectedChat) {
                 this.stateManager.setSessionId(selectedChat.id);
-                this.initializeChatbot();
+                //this.initializeChatbot();
                 this.selectChatItem(selectedChat.id);
             }
         }
@@ -950,7 +951,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     uiManager.loadSelectedChat();
 
     // Se nenhum GPT foi selecionado, inicializar com GPT padrão
-    if (!stateManager.selectedGPT) {
-        await uiManager.initializeChatbot();
-    }
+//    if (!stateManager.selectedGPT) {
+//        await uiManager.initializeChatbot();
+//    }
+
+
+    // Inicializar o chatbot após carregar GPT e chat
+    await uiManager.initializeChatbot();
+
 });

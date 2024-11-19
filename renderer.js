@@ -3,14 +3,16 @@ import Chatbot from "./web.js";
 /* ================================
    1. Configurações e Constantes
    ================================ */
+// Definição das configurações da aplicação, incluindo informações do usuário, empresa e credenciais da API
 const CONFIG = {
-    userId: 4,
-    companyName: 'bhm',
-    userName: 'bruno',
-    flowiseChatflowId: 'fd33f1f1-5543-4cf6-b22f-485bf1bedeb5',
-    flowiseApiHost: 'https://flowise.prod.bhm.tec.br',
-    flowiseToken: 'auQmNz8lRPkUqRrU1X86Kkfx_DICm92uCA8Pr8Vz8wc',
+    userId: 4, // ID do usuário
+    companyName: 'bhm', // Nome da empresa
+    userName: 'bruno', // Nome do usuário
+    flowiseChatflowId: 'fd33f1f1-5543-4cf6-b22f-485bf1bedeb5', // ID do fluxo de chat do Flowise
+    flowiseApiHost: 'https://flowise.prod.bhm.tec.br', // URL base da API do Flowise
+    flowiseToken: 'auQmNz8lRPkUqRrU1X86Kkfx_DICm92uCA8Pr8Vz8wc', // Token de autenticação do Flowise
     apiCredentials: {
+        // Credenciais e URLs para diferentes endpoints da API
         readChat: {
             URL: 'https://n8n.prod.bhm.tec.br/webhook/baa3de89-ecc9-448c-bd1b-8b45554da20f',
             AUTH: 'MinhaSenhaDaApi2024@'
@@ -37,11 +39,13 @@ const CONFIG = {
 /* ==========================
    2. Serviços de API
    ========================== */
+// Classe responsável por realizar requisições às APIs definidas nas configurações
 class ApiService {
     constructor(config) {
         this.config = config;
     }
 
+    // Método genérico para realizar requisições a uma API específica
     async request(apiKey, params = {}, method = 'GET', body = null) {
         const apiConfig = this.config.apiCredentials[apiKey];
         if (!apiConfig) throw new Error(`Configuração da API '${apiKey}' não encontrada.`);
@@ -77,15 +81,16 @@ class ApiService {
 /* ==========================
    3. Gerenciamento de Estado
    ========================== */
+// Classe para gerenciar o estado da aplicação, incluindo sessões, chats e configurações do GPT
 class StateManager {
     constructor() {
-        this.currentSessionId = "";
-        this.chats = [];
-        this.selectedGPT = null;
-        this.selectedGPTId = null;
-        this.gptConfig = {};
+        this.currentSessionId = ""; // ID da sessão atual
+        this.chats = []; // Lista de chats
+        this.selectedGPT = null; // GPT selecionado
+        this.selectedGPTId = null; // ID do GPT selecionado
+        this.gptConfig = {}; // Configurações do GPT selecionado
 
-        // Configurações do GPT
+        // Variáveis de configuração do GPT
         this.openAIApiKey = "";
         this.modelName = "";
         this.temperature = "";
@@ -97,6 +102,7 @@ class StateManager {
         this.pineconeNamespace = "";
     }
 
+    // Métodos para atualizar o estado
     setSessionId(sessionId) {
         this.currentSessionId = sessionId;
     }
@@ -122,6 +128,7 @@ class StateManager {
 /* ==========================
    4. UI e Manipulação de Eventos
    ========================== */
+// Classe para gerenciar a interface do usuário e eventos associados
 class UIManager {
     constructor(apiService, stateManager) {
         this.apiService = apiService;
@@ -135,7 +142,7 @@ class UIManager {
 
     /* --- Configuração de Eventos da UI --- */
     setupUIEvents() {
-        // Botões do cabeçalho (hide-header-button e show-header-button)
+        // Botões do cabeçalho (ocultar e mostrar cabeçalho)
         const hideHeaderButton = document.getElementById('hide-header-button');
         const showHeaderButton = document.getElementById('show-header-button');
 
@@ -159,7 +166,7 @@ class UIManager {
             clearSearchButton.addEventListener('click', () => this.clearSearch());
         }
 
-        // Botões da Sidebar
+        // Botões da barra lateral
         const newChatButton = document.getElementById('new-chat-button');
         const selectGPTButton = document.getElementById('select-gpt-button');
 
@@ -171,7 +178,7 @@ class UIManager {
             selectGPTButton.addEventListener('click', () => this.openModal());
         }
 
-        // Eventos do Dropdown de Configurações (exemplo de logout)
+        // Eventos do menu suspenso de configurações (exemplo de logout)
         const logoutItem = document.querySelector('.dropdown-item[href="#logout"]');
         if (logoutItem) {
             logoutItem.addEventListener('click', (e) => {
@@ -193,6 +200,7 @@ class UIManager {
     }
 
     /* --- Funções de Carregamento e População de Menus --- */
+    // Carrega a lista de chats a partir da API e atualiza a interface
     async loadChatList() {
         const params = {
             company_name: CONFIG.companyName,
@@ -245,6 +253,7 @@ class UIManager {
         }
     }
 
+    // Atualiza a lista de chats exibida na interface
     populateChatMenu(chatsToDisplay) {
         const chatList = document.getElementById('chat-list');
         if (!chatList) {
@@ -310,12 +319,14 @@ class UIManager {
     }
 
     /* --- Funções de Manipulação de Chats --- */
+    // Lida com o clique em um chat existente na lista
     handleChatClick(chat) {
         this.stateManager.setSessionId(chat.id);
         this.initializeChatbot();
         this.selectChatItem(chat.id);
     }
 
+    // Lida com a exclusão de um chat
     async handleDeleteChat(chatId, chatName) {
         const confirmDelete = confirm(`Tem certeza que deseja excluir o chat "${chatName}"?`);
         if (!confirmDelete) return;
@@ -355,6 +366,7 @@ class UIManager {
     }
 
     /* --- Funções de Seleção de Chats --- */
+    // Destaca o chat selecionado na interface
     selectChatItem(chatId) {
         const chatItems = document.querySelectorAll('#chat-list .chat-item');
         chatItems.forEach(item => {
@@ -368,6 +380,7 @@ class UIManager {
     }
 
     /* --- Funções de Filtragem de Chats --- */
+    // Filtra a lista de chats com base no termo de pesquisa
     filterChatList() {
         const searchInput = document.getElementById('search-input').value.toLowerCase();
         const clearButton = document.getElementById('clear-search-button');
@@ -386,6 +399,7 @@ class UIManager {
         this.populateChatMenu(filteredChats);
     }
 
+    // Limpa o campo de pesquisa e restaura a lista de chats
     clearSearch() {
         const searchInput = document.getElementById('search-input');
         searchInput.value = '';
@@ -394,6 +408,7 @@ class UIManager {
         searchInput.focus();
     }
 
+    // Destaca o termo de pesquisa nos nomes dos chats
     highlightSearch(text) {
         const searchQuery = document.getElementById('search-input').value.toLowerCase();
         if (!searchQuery) return text;
@@ -401,11 +416,13 @@ class UIManager {
         return text.replace(regex, '<span class="highlight">$1</span>');
     }
 
+    // Escapa caracteres especiais para uso em expressões regulares
     escapeRegExp(string) {
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
     /* --- Funções de Inicialização do Chatbot --- */
+    // Inicializa o chatbot com as configurações atuais
     async initializeChatbot() {
         try {
             if (!this.stateManager.currentSessionId) {
@@ -480,14 +497,14 @@ class UIManager {
                         button: {
                             backgroundColor: "black"
                           },
-                        showTitle: false,
+                        showTitle: true,
                         title: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.name : 'Escolha um GPT',
                         titleAvatarSrc:  "https://www.bhm.tec.br/images/152x152/10788698/favicon.png",
                         welcomeMessage: 'Como posso ajudar?',
                         backgroundColor: '#ffffff',
                         fontSize: 15,
                         starterPrompts: ['Quem é você?', 'O que sabe fazer?'],
-                        clearChatOnReload: false, // If set to true, the chat will be cleared when the page reloads
+                        clearChatOnReload: false, // Se verdadeiro, o chat será limpo ao recarregar a página
                         botMessage: {
                             backgroundColor: "#ffffff",
                             textColor: "#303235",
@@ -543,6 +560,7 @@ class UIManager {
         }
     }
 
+    // Injeta o histórico de chat previamente salvo
     async injectChatHistory() {
         const apiURL = `${CONFIG.flowiseApiHost}/api/v1/chatmessage/${CONFIG.flowiseChatflowId}?sessionId=${this.stateManager.currentSessionId}&user_id=${encodeURIComponent(CONFIG.userId)}`;
         try {
@@ -580,6 +598,7 @@ class UIManager {
     }
 
     /* --- Funções de Seleção de GPT --- */
+    // Abre o modal para seleção de um GPT
     async openModal() {
         await this.loadGPTList();
         if (this.modal) {
@@ -589,6 +608,7 @@ class UIManager {
         }
     }
 
+    // Carrega a lista de GPTs disponíveis a partir da API
     async loadGPTList() {
         const params = {
             company_name: CONFIG.companyName,
@@ -605,6 +625,7 @@ class UIManager {
         }
     }
 
+    // Popula o menu de seleção de GPTs na interface
     populateGPTMenu(gpts) {
         const gptList = document.getElementById('gpt-list');
         if (!gptList) {
@@ -640,6 +661,7 @@ class UIManager {
         gptList.appendChild(fragment);
     }
 
+    // Lida com a seleção de um GPT pelo usuário
     async selectGPTItem(gpt) {
         this.stateManager.setSelectedGPT(gpt);
         console.log('GPT selecionado:', gpt);
@@ -676,6 +698,7 @@ class UIManager {
         }
     }
 
+    // Busca as configurações detalhadas do GPT selecionado
     async fetchGPTConfig(gptId) {
         const params = {
             gpt_id: gptId,
@@ -736,6 +759,7 @@ class UIManager {
     }
 
     /* --- Funções de Criação de Novo Chat --- */
+    // Cria um novo chat e inicializa o chatbot
     async createNewChat() {
         if (this.stateManager.currentSessionId) {
             console.log('Criando um novo chat...');
@@ -762,6 +786,7 @@ class UIManager {
     }
 
     /* --- Funções de Seleção Padrão e Persistência --- */
+    // Carrega o GPT selecionado previamente ou seleciona o GPT padrão
     async loadSelectedGPT() {
         const storedGPT = localStorage.getItem('selectedGPT');
         const storedGPTId = localStorage.getItem('selectedGPTId');
@@ -798,6 +823,7 @@ class UIManager {
         }
     }
 
+    // Carrega o chat selecionado previamente
     loadSelectedChat() {
         const selectedChatId = localStorage.getItem('selectedChatId');
         if (selectedChatId) {
@@ -811,6 +837,7 @@ class UIManager {
     }
 
     /* --- Funções Auxiliares --- */
+    // Retorna o grupo de data para agrupar os chats na interface
     getDateGroup(date) {
         const today = new Date();
         const chatDate = new Date(date);
@@ -829,19 +856,23 @@ class UIManager {
         return "Mês passado";
     }
 
+    // Gera um novo ID de sessão único
     generateSessionId() {
         return crypto.randomUUID(); // Gera um UUID
     }
 
     /* --- Funções de Log e Erro --- */
+    // Loga a entrada do usuário
     logUserInput(userInput) {
         console.log({ userInput });
     }
 
+    // Loga as mensagens trocadas no chat
     logMessages(messages) {
         console.log({ messages });
     }
 
+    // Lida com o estado de carregamento do chatbot
     async handleLoadingState(loading) {
         console.log({ loading });
 
@@ -872,6 +903,7 @@ class UIManager {
         }
     }
 
+    // Exibe uma mensagem de erro na interface
     showError(message) {
         const errorContainer = document.getElementById('error-container');
         if (errorContainer) {
@@ -887,6 +919,7 @@ class UIManager {
         }
     }
 
+    // Exibe uma mensagem de alerta na interface
     showAlert(message, type = 'danger') {
         const errorContainer = document.getElementById('error-container');
         if (errorContainer) {
@@ -900,6 +933,7 @@ class UIManager {
     }
 
     /* --- Funções de Seleção Padrão e Persistência --- */
+    // Seleciona o GPT padrão caso nenhum esteja selecionado
     async selectDefaultGPT(gptId) {
         // Implemente a lógica para selecionar um GPT padrão
         console.log(`Selecione o GPT padrão com ID: ${gptId}`);
@@ -916,15 +950,18 @@ class UIManager {
     }
 
     /* --- Funções de Controle de Cabeçalho --- */
+    // Oculta o cabeçalho da interface
     hideHeader() {
         // Se não estiver usando o cabeçalho, esta função pode ser omitida
     }
 
+    // Exibe o cabeçalho da interface
     showHeader() {
         // Se não estiver usando o cabeçalho, esta função pode ser omitida
     }
 
     /* --- Funções de Logout --- */
+    // Realiza o logout do usuário
     logout() {
         // Implemente a lógica de logout aqui
         console.log('Usuário desconectado.');
@@ -936,6 +973,7 @@ class UIManager {
 /* ==========================
    5. Inicialização da Aplicação
    ========================== */
+// Evento que inicia a aplicação quando o documento é carregado
 document.addEventListener('DOMContentLoaded', async () => {
     const apiService = new ApiService(CONFIG);
     const stateManager = new StateManager();
@@ -954,7 +992,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 //    if (!stateManager.selectedGPT) {
 //        await uiManager.initializeChatbot();
 //    }
-
 
     // Inicializar o chatbot após carregar GPT e chat
     await uiManager.initializeChatbot();

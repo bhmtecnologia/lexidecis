@@ -1,5 +1,6 @@
 import Chatbot from "./web.js";
 
+
 /* ================================
    1. Configurações e Constantes
    ================================ */
@@ -20,6 +21,7 @@ const CONFIG = {
         updateChat: {
             URL: 'https://n8n.prod.bhm.tec.br/webhook/8b3c7d4b-660b-413d-a0a0-87ce039cba41',
             AUTH: 'MinhaSenhaDaApi2024@'
+            // Não é necessário incluir 'paramsInQuery' aqui, pois a lógica foi ajustada no método 'request'
         },
         readGPT: {
             URL: 'https://n8n.prod.bhm.tec.br/webhook/15108d38-cdf9-4bfa-87be-f14469aa7969',
@@ -46,30 +48,42 @@ class ApiService {
     }
 
     // Método genérico para realizar requisições a uma API específica
-    async request(apiKey, params = {}, method = 'GET', body = null) {
+    async request(apiKey, params = {}, method = 'GET', body = null, options = {}) {
         const apiConfig = this.config.apiCredentials[apiKey];
         if (!apiConfig) throw new Error(`Configuração da API '${apiKey}' não encontrada.`);
         
-        // Construir a URL com parâmetros para métodos GET e DELETE
+        // Construir a URL
         let url = apiConfig.URL;
-        if (method === 'GET' || method === 'DELETE') {
+
+        // Determinar se os parâmetros devem ser incluídos na query string
+        const includeParamsInQuery = options.includeParamsInQuery || false;
+
+        // Incluir parâmetros na query string se necessário
+        if (method === 'GET' || method === 'DELETE' || includeParamsInQuery) {
             const queryString = new URLSearchParams(params).toString();
             if (queryString) {
                 url += `?${queryString}`;
             }
         }
 
-        const options = {
+        const fetchOptions = {
             method,
             headers: {
                 'Authorization': apiConfig.AUTH,
                 'Content-Type': 'application/json'
             }
         };
-        if (body && (method === 'POST' || method === 'PUT' || method === 'PATCH')) options.body = JSON.stringify(body);
+
+        // Incluir 'body' se for fornecido e o método for apropriado
+        if (body && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
+            fetchOptions.body = JSON.stringify(body);
+        }
+        
+        // Log para depuração
+        console.log(`Fazendo requisição para ${url} com opções:`, fetchOptions);
         
         try {
-            const response = await fetch(url, options);
+            const response = await fetch(url, fetchOptions);
             if (!response.ok) throw new Error(`Erro na requisição ${apiKey}: ${response.status} ${response.statusText}`);
             return response.json();
         } catch (error) {
@@ -296,7 +310,10 @@ class UIManager {
                     chatItem.classList.add('list-group-item', 'chat-item', 'd-flex', 'justify-content-between', 'align-items-center');
                     chatItem.innerHTML = `
                         <span class="chat-name">${this.highlightSearch(chat.name || 'Chat sem nome')}</span>
-                        <button class="btn btn-sm btn-danger delete-chat-button" title="Excluir Chat">
+                        <button class="btn btn-sm btn-outline-secondary rename-chat-button me-2" title="Renomear Chat">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary delete-chat-button" title="Excluir Chat">
                             <i class="bi bi-trash"></i>
                         </button>
                     `;
@@ -304,6 +321,10 @@ class UIManager {
                     chatItem.dataset.chatDate = chat.date;
 
                     // Eventos
+                    chatItem.querySelector('.rename-chat-button').addEventListener('click', (event) => {
+                        event.stopPropagation(); // Evita o evento de clique no chat
+                        this.handleRenameChat(chat.id, chat.name || 'Chat sem nome');
+                    });                    
                     chatItem.querySelector('.delete-chat-button').addEventListener('click', (event) => {
                         event.stopPropagation(); // Evita o evento de clique no chat
                         this.handleDeleteChat(chat.id, chat.name);
@@ -324,6 +345,38 @@ class UIManager {
         this.stateManager.setSessionId(chat.id);
         this.initializeChatbot();
         this.selectChatItem(chat.id);
+    }
+
+    // Lida com a renomeação de um chat
+    async handleRenameChat(chatId, oldChatName) {
+        const newChatName = prompt(`Renomear "${oldChatName}" para:`, oldChatName);
+        if (!newChatName || newChatName.trim() === oldChatName.trim()) return;
+
+        try {
+            const params = {
+                company_name: CONFIG.companyName,
+                user_name: CONFIG.userName,
+                user_id: CONFIG.userId,
+                session_id: chatId,
+                new_chat_name: newChatName.trim()
+            };
+            const renameResponse = await this.apiService.request('updateChat', params, 'POST');
+            console.log('Resposta da API de renomeação:', renameResponse);
+
+            if (renameResponse.status === "success") {
+                this.showAlert('Chat renomeado com sucesso.', 'success');
+                const chatToRename = this.stateManager.chats.find(chat => chat.id === chatId);
+                if (chatToRename) {
+                    chatToRename.name = newChatName.trim();
+                    this.populateChatMenu(this.stateManager.chats);
+                }
+            } else {
+                throw new Error(renameResponse.message || 'Erro desconhecido.');
+            }
+        } catch (error) {
+            console.error('Erro ao renomear o chat:', error);
+            this.showError('Erro ao renomear o chat. Verifique o console para mais detalhes.');
+        }
     }
 
     // Lida com a exclusão de um chat
@@ -857,9 +910,19 @@ class UIManager {
     }
 
     // Gera um novo ID de sessão único
+//    generateSessionId() {
+//        return crypto.randomUUID(); // Gera um UUID
+//    }
+
+// Função para gerar um novo ID de sessão
     generateSessionId() {
-        return crypto.randomUUID(); // Gera um UUID
+        const timestamp = BigInt(Date.now()) * 1000n;  // Obtém o timestamp atual em milissegundos
+        const randomComponent = BigInt(Math.floor(Math.random() * 1000));  // Gera um número aleatório entre 0 e 999
+        const sessionId = timestamp + randomComponent;  // Soma o timestamp com o número aleatório para gerar um ID único
+        return sessionId.toString();  // Converte o BigInt para string
     }
+
+
 
     /* --- Funções de Log e Erro --- */
     // Loga a entrada do usuário
@@ -885,7 +948,7 @@ class UIManager {
                     user_id: CONFIG.userId,
                     sessionid: this.stateManager.currentSessionId
                 };
-                const response = await this.apiService.request('updateChat', params, 'POST', {});
+                const response = await this.apiService.request('updateChat', params, 'POST', null, { includeParamsInQuery: true });
                 console.log('Resposta da API:', response);
 
                 if (response.status === "success") {
@@ -979,6 +1042,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     const stateManager = new StateManager();
     const uiManager = new UIManager(apiService, stateManager);
 
+    // Inicialização dos tooltips e Funcionalidade da Sidebar
+    // Inicialização dos tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Funcionalidade de toggler da Sidebar
+    var toggleButton = document.getElementById('sidebarToggle');
+    var sidebar = document.getElementById('sidebarMenu');
+
+    if (toggleButton && sidebar) {
+        toggleButton.addEventListener('click', function () {
+            sidebar.classList.toggle('active');
+            document.body.classList.toggle('sidebar-active'); // Adiciona/Remove a classe no body
+        });
+    } else {
+        console.error('Elementos sidebarToggle ou sidebarMenu não encontrados.');
+    }
+
     // Carregar lista de chats
     await uiManager.loadChatList();
 
@@ -988,12 +1071,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Carregar chat selecionado anteriormente
     uiManager.loadSelectedChat();
 
-    // Se nenhum GPT foi selecionado, inicializar com GPT padrão
-//    if (!stateManager.selectedGPT) {
-//        await uiManager.initializeChatbot();
-//    }
-
     // Inicializar o chatbot após carregar GPT e chat
     await uiManager.initializeChatbot();
-
 });

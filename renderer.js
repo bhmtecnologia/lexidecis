@@ -478,9 +478,9 @@ class UIManager {
                 theme: {
                     chatWindow: {
                         button: {
-                            backgroundColor: "#000000"
+                            backgroundColor: "black"
                           },
-                        showTitle: true,
+                        showTitle: false,
                         title: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.name : 'Escolha um GPT',
                         titleAvatarSrc:  "https://www.bhm.tec.br/images/152x152/10788698/favicon.png",
                         welcomeMessage: 'Como posso ajudar?',

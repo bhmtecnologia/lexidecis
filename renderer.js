@@ -4,14 +4,21 @@ import Chatbot from "./web.js";
 /* ================================
    1. Configurações e Constantes
    ================================ */
+
+   // Recuperar as variáveis do sessionStorage
+const tenant = sessionStorage.getItem("tenant");
+const uuid = sessionStorage.getItem("uuid");
+const email = sessionStorage.getItem("email");
+
 // Definição das configurações da aplicação, incluindo informações do usuário, empresa e credenciais da API
 const CONFIG = {
     userId: 4, // ID do usuário
-    companyName: 'bhm', // Nome da empresa
-    userName: 'bruno', // Nome do usuário
+    userUuid: uuid, // UUID do usuário
+    companyName: tenant, // Nome da empresa
+    userName: email, // Nome do usuário
     flowiseChatflowId: 'fd33f1f1-5543-4cf6-b22f-485bf1bedeb5', // ID do fluxo de chat do Flowise
     flowiseApiHost: 'https://flowise.prod.bhm.tec.br', // URL base da API do Flowise
-    flowiseToken: 'auQmNz8lRPkUqRrU1X86Kkfx_DICm92uCA8Pr8Vz8wc', // Token de autenticação do Flowise
+    flowiseToken: '5AmGA-dXg_NfVl0dMoslPbCd8FpzRxAs7uOK91MKS_E', // Token de autenticação do Flowise
     apiCredentials: {
         // Credenciais e URLs para diferentes endpoints da API
         readChat: {
@@ -309,14 +316,19 @@ class UIManager {
                     const chatItem = document.createElement('li');
                     chatItem.classList.add('list-group-item', 'chat-item', 'd-flex', 'justify-content-between', 'align-items-center');
                     chatItem.innerHTML = `
-                        <span class="chat-name">${this.highlightSearch(chat.name || 'Chat sem nome')}</span>
-                        <button class="btn btn-sm btn-outline-secondary rename-chat-button me-2" title="Renomear Chat">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary delete-chat-button" title="Excluir Chat">
-                            <i class="bi bi-trash"></i>
-                        </button>
+                    <span class="chat-name">${this.highlightSearch(chat.name || 'Chat sem nome')}</span>
+                    <button class="btn btn-sm btn-outline-secondary rename-chat-button me-2" title="Renomear Chat">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary delete-chat-button" title="Excluir Chat">
+                        <i class="bi bi-trash"></i>
+                    </button>
                     `;
+
+                    //<button class="btn btn-sm btn-outline-secondary archive-chat-button me-2" title="Arquivar Chat">
+                    //    <i class="bi bi-archive"></i>
+                    //</button>
+
                     chatItem.dataset.chatId = chat.id;
                     chatItem.dataset.chatDate = chat.date;
 
@@ -339,7 +351,7 @@ class UIManager {
         chatList.appendChild(fragment);
     }
 
-    /* --- Funções de Manipulação de Chats --- */
+    /* --- Funções de Manipulação de Chats --- */    
     // Lida com o clique em um chat existente na lista
     handleChatClick(chat) {
         this.stateManager.setSessionId(chat.id);
@@ -351,18 +363,24 @@ class UIManager {
     async handleRenameChat(chatId, oldChatName) {
         const newChatName = prompt(`Renomear "${oldChatName}" para:`, oldChatName);
         if (!newChatName || newChatName.trim() === oldChatName.trim()) return;
-
+    
         try {
             const params = {
                 company_name: CONFIG.companyName,
                 user_name: CONFIG.userName,
                 user_id: CONFIG.userId,
-                session_id: chatId,
+                sessionid: chatId,
                 new_chat_name: newChatName.trim()
             };
-            const renameResponse = await this.apiService.request('updateChat', params, 'POST');
+            const renameResponse = await this.apiService.request(
+                'updateChat',
+                params,
+                'POST',
+                null,
+                { includeParamsInQuery: true } // Adiciona esta linha
+            );
             console.log('Resposta da API de renomeação:', renameResponse);
-
+    
             if (renameResponse.status === "success") {
                 this.showAlert('Chat renomeado com sucesso.', 'success');
                 const chatToRename = this.stateManager.chats.find(chat => chat.id === chatId);
@@ -512,7 +530,7 @@ class UIManager {
             };
 
             // Corrigir a temperatura
-            const parsedTemperature = parseFloat(this.stateManager.temperature.toString().replace(',', '.')) || 0.2;
+            const parsedTemperature = parseFloat(this.stateManager.temperature.toString().replace(',', '.')) || 0.9;
 
             // Configurar o objeto de chatflowConfig com systemMessage e outras variáveis
             const chatflowConfig = {
@@ -557,7 +575,7 @@ class UIManager {
                         backgroundColor: '#ffffff',
                         fontSize: 15,
                         starterPrompts: ['Quem é você?', 'O que sabe fazer?'],
-                        clearChatOnReload: false, // Se verdadeiro, o chat será limpo ao recarregar a página
+                        clearChatOnReload: false, // Se verdadeiro, o chat será limpo ao recarregar a página. Está desativado para permitir o injection
                         botMessage: {
                             backgroundColor: "#ffffff",
                             textColor: "#303235",
@@ -568,15 +586,15 @@ class UIManager {
                             backgroundColor: "#f7f8ff",
                             textColor: "#000000",
                             showAvatar: false,
-                            avatarSrc: "https://www.bhm.tec.br/images/152x152/10788698/favicon.png",
+                            //avatarSrc: "https://www.bhm.tec.br/images/152x152/10788698/favicon.png", // Se o ShowAvatar for false esse item deve estar comentado
                         },                
                         textInput: {
                             placeholder: 'Mensagem para o LexiDecis',
                             backgroundColor: '#ffffff',                    
                             textColor: '#303235',
                             sendButtonColor: '#000000',
-                            maxChars: 1500,
-                            maxCharsWarningMessage: 'Você excedeu o limite de caracteres. Por favor, insira menos de 1500 caracteres.',
+                            maxChars: 3000,
+                            maxCharsWarningMessage: 'Você excedeu o limite de caracteres. Por favor, insira menos de 3000 caracteres.',
                             autoFocus: true,
                             sendMessageSound: true,
                             receiveMessageSound: true,
@@ -854,7 +872,7 @@ class UIManager {
             if (this.stateManager.gptConfig.openAI) {
                 this.stateManager.openAIApiKey = this.stateManager.gptConfig.openAI.openAIApiKey?.chatOpenAI_0 || "";
                 this.stateManager.modelName = this.stateManager.gptConfig.openAI.modelName?.chatOpenAI_0 || "";
-                this.stateManager.temperature = this.stateManager.gptConfig.openAI.temperature || "0.2";
+                this.stateManager.temperature = this.stateManager.gptConfig.openAI.temperature || "";
                 this.stateManager.temperature = parseFloat(this.stateManager.temperature.toString().replace(',', '.')) || 0.2;
             }
             if (this.stateManager.gptConfig.toolAgent) {

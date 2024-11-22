@@ -60,6 +60,7 @@ body.sidebar-active .content {
     height: 100%;
     background-color: #ffffff; /* Defina a cor de fundo desejada */
     overflow-y: auto; /* Permite rolagem se necessário */
+        border: 2px solid purple;
 }
 
 /* Botão de toggle da Sidebar */
@@ -79,6 +80,7 @@ body.sidebar-active .content {
     justify-content: center;
     z-index: 1100; /* Acima da sidebar */
     transition: background-color 0.3s ease;
+    
 }
 
 #sidebarToggle:hover {
@@ -114,7 +116,7 @@ body.sidebar-active .content {
 
 /* Classe personalizada para definir a altura da lista de chats */
 .custom-chat-list-height {
-    height: 70%;
+    height: 60%;
 }
 
 /* Ajustes para responsividade */
@@ -138,3 +140,7 @@ body.sidebar-active .content {
         width: calc(100% - 250px);
     }
 }
+
+
+
+

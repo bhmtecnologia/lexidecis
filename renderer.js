@@ -5,6 +5,7 @@ import Chatbot from "./web.js";
    1. Configurações e Constantes
    ================================ */
 
+   
    // Recuperar as variáveis do sessionStorage
 const tenant = sessionStorage.getItem("tenant");
 const uuid = sessionStorage.getItem("uuid");
@@ -928,11 +929,11 @@ class UIManager {
     }
 
     // Gera um novo ID de sessão único
-//    generateSessionId() {
-//        return crypto.randomUUID(); // Gera um UUID
-//    }
+    //    generateSessionId() {
+    //        return crypto.randomUUID(); // Gera um UUID
+    //    }
 
-// Função para gerar um novo ID de sessão
+    // Função para gerar um novo ID de sessão
     generateSessionId() {
         const timestamp = BigInt(Date.now()) * 1000n;  // Obtém o timestamp atual em milissegundos
         const randomComponent = BigInt(Math.floor(Math.random() * 1000));  // Gera um número aleatório entre 0 e 999
@@ -1049,6 +1050,8 @@ class UIManager {
         // Por exemplo, redirecionar para a página de login
         window.location.href = '/login';
     }
+
+    
 }
 
 /* ==========================

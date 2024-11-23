@@ -1,6 +1,15 @@
 // login.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+import {
+    getAuth,
+    signInWithEmailAndPassword,
+    setPersistence,
+    browserLocalPersistence,
+    onAuthStateChanged,
+    signOut,
+    updatePassword,
+    sendPasswordResetEmail,
+} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
 
 // Configuração do Firebase
 const firebaseConfig = {
@@ -39,7 +48,6 @@ window.login = async function () {
     }
 
     try {
-        // Tenta realizar o login com email e senha
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
@@ -49,28 +57,26 @@ window.login = async function () {
         sessionStorage.setItem("email", email);
 
         // Notificar sucesso no login
-        alert("Login bem-sucedido!");
+        //alert("Login bem-sucedido!");
 
         // Redirecionar para outra página, ex: chat.html
         window.location.href = "chat.html";
     } catch (error) {
-        // Exibir mensagem de erro em caso de falha no login
         alert(`Erro no login: ${error.message}`);
     }
 };
 
-// Logout por Inatividade
-//const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutos em milissegundos
-const INACTIVITY_LIMIT = 1 * 60 * 1000; // 15 minutos em milissegundos
+// Logout por inatividade
+const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutos
 let inactivityTimeout;
 
 // Função para deslogar o usuário após inatividade
-const logout = async () => {
+window.logout = async function () {
     try {
-        await signOut(auth); // Desloga o usuário
-        sessionStorage.clear(); // Limpa o sessionStorage
-        alert("Você foi desconectado devido à inatividade.");
-        window.location.href = "login.html"; // Redireciona para a página de login
+        await signOut(auth);
+        sessionStorage.clear();
+        alert("login.js: Você foi desconectado devido à inatividade.");
+        window.location.href = "index.html";
     } catch (error) {
         console.error("Erro ao deslogar:", error);
     }
@@ -78,19 +84,17 @@ const logout = async () => {
 
 // Função para reiniciar o temporizador de inatividade
 const resetInactivityTimer = () => {
-    clearTimeout(inactivityTimeout); // Limpa o temporizador atual
-    inactivityTimeout = setTimeout(logout, INACTIVITY_LIMIT); // Reinicia o temporizador
+    clearTimeout(inactivityTimeout);
+    inactivityTimeout = setTimeout(window.logout, INACTIVITY_LIMIT);
 };
 
 // Monitorando a atividade do usuário
 const monitorInactivity = () => {
-    window.addEventListener('mousemove', resetInactivityTimer);
-    window.addEventListener('keydown', resetInactivityTimer);
-    window.addEventListener('scroll', resetInactivityTimer);
-    window.addEventListener('click', resetInactivityTimer);
-    window.addEventListener('touchstart', resetInactivityTimer);
-
-    // Inicializa o temporizador logo após a carga da página
+    window.addEventListener("mousemove", resetInactivityTimer);
+    window.addEventListener("keydown", resetInactivityTimer);
+    window.addEventListener("scroll", resetInactivityTimer);
+    window.addEventListener("click", resetInactivityTimer);
+    window.addEventListener("touchstart", resetInactivityTimer);
     resetInactivityTimer();
 };
 
@@ -98,10 +102,52 @@ const monitorInactivity = () => {
 onAuthStateChanged(auth, (user) => {
     if (user) {
         console.log("Usuário autenticado:", user.uid);
+        monitorInactivity();
     } else {
         console.log("Usuário não autenticado.");
+        sessionStorage.clear();
+        window.location.href = "index.html";
     }
 });
 
-// Chama o monitoramento de inatividade assim que o script for carregado
-monitorInactivity();
+// Função para alterar senha do usuário logado
+window.changePassword = async function () {
+    const user = auth.currentUser;
+
+    if (!user) {
+        alert("Usuário não autenticado.");
+        return;
+    }
+
+    const newPassword = prompt("Digite sua nova senha:");
+    if (!newPassword || newPassword.length < 6) {
+        alert("A senha deve ter pelo menos 6 caracteres.");
+        return;
+    }
+
+    try {
+        await updatePassword(user, newPassword);
+        alert("Senha alterada com sucesso!");
+    } catch (error) {
+        console.error("Erro ao alterar a senha:", error);
+        alert(`Erro ao alterar a senha: ${error.message}`);
+    }
+};
+
+// Função para recuperação de senha (usuário deslogado)
+window.resetPassword = async function () {
+    const email = prompt("Digite o e-mail cadastrado:");
+
+    if (!email) {
+        alert("E-mail é obrigatório.");
+        return;
+    }
+
+    try {
+        await sendPasswordResetEmail(auth, email);
+        alert("Um e-mail para redefinir sua senha foi enviado.");
+    } catch (error) {
+        console.error("Erro ao enviar e-mail de redefinição de senha:", error);
+        alert(`Erro ao redefinir senha: ${error.message}`);
+    }
+};

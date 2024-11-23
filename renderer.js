@@ -1,12 +1,10 @@
 import Chatbot from "./web.js";
 
-
 /* ================================
    1. Configurações e Constantes
    ================================ */
 
-   
-   // Recuperar as variáveis do sessionStorage
+// Recuperar as variáveis do sessionStorage
 const tenant = sessionStorage.getItem("tenant");
 const uuid = sessionStorage.getItem("uuid");
 const email = sessionStorage.getItem("email");
@@ -29,7 +27,6 @@ const CONFIG = {
         updateChat: {
             URL: 'https://n8n.prod.bhm.tec.br/webhook/8b3c7d4b-660b-413d-a0a0-87ce039cba41',
             AUTH: 'MinhaSenhaDaApi2024@'
-            // Não é necessário incluir 'paramsInQuery' aqui, pois a lógica foi ajustada no método 'request'
         },
         readGPT: {
             URL: 'https://n8n.prod.bhm.tec.br/webhook/15108d38-cdf9-4bfa-87be-f14469aa7969',
@@ -112,16 +109,8 @@ class StateManager {
         this.selectedGPTId = null; // ID do GPT selecionado
         this.gptConfig = {}; // Configurações do GPT selecionado
 
-        // Variáveis de configuração do GPT
-        this.openAIApiKey = "";
-        this.modelName = "";
-        this.temperature = "";
-        this.systemMessage = "";
-        this.maxIterations = "";
-        this.retrieverTools = [];
-        this.pineconeApiKey = "";
-        this.pineconeIndex = "";
-        this.pineconeNamespace = "";
+        // Remova as variáveis individuais de configuração do GPT
+        // Elas serão acessadas diretamente através de gptConfig
     }
 
     // Métodos para atualizar o estado
@@ -326,10 +315,6 @@ class UIManager {
                     </button>
                     `;
 
-                    //<button class="btn btn-sm btn-outline-secondary archive-chat-button me-2" title="Arquivar Chat">
-                    //    <i class="bi bi-archive"></i>
-                    //</button>
-
                     chatItem.dataset.chatId = chat.id;
                     chatItem.dataset.chatDate = chat.date;
 
@@ -525,36 +510,11 @@ class UIManager {
                 return;
             }
 
-            // Definir o systemMessage fixo a partir das configurações do GPT
-            const fixedSystemMessage = { 
-                toolAgent_0: this.stateManager.systemMessage
-            };
-
-            // Corrigir a temperatura
-            const parsedTemperature = parseFloat(this.stateManager.temperature.toString().replace(',', '.')) || 0.9;
-
-            // Configurar o objeto de chatflowConfig com systemMessage e outras variáveis
+            // Configurar o objeto de chatflowConfig com gptConfig completo
             const chatflowConfig = {
                 sessionId: this.stateManager.currentSessionId,
-                systemMessage: fixedSystemMessage,
-                returnSourceDocuments: true,
-                retrieverTool_0: this.stateManager.retrieverTools[0] || "",
-                retrieverTool_1: this.stateManager.retrieverTools[1] || "",
-                description: {
-                    retrieverTool_0: "Descrição da ferramenta 0",
-                    retrieverTool_1: "Descrição da ferramenta 1"
-                },
-                maxIterations: {
-                    toolAgent_0: parseInt(this.stateManager.maxIterations) || 10
-                },
-                openAIApiKey: this.stateManager.openAIApiKey,
-                modelName: this.stateManager.modelName,
-                temperature: parsedTemperature,
-                pinecone: {
-                    pineconeApiKey: this.stateManager.pineconeApiKey,
-                    pineconeIndex: this.stateManager.pineconeIndex,
-                    pineconeNamespace: this.stateManager.pineconeNamespace
-                }
+                ...this.stateManager.gptConfig, // Integração direta do gptConfig
+                // Adicione outras configurações fixas aqui, se necessário
             };
 
             console.log('Chatflow Config:', chatflowConfig);
@@ -568,7 +528,7 @@ class UIManager {
                     chatWindow: {
                         button: {
                             backgroundColor: "black"
-                          },
+                        },
                         showTitle: true,
                         title: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.name : 'Escolha um GPT',
                         titleAvatarSrc:  "https://www.bhm.tec.br/images/152x152/10788698/favicon.png",
@@ -782,48 +742,15 @@ class UIManager {
             const configData = await this.apiService.request('overrideConfig', params, 'GET');
             console.log('Configurações do GPT:', configData);
 
-            this.stateManager.setGPTConfig({});
+            // Agregar todos os objetos 'value' em um único objeto gptConfig
+            const aggregatedConfig = configData.reduce((acc, current) => {
+                return { ...acc, ...current.value };
+            }, {});
 
-            configData.forEach(configItem => {
-                const { name, value } = configItem;
+            // Atualizar o stateManager com o gptConfig agregado
+            this.stateManager.setGPTConfig(aggregatedConfig);
 
-                switch (name) {
-                    case 'openAI':
-                        this.stateManager.openAIApiKey = value.openAIApiKey?.chatOpenAI_0 || "";
-                        this.stateManager.modelName = value.modelName?.chatOpenAI_0 || "";
-                        this.stateManager.temperature = value.temperature?.chatOpenAI_0 ? parseFloat(value.temperature.chatOpenAI_0.replace(',', '.')) : 0.2;
-                        break;
-                    case 'toolAgent':
-                        this.stateManager.systemMessage = value.systemMessage?.toolAgent_0 || "";
-                        this.stateManager.maxIterations = value.maxIterations?.toolAgent_0 || "";
-                        break;
-                    case 'retrieverTool':
-                        this.stateManager.retrieverTools = Object.values(value.name).filter(Boolean);
-                        break;
-                    case 'pinecone':
-                        this.stateManager.pineconeApiKey = value.pineconeApiKey?.pinecone_0 || "";
-                        this.stateManager.pineconeIndex = value.pineconeIndex?.pinecone_0 || "";
-                        this.stateManager.pineconeNamespace = value.pineconeNamespace?.pinecone_0 || "";
-                        break;
-                    default:
-                        console.warn(`Configuração desconhecida: ${name}`);
-                }
-
-                // Armazenar no objeto gptConfig para uso futuro
-                this.stateManager.gptConfig[name] = value;
-            });
-
-            console.log('Variáveis de configuração definidas:', {
-                openAIApiKey: this.stateManager.openAIApiKey,
-                modelName: this.stateManager.modelName,
-                temperature: this.stateManager.temperature,
-                systemMessage: this.stateManager.systemMessage,
-                maxIterations: this.stateManager.maxIterations,
-                retrieverTools: this.stateManager.retrieverTools,
-                pineconeApiKey: this.stateManager.pineconeApiKey,
-                pineconeIndex: this.stateManager.pineconeIndex,
-                pineconeNamespace: this.stateManager.pineconeNamespace
-            });
+            console.log('Configurações agregadas do GPT:', this.stateManager.gptConfig);
         } catch (error) {
             console.error('Erro ao buscar configurações do GPT:', error);
             this.showError('Erro ao buscar configurações do GPT. Verifique o console para mais detalhes.');
@@ -869,25 +796,7 @@ class UIManager {
             this.stateManager.setGPTConfig(JSON.parse(storedGPTConfig));
             console.log('GPT carregado do localStorage:', this.stateManager.selectedGPT);
 
-            // Definir as variáveis de configuração a partir de gptConfig
-            if (this.stateManager.gptConfig.openAI) {
-                this.stateManager.openAIApiKey = this.stateManager.gptConfig.openAI.openAIApiKey?.chatOpenAI_0 || "";
-                this.stateManager.modelName = this.stateManager.gptConfig.openAI.modelName?.chatOpenAI_0 || "";
-                this.stateManager.temperature = this.stateManager.gptConfig.openAI.temperature || "";
-                this.stateManager.temperature = parseFloat(this.stateManager.temperature.toString().replace(',', '.')) || 0.2;
-            }
-            if (this.stateManager.gptConfig.toolAgent) {
-                this.stateManager.systemMessage = this.stateManager.gptConfig.toolAgent.systemMessage?.toolAgent_0 || "";
-                this.stateManager.maxIterations = this.stateManager.gptConfig.toolAgent.maxIterations?.toolAgent_0 || "";
-            }
-            if (this.stateManager.gptConfig.retrieverTool) {
-                this.stateManager.retrieverTools = Object.values(this.stateManager.gptConfig.retrieverTool.name).filter(Boolean);
-            }
-            if (this.stateManager.gptConfig.pinecone) {
-                this.stateManager.pineconeApiKey = this.stateManager.gptConfig.pinecone.pineconeApiKey?.pinecone_0 || "";
-                this.stateManager.pineconeIndex = this.stateManager.gptConfig.pinecone.pineconeIndex?.pinecone_0 || "";
-                this.stateManager.pineconeNamespace = this.stateManager.gptConfig.pinecone.pineconeNamespace?.pinecone_0 || "";
-            }
+            // Nenhuma necessidade de decompor, pois utilizamos o objeto completo
 
             //await this.initializeChatbot(); //verificar se o chat nao está sendo puxado duplicado, e ver se remover da erro
         } else {
@@ -928,11 +837,6 @@ class UIManager {
         return "Mês passado";
     }
 
-    // Gera um novo ID de sessão único
-    //    generateSessionId() {
-    //        return crypto.randomUUID(); // Gera um UUID
-    //    }
-
     // Função para gerar um novo ID de sessão
     generateSessionId() {
         const timestamp = BigInt(Date.now()) * 1000n;  // Obtém o timestamp atual em milissegundos
@@ -940,8 +844,6 @@ class UIManager {
         const sessionId = timestamp + randomComponent;  // Soma o timestamp com o número aleatório para gerar um ID único
         return sessionId.toString();  // Converte o BigInt para string
     }
-
-
 
     /* --- Funções de Log e Erro --- */
     // Loga a entrada do usuário
@@ -1034,12 +936,22 @@ class UIManager {
     /* --- Funções de Controle de Cabeçalho --- */
     // Oculta o cabeçalho da interface
     hideHeader() {
-        // Se não estiver usando o cabeçalho, esta função pode ser omitida
+        // Implemente a lógica para ocultar o cabeçalho, se necessário
+        // Por exemplo:
+        const header = document.getElementById('header');
+        if (header) {
+            header.classList.add('d-none');
+        }
     }
 
     // Exibe o cabeçalho da interface
     showHeader() {
-        // Se não estiver usando o cabeçalho, esta função pode ser omitida
+        // Implemente a lógica para exibir o cabeçalho, se necessário
+        // Por exemplo:
+        const header = document.getElementById('header');
+        if (header) {
+            header.classList.remove('d-none');
+        }
     }
 
     /* --- Funções de Logout --- */
@@ -1047,11 +959,11 @@ class UIManager {
     logout() {
         // Implemente a lógica de logout aqui
         console.log('Usuário desconectado.');
-        // Por exemplo, redirecionar para a página de login
+        // Por exemplo, limpar sessionStorage e redirecionar para a página de login
+        sessionStorage.clear();
+        localStorage.clear();
         window.location.href = '/login';
     }
-
-    
 }
 
 /* ==========================

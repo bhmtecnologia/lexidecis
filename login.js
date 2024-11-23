@@ -56,9 +56,6 @@ window.login = async function () {
         sessionStorage.setItem("uuid", user.uid);
         sessionStorage.setItem("email", email);
 
-        // Notificar sucesso no login
-        //alert("Login bem-sucedido!");
-
         // Redirecionar para outra página, ex: chat.html
         window.location.href = "chat.html";
     } catch (error) {
@@ -75,7 +72,7 @@ window.logout = async function () {
     try {
         await signOut(auth);
         sessionStorage.clear();
-        alert("login.js: Você foi desconectado devido à inatividade.");
+        alert("Você foi desconectado devido à inatividade.");
         window.location.href = "index.html";
     } catch (error) {
         console.error("Erro ao deslogar:", error);
@@ -98,15 +95,15 @@ const monitorInactivity = () => {
     resetInactivityTimer();
 };
 
-// Monitorar o estado de autenticação para garantir que o usuário permaneça autenticado entre as sessões
+// Monitorar o estado de autenticação para redirecionar se já estiver logado
 onAuthStateChanged(auth, (user) => {
     if (user) {
         console.log("Usuário autenticado:", user.uid);
-        monitorInactivity();
+        // Se o usuário já estiver autenticado na página de login, redireciona para chat.html
+        window.location.href = "chat.html";
     } else {
         console.log("Usuário não autenticado.");
-        sessionStorage.clear();
-        window.location.href = "index.html";
+        // Não redirecionar para index.html, pois já está na página de login
     }
 });
 

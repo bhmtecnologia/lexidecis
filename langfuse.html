@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LexiDecis - Langfuse API Explorer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+        main {
+            padding: 2rem;
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+        }
+        .section {
+            margin-bottom: 1.5rem;
+        }
+        .section h2 {
+            color: #4CAF50;
+        }
+        button {
+            padding: 0.7rem 1rem;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 0.5rem;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        pre {
+            background-color: #f0f0f0;
+            padding: 1rem;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>LexiDecis - Langfuse API</h1>
+    </header>
+    <main>
+        <section class="section">
+            <h2>Informações do Projeto</h2>
+            <p><strong>URL Base:</strong> <span>https://langfuse.bhm.tec.br</span></p>
+            <p><strong>Projeto:</strong> <a href="https://langfuse.bhm.tec.br/project/clz7x2tqc00006x31gd4hw5zc" target="_blank">LexiDecis</a></p>
+        </section>
+
+        <section class="section">
+            <h2>Ações Disponíveis</h2>
+            <button id="fetchMetrics">Obter Métricas Diárias</button>
+            <button id="createComment">Criar Comentário</button>
+        </section>
+
+        <section class="section">
+            <h2>Resposta da API</h2>
+            <pre id="response">Clique em um botão para ver os resultados...</pre>
+        </section>
+    </main>
+
+    <script>
+        const secretKey = "sk-lf-e480aada-dabe-44ab-b8a5-8bcbed5140f3";
+        const publicKey = "pk-lf-3d1518dc-74d2-450b-9bbe-8190fb10a84c";
+        const baseUrl = "https://langfuse.bhm.tec.br/api/public";
+
+        // Função para buscar métricas diárias
+        async function fetchDailyMetrics() {
+            const responseElement = document.getElementById("response");
+            responseElement.textContent = "Buscando métricas diárias...";
+
+            try {
+                const response = await fetch(`${baseUrl}/metrics/daily`, {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${secretKey}`,
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erro ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                responseElement.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseElement.textContent = `Erro: ${error.message}`;
+            }
+        }
+
+        // Função para criar um comentário
+        async function createComment() {
+            const responseElement = document.getElementById("response");
+            responseElement.textContent = "Criando comentário...";
+
+            try {
+                const response = await fetch(`${baseUrl}/comments`, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${secretKey}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        content: "Este é um comentário gerado pela API LexiDecis.",
+                        projectId: "clz7x2tqc00006x31gd4hw5zc"
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erro ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                responseElement.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseElement.textContent = `Erro: ${error.message}`;
+            }
+        }
+
+        // Adicionar eventos aos botões
+        document.getElementById("fetchMetrics").addEventListener("click", fetchDailyMetrics);
+        document.getElementById("createComment").addEventListener("click", createComment);
+    </script>
+</body>
+</html>

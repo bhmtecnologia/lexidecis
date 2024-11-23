@@ -9,45 +9,12 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-    <!-- CSS externo -->
+    <!-- CSS externo (se houver) -->
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <script type="module">
-        // Importando Firebase
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-
-        // Inicializando Firebase (não se esqueça de configurar com seu próprio FirebaseConfig)
-        const firebaseConfig = {
-            apiKey: "AIzaSyD7Gh-UfV-LyueKtlUcY9nny_o-UWmlmJM",
-            authDomain: "lexidecis.firebaseapp.com",
-            projectId: "lexidecis",
-            storageBucket: "lexidecis.firebasestorage.app",
-            messagingSenderId: "267899611161",
-            appId: "1:267899611161:web:6d1160f5ade72515ee6288",
-            measurementId: "G-0QSNF8MKR1"
-        };
-
-        // Inicializando o Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-
-        // Verifica se o usuário está autenticado
-        onAuthStateChanged(auth, (user) => {
-            if (!user) {
-                // Se o usuário não estiver autenticado, redireciona para a página de login
-                alert("Você precisa estar logado para acessar o chat.");
-                window.location.href = "index.html"; // Redireciona para o login
-            } else {
-                // Se o usuário estiver autenticado, continue com a inicialização da página
-                console.log("Usuário autenticado: ", user.uid);
-            }
-        });
-    </script>
-
     <!-- Sidebar -->
-    <nav id="sidebarMenu" class="sidebar d-flex flex-column p-3">
+    <nav id="sidebarMenu" class="sidebar d-flex flex-column p-3 bg-dark text-white">
         <a href="#" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
             <img src="https://www.bhm.tec.br/images/152x152/10788698/favicon.png" alt="Logo" width="30" height="30" class="me-2">
             <span class="fs-4">BHM Tecnologia</span>
@@ -85,7 +52,7 @@
                     <li><a href="#" class="nav-link text-white ms-3">Perfil</a></li>
                     <li><a href="#" class="nav-link text-white ms-3">Preferências</a></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a href="#" class="nav-link text-white ms-3">Sair</a></li>
+                    <li><a href="#" class="nav-link text-white ms-3" onclick="logout()">Sair</a></li>
                 </ul>
             </li>
         </ul>
@@ -101,7 +68,7 @@
         </button>
         <!-- Componente do chatbot -->
         <div id="chatbot-container">
-        <!--    <flowise-fullchatbot></flowise-fullchatbot> -->
+            <!--    <flowise-fullchatbot></flowise-fullchatbot> -->
         </div>
     </div>
 
@@ -150,6 +117,9 @@
     <div id="error-container" class="alert alert-danger position-fixed bottom-0 end-0 m-3 d-none" role="alert">
         <!-- Mensagem de erro será exibida aqui -->
     </div>
+
+    <!-- Scripts de Autenticação -->
+    <script type="module" src="auth.js"></script>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

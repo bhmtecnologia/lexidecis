@@ -615,9 +615,14 @@ class UIManager {
                 fileUploads: msg.fileUploads || []
             }));
 
+            //const chatData = {
+                //chatHistory: formattedHistory,
+                //chatId: apiHistory[0]?.chatId || "default-chat-id"
+            //};
+
             const chatData = {
                 chatHistory: formattedHistory,
-                chatId: apiHistory[0]?.chatId || "default-chat-id"
+                chatId: apiHistory[0]?.chatId || this.generateSessionId() // Gera um ID único se não houver chatId
             };
 
             const historyKey = `${CONFIG.flowiseChatflowId}_EXTERNAL`;

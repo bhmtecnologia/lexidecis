@@ -107,7 +107,7 @@ onAuthStateChanged(auth, (user) => {
         // **Ação Condicional de Redirecionamento**
         // Verifique se a página atual NÃO é a página de login antes de redirecionar
         const currentPage = window.location.pathname.split("/").pop();
-        const loginPages = ["index.html", "logins.html"]; // Adicione o nome correto da sua página de login
+        const loginPages = ["index.html", "matrix.html"]; // Adicione o nome correto da sua página de login
 
         if (!loginPages.includes(currentPage)) {
             window.location.href = "index.html";

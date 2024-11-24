@@ -125,5 +125,30 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Seu JavaScript externo -->
     <script type="module" src="renderer.js"></script>
+
+    <!-- Ajustes para autenticação com sessionStorage -->
+    <script>
+        // Recupera os dados do sessionStorage
+        const tenant = sessionStorage.getItem('tenant');
+        const email = sessionStorage.getItem('email');
+        const uuid = sessionStorage.getItem('uuid');
+
+        // Verifica se os dados existem
+        if (!tenant || !email || !uuid) {
+            alert('Sessão expirada ou inválida. Por favor, faça login novamente.');
+            window.location.href = 'index.html';
+        } else {
+            // Se necessário, você pode usar essas informações aqui
+            console.log('Usuário autenticado:', { tenant, email, uuid });
+        }
+
+        // Função de logout
+        function logout() {
+            // Limpa o sessionStorage
+            sessionStorage.clear();
+            // Redireciona para a página de login
+            window.location.href = 'index.html';
+        }
+    </script>
 </body>
 </html>

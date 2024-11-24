@@ -72,7 +72,7 @@ window.logout = async function () {
     try {
         await signOut(auth);
         sessionStorage.clear();
-        alert("Você foi desconectado devido à inatividade.");
+        alert("login.js: Você foi desconectado devido à inatividade.");
         window.location.href = "index.html";
     } catch (error) {
         console.error("Erro ao deslogar:", error);
@@ -95,15 +95,23 @@ const monitorInactivity = () => {
     resetInactivityTimer();
 };
 
-// Monitorar o estado de autenticação para redirecionar se já estiver logado
+// Monitorar o estado de autenticação
 onAuthStateChanged(auth, (user) => {
     if (user) {
         console.log("Usuário autenticado:", user.uid);
-        // Se o usuário já estiver autenticado na página de login, redireciona para chat.html
-        window.location.href = "chat.html";
+        monitorInactivity();
     } else {
         console.log("Usuário não autenticado.");
-        // Não redirecionar para index.html, pois já está na página de login
+        sessionStorage.clear();
+
+        // **Ação Condicional de Redirecionamento**
+        // Verifique se a página atual NÃO é a página de login antes de redirecionar
+        const currentPage = window.location.pathname.split("/").pop();
+        const loginPages = ["index.html", "logins.html"]; // Adicione o nome correto da sua página de login
+
+        if (!loginPages.includes(currentPage)) {
+            window.location.href = "index.html";
+        }
     }
 });
 

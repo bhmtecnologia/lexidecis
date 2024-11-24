@@ -622,7 +622,7 @@ class UIManager {
 
             const chatData = {
                 chatHistory: formattedHistory,
-                chatId: apiHistory[0]?.chatId || this.generateSessionId() // Gera um ID único se não houver chatId
+                chatId: apiHistory[0]?.chatId || this.stateManager.currentSessionId // ESSE INFORMACAO VAI PARA O LANGFUSE PARA SESSION, SENDO O LANGFUSE CONFIGURADO NO FLOWISE, PRECISA DISSO PARA VER CUSTOS DE CADA CHAT)
             };
 
             const historyKey = `${CONFIG.flowiseChatflowId}_EXTERNAL`;

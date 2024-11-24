@@ -4,198 +4,310 @@
     <!-- Meta tags essenciais -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LexiDecis - Login Matrix</title>
-    <!-- Fonte Monoespaçada para Estilo Terminal -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <title>LexiDecis - Login</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Estilos Internos -->
     <style>
-        /* Estilos básicos - variáveis de cores */
+        /* Variáveis de Cores */
         :root {
-            --primary-color: #00FF00;
-            --secondary-color: #00CC00;
-            --background-color: #000000;
-            --card-bg: rgba(0, 0, 0, 0.85);
-            --text-color: #00FF00;
-            --placeholder-color: #33FF33;
-            --button-bg: #00FF00;
-            --button-hover-bg: #00CC00;
-            --border-color: rgba(0, 255, 0, 0.2);
-            --glow-color: rgba(0, 255, 0, 0.6);
+            --bg-color: #0f0f0f;
+            --card-bg: rgba(255, 255, 255, 0.1);
+            --primary-color: #1db954;
+            --input-bg: rgba(255, 255, 255, 0.15);
+            --text-color: #ffffff;
+            --placeholder-color: #c0c0c0;
+            --button-hover: #1ed760;
+            --link-color: #1db954;
+            --border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Reset de Margens e Padding */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            background: var(--background-color);
-            color: var(--text-color);
-            font-family: 'Roboto Mono', monospace;
+            background: #0f0f0f;
             height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-color);
             overflow: hidden;
+            position: relative;
         }
 
-        #matrixCanvas {
+        /* Efeitos de Partículas no Fundo */
+        #particles-js {
             position: absolute;
-            top: 0;
-            left: 0;
             width: 100%;
             height: 100%;
             z-index: 0;
+            top: 0;
+            left: 0;
         }
 
-        .login-container {
+        /* Container do Login com Glassmorphism */
+        #login-container {
             position: relative;
             background: var(--card-bg);
-            padding: 2rem 3rem;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            z-index: 1;
-        }
-
-        .login-container h2 {
-            text-align: center;
-            margin-bottom: 1rem;
-            font-weight: bold;
-            font-size: 1.8rem;
-            color: var(--primary-color);
-            text-shadow: 0 0 8px var(--glow-color);
-        }
-
-        .input-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: bold;
-            color: var(--text-color);
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 0.5rem;
-            background: rgba(0, 0, 0, 0.5);
+            padding: 2.5rem;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             border: 1px solid var(--border-color);
-            border-radius: 5px;
-            color: var(--text-color);
-            outline: none;
-            transition: 0.3s;
+            z-index: 1;
+            max-width: 400px;
+            width: 90%;
+            animation: slideIn 1s ease-out forwards;
         }
 
-        .input-group input:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 8px var(--primary-color);
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .btn-login {
-            width: 100%;
-            padding: 0.8rem;
-            background: var(--button-bg);
-            border: none;
-            border-radius: 5px;
-            color: #000000;
-            font-weight: bold;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .btn-login:hover {
-            background: var(--button-hover-bg);
-            box-shadow: 0 0 8px var(--button-hover-bg);
-        }
-
-        .links {
-            text-align: center;
-            margin-top: 1rem;
-        }
-
-        .links a {
-            color: var(--secondary-color);
-            text-decoration: none;
-            font-size: 0.9rem;
-            transition: 0.3s;
-        }
-
-        .links a:hover {
+        h2 {
             color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            text-align: center;
+            font-family: 'Roboto', sans-serif;
+            font-weight: 500;
+            position: relative;
+        }
+
+        h2::after {
+            content: '';
+            display: block;
+            width: 50px;
+            height: 3px;
+            background: var(--primary-color);
+            margin: 0.5rem auto 0;
+            border-radius: 2px;
+        }
+
+        .form-label {
+            color: var(--text-color);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: var(--text-color);
+            transition: border 0.3s, box-shadow 0.3s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .form-control::placeholder {
+            color: var(--placeholder-color);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border: 1px solid var(--primary-color);
+            box-shadow: 0 0 8px var(--primary-color);
+            background: var(--input-bg);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border: none;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
+            cursor: pointer;
+            margin-top: 1rem;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--button-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(29, 185, 84, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+
+        a {
+            color: var(--link-color);
+            text-decoration: none;
+            transition: color 0.3s;
+            font-weight: 500;
+        }
+
+        a:hover {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+
+        /* Animação de Flutuação */
+        #login-container {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        /* Responsividade */
+        @media (max-width: 576px) {
+            #login-container {
+                padding: 2rem;
+            }
+
+            h2 {
+                font-size: 1.75rem;
+            }
+
+            .btn-primary {
+                font-size: 0.95rem;
+            }
         }
     </style>
 </head>
 <body>
-    <canvas id="matrixCanvas"></canvas>
+    <!-- Partículas de Fundo -->
+    <div id="particles-js"></div>
 
-    <div class="login-container">
+    <!-- Tela de Login -->
+    <div id="login-container" class="card">
         <h2>Login</h2>
-        <!-- Removemos o atributo 'id' do formulário, já que não o utilizaremos -->
-        <form>
-            <div class="input-group">
-                <label for="tenant">Tenant</label>
-                <input type="text" id="tenant" name="tenant" placeholder="Digite o Tenant" value="bhm" readonly required>
-            </div>
-            <div class="input-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" placeholder="Digite seu email" required>
-            </div>
-            <div class="input-group">
-                <label for="password">Senha</label>
-                <input type="password" id="password" name="password" placeholder="Digite sua senha" required>
-            </div>
-            <!-- Alteramos o botão para chamar a função 'login()' -->
-            <button type="button" class="btn-login" onclick="login()">Entrar</button>
-            <div class="links">
-                <a href="#" onclick="resetPassword()">Esqueci minha senha</a>
-            </div>
-        </form>
+        <div class="mb-3">
+            <label for="tenant" class="form-label">Tenant</label>
+            <input type="text" id="tenant" class="form-control" placeholder="Digite o Tenant" value="bhm" readonly required>
+        </div>
+        <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" id="email" class="form-control" placeholder="Digite seu email" required>
+        </div>
+        <div class="mb-3">
+            <label for="password" class="form-label">Senha</label>
+            <input type="password" id="password" class="form-control" placeholder="Digite sua senha" required>
+        </div>
+        <button class="btn btn-primary w-100" onclick="login()">Entrar</button>
+        <div class="mt-3 text-center">
+            <a href="#" onclick="resetPassword()">Esqueci minha senha</a>
+        </div>
     </div>
 
-    <!-- Script do Efeito Matrix -->
-    <script>
-        // Efeito Matrix
-        const canvas = document.getElementById('matrixCanvas');
-        const ctx = canvas.getContext('2d');
-
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
-        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}';
-        const fontSize = 16;
-        const columns = canvas.width / fontSize;
-        const drops = Array.from({ length: columns }).fill(0);
-
-        function drawMatrix() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            ctx.fillStyle = '#00FF00';
-            ctx.font = fontSize + 'px monospace';
-
-            drops.forEach((y, x) => {
-                const text = characters[Math.floor(Math.random() * characters.length)];
-                ctx.fillText(text, x * fontSize, y * fontSize);
-
-                if (y * fontSize > canvas.height && Math.random() > 0.975) {
-                    drops[x] = 0;
-                }
-                drops[x]++;
-            });
-        }
-
-        setInterval(drawMatrix, 50);
-
-        // Função para exibir alerta no link de esquecimento de senha
-        function resetPassword() {
-            alert('Funcionalidade de redefinição de senha ainda não implementada.');
-        }
-    </script>
-
-    <!-- Inclusão do login.js e possíveis scripts do Firebase -->
-    <!-- Certifique-se de que o login.js está corretamente referenciado e que os scripts do Firebase estão incluídos se necessários -->
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Particles.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
     <!-- Firebase e Scripts Personalizados -->
     <script type="module" src="login.js" defer></script>
-    <!-- Caso use o Firebase, inclua os scripts abaixo -->
-    <!-- <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script> -->
+    <!-- Script para Configurar Partículas -->
+    <script>
+        particlesJS("particles-js", {
+            "particles": {
+                "number": {
+                    "value": 400,
+                    "density": {
+                        "enable": true,
+                        "value_area": 800
+                    }
+                },
+                "color": {
+                    "value": "#ffffff"
+                },
+                "shape": {
+                    "type": "circle",
+                    "stroke": {
+                        "width": 0,
+                        "color": "#000000"
+                    },
+                    "polygon": {
+                        "nb_sides": 5
+                    }
+                },
+                "opacity": {
+                    "value": 0.5,
+                    "random": false,
+                    "anim": {
+                        "enable": false
+                    }
+                },
+                "size": {
+                    "value": 3,
+                    "random": true,
+                    "anim": {
+                        "enable": true //faz as bolinhas entre as constelações piscarem
+                    }
+                },
+                "line_linked": {
+                    "enable": true,
+                    "distance": 150,
+                    "color": "#ffffff",
+                    "opacity": 0.4,
+                    "width": 1
+                },
+                "move": {
+                    "enable": true,
+                    "speed": 0.3,
+                    "direction": "none",
+                    "random": false,
+                    "straight": false,
+                    "out_mode": "out",
+                    "bounce": false,
+                    "attract": {
+                        "enable": false
+                    }
+                }
+            },
+            "interactivity": {
+                "detect_on": "canvas",
+                "events": {
+                    "onhover": {
+                        "enable": true,
+                        "mode": "repulse"
+                    },
+                    "onclick": {
+                        "enable": true,
+                        "mode": "push"
+                    },
+                    "resize": true
+                },
+                "modes": {
+                    "repulse": {
+                        "distance": 100,
+                        "duration": 0.4
+                    },
+                    "push": {
+                        "particles_nb": 4
+                    }
+                }
+            },
+            "retina_detect": true
+        });
+    </script>
 </body>
 </html>

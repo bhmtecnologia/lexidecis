@@ -1,17 +1,17 @@
 /* ===========================
    1. Reset Global
-   =========================== */
+=========================== */
 
-/* Reseta margens, paddings e configura box-sizing */
+/* Reseta margens, paddings e define box-sizing */
 * {
     margin: 0;
     padding: 0;
-    box-sizing: border-box; /* Garante que borda e padding não expandam o tamanho do elemento */
+    box-sizing: border-box;
 }
 
 /* ===========================
    2. Variáveis de Cores
-   =========================== */
+=========================== */
 
 :root {
     --background-color: #363839; /* Cor de fundo uniforme */
@@ -21,11 +21,18 @@
     --sidebar-bg-color: #363839; /* Cor de fundo da sidebar */
     --content-bg-color: #363839; /* Cor de fundo do conteúdo principal */
     --chatbot-bg-color: #363839; /* Cor de fundo do chatbot */
+    
+    /* Definições das variáveis ausentes */
+    --secondary-color: #f30f0f; /* Cor de fundo das notificações (cinza escuro) */
+    --accent-color: #6200ea; /* Cor da borda lateral das notificações */
+    --card-shadow: rgba(0, 0, 0, 0.2); /* Sombra das notificações */
+    --primary-color: #6200ea; /* Cor dos ícones das notificações */
+    
 }
 
 /* ===========================
    3. Estilo Global do Corpo
-   =========================== */
+=========================== */
 
 body {
     display: flex; /* Define layout flexível */
@@ -40,7 +47,7 @@ body {
 
 /* ===========================
    4. Sidebar
-   =========================== */
+=========================== */
 
 #sidebarMenu {
     min-width: 250px;
@@ -66,7 +73,7 @@ body {
 
 /* ===========================
    5. Conteúdo Principal
-   =========================== */
+=========================== */
 
 .content {
     margin-left: 250px; /* Espaço para acomodar a sidebar */
@@ -86,7 +93,7 @@ body.sidebar-active .content {
 
 /* ===========================
    6. Container do Chatbot
-   =========================== */
+=========================== */
 
 #chatbot-container {
     flex-grow: 1; /* Ocupa todo o espaço disponível */
@@ -99,8 +106,8 @@ body.sidebar-active .content {
 }
 
 /* ===========================
-   7. Botão Toggle da Sidebar
-   =========================== */
+   7. Botão Toggle da Sidebar e Notificações em Tempo Real
+=========================== */
 
 #sidebarToggle {
     position: fixed; /* Fixa o botão no canto superior esquerdo */
@@ -124,9 +131,43 @@ body.sidebar-active .content {
     background-color: #3B81F6; /* Cor ao passar o mouse */
 }
 
+/* Notificações em Tempo Real */
+.notification-container {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 1002; /* Certifique-se de que o z-index seja alto o suficiente */
+}
+
+.notification {
+    background-color: var(--secondary-color); /* Fundo definido */
+    padding: 15px 20px;
+    border-left: 5px solid var(--accent-color); /* Borda lateral definida */
+    box-shadow: 0 2px 5px var(--card-shadow); /* Sombra definida */
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: slideIn 0.5s forwards;
+    color: var(--text-color); /* Cor do texto */
+}
+
+.notification i {
+    font-size: 1.5em;
+    color: var(--primary-color); /* Cor do ícone */
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(100%); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
 /* ===========================
    8. Botão de Limpar Busca
-   =========================== */
+=========================== */
 
 #clear-search-button {
     display: none; /* Inicialmente oculto */
@@ -139,7 +180,7 @@ body.sidebar-active .content {
 
 /* ===========================
    9. Destaque de Texto na Busca
-   =========================== */
+=========================== */
 
 .highlight {
     background-color: var(--highlight-bg-color); /* Fundo amarelo vibrante */
@@ -150,7 +191,7 @@ body.sidebar-active .content {
 
 /* ===========================
    10. Modal
-   =========================== */
+=========================== */
 
 .modal-content {
     border: 2px solid purple; /* Define borda roxa */
@@ -160,7 +201,7 @@ body.sidebar-active .content {
 
 /* ===========================
    11. Container de Erros
-   =========================== */
+=========================== */
 
 #error-container {
     border: 2px solid orange; /* Borda laranja para destaque */
@@ -170,7 +211,7 @@ body.sidebar-active .content {
 
 /* ===========================
    12. Lista de Chats
-   =========================== */
+=========================== */
 
 #chat-list {
     background-color: var(--background-color); /* Fundo consistente para a lista */
@@ -188,7 +229,7 @@ body.sidebar-active .content {
 
 /* ===========================
    13. Agrupadores de Chat (Hoje, Ontem, Anteontem)
-   =========================== */
+=========================== */
 
 /* Opção 1: Se você adicionou a classe 'chat-group-header' aos agrupadores */
 #chat-list .chat-group-header {
@@ -210,7 +251,7 @@ body.sidebar-active .content {
 
 /* ===========================
    14. Altura Personalizada da Lista de Chats
-   =========================== */
+=========================== */
 
 .custom-chat-list-height {
     height: 60vh; /* Define altura relativa à viewport */
@@ -219,7 +260,7 @@ body.sidebar-active .content {
 
 /* ===========================
    15. Estilo dos Itens de Chat
-   =========================== */
+=========================== */
 
 .chat-item {
     padding: 0.1rem; /* Espaçamento interno */
@@ -247,7 +288,7 @@ body.sidebar-active .content {
 
 /* ===========================
    16. Dropdown para Ações
-   =========================== */
+=========================== */
 
 .dropdown-toggle {
     border: none; /* Remove borda padrão */
@@ -263,7 +304,7 @@ body.sidebar-active .content {
 
 /* ===========================
    17. Ajustes de Responsividade
-   =========================== */
+=========================== */
 
 @media (max-width: 768px) {
     /* Oculta a sidebar por padrão em telas pequenas */
@@ -291,7 +332,7 @@ body.sidebar-active .content {
 
 /* ===========================
    18. Alinhamento do Nome e Menu de Opções nos Itens de Chat
-   =========================== */
+=========================== */
 
 /* Garante que o contêiner interno seja flex */
 #chat-list .chat-item > .chat-item {
@@ -317,7 +358,7 @@ body.sidebar-active .content {
 
 /* ===========================
    19. Outras Melhorias Visuais (Opcional)
-   =========================== */
+=========================== */
 
 /* Cursor para itens de chat */
 #chat-list .chat-item {
@@ -342,7 +383,7 @@ body.sidebar-active .content {
 
 /* ===========================
    20. Responsividade dos Itens de Chat
-   =========================== */
+=========================== */
 
 @media (max-width: 576px) {
     /* Ajusta o tamanho do texto para dispositivos menores */
@@ -359,7 +400,7 @@ body.sidebar-active .content {
 
 /* ===========================
    21. Adições para Implementar Sugestões 2 e 3
-   =========================== */
+=========================== */
 
 /* Adicionando estilos para o Overlay da Sidebar */
 .sidebar-overlay {
@@ -410,10 +451,29 @@ body.sidebar-active .content {
 
 /* ===========================
    22. Prevenção de Interferência de Gestos em Componentes Específicos
-   =========================== */
+=========================== */
 
 /* Opcional: Adicionar estilos para inputs e botões para garantir que não sejam afetados visualmente pelos gestos */
 input, button {
     /* Por exemplo, garantir que não haja estilos inesperados ao interagir */
     touch-action: manipulation; /* Melhora a responsividade dos toques */
+}
+
+
+.notification {
+    background-color: #f0f0f0; /* Fundo fixo */
+    padding: 15px 20px;
+    border-left: 5px solid #6200ea; /* Borda fixa */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Sombra fixa */
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: slideIn 0.5s forwards;
+    color: #ffffff; /* Cor do texto */
+}
+
+.notification i {
+    font-size: 1.5em;
+    color: #6200ea; /* Cor do ícone */
 }

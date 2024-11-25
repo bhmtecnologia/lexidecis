@@ -4,311 +4,208 @@
     <!-- Meta tags essenciais -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LexiDecis - </title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <title>LexiDecis - Bem-vindo</title>
+    
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- GSAP para Animações -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
+    
+    <!-- Three.js para Animações 3D -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+    
     <!-- Estilos Internos -->
     <style>
         /* Variáveis de Cores */
         :root {
-            --bg-color: #0f0f0f;
-            --card-bg: rgba(255, 255, 255, 0.1);
-            --primary-color: #1c1d1c;
-            --input-bg: rgba(255, 255, 255, 0.15);
+            --primary-color: #1ed760;
+            --secondary-color: #ffffff;
+            --bg-color: #000000;
             --text-color: #ffffff;
-            --placeholder-color: #c0c0c0;
-            --button-hover: #1ed760; /* Cor do botao Entrar após clidado */
-            --link-color: #1c1d1c;
-            --border-color: rgba(255, 255, 255, 0.2);
+            --button-bg: #1ed760;
+            --button-hover: #17b456;
         }
 
-        /* Reset de Margens e Padding */
+        /* Reset */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
-        body {
-            background: #0f0f0f;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        /* Corpo da Página */
+        body, html {
+            height: 100%;
+            width: 100%;
             font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
             color: var(--text-color);
             overflow: hidden;
             position: relative;
         }
 
-        /* Efeitos de Partículas no Fundo */
-        #particles-js {
+        /* Canvas para Animações 3D */
+        #bg-canvas {
             position: absolute;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
             top: 0;
             left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
         }
 
-        /* Container do Login com Glassmorphism */
-        #login-container {
+        /* Container Central */
+        .intro-container {
             position: relative;
-            background: var(--card-bg);
-            padding: 2.5rem;
-            border-radius: 16px;
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid var(--border-color);
-            z-index: 1;
-            max-width: 400px;
-            width: 90%;
-            animation: slideIn 1s ease-out forwards;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        h2 {
-            color: var(--primary-color);
-            margin-bottom: 1.5rem;
+            height: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             text-align: center;
-            font-family: 'Roboto', sans-serif;
-            font-weight: 500;
-            position: relative;
+            padding: 0 20px;
         }
 
-        h2::after {
-            content: '';
-            display: block;
-            width: 50px;
-            height: 3px;
-            background: var(--primary-color);
-            margin: 0.5rem auto 0;
-            border-radius: 2px;
+        /* Logotipo ou Título */
+        .logo {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            opacity: 0;
         }
 
-        .form-label {
-            color: var(--text-color);
-            font-weight: 500;
-            margin-bottom: 0.5rem;
+        /* Slogan ou Mensagem */
+        .slogan {
+            font-size: 1.5rem;
+            margin-bottom: 40px;
+            opacity: 0;
         }
 
-        .form-control {
-            background: var(--input-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            color: var(--text-color);
-            transition: border 0.3s, box-shadow 0.3s;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .form-control::placeholder {
-            color: var(--placeholder-color);
-        }
-
-        .form-control:focus {
-            outline: none;
-            border: 1px solid var(--primary-color);
-            box-shadow: 0 0 8px var(--primary-color);
-            background: var(--input-bg);
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
+        /* Botão de Acesso */
+        .btn-start {
+            background-color: var(--button-bg);
+            color: var(--secondary-color);
             border: none;
-            padding: 0.75rem;
-            border-radius: 8px;
+            padding: 15px 30px;
+            border-radius: 50px;
             font-size: 1rem;
             font-weight: 600;
-            transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
             cursor: pointer;
-            margin-top: 1rem;
-            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s, transform 0.3s;
+            opacity: 0;
+            transform: scale(0.8);
         }
 
-        .btn-primary:hover {
+        .btn-start:hover {
             background-color: var(--button-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(29, 185, 84, 0.4);
-        }
-
-        .btn-primary:active {
-            transform: translateY(0);
-            box-shadow: none;
-        }
-
-        a {
-            color: var(--link-color);
-            text-decoration: none;
-            transition: color 0.3s;
-            font-weight: 500;
-        }
-
-        a:hover {
-            color: var(--primary-color);
-            text-decoration: underline;
-        }
-
-        /* Animação de Flutuação */
-        #login-container {
-            animation: float 6s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% {
-                transform: translateY(0);
-            }
-            50% {
-                transform: translateY(-10px);
-            }
+            transform: scale(1.05);
         }
 
         /* Responsividade */
-        @media (max-width: 576px) {
-            #login-container {
-                padding: 2rem;
+        @media (max-width: 768px) {
+            .logo {
+                font-size: 2.5rem;
             }
 
-            h2 {
-                font-size: 1.75rem;
+            .slogan {
+                font-size: 1.2rem;
             }
 
-            .btn-primary {
-                font-size: 0.95rem;
+            .btn-start {
+                padding: 12px 25px;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .logo {
+                font-size: 2rem;
+            }
+
+            .slogan {
+                font-size: 1rem;
+            }
+
+            .btn-start {
+                padding: 10px 20px;
+                font-size: 0.8rem;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Partículas de Fundo -->
-    <div id="particles-js"></div>
+    <!-- Canvas para Animações 3D -->
+    <canvas id="bg-canvas"></canvas>
 
-    <!-- Tela de Login -->
-    <div id="login-container" class="card">
-        <h2>LexiDecis</h2>
-        <form id="login-form"> <!-- Adicionei o formulário -->
-            <div class="mb-3">
-                <label for="tenant" class="form-label">Empresa</label>
-                <input type="text" id="tenant" class="form-control" placeholder="Digite o Tenant" value="bhm" readonly required>
-            </div>
-            <div class="mb-3">
-                <label for="email" class="form-label">Email</label>
-                <input type="email" id="email" class="form-control" placeholder="Digite seu email" required>
-            </div>
-            <div class="mb-3">
-                <label for="password" class="form-label">Senha</label>
-                <input type="password" id="password" class="form-control" placeholder="Digite sua senha" required>
-            </div>
-            <button type="submit" class="btn btn-primary w-100">Entrar</button>
-        </form>
-        <div class="mt-3 text-center">
-            <a href="#" id="reset-password-button">Esqueci minha senha</a>
-        </div>
+    <!-- Container Central -->
+    <div class="intro-container">
+        <div class="logo">LexiDecis</div>
+        <div class="slogan">Transformando a Inteligência Competitiva</div>
+        <button class="btn-start" id="start-button">Entrar</button>
     </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Particles.js Library -->
-    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
-    <!-- Firebase e Scripts Personalizados -->
-    <script type="module" src="login.js" defer></script>
-    <!-- Script para Configurar Partículas -->
+    <!-- Scripts -->
     <script>
-        particlesJS("particles-js", {
-            "particles": {
-                "number": {
-                    "value": 180, //Define a quantidade de Partículas
-                    "density": {
-                        "enable": true,
-                        "value_area": 800
-                    }
-                },
-                "color": {
-                    "value": "#ffffff"
-                },
-                "shape": {
-                    "type": "circle",
-                    "stroke": {
-                        "width": 0,
-                        "color": "#000000"
-                    },
-                    "polygon": {
-                        "nb_sides": 5
-                    }
-                },
-                "opacity": {
-                    "value": 0.5,
-                    "random": false,
-                    "anim": {
-                        "enable": false
-                    }
-                },
-                "size": {
-                    "value": 3,
-                    "random": true,
-                    "anim": {
-                        "enable": true //faz as bolinhas entre as constelações piscarem
-                    }
-                },
-                "line_linked": {
-                    "enable": true,
-                    "distance": 300,
-                    "color": "#ffffff",
-                    "opacity": 0.2,
-                    "width": 1
-                },
-                "move": {
-                    "enable": true,
-                    "speed": 0.3,
-                    "direction": "none",
-                    "random": false,
-                    "straight": false,
-                    "out_mode": "out",
-                    "bounce": false,
-                    "attract": {
-                        "enable": true
-                    }
-                }
-            },
-            "interactivity": {
-                "detect_on": "canvas",
-                "events": {
-                    "onhover": {
-                        "enable": true,
-                        "mode": "repulse"
-                    },
-                    "onclick": {
-                        "enable": true,
-                        "mode": "push"
-                    },
-                    "resize": true
-                },
-                "modes": {
-                    "repulse": {
-                        "distance": 100,
-                        "duration": 0.4
-                    },
-                    "push": {
-                        "particles_nb": 4
-                    }
-                }
-            },
-            "retina_detect": true
+        // Configuração do Three.js para Animações de Fundo
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('bg-canvas');
+            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            const scene = new THREE.Scene();
+
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 5;
+
+            // Geometria e Material
+            const geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16);
+            const material = new THREE.MeshStandardMaterial({ color: 0x1ed760, metalness: 0.5, roughness: 0.1 });
+            const torusKnot = new THREE.Mesh(geometry, material);
+            scene.add(torusKnot);
+
+            // Iluminação
+            const pointLight = new THREE.PointLight(0xffffff, 1);
+            pointLight.position.set(5, 5, 5);
+            scene.add(pointLight);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+            scene.add(ambientLight);
+
+            // Animação
+            const animate = function () {
+                requestAnimationFrame(animate);
+
+                torusKnot.rotation.x += 0.005;
+                torusKnot.rotation.y += 0.005;
+
+                renderer.render(scene, camera);
+            };
+
+            animate();
+
+            // Responsividade
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        });
+
+        // Animações de Entrada com GSAP
+        window.addEventListener('load', () => {
+            gsap.to(".logo", { duration: 1, opacity: 1, y: 0, ease: "power2.out" });
+            gsap.to(".slogan", { duration: 1, opacity: 1, y: 0, delay: 0.5, ease: "power2.out" });
+            gsap.to(".btn-start", { duration: 1, opacity: 1, scale: 1, delay: 1, ease: "power2.out" });
+        });
+
+        // Redirecionamento com Animação ao Clicar no Botão
+        document.getElementById("start-button").addEventListener("click", () => {
+            gsap.to(".intro-container", { duration: 1, opacity: 0, scale: 0.8, ease: "power2.in", onComplete: () => {
+                window.location.href = "login.html";
+            }});
         });
     </script>
 </body>

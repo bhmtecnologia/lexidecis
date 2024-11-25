@@ -1,4 +1,6 @@
 import Chatbot from "./web.js";
+import adicionarNotificacao from './notifications.js';
+//import { adicionarNotificacao } from './notifications.js';
 
 /* ================================
    1. Configurações e Constantes
@@ -151,6 +153,7 @@ class UIManager {
         this.setupUIEvents();
     }
 
+    
     /* --- Configuração de Eventos da UI --- */
     setupUIEvents() {
         // Botões do cabeçalho (ocultar e mostrar cabeçalho)
@@ -988,6 +991,7 @@ class UIManager {
    5. Inicialização da Aplicação
    ========================== */
 // Evento que inicia a aplicação quando o documento é carregado
+// Evento que inicia a aplicação quando o documento é carregado
 document.addEventListener('DOMContentLoaded', async () => {
     const apiService = new ApiService(CONFIG);
     const stateManager = new StateManager();
@@ -1000,19 +1004,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
 
-    // Funcionalidade de toggler da Sidebar
-    //var toggleButton = document.getElementById('sidebarToggle');
-    //var sidebar = document.getElementById('sidebarMenu');
-
-    //if (toggleButton && sidebar) {
-    //    toggleButton.addEventListener('click', function () {
-    //        sidebar.classList.toggle('active');
-    //        document.body.classList.toggle('sidebar-active'); // Adiciona/Remove a classe no body
-    //    });
-    //} else {
-    //    console.error('Elementos sidebarToggle ou sidebarMenu não encontrados.');
-    //}
-
     // Carregar lista de chats
     await uiManager.loadChatList();
 
@@ -1024,4 +1015,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Inicializar o chatbot após carregar GPT e chat
     await uiManager.initializeChatbot();
+
+    // Adicionar uma notificação de boas-vindas ao finalizar a inicialização
+    adicionarNotificacao("Bem-vindo!", "Seu sistema de IA está pronto para uso.");
 });

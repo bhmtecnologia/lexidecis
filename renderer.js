@@ -306,14 +306,27 @@ class UIManager {
                     const chatItem = document.createElement('li');
                     chatItem.classList.add('list-group-item', 'chat-item', 'd-flex', 'justify-content-between', 'align-items-center');
                     chatItem.innerHTML = `
-                    <span class="chat-name">${this.highlightSearch(chat.name || 'Chat sem nome')}</span>
-                    <button class="btn btn-sm btn-outline-secondary rename-chat-button me-2" title="Renomear Chat">
-                        <i class="bi bi-pencil"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-secondary delete-chat-button" title="Excluir Chat">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                    `;
+                    <div class="chat-item d-flex align-items-center justify-content-between">
+                        <span class="chat-name text-start">${this.highlightSearch(chat.name || 'Chat sem nome')}</span>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="chatOptions-${chat.id}" data-bs-toggle="dropdown" aria-expanded="false" title="Opções">
+                                <i class="bi bi-three-dots"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="chatOptions-${chat.id}">
+                                <li>
+                                    <button class="dropdown-item rename-chat-button" data-chat-id="${chat.id}" title="Renomear Chat">
+                                        Renomear
+                                    </button>
+                                </li>
+                                <li>
+                                    <button class="dropdown-item delete-chat-button" data-chat-id="${chat.id}" title="Excluir Chat">
+                                        Excluir
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
 
                     chatItem.dataset.chatId = chat.id;
                     chatItem.dataset.chatDate = chat.date;
@@ -533,13 +546,13 @@ class UIManager {
                         title: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.name : 'Escolha um GPT',
                         titleAvatarSrc:  "https://www.bhm.tec.br/images/152x152/10788698/favicon.png",
                         welcomeMessage: 'Como posso ajudar?',
-                        backgroundColor: '#0f0f0f',
+                        backgroundColor: '#ffffff',
                         fontSize: 15,
                         starterPrompts: ['Quem é você?', 'O que sabe fazer?'],
                         clearChatOnReload: false, // Se verdadeiro, o chat será limpo ao recarregar a página. Está desativado para permitir o injection
                         botMessage: {
-                            backgroundColor: "#0f0f0f",
-                            textColor: "#ffffff",
+                            backgroundColor: "#ffffff",
+                            textColor: "#000000",
                             showAvatar: true,
                             avatarSrc: "https://www.bhm.tec.br/images/152x152/10788698/favicon.png",
                         },
@@ -561,7 +574,7 @@ class UIManager {
                             receiveMessageSound: true,
                         },
                         feedback: {
-                            color: '#ffffff',
+                            color: '#000000',
                         },
                         dateTimeToggle: {
                             date: true,
@@ -988,17 +1001,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // Funcionalidade de toggler da Sidebar
-    var toggleButton = document.getElementById('sidebarToggle');
-    var sidebar = document.getElementById('sidebarMenu');
+    //var toggleButton = document.getElementById('sidebarToggle');
+    //var sidebar = document.getElementById('sidebarMenu');
 
-    if (toggleButton && sidebar) {
-        toggleButton.addEventListener('click', function () {
-            sidebar.classList.toggle('active');
-            document.body.classList.toggle('sidebar-active'); // Adiciona/Remove a classe no body
-        });
-    } else {
-        console.error('Elementos sidebarToggle ou sidebarMenu não encontrados.');
-    }
+    //if (toggleButton && sidebar) {
+    //    toggleButton.addEventListener('click', function () {
+    //        sidebar.classList.toggle('active');
+    //        document.body.classList.toggle('sidebar-active'); // Adiciona/Remove a classe no body
+    //    });
+    //} else {
+    //    console.error('Elementos sidebarToggle ou sidebarMenu não encontrados.');
+    //}
 
     // Carregar lista de chats
     await uiManager.loadChatList();

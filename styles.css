@@ -1,138 +1,405 @@
-/* Reset de margens e paddings */
+/* ===========================
+   1. Reset Global
+   =========================== */
+
+/* Reseta margens, paddings e configura box-sizing */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box; /* Garante que borda e padding não expandam o tamanho do elemento */
 }
 
-/* Estilo global */
-body {
-    display: flex;
-    min-height: 100vh;
-    background-color: #f4f6f8; /* Cor de fundo consistente */
-    color: #333;
-    margin: 0;
-    padding: 0;
-    overflow: hidden; /* Previne rolagem global */
+/* ===========================
+   2. Variáveis de Cores
+   =========================== */
+
+:root {
+    --background-color: #363839; /* Cor de fundo uniforme */
+    --text-color: #ffffff; /* Cor do texto */
+    --highlight-bg-color: #ffeb3b; /* Fundo amarelo vibrante para destaque */
+    --highlight-text-color: #000000; /* Cor do texto no destaque */
+    --sidebar-bg-color: #363839; /* Cor de fundo da sidebar */
+    --content-bg-color: #363839; /* Cor de fundo do conteúdo principal */
+    --chatbot-bg-color: #363839; /* Cor de fundo do chatbot */
 }
 
-/* Sidebar */
+/* ===========================
+   3. Estilo Global do Corpo
+   =========================== */
+
+body {
+    display: flex; /* Define layout flexível */
+    min-height: 100vh; /* Garante que o corpo ocupe toda a altura da janela */
+    background-color: var(--background-color); /* Cor de fundo consistente */
+    color: var(--text-color); /* Cor padrão do texto */
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden; /* Remove rolagem horizontal */
+    overflow-y: auto; /* Permite rolagem vertical se necessário */
+}
+
+/* ===========================
+   4. Sidebar
+   =========================== */
+
 #sidebarMenu {
     min-width: 250px;
     max-width: 250px;
-    background-color: #343a40;
-    color: white;
-    transition: transform 0.3s ease;
-    transform: translateX(0);
-    position: fixed;
+    background-color: var(--sidebar-bg-color); /* Fundo da sidebar */
+    color: var(--text-color); /* Cor do texto */
+    transition: transform 0.3s ease-in-out; /* Transição suave ao abrir/fechar */
+    transform: translateX(0); /* Sidebar visível inicialmente em telas grandes */
+    position: fixed; /* Fixa a sidebar na tela */
     height: 100vh;
-    overflow-y: auto;
-    z-index: 1000;
+    overflow-y: auto; /* Permite rolagem vertical */
+    z-index: 1000; /* Garante sobreposição */
     display: flex;
     flex-direction: column;
 }
 
+/* ======== Alteração Importante ======== */
+/* Remova ou ajuste a regra abaixo para evitar conflito com media queries */
 #sidebarMenu.active {
-    transform: translateX(-100%);
+    transform: translateX(0); /* Sidebar visível quando .active é adicionado */
 }
+/* ======================================== */
 
-/* Conteúdo Principal */
+/* ===========================
+   5. Conteúdo Principal
+   =========================== */
+
 .content {
-    margin-left: 250px; /* Espaço para a sidebar */
-    transition: margin-left 0.3s ease, width 0.3s ease;
-    width: calc(100% - 250px);
-    background-color: #f4f6f8; /* Cor de fundo consistente */
+    margin-left: 250px; /* Espaço para acomodar a sidebar */
+    transition: margin-left 0.3s ease, width 0.3s ease; /* Animações suaves */
+    width: calc(100% - 250px); /* Ajusta largura com base na sidebar */
+    background-color: var(--content-bg-color); /* Cor de fundo consistente */
     display: flex;
-    flex-direction: column;
-    height: 100vh;
-    overflow: hidden; /* Previne rolagem indesejada */
+    flex-direction: column; /* Layout flexível em coluna */
+    height: 100vh; /* Ocupa toda a altura */
+    overflow: hidden; /* Remove rolagem não desejada */
 }
 
 body.sidebar-active .content {
-    margin-left: 0;
+    margin-left: 0; /* Ajusta para tela cheia quando a sidebar está oculta */
     width: 100%;
 }
 
-/* Container do Chatbot */
+/* ===========================
+   6. Container do Chatbot
+   =========================== */
+
 #chatbot-container {
-    flex-grow: 1; /* Permite que o chatbot ocupe todo o espaço disponível */
+    flex-grow: 1; /* Ocupa todo o espaço disponível */
     width: 100%;
     height: 100%;
-    background-color: #ffffff; /* Defina a cor de fundo desejada */
-    overflow-y: auto; /* Permite rolagem se necessário */
-        border: 0px solid rgb(0, 0, 0); /* moldura geral do chatbot */
+    background-color: var(--chatbot-bg-color); /* Fundo consistente */
+    overflow-y: auto; /* Permite rolagem vertical */
+    border: none; /* Remove borda padrão */
+    color: var(--text-color); /* Cor do texto */
 }
 
-/* Botão de toggle da Sidebar */
+/* ===========================
+   7. Botão Toggle da Sidebar
+   =========================== */
+
 #sidebarToggle {
-    position: fixed;
+    position: fixed; /* Fixa o botão no canto superior esquerdo */
     top: 10px;
     left: 10px;
     width: 40px;
     height: 40px;
-    background-color: #495057;
+    background-color: #495057; /* Fundo do botão */
     border: none;
-    border-radius: 50%;
-    color: white;
+    border-radius: 50%; /* Botão arredondado */
+    color: var(--text-color); /* Cor do ícone */
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1100; /* Acima da sidebar */
-    transition: background-color 0.3s ease;
-    
+    z-index: 1100; /* Sobrepõe a sidebar */
+    transition: background-color 0.3s ease; /* Transição para hover */
 }
 
 #sidebarToggle:hover {
-    background-color: #3B81F6;
+    background-color: #3B81F6; /* Cor ao passar o mouse */
 }
 
-/* Botão de limpar busca */
+/* ===========================
+   8. Botão de Limpar Busca
+   =========================== */
+
 #clear-search-button {
-    display: none;
-    cursor: pointer;
+    display: none; /* Inicialmente oculto */
+    cursor: pointer; /* Indica que é clicável */
 }
 
 #clear-search-button.d-block {
-    display: inline-block;
+    display: inline-block; /* Exibe o botão */
 }
 
-/* Estilo para destacar texto na busca */
+/* ===========================
+   9. Destaque de Texto na Busca
+   =========================== */
+
 .highlight {
-    background-color: #ffeb3b; /* Amarelo mais vibrante */
-    font-weight: bold;
-    border-radius: 2px;
+    background-color: var(--highlight-bg-color); /* Fundo amarelo vibrante */
+    color: var(--highlight-text-color); /* Cor do texto para melhor contraste */
+    font-weight: bold; /* Texto em negrito */
+    border-radius: 2px; /* Bordas arredondadas */
 }
 
-/* Modal */
+/* ===========================
+   10. Modal
+   =========================== */
+
 .modal-content {
-    border: 2px solid purple;
+    border: 2px solid purple; /* Define borda roxa */
+    background-color: var(--background-color); /* Fundo consistente */
+    color: var(--text-color); /* Cor do texto */
 }
 
-/* Container de erros */
+/* ===========================
+   11. Container de Erros
+   =========================== */
+
 #error-container {
-    border: 2px solid orange;
+    border: 2px solid orange; /* Borda laranja para destaque */
+    background-color: var(--background-color); /* Fundo consistente */
+    color: var(--text-color); /* Cor do texto */
 }
 
-/* Classe personalizada para definir a altura da lista de chats */
+/* ===========================
+   12. Lista de Chats
+   =========================== */
+
+#chat-list {
+    background-color: var(--background-color); /* Fundo consistente para a lista */
+    overflow: hidden; /* Remove rolagem horizontal */
+}
+
+#chat-list .list-group-item {
+    /* Remover flex layout do Bootstrap */
+    display: block; /* Define como bloco */
+    padding: 0.5rem 1rem; /* Espaçamento interno */
+    background-color: var(--background-color); /* Fundo consistente */
+    color: var(--text-color); /* Cor do texto */
+    border: none; /* Remove a borda */
+}
+
+/* ===========================
+   13. Agrupadores de Chat (Hoje, Ontem, Anteontem)
+   =========================== */
+
+/* Opção 1: Se você adicionou a classe 'chat-group-header' aos agrupadores */
+#chat-list .chat-group-header {
+    background-color: var(--background-color) !important; /* Sobrescreve o fundo */
+    color: var(--text-color) !important; /* Sobrescreve a cor do texto */
+    font-weight: bold; /* Garante que o texto esteja em negrito */
+    border: none; /* Remove a borda */
+    cursor: default; /* Indica que não é clicável */
+}
+
+/* Opção 2: Se você NÃO adicionou uma classe específica, sobrescreva as classes do Bootstrap */
+#chat-list .list-group-item.fw-bold.bg-light.text-muted {
+    background-color: var(--background-color) !important; /* Sobrescreve o fundo */
+    color: var(--text-color) !important; /* Sobrescreve a cor do texto */
+    font-weight: bold; /* Garante que o texto esteja em negrito */
+    border: none; /* Remove a borda */
+    cursor: default; /* Indica que não é clicável */
+}
+
+/* ===========================
+   14. Altura Personalizada da Lista de Chats
+   =========================== */
+
 .custom-chat-list-height {
-    height: 60%;
+    height: 60vh; /* Define altura relativa à viewport */
+    /* background-color: blue; /* Ajusta a cor de fundo do chats-list, se necessário */
 }
 
-/* Ajustes para responsividade */
+/* ===========================
+   15. Estilo dos Itens de Chat
+   =========================== */
+
+.chat-item {
+    padding: 0.1rem; /* Espaçamento interno */
+    display: flex; /* Layout flexível */
+    align-items: center; /* Alinha verticalmente os itens */
+    justify-content: space-between; /* Espaço entre título e ações */
+    background-color: var(--background-color); /* Fundo consistente */
+    border: none; /* Remove borda */
+    margin-bottom: 0; /* Remove espaço entre os itens */
+    color: var(--text-color); /* Cor do texto ajustada */
+    font-weight: normal; /* Torna o texto mais legível */
+    cursor: pointer; /* Indica que o item pode ser clicado */
+}
+
+/* Ajuste para realce em hover */
+.chat-item:hover {
+    background-color: #495057; /* Fundo escuro ao passar o mouse */
+    color: #f4f6f8; /* Ajuste sutil na cor do texto */
+}
+
+/* Espaçamento entre os itens, exceto o último */
+.chat-item:not(:last-child) {
+    margin-bottom: 0rem;
+}
+
+/* ===========================
+   16. Dropdown para Ações
+   =========================== */
+
+.dropdown-toggle {
+    border: none; /* Remove borda padrão */
+    background: none; /* Fundo transparente */
+    padding: 0; /* Remove padding padrão */
+}
+
+.dropdown-menu {
+    min-width: 8rem; /* Define largura mínima */
+    background-color: var(--background-color); /* Fundo consistente */
+    color: var(--text-color); /* Cor do texto */
+}
+
+/* ===========================
+   17. Ajustes de Responsividade
+   =========================== */
+
 @media (max-width: 768px) {
-    /* Quando a tela é pequena, a sidebar está oculta por padrão */
+    /* Oculta a sidebar por padrão em telas pequenas */
     #sidebarMenu {
-        transform: translateX(-100%);
+        transform: translateX(-100%); /* Sidebar oculta inicialmente em telas pequenas */
     }
 
+    /* Exibe a sidebar ao ativar */
     body.sidebar-active #sidebarMenu {
-        transform: translateX(0);
+        transform: translateX(0); /* Sidebar visível */
     }
 
+    /* Ajusta o conteúdo para tela cheia */
     .content {
         margin-left: 0;
         width: 100%;
+    }
+
+    /* Ajusta o conteúdo quando a sidebar está ativa */
+    body.sidebar-active .content {
+        margin-left: 250px;
+        width: calc(100% - 250px);
+    }
+}
+
+/* ===========================
+   18. Alinhamento do Nome e Menu de Opções nos Itens de Chat
+   =========================== */
+
+/* Garante que o contêiner interno seja flex */
+#chat-list .chat-item > .chat-item {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* Override 'justify-content-between' */
+    width: 100%;
+}
+
+/* Estiliza o nome do chat para ocupar todo o espaço disponível e truncar se necessário */
+#chat-list .chat-item > .chat-item .chat-name {
+    flex: 1; /* Permite que o nome ocupe todo o espaço disponível */
+    margin-right: 10px; /* Espaço entre o nome e o menu de opções */
+    white-space: nowrap; /* Evita quebra de linha */
+    overflow: hidden; /* Esconde o excesso de texto */
+    text-overflow: ellipsis; /* Adiciona '...' ao final do texto truncado */
+}
+
+/* Garante que o menu de opções não encolha */
+#chat-list .chat-item > .chat-item .dropdown {
+    flex-shrink: 0; /* Evita que o menu de opções encolha */
+}
+
+/* ===========================
+   19. Outras Melhorias Visuais (Opcional)
+   =========================== */
+
+/* Cursor para itens de chat */
+#chat-list .chat-item {
+    cursor: pointer;
+}
+
+/* Cursor para agrupadores (não clicáveis) */
+#chat-list .chat-group-header {
+    cursor: default;
+}
+
+/* Tooltip para opções */
+.dropdown-menu .dropdown-item:hover {
+    background-color: #495057; /* Fundo ao passar o mouse */
+    color: #f4f6f8; /* Cor do texto ao passar o mouse */
+}
+
+/* Ajuste da largura do menu de opções para manter consistência */
+.dropdown-menu {
+    min-width: 8rem; /* Mantém uma largura mínima */
+}
+
+/* ===========================
+   20. Responsividade dos Itens de Chat
+   =========================== */
+
+@media (max-width: 576px) {
+    /* Ajusta o tamanho do texto para dispositivos menores */
+    #chat-list .chat-item > .chat-item .chat-name {
+        font-size: 14px;
+    }
+
+    /* Ajusta o tamanho do botão de opções */
+    #chat-list .chat-item > .chat-item .dropdown .dropdown-toggle {
+        width: 30px;
+        height: 30px;
+    }
+}
+
+/* ===========================
+   21. Adições para Implementar Sugestões 2 e 3
+   =========================== */
+
+/* Adicionando estilos para o Overlay da Sidebar */
+.sidebar-overlay {
+    display: none; /* Inicialmente oculto */
+    position: fixed; /* Cobrir a tela */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5); /* Fundo semitransparente */
+    z-index: 999; /* Abaixo da sidebar */
+    transition: opacity 0.3s ease-in-out; /* Transição suave para aparecer/desaparecer */
+}
+
+.sidebar-overlay.active {
+    display: block; /* Exibe o overlay */
+    opacity: 1;
+}
+
+/* Ajuste da Sidebar para telas grandes */
+@media (min-width: 769px) {
+    /* Sidebar visível permanentemente em telas grandes */
+    #sidebarMenu {
+        transform: translateX(0);
+    }
+
+    /* Remover a transição de transformação para evitar animações desnecessárias */
+    #sidebarMenu {
+        transition: none;
+    }
+
+    /* Garantir que o overlay não seja exibido em telas grandes */
+    .sidebar-overlay {
+        display: none !important;
+    }
+
+    /* Ajustar o conteúdo para acomodar a sidebar */
+    .content {
+        margin-left: 250px;
+        width: calc(100% - 250px);
     }
 
     body.sidebar-active .content {
@@ -141,6 +408,12 @@ body.sidebar-active .content {
     }
 }
 
+/* ===========================
+   22. Prevenção de Interferência de Gestos em Componentes Específicos
+   =========================== */
 
-
-
+/* Opcional: Adicionar estilos para inputs e botões para garantir que não sejam afetados visualmente pelos gestos */
+input, button {
+    /* Por exemplo, garantir que não haja estilos inesperados ao interagir */
+    touch-action: manipulation; /* Melhora a responsividade dos toques */
+}

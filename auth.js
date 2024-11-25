@@ -29,8 +29,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-// Configurações de inatividade
-const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutos
+// Limite de inatividade (em milissegundos)
+const INACTIVITY_LIMIT = 15 * 60 * 1000; 
 let inactivityTimeout;
 
 /**
@@ -135,6 +135,16 @@ export function monitorInactivity() {
  * Verifica o estado de autenticação e redireciona se necessário.
  */
 export function verifyAuthState() {
+    const currentPage = window.location.pathname.split("/").pop();
+
+    // Lista de páginas públicas que não exigem autenticação
+    const publicPages = ["index.html", "login.html"];
+
+    if (publicPages.includes(currentPage)) {
+        console.log("Página pública acessada. Verificação de autenticação ignorada.");
+        return;
+    }
+
     const tenant = sessionStorage.getItem("tenant");
     const email = sessionStorage.getItem("email");
     const uuid = sessionStorage.getItem("uuid");

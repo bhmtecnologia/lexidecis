@@ -1,10 +1,7 @@
 import { login, resetPassword, verifyAuthState } from './auth.js'; // Importa funções do auth.js
 
-/**
- * Verifica o estado de autenticação ao carregar a página.
- */
 document.addEventListener("DOMContentLoaded", () => {
-    verifyAuthState();
+    verifyAuthState(); // Verifica a sessão ao carregar a página
 });
 
 /**

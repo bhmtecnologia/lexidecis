@@ -1,12 +1,14 @@
+// renderer.js
 import { showToast } from './notificationManager.js';
 import Chatbot from "./web.js";
 import ApiService from './apiService.js';
 import StateManager from './stateManager.js';
 import HistoryManager from './historyManager.js';
+import GPTManager from './gptManager.js';
 
 /* ================================
    1. Configurações e Constantes
-   ================================ */
+=============================== */
 
 // Recuperar as variáveis do sessionStorage
 const tenant = sessionStorage.getItem("tenant");
@@ -48,16 +50,18 @@ const CONFIG = {
 };
 
 
-
-
 /* ==========================
    4. UI e Manipulação de Eventos
-   ========================== */
+========================== */
 // Classe para gerenciar a interface do usuário e eventos associados
 class UIManager {
     constructor(apiService, stateManager) {
         this.apiService = apiService;
         this.stateManager = stateManager;
+
+        // Inicializar o GPTManager
+        this.gptManager = new GPTManager(this.apiService, this.stateManager, this, CONFIG);
+
         const gptModalElement = document.getElementById('gpt-modal');
         if (gptModalElement) {
             this.modal = new bootstrap.Modal(gptModalElement);
@@ -65,7 +69,7 @@ class UIManager {
         this.setupUIEvents();
     }
 
-    
+
     /* --- Configuração de Eventos da UI --- */
     setupUIEvents() {
         // Botões do cabeçalho (ocultar e mostrar cabeçalho)
@@ -101,7 +105,7 @@ class UIManager {
         }
 
         if (selectGPTButton) {
-            selectGPTButton.addEventListener('click', () => this.openModal());
+            selectGPTButton.addEventListener('click', () => this.gptManager.openModal());
         }
 
         // Eventos do menu suspenso de configurações (exemplo de logout)
@@ -250,7 +254,7 @@ class UIManager {
                     chatItem.querySelector('.rename-chat-button').addEventListener('click', (event) => {
                         event.stopPropagation(); // Evita o evento de clique no chat
                         this.handleRenameChat(chat.id, chat.name || 'Chat sem nome');
-                    });                    
+                    });
                     chatItem.querySelector('.delete-chat-button').addEventListener('click', (event) => {
                         event.stopPropagation(); // Evita o evento de clique no chat
                         this.handleDeleteChat(chat.id, chat.name);
@@ -520,136 +524,20 @@ class UIManager {
         }
     }
 
-    // Injeta o histórico de chat previamente salvo
-
-
     /* --- Funções de Seleção de GPT --- */
     // Abre o modal para seleção de um GPT
-    async openModal() {
-        await this.loadGPTList();
-        if (this.modal) {
-            this.modal.show();
-        } else {
-            console.error('Modal não está inicializado.');
-        }
-    }
+    // Esta função agora está delegada ao GPTManager
+    // async openModal() {
+    //     await this.gptManager.loadGPTList();
+    //     if (this.modal) {
+    //         this.modal.show();
+    //     } else {
+    //         console.error('Modal não está inicializado.');
+    //     }
+    // }
 
     // Carrega a lista de GPTs disponíveis a partir da API
-    async loadGPTList() {
-        const params = {
-            company_name: CONFIG.companyName,
-            user_name: CONFIG.userName,
-            user_id: CONFIG.userId
-        };
-        try {
-            const gptData = await this.apiService.request('readGPT', params, 'GET');
-            console.log('Lista de GPTs:', gptData);
-            this.populateGPTMenu(gptData);
-        } catch (error) {
-            console.error('Erro ao carregar lista de GPTs:', error);
-            this.showError('Erro ao carregar a lista de GPTs. Verifique o console para mais detalhes.');
-        }
-    }
-
-    // Popula o menu de seleção de GPTs na interface
-    populateGPTMenu(gpts) {
-        const gptList = document.getElementById('gpt-list');
-        if (!gptList) {
-            console.error('Elemento gpt-list não encontrado.');
-            return;
-        }
-        gptList.innerHTML = ''; // Limpar lista existente
-
-        if (!gpts || gpts.length === 0) {
-            const emptyMessage = document.createElement('li');
-            emptyMessage.textContent = 'Nenhum GPT encontrado.';
-            emptyMessage.classList.add('list-group-item', 'text-center');
-            gptList.appendChild(emptyMessage);
-            return;
-        }
-
-        const fragment = document.createDocumentFragment();
-
-        gpts.forEach(gpt => {
-            if (!gpt.enabled) return;
-
-            const gptItem = document.createElement('li');
-            gptItem.classList.add('list-group-item', 'gpt-list-item', 'd-flex', 'flex-column', 'cursor-pointer');
-            gptItem.innerHTML = `
-                <div class="gpt-name fw-bold">${gpt.name}</div>
-                <div class="gpt-description text-muted">${gpt.description || 'Sem descrição'}</div>
-            `;
-            gptItem.dataset.gptId = gpt.id;
-            gptItem.addEventListener('click', () => this.selectGPTItem(gpt));
-            fragment.appendChild(gptItem);
-        });
-
-        gptList.appendChild(fragment);
-    }
-
-    // Lida com a seleção de um GPT pelo usuário
-    async selectGPTItem(gpt) {
-        this.stateManager.setSelectedGPT(gpt);
-        console.log('GPT selecionado:', gpt);
-
-        // Atualizar a configuração do chatbot com o GPT selecionado
-        if (this.stateManager.selectedGPTId) {
-            await this.fetchGPTConfig(this.stateManager.selectedGPTId);
-
-            if (!this.stateManager.currentSessionId) {
-                this.stateManager.setSessionId(this.generateSessionId());
-                const defaultChatName = this.stateManager.selectedGPT.name;
-                const defaultChat = {
-                    id: this.stateManager.currentSessionId,
-                    name: defaultChatName,
-                    date: new Date().toISOString()
-                };
-                this.stateManager.addChat(defaultChat);
-                this.populateChatMenu(this.stateManager.chats);
-            }
-
-            await this.initializeChatbot();
-        } else {
-            console.error('GPT selecionado não possui um id válido.');
-        }
-
-        // Persistir a seleção do GPT
-        localStorage.setItem('selectedGPT', JSON.stringify(this.stateManager.selectedGPT));
-        localStorage.setItem('selectedGPTId', this.stateManager.selectedGPTId);
-        localStorage.setItem('gptConfig', JSON.stringify(this.stateManager.gptConfig));
-
-        // Fechar o modal
-        if (this.modal) {
-            this.modal.hide();
-        }
-    }
-
-    // Busca as configurações detalhadas do GPT selecionado
-    async fetchGPTConfig(gptId) {
-        const params = {
-            gpt_id: gptId,
-            company_name: CONFIG.companyName,
-            user_name: CONFIG.userName,
-            user_id: CONFIG.userId
-        };
-        try {
-            const configData = await this.apiService.request('overrideConfig', params, 'GET');
-            console.log('Configurações do GPT:', configData);
-
-            // Agregar todos os objetos 'value' em um único objeto gptConfig
-            const aggregatedConfig = configData.reduce((acc, current) => {
-                return { ...acc, ...current.value };
-            }, {});
-
-            // Atualizar o stateManager com o gptConfig agregado
-            this.stateManager.setGPTConfig(aggregatedConfig);
-
-            console.log('Configurações agregadas do GPT:', this.stateManager.gptConfig);
-        } catch (error) {
-            console.error('Erro ao buscar configurações do GPT:', error);
-            this.showError('Erro ao buscar configurações do GPT. Verifique o console para mais detalhes.');
-        }
-    }
+    // Agora delegada ao GPTManager
 
     /* --- Funções de Criação de Novo Chat --- */
     // Cria um novo chat e inicializa o chatbot
@@ -702,10 +590,7 @@ class UIManager {
 
     // Função para gerar um novo ID de sessão
     generateSessionId() {
-        const timestamp = BigInt(Date.now()) * 1000n;  // Obtém o timestamp atual em milissegundos
-        const randomComponent = BigInt(Math.floor(Math.random() * 1000));  // Gera um número aleatório entre 0 e 999
-        const sessionId = timestamp + randomComponent;  // Soma o timestamp com o número aleatório para gerar um ID único
-        return sessionId.toString();  // Converte o BigInt para string
+        return this.gptManager.generateSessionId();
     }
 
     /* --- Funções de Log e Erro --- */
@@ -781,20 +666,7 @@ class UIManager {
 
     /* --- Funções de Seleção Padrão e Persistência --- */
     // Seleciona o GPT padrão caso nenhum esteja selecionado
-    async selectDefaultGPT(gptId) {
-        // Implemente a lógica para selecionar um GPT padrão
-        console.log(`Selecione o GPT padrão com ID: ${gptId}`);
-        await this.loadGPTList();
-        const gptList = document.getElementById('gpt-list');
-        if (gptList) {
-            const defaultGPTItem = gptList.querySelector(`.gpt-list-item[data-gpt-id="${gptId}"]`);
-            if (defaultGPTItem) {
-                defaultGPTItem.click();
-            } else {
-                console.warn('GPT padrão não encontrado na lista.');
-            }
-        }
-    }
+    // Agora delegada ao GPTManager
 
     /* --- Funções de Controle de Cabeçalho --- */
     // Oculta o cabeçalho da interface
@@ -831,16 +703,14 @@ class UIManager {
 
 /* ==========================
    5. Inicialização da Aplicação
-   ========================== */
-// Evento que inicia a aplicação quando o documento é carregado
+========================== */
 // Evento que inicia a aplicação quando o documento é carregado
 document.addEventListener('DOMContentLoaded', async () => {
     const apiService = new ApiService(CONFIG);
     const stateManager = new StateManager();
     const uiManager = new UIManager(apiService, stateManager);
+    const gptManager = uiManager.gptManager; // Acessa o GPTManager a partir do UIManager
 
-
-    // Inicialização dos tooltips e Funcionalidade da Sidebar
     // Inicialização dos tooltips
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
@@ -848,17 +718,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // Carregar GPT selecionado ou padrão
-    await stateManager.loadSelectedGPT(1, apiService); // 1 é o ID do GPT padrão
+    const defaultGPTId = 1; // ID do GPT padrão
+    await stateManager.loadSelectedGPT(defaultGPTId, apiService);
 
     // Carregar lista de chats
     await uiManager.loadChatList();
-    
+
     // Carregar chat selecionado
     stateManager.loadSelectedChat();
-    
+
     // Inicializar o chatbot após carregar GPT e chat
     await uiManager.initializeChatbot();
-    
-    showToast('Seu sistema de IA está pronto para uso.', 'success');
 
+    // Selecionar o GPT padrão se nenhum estiver selecionado
+    if (!stateManager.selectedGPTId) {
+        await gptManager.selectDefaultGPT(defaultGPTId);
+    }
+
+    showToast('Seu sistema de IA está pronto para uso.', 'success');
 });

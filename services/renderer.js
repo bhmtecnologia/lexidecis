@@ -1,6 +1,8 @@
 import Chatbot from "./web.js";
-import adicionarNotificacao from './notifications.js';
-//import { adicionarNotificacao } from './notifications.js';
+//import { showToast } from './toast.js'; // Importa a função showToast do toast.js
+import ApiService from './apiService.js';
+import StateManager from './stateManager.js';
+import HistoryManager from './historyManager.js';
 
 /* ================================
    1. Configurações e Constantes
@@ -45,98 +47,8 @@ const CONFIG = {
     }
 };
 
-/* ==========================
-   2. Serviços de API
-   ========================== */
-// Classe responsável por realizar requisições às APIs definidas nas configurações
-class ApiService {
-    constructor(config) {
-        this.config = config;
-    }
 
-    // Método genérico para realizar requisições a uma API específica
-    async request(apiKey, params = {}, method = 'GET', body = null, options = {}) {
-        const apiConfig = this.config.apiCredentials[apiKey];
-        if (!apiConfig) throw new Error(`Configuração da API '${apiKey}' não encontrada.`);
-        
-        // Construir a URL
-        let url = apiConfig.URL;
 
-        // Determinar se os parâmetros devem ser incluídos na query string
-        const includeParamsInQuery = options.includeParamsInQuery || false;
-
-        // Incluir parâmetros na query string se necessário
-        if (method === 'GET' || method === 'DELETE' || includeParamsInQuery) {
-            const queryString = new URLSearchParams(params).toString();
-            if (queryString) {
-                url += `?${queryString}`;
-            }
-        }
-
-        const fetchOptions = {
-            method,
-            headers: {
-                'Authorization': apiConfig.AUTH,
-                'Content-Type': 'application/json'
-            }
-        };
-
-        // Incluir 'body' se for fornecido e o método for apropriado
-        if (body && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
-            fetchOptions.body = JSON.stringify(body);
-        }
-        
-        // Log para depuração
-        console.log(`Fazendo requisição para ${url} com opções:`, fetchOptions);
-        
-        try {
-            const response = await fetch(url, fetchOptions);
-            if (!response.ok) throw new Error(`Erro na requisição ${apiKey}: ${response.status} ${response.statusText}`);
-            return response.json();
-        } catch (error) {
-            throw new Error(`Falha ao realizar a requisição ${apiKey}: ${error.message}`);
-        }
-    }
-}
-
-/* ==========================
-   3. Gerenciamento de Estado
-   ========================== */
-// Classe para gerenciar o estado da aplicação, incluindo sessões, chats e configurações do GPT
-class StateManager {
-    constructor() {
-        this.currentSessionId = ""; // ID da sessão atual
-        this.chats = []; // Lista de chats
-        this.selectedGPT = null; // GPT selecionado
-        this.selectedGPTId = null; // ID do GPT selecionado
-        this.gptConfig = {}; // Configurações do GPT selecionado
-
-        // Remova as variáveis individuais de configuração do GPT
-        // Elas serão acessadas diretamente através de gptConfig
-    }
-
-    // Métodos para atualizar o estado
-    setSessionId(sessionId) {
-        this.currentSessionId = sessionId;
-    }
-
-    addChat(chat) {
-        this.chats.push(chat);
-    }
-
-    removeChat(chatId) {
-        this.chats = this.chats.filter(chat => chat.id !== chatId);
-    }
-
-    setSelectedGPT(gpt) {
-        this.selectedGPT = gpt;
-        this.selectedGPTId = gpt.id || null;
-    }
-
-    setGPTConfig(config) {
-        this.gptConfig = config;
-    }
-}
 
 /* ==========================
    4. UI e Manipulação de Eventos
@@ -515,7 +427,7 @@ class UIManager {
             localStorage.removeItem(`${CONFIG.flowiseChatflowId}_EXTERNAL`);
 
             // Injetar histórico
-            await this.injectChatHistory();
+            await HistoryManager.injectChatHistory(this.stateManager.currentSessionId, CONFIG);
 
             // Remover o chatbot anterior e inserir um novo
             const chatbotContainer = document.getElementById('chatbot-container');
@@ -609,46 +521,7 @@ class UIManager {
     }
 
     // Injeta o histórico de chat previamente salvo
-    async injectChatHistory() {
-        const apiURL = `${CONFIG.flowiseApiHost}/api/v1/chatmessage/${CONFIG.flowiseChatflowId}?sessionId=${this.stateManager.currentSessionId}&user_id=${encodeURIComponent(CONFIG.userId)}`;
-        try {
-            const response = await fetch(apiURL, {
-                method: "GET",
-                headers: {
-                    "Authorization": `Bearer ${CONFIG.flowiseToken}`
-                }
-            });
 
-            if (!response.ok) throw new Error("Erro ao buscar histórico de mensagens da API");
-
-            const apiHistory = await response.json();
-
-            const formattedHistory = apiHistory.map((msg) => ({
-                message: msg.content,
-                type: msg.role === "userMessage" ? "userMessage" : "apiMessage",
-                dateTime: msg.createdDate || new Date().toISOString(),
-                messageId: msg.id || Math.random().toString(36).substring(2),
-                fileUploads: msg.fileUploads || []
-            }));
-
-            //const chatData = {
-                //chatHistory: formattedHistory,
-                //chatId: apiHistory[0]?.chatId || "default-chat-id"
-            //};
-
-            const chatData = {
-                chatHistory: formattedHistory,
-                chatId: apiHistory[0]?.chatId || this.stateManager.currentSessionId // ESSE INFORMACAO VAI PARA O LANGFUSE PARA SESSION, SENDO O LANGFUSE CONFIGURADO NO FLOWISE, PRECISA DISSO PARA VER CUSTOS DE CADA CHAT)
-            };
-
-            const historyKey = `${CONFIG.flowiseChatflowId}_EXTERNAL`;
-            localStorage.setItem(historyKey, JSON.stringify(chatData));
-            localStorage.setItem(`${CONFIG.flowiseChatflowId}_historyInjected`, "true");
-        } catch (error) {
-            console.error("Erro ao injetar histórico no localStorage:", error);
-            this.showError("Erro ao buscar histórico de mensagens da API.");
-        }
-    }
 
     /* --- Funções de Seleção de GPT --- */
     // Abre o modal para seleção de um GPT
@@ -997,6 +870,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const stateManager = new StateManager();
     const uiManager = new UIManager(apiService, stateManager);
 
+
     // Inicialização dos tooltips e Funcionalidade da Sidebar
     // Inicialização dos tooltips
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -1017,5 +891,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     await uiManager.initializeChatbot();
 
     // Adicionar uma notificação de boas-vindas ao finalizar a inicialização
-    adicionarNotificacao("Bem-vindo!", "Seu sistema de IA está pronto para uso.");
+    //showToast("Bem-vindo!", "Seu sistema de I.A está pronto para uso.", "success");
 });

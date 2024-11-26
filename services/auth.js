@@ -115,7 +115,7 @@ export function resetInactivityTimer() {
     inactivityTimeout = setTimeout(async () => {
         await logout();
         alert("Você foi desconectado por inatividade.");
-        window.location.href = "index.html";
+        window.location.href = "../index.html";
     }, INACTIVITY_LIMIT);
 }
 
@@ -151,7 +151,7 @@ export function verifyAuthState() {
 
     if (!tenant || !email || !uuid) {
         alert("Sessão expirada ou inválida. Faça login novamente.");
-        window.location.href = "index.html";
+        window.location.href = "../index.html";
     } else {
         console.log("Sessão válida:", { tenant, email, uuid });
         monitorInactivity();

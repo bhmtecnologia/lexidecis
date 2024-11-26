@@ -27,7 +27,7 @@ document.getElementById('login-form').addEventListener('submit', async (event) =
         sessionStorage.setItem("email", user.email);
 
         console.log("Login bem-sucedido:", user);
-        window.location.href = "chat.html";
+        window.location.href = "../pages/chat.html";  /* URL DO CHAT PROTEGIDA APOS LOGIN */
     } catch (error) {
         console.error("Erro ao realizar login:", error);
         alert(`Erro ao fazer login: ${error.message}`);

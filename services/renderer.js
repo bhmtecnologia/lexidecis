@@ -678,38 +678,7 @@ class UIManager {
         await this.initializeChatbot();
     }
 
-    /* --- Funções de Seleção Padrão e Persistência --- */
-    // Carrega o GPT selecionado previamente ou seleciona o GPT padrão
-    async loadSelectedGPT() {
-        const storedGPT = localStorage.getItem('selectedGPT');
-        const storedGPTId = localStorage.getItem('selectedGPTId');
-        const storedGPTConfig = localStorage.getItem('gptConfig');
-        if (storedGPT && storedGPTId && storedGPTConfig) {
-            this.stateManager.setSelectedGPT(JSON.parse(storedGPT));
-            this.stateManager.selectedGPTId = storedGPTId;
-            this.stateManager.setGPTConfig(JSON.parse(storedGPTConfig));
-            console.log('GPT carregado do localStorage:', this.stateManager.selectedGPT);
 
-            // Nenhuma necessidade de decompor, pois utilizamos o objeto completo
-
-            //await this.initializeChatbot(); //verificar se o chat nao está sendo puxado duplicado, e ver se remover da erro
-        } else {
-            await this.selectDefaultGPT(1);
-        }
-    }
-
-    // Carrega o chat selecionado previamente
-    loadSelectedChat() {
-        const selectedChatId = localStorage.getItem('selectedChatId');
-        if (selectedChatId) {
-            const selectedChat = this.stateManager.chats.find(chat => chat.id === selectedChatId);
-            if (selectedChat) {
-                this.stateManager.setSessionId(selectedChat.id);
-                //this.initializeChatbot();
-                this.selectChatItem(selectedChat.id);
-            }
-        }
-    }
 
     /* --- Funções Auxiliares --- */
     // Retorna o grupo de data para agrupar os chats na interface

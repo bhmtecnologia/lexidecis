@@ -878,18 +878,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
 
+    // Carregar GPT selecionado ou padrão
+    await stateManager.loadSelectedGPT(1, apiService); // 1 é o ID do GPT padrão
+
     // Carregar lista de chats
     await uiManager.loadChatList();
-
-    // Carregar GPT selecionado anteriormente ou selecionar padrão
-    await uiManager.loadSelectedGPT();
-
-    // Carregar chat selecionado anteriormente
-    uiManager.loadSelectedChat();
-
+    
+    // Carregar chat selecionado
+    stateManager.loadSelectedChat();
+    
     // Inicializar o chatbot após carregar GPT e chat
     await uiManager.initializeChatbot();
-
+    
     // Adicionar uma notificação de boas-vindas ao finalizar a inicialização
     //showToast("Bem-vindo!", "Seu sistema de I.A está pronto para uso.", "success");
 });

@@ -1,5 +1,5 @@
+import { showToast } from './notificationManager.js';
 import Chatbot from "./web.js";
-//import { showToast } from './toast.js'; // Importa a função showToast do toast.js
 import ApiService from './apiService.js';
 import StateManager from './stateManager.js';
 import HistoryManager from './historyManager.js';
@@ -859,6 +859,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Inicializar o chatbot após carregar GPT e chat
     await uiManager.initializeChatbot();
     
-    // Adicionar uma notificação de boas-vindas ao finalizar a inicialização
-    //showToast("Bem-vindo!", "Seu sistema de I.A está pronto para uso.", "success");
+    showToast('Seu sistema de IA está pronto para uso.', 'success');
+
 });

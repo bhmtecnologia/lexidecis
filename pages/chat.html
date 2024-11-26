@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <!-- CSS externo (se houver) -->
     <link rel="stylesheet" href="../styles/chat.css">
+    <link rel="stylesheet" href="../styles/notifications.css">
     <!--
     <style>
         /* Manter estilos existentes e evitar sobreposição */
@@ -222,5 +223,10 @@
         });
     });
 </script>
+
+<div id="toast-container" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1055;">
+    <!-- Os toasts serão dinamicamente adicionados aqui -->
+</div>
+
 </body>
 </html>

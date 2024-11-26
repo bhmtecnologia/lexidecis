@@ -1,0 +1,5 @@
+.toast-container {
+    top: 80px; /* Ajuste a distância do topo */
+    right: 20px; /* Ajuste a distância da borda direita */
+    z-index: 1055; /* Certifique-se de que está acima de outros elementos */
+}

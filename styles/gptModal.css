@@ -1,0 +1,51 @@
+/* gptModal.css */
+
+/* Partículas no Fundo do Modal */
+.modal-particles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1; /* Garantir que fique atrás do conteúdo */
+    pointer-events: none; /* Evitar interação com as partículas */
+}
+
+/* Estilo do Conteúdo do Modal */
+.modal-custom {
+    position: relative;
+    z-index: 2; /* Mantém o conteúdo acima das partículas */
+    background: rgba(18, 18, 18, 0.9); /* Fundo levemente transparente */
+    backdrop-filter: blur(10px); /* Adiciona desfoque */
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Cabeçalho Customizado */
+.modal-header-custom {
+    background: linear-gradient(135deg, #6200ea, #3700b3);
+    color: #fff;
+    padding: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Lista Customizada */
+.list-group-custom {
+    background: transparent;
+    padding: 0;
+    border: none;
+}
+
+.list-group-custom li {
+    background: rgba(255, 255, 255, 0.1);
+    margin-bottom: 10px;
+    border-radius: 10px;
+    padding: 15px;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.list-group-custom li:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.2);
+}

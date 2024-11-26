@@ -1,4 +1,3 @@
-// Classe para gerenciar o estado da aplicação, incluindo sessões, chats e configurações do GPT
 export default class StateManager {
     constructor() {
         this.currentSessionId = ""; // ID da sessão atual
@@ -6,13 +5,22 @@ export default class StateManager {
         this.selectedGPT = null; // GPT selecionado
         this.selectedGPTId = null; // ID do GPT selecionado
         this.gptConfig = {}; // Configurações do GPT selecionado
+        this.isLoadingGPTs = false; // Flag para controlar o estado de carregamento dos GPTs
+        this.isGPTSelectionLoading = false; // Flag para controlar múltiplas requisições na seleção de GPT
     }
 
+    /* === Sessões === */
     // Define o ID da sessão atual
     setSessionId(sessionId) {
         this.currentSessionId = sessionId;
     }
 
+    // Recupera o ID da sessão atual
+    getSessionId() {
+        return this.currentSessionId;
+    }
+
+    /* === Chats === */
     // Adiciona um chat à lista
     addChat(chat) {
         this.chats.push(chat);
@@ -23,30 +31,40 @@ export default class StateManager {
         this.chats = this.chats.filter(chat => chat.id !== chatId);
     }
 
+    // Recupera a lista de chats
+    getChats() {
+        return this.chats;
+    }
+
+    // Carrega o chat selecionado previamente
+    loadSelectedChat() {
+        const selectedChatId = localStorage.getItem('selectedChatId');
+        if (selectedChatId) {
+            const selectedChat = this.chats.find(chat => chat.id === selectedChatId);
+            if (selectedChat) {
+                this.setSessionId(selectedChat.id);
+                console.log('Chat selecionado do localStorage:', selectedChat);
+            } else {
+                console.warn('Chat salvo no localStorage não encontrado na lista atual.');
+            }
+        }
+    }
+
+    /* === GPTs === */
     // Define o GPT selecionado
     setSelectedGPT(gpt) {
         this.selectedGPT = gpt;
         this.selectedGPTId = gpt.id || null;
     }
 
-    // Define as configurações do GPT
-    setGPTConfig(config) {
-        this.gptConfig = config;
-    }
-
-    // Recupera o ID da sessão atual
-    getSessionId() {
-        return this.currentSessionId;
-    }
-
-    // Recupera a lista de chats
-    getChats() {
-        return this.chats;
-    }
-
     // Recupera o GPT selecionado
     getSelectedGPT() {
         return this.selectedGPT;
+    }
+
+    // Define as configurações do GPT
+    setGPTConfig(config) {
+        this.gptConfig = config;
     }
 
     // Recupera as configurações do GPT selecionado
@@ -86,17 +104,25 @@ export default class StateManager {
         }
     }
 
-    // Carrega o chat selecionado previamente
-    loadSelectedChat() {
-        const selectedChatId = localStorage.getItem('selectedChatId');
-        if (selectedChatId) {
-            const selectedChat = this.chats.find(chat => chat.id === selectedChatId);
-            if (selectedChat) {
-                this.setSessionId(selectedChat.id);
-                console.log('Chat selecionado do localStorage:', selectedChat);
-            } else {
-                console.warn('Chat salvo no localStorage não encontrado na lista atual.');
-            }
-        }
+    /* === Estado de Carregamento dos GPTs === */
+    // Marca o estado de carregamento dos GPTs como ativo ou inativo
+    setLoadingGPTs(isLoading) {
+        this.isLoadingGPTs = isLoading;
+    }
+
+    // Retorna o estado de carregamento dos GPTs
+    isLoadingGPTsActive() {
+        return this.isLoadingGPTs;
+    }
+
+    /* === Estado de Seleção de GPT === */
+    // Marca o estado de carregamento na seleção de GPT como ativo ou inativo
+    setGPTSelectionLoading(isLoading) {
+        this.isGPTSelectionLoading = isLoading;
+    }
+
+    // Retorna o estado de carregamento na seleção de GPT
+    isGPTSelectionLoadingActive() {
+        return this.isGPTSelectionLoading;
     }
 }

@@ -58,7 +58,7 @@ class UIManager {
     constructor(apiService, stateManager) {
         this.apiService = apiService;
         this.stateManager = stateManager;
-
+ 
         // Inicializar o GPTManager
         this.gptManager = new GPTManager(this.apiService, this.stateManager, this, CONFIG);
 
@@ -331,7 +331,7 @@ class UIManager {
             console.log('Resposta da API de exclusão:', deleteResponse);
 
             if (deleteResponse.status === "success") {
-                this.showAlert('Chat excluído com sucesso.', 'success');
+                showToast('Chat excluído com sucesso.', 'info');
                 this.stateManager.removeChat(chatId);
                 this.populateChatMenu(this.stateManager.chats);
 
@@ -482,7 +482,7 @@ class UIManager {
                             //avatarSrc: "https://www.bhm.tec.br/images/152x152/10788698/favicon.png", // Se o ShowAvatar for false esse item deve estar comentado
                         },                
                         textInput: {
-                            placeholder: 'Mensagem para o LexiDecis',
+                            placeholder: 'Mensagem',
                             backgroundColor: '#282828',                    
                             textColor: '#ffffff',
                             sendButtonColor: '#ffffff',

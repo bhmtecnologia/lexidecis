@@ -194,7 +194,7 @@ body.sidebar-active .content {
 =========================== */
 
 .modal-content {
-    border: 2px solid purple; /* Define borda roxa */
+    border: 1px solid rgb(0, 0, 0); /* Define borda roxa */
     background-color: var(--background-color); /* Fundo consistente */
     color: var(--text-color); /* Cor do texto */
 }

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Status do OpenAI</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome para ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Notyf CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+    <style>
+        :root {
+            --green: #28a745;
+            --yellow: #ffc107;
+            --red: #dc3545;
+            --gray: #6c757d;
+            --background: #f0f2f5;
+            --card-bg: #ffffff;
+            --box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 20px;
+        }
+
+        .status-card {
+            background-color: var(--card-bg);
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: var(--box-shadow);
+            display: flex;
+            align-items: center;
+            max-width: 400px;
+            width: 100%;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        .status-icon {
+            font-size: 2.5rem;
+            margin-right: 20px;
+            transition: color var(--transition);
+        }
+
+        .status-text {
+            font-size: 1.2rem;
+            color: #333;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-size: 1.5rem;
+            color: var(--gray);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsividade */
+        @media (max-width: 480px) {
+            .status-card {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .status-icon {
+                margin-right: 0;
+                margin-bottom: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="status-container" class="loading">
+        <i class="fas fa-spinner fa-spin"></i> Carregando status...
+    </div>
+
+    <!-- Notyf JS -->
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+    <!-- JavaScript Atualizado -->
+    <script>
+        let previousStatus = null; // Para rastrear mudanças de status
+
+        // Inicializa o Notyf
+        const notyf = new Notyf({
+            duration: 5000,
+            position: {
+                x: 'right',
+                y: 'top',
+            },
+            types: [
+                {
+                    type: 'success',
+                    background: '#28a745',
+                    icon: 'fas fa-check-circle',
+                },
+                {
+                    type: 'warning',
+                    background: '#ffc107',
+                    icon: 'fas fa-exclamation-triangle',
+                },
+                {
+                    type: 'error',
+                    background: '#dc3545',
+                    icon: 'fas fa-times-circle',
+                },
+                {
+                    type: 'info',
+                    background: '#6c757d',
+                    icon: 'fas fa-info-circle',
+                }
+            ]
+        });
+
+        async function fetchOpenAIStatus() {
+            try {
+                const response = await fetch("https://status.openai.com/history.rss");
+                const text = await response.text();
+                const parser = new DOMParser();
+                const rss = parser.parseFromString(text, "application/xml");
+
+                // Verifica se há erros no parsing
+                const parserError = rss.querySelector("parsererror");
+                if (parserError) {
+                    throw new Error("Erro ao parsear o RSS.");
+                }
+
+                // Obtém o título e descrição do item mais recente
+                const latestItem = rss.querySelector("item");
+                const title = latestItem.querySelector("title").textContent;
+                const description = latestItem.querySelector("description").textContent;
+
+                // Analisa o status com base no título e descrição
+                if (title.includes("Operational")) {
+                    return { type: 'success', message: "OpenAI está operacional", icon: "fas fa-check-circle" };
+                } else if (title.includes("Elevated") || title.includes("Degraded") || title.includes("Partial Outage")) {
+                    return { type: 'warning', message: "Desempenho reduzido ou congestionado", icon: "fas fa-exclamation-triangle" };
+                } else if (title.includes("Major Outage") || description.includes("unavailable")) {
+                    return { type: 'error', message: "OpenAI está fora do ar", icon: "fas fa-times-circle" };
+                } else {
+                    return { type: 'info', message: "Status desconhecido", icon: "fas fa-question-circle" };
+                }
+            } catch (error) {
+                console.error("Erro ao buscar o status do OpenAI:", error);
+                return { type: 'info', message: "Erro ao buscar o status", icon: "fas fa-exclamation-circle" };
+            }
+        }
+
+        async function updateOpenAIStatus() {
+            const { type, message, icon } = await fetchOpenAIStatus();
+
+            // Verifica se o status mudou
+            if (previousStatus && previousStatus.message !== message) {
+                showNotification(message, type, icon);
+            }
+            previousStatus = { type, message, icon };
+
+            // Cria o conteúdo do cartão de status
+            const statusCard = document.createElement("div");
+            statusCard.classList.add("status-card");
+
+            const statusIcon = document.createElement("i");
+            statusIcon.className = `${icon} status-icon`;
+            statusIcon.style.color = getComputedStyle(document.documentElement).getPropertyValue(type === 'success' ? '--green' : type === 'warning' ? '--yellow' : type === 'error' ? '--red' : '--gray');
+
+            const statusText = document.createElement("div");
+            statusText.classList.add("status-text");
+            statusText.textContent = message;
+
+            statusCard.appendChild(statusIcon);
+            statusCard.appendChild(statusText);
+
+            // Atualiza o DOM
+            const statusContainer = document.getElementById("status-container");
+            statusContainer.innerHTML = ""; // Limpa o conteúdo atual
+            statusContainer.classList.remove("loading");
+            statusContainer.appendChild(statusCard);
+        }
+
+        function showNotification(message, type, icon) {
+            notyf.open({
+                type: type,
+                message: `<i class="${icon}" style="margin-right: 8px;"></i>${message}`,
+                ripple: true,
+                dismissible: true
+            });
+        }
+
+        // Atualiza o status a cada 5 minutos (300000 ms)
+        setInterval(updateOpenAIStatus, 300000);
+        updateOpenAIStatus(); // Atualiza imediatamente ao carregar
+    </script>
+</body>
+</html>

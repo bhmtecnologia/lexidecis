@@ -263,9 +263,10 @@ export default class GPTManager {
      * @returns {string} - Novo ID de sessão.
      */
     generateSessionId() {
-        const timestamp = BigInt(Date.now()) * 1000n;
-        const randomComponent = BigInt(Math.floor(Math.random() * 1000));
-        const sessionId = timestamp + randomComponent;
+        //const timestamp = BigInt(Date.now()) * 1000n;
+        //const randomComponent = BigInt(Math.floor(Math.random() * 1000));
+        //const sessionId = timestamp + randomComponent;
+        const sessionId = crypto.randomUUID();
         return sessionId.toString();
     }
 }

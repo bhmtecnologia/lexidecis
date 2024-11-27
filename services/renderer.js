@@ -58,7 +58,7 @@ class UIManager {
     constructor(apiService, stateManager) {
         this.apiService = apiService;
         this.stateManager = stateManager;
- 
+
         // Inicializar o GPTManager
         this.gptManager = new GPTManager(this.apiService, this.stateManager, this, CONFIG);
 
@@ -272,9 +272,16 @@ class UIManager {
     /* --- Funções de Manipulação de Chats --- */    
     // Lida com o clique em um chat existente na lista
     handleChatClick(chat) {
+        console.log('Chat clicado:', chat); // Verifica o objeto do chat
+        if (!chat || !chat.id) {
+            console.warn('Chat sem ID válido:', chat);
+            return;
+        }
+    
+        console.log('Salvando sessionId no StateManager:', chat.id);
         this.stateManager.setSessionId(chat.id);
+        this.selectChatItem(chat.id); // Passa o ID para ser salvo no localStorage
         this.initializeChatbot();
-        this.selectChatItem(chat.id);
     }
 
     // Lida com a renomeação de um chat
@@ -357,13 +364,17 @@ class UIManager {
     /* --- Funções de Seleção de Chats --- */
     // Destaca o chat selecionado na interface
     selectChatItem(chatId) {
+        console.log('selectChatItem chamado com chatId:', chatId); // Log inicial
+    
         const chatItems = document.querySelectorAll('#chat-list .chat-item');
         chatItems.forEach(item => {
             if (item.dataset.chatId === chatId) {
                 item.classList.add('active');
-                localStorage.setItem('selectedChatId', chatId);
+                localStorage.setItem('selectedChatId', chatId); // Grava no localStorage
+                console.log('Chat selecionado e salvo no localStorage:', chatId); // Log ao salvar no localStorage
             } else {
                 item.classList.remove('active');
+                console.log('Chat não selecionado:', item.dataset.chatId); // Log para itens não selecionados
             }
         });
     }
@@ -718,7 +729,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // Carregar GPT selecionado ou padrão
-    const defaultGPTId = 1; // ID do GPT padrão
+    const defaultGPTId = "1"; // ID do GPT padrão (LEXIDECIS GPT MINI) versao default
     await stateManager.loadSelectedGPT(defaultGPTId, apiService);
 
     // Carregar lista de chats

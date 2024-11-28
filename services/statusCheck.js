@@ -1,0 +1,119 @@
+export default class StatusCheck {
+    constructor() {
+        this.createAlertStyles();
+    }
+
+    // Adiciona estilos para o modal
+    createAlertStyles() {
+        const style = document.createElement('style');
+        style.textContent = `
+            .status-modal {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background-color: #fff;
+                border: 1px solid #ccc;
+                border-radius: 8px;
+                padding: 20px;
+                z-index: 10000;
+                box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+                text-align: center;
+                width: 300px;
+            }
+            .status-modal h2 {
+                margin: 0 0 10px;
+                font-size: 18px;
+            }
+            .status-modal p {
+                margin: 0 0 20px;
+                font-size: 14px;
+                color: #555;
+            }
+            .status-modal button {
+                padding: 8px 15px;
+                margin: 5px;
+                font-size: 14px;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+            }
+            .status-modal button.confirm {
+                background-color: #007bff;
+                color: #fff;
+            }
+            .status-modal button.cancel {
+                background-color: #dc3545;
+                color: #fff;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // Exibe o modal de decisão
+    showDecisionModal(title, message) {
+        return new Promise((resolve) => {
+            const modal = document.createElement('div');
+            modal.className = 'status-modal';
+
+            const titleEl = document.createElement('h2');
+            titleEl.textContent = title;
+
+            const messageEl = document.createElement('p');
+            messageEl.textContent = message;
+
+            const buttonConfirm = document.createElement('button');
+            buttonConfirm.textContent = 'Continuar';
+            buttonConfirm.className = 'confirm';
+            buttonConfirm.onclick = () => {
+                document.body.removeChild(modal);
+                resolve(true);
+            };
+
+            const buttonCancel = document.createElement('button');
+            buttonCancel.textContent = 'Sair';
+            buttonCancel.className = 'cancel';
+            buttonCancel.onclick = () => {
+                document.body.removeChild(modal);
+                resolve(false);
+            };
+
+            modal.appendChild(titleEl);
+            modal.appendChild(messageEl);
+            modal.appendChild(buttonConfirm);
+            modal.appendChild(buttonCancel);
+
+            document.body.appendChild(modal);
+        });
+    }
+
+    // Verifica o status da OpenAI
+    async checkStatus() {
+        try {
+            const response = await fetch('https://status.openai.com/api/v2/status.json');
+            const data = await response.json();
+            const status = data.status.description;
+
+            console.log(`Status recebido da OpenAI: ${status}`); // Adicionado para depuração
+
+            if (status !== 'All Systems Operational') {
+                // Pergunta ao usuário se deseja continuar
+                return await this.showDecisionModal(
+                    'Instabilidade no Sistema',
+                    `O status atual é: ${status}. Deseja continuar?`
+                );
+            }
+
+            // Tudo operacional, segue automaticamente
+            console.log('Status operacional. Nenhum alerta exibido.');
+            return true;
+        } catch (error) {
+            console.error('Erro ao verificar o status da OpenAI:', error);
+            // Mostra erro ao usuário e pede decisão
+            return await this.showDecisionModal(
+                'Erro na Verificação',
+                'Não foi possível verificar o status da OpenAI. Deseja continuar?'
+            );
+        }
+    }
+}

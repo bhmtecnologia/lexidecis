@@ -1,251 +1,117 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Loading Animations</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Status da OpenAI</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        /* Estilos Gerais */
-        body, html {
-            height: 100%;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: #1e1e1e;
+        body {
             font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        button {
+            padding: 10px 15px;
+            font-size: 16px;
+            margin: 10px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
             color: #fff;
         }
-        #loader-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 40px;
-            justify-content: center;
-            align-items: center;
-        }
-        .loader {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100px;
-            height: 100px;
-        }
-
-        /* Loader 1: Bouncing Dots */
-        .loader1 div {
-            width: 18px;
-            height: 18px;
-            margin: 3px;
-            background-color: #3498db;
-            border-radius: 50%;
-            animation: bounce 0.6s infinite alternate;
-        }
-        .loader1 div:nth-child(2) {
-            animation-delay: 0.2s;
-            background-color: #e74c3c;
-        }
-        .loader1 div:nth-child(3) {
-            animation-delay: 0.4s;
-            background-color: #f1c40f;
-        }
-        @keyframes bounce {
-            to {
-                transform: translateY(-20px);
-            }
-        }
-
-        /* Loader 2: Rotating Cube */
-        .loader2 {
-            width: 40px;
-            height: 40px;
-            position: relative;
-            transform: rotateZ(45deg);
-        }
-        .loader2::before, .loader2::after {
-            content: "";
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            background-color: #9b59b6;
-            animation: rotateCube 1.2s infinite linear;
-        }
-        .loader2::after {
-            background-color: #2ecc71;
-            animation-delay: -0.6s;
-        }
-        @keyframes rotateCube {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Loader 3: Pulsing Rings */
-        .loader3 {
-            position: relative;
-            width: 64px;
-            height: 64px;
-        }
-        .loader3 div {
-            box-sizing: border-box;
-            display: block;
-            position: absolute;
-            width: 51px;
-            height: 51px;
-            margin: 6px;
-            border: 6px solid #3498db;
-            border-radius: 50%;
-            animation: pulse 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-            border-color: #3498db transparent transparent transparent;
-        }
-        .loader3 div:nth-child(1) {
-            animation-delay: -0.45s;
-        }
-        .loader3 div:nth-child(2) {
-            animation-delay: -0.3s;
-        }
-        .loader3 div:nth-child(3) {
-            animation-delay: -0.15s;
-        }
-        @keyframes pulse {
-            0% {
-                transform: rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* Loader 4: Fluid Spinner */
-        .loader4 {
-            width: 80px;
-            height: 80px;
-            position: relative;
-        }
-        .loader4 div {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 16px;
-            height: 16px;
-            background: #e67e22;
-            border-radius: 50%;
-            transform-origin: 0 0;
-            animation: fluidSpinner 1s linear infinite;
-        }
-        .loader4 div:nth-child(1) { transform: rotate(0deg) translate(35px); }
-        .loader4 div:nth-child(2) { transform: rotate(72deg) translate(35px); animation-delay: -0.8s; }
-        .loader4 div:nth-child(3) { transform: rotate(144deg) translate(35px); animation-delay: -0.6s; }
-        .loader4 div:nth-child(4) { transform: rotate(216deg) translate(35px); animation-delay: -0.4s; }
-        .loader4 div:nth-child(5) { transform: rotate(288deg) translate(35px); animation-delay: -0.2s; }
-        @keyframes fluidSpinner {
-            0%, 100% { transform: rotate(var(--rotate)) translate(35px); opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-
-        /* Loader 5: Sliding Bars */
-        .loader5 {
-            display: flex;
-            align-items: flex-end;
-            height: 40px;
-        }
-        .loader5 div {
-            width: 6px;
-            height: 100%;
-            margin: 0 2px;
-            background-color: #1abc9c;
-            animation: slide 1.2s infinite ease-in-out;
-        }
-        .loader5 div:nth-child(1) { animation-delay: -1.2s; }
-        .loader5 div:nth-child(2) { animation-delay: -1s; }
-        .loader5 div:nth-child(3) { animation-delay: -0.8s; }
-        .loader5 div:nth-child(4) { animation-delay: -0.6s; }
-        .loader5 div:nth-child(5) { animation-delay: -0.4s; }
-        @keyframes slide {
-            0%, 40%, 100% { transform: scaleY(0.4); }
-            20% { transform: scaleY(1); }
-        }
-
-        /* Ocultar o loader após o carregamento */
-        #loader-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #1e1e1e;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            transition: opacity 0.5s ease;
-        }
-        #content {
-            display: none;
-            text-align: center;
+        button:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
 <body>
-
-    <div id="loader-overlay">
-        <div id="loader-container">
-            <!-- Loader 1 -->
-            <div class="loader loader1">
-                <div></div>
-                <div></div>
-                <div></div>
-            </div>
-            <!-- Loader 2 -->
-            <div class="loader loader2"></div>
-            <!-- Loader 3 -->
-            <div class="loader loader3">
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-            </div>
-            <!-- Loader 4 -->
-            <div class="loader loader4">
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-            </div>
-            <!-- Loader 5 -->
-            <div class="loader loader5">
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="content">
-        <h1>Aplicação Carregada!</h1>
-        <p>Bem-vindo à sua aplicação moderna.</p>
-    </div>
+    <h1>Status da OpenAI - Teste Simulação</h1>
+    <button onclick="toggleMockStatus()">Alternar Status Simulado</button>
+    <button onclick="checkOpenAIStatus()">Consultar Status</button>
 
     <script>
-        // Simular carregamento da aplicação
-        window.addEventListener('load', function() {
-            const loaderOverlay = document.getElementById('loader-overlay');
-            const content = document.getElementById('content');
-            // Adicionar transição de opacidade
-            loaderOverlay.style.opacity = '0';
-            setTimeout(() => {
-                loaderOverlay.style.display = 'none';
-                content.style.display = 'block';
-            }, 500);
-        });
+        // Variáveis para alternar entre diferentes status simulados
+        const mockStatuses = [
+            "All Systems Operational",
+            "Partial System Outage",
+            "Major Service Outage",
+            "Degraded Performance"
+        ];
+        let currentMockIndex = 0;
 
-        // Opcional: Simular atraso de carregamento para demonstração
-        window.addEventListener('DOMContentLoaded', function() {
-            // Adicione um atraso de 3 segundos antes de disparar o evento load
-            setTimeout(() => {
-                window.dispatchEvent(new Event('load'));
-            }, 3000);
-        });
+        // Mock fetch para simular diferentes respostas da API
+        const originalFetch = window.fetch;
+        window.fetch = async (...args) => {
+            if (args[0] === 'https://status.openai.com/api/v2/status.json') {
+                return Promise.resolve({
+                    json: () => Promise.resolve({
+                        status: {
+                            description: mockStatuses[currentMockIndex]
+                        }
+                    })
+                });
+            }
+            return originalFetch(...args);
+        };
+
+        // Alterna entre os diferentes status simulados
+        function toggleMockStatus() {
+            currentMockIndex = (currentMockIndex + 1) % mockStatuses.length;
+            alert(`Status simulado alterado para: ${mockStatuses[currentMockIndex]}`);
+        }
+
+        // Função para verificar o status da OpenAI
+        async function checkOpenAIStatus() {
+            try {
+                const response = await fetch('https://status.openai.com/api/v2/status.json');
+                const data = await response.json();
+                const status = data.status.description;
+
+                if (status !== 'All Systems Operational') {
+                    Swal.fire({
+                        title: 'Instabilidade no Sistema',
+                        text: `Status atual: ${status}. Deseja continuar?`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Continuar',
+                        cancelButtonText: 'Sair do Sistema',
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            console.log('Usuário escolheu continuar.');
+                            // Continuação no sistema
+                        } else {
+                            console.log('Usuário escolheu sair.');
+                            logout(); // Chama a função de logout
+                        }
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Tudo operacional',
+                        text: 'O sistema está funcionando normalmente.',
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            } catch (error) {
+                console.error('Erro ao verificar o status:', error);
+            }
+        }
+
+        // Função de logout simulada
+        function logout() {
+            console.log('Fazendo logout...');
+            Swal.fire({
+                title: 'Logout efetuado',
+                text: 'Você saiu do sistema.',
+                icon: 'info',
+                confirmButtonText: 'OK'
+            }).then(() => {
+                window.location.href = '/logout'; // Simulação de logout
+            });
+        }
     </script>
 </body>
 </html>

@@ -702,27 +702,35 @@ class UIManager {
 /* ==========================
    5. Inicialização da Aplicação
 ========================== */
-// Evento que inicia a aplicação quando o documento é carregado
-// Importa o módulo de LoadingScreen
+import StatusCheck from './statusCheck.js';
 import LoadingScreen from './loadingScreen.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Inicializa a tela de loading
     const loadingScreen = new LoadingScreen();
+    const statusCheck = new StatusCheck();
+
     loadingScreen.show(); // Exibe a tela de loading
 
     try {
+        // Verifica o status antes de continuar
+        const userAgreed = await statusCheck.checkStatus();
+        if (!userAgreed) {
+            console.log('Usuário escolheu sair.');
+            window.location.href = '../index.html';
+            return; // Interrompe a inicialização
+        }
+
+        console.log('Status aprovado pelo usuário. Continuando inicialização...');
+
         // Inicializar a aplicação
         const apiService = new ApiService(CONFIG);
         const stateManager = new StateManager();
         const uiManager = new UIManager(apiService, stateManager);
         const gptManager = uiManager.gptManager;
 
-        // Inicialização dos tooltips
         const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         tooltipTriggerList.map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 
-        // Carregar configurações iniciais
         const defaultGPTId = "1"; // GPT padrão
         await stateManager.loadSelectedGPT(defaultGPTId, apiService);
         await uiManager.loadChatList();
@@ -738,7 +746,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Erro ao inicializar a aplicação:', error);
         alert('Erro ao carregar o sistema. Consulte o console para mais detalhes.');
     } finally {
-        // Oculta a tela de loading
-        loadingScreen.hide();
+        loadingScreen.hide(); // Oculta a tela de loading
     }
 });

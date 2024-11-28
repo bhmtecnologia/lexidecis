@@ -11,3 +11,35 @@
     background-color: #f8f9fa;
     cursor: pointer;
 }
+
+/* Estilos para os itens de GPT */
+.gpt-card {
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.gpt-card:hover {
+    transform: scale(1.02);
+}
+
+.gpt-card.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Imagem do GPT */
+.gpt-image {
+    width: 100%;
+    height: 200px; /* Ajuste conforme necessário */
+    object-fit: cover;
+    border-bottom: 1px solid #dee2e6;
+}
+
+/* Título e descrição */
+.card-title {
+    font-size: 1.25rem;
+}
+
+.card-text {
+    flex-grow: 1; /* Garante que a descrição ocupe o espaço disponível */
+}

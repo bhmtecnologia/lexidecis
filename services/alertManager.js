@@ -1,7 +1,7 @@
 // alertManager.js
 
 // Função para carregar dinamicamente o SweetAlert2 via CDN
-function loadSweetAlert() {
+export function loadSweetAlert() {
     return new Promise((resolve, reject) => {
         if (document.querySelector('script[src="https://cdn.jsdelivr.net/npm/sweetalert2@11"]')) {
             resolve(); // SweetAlert2 já está carregado

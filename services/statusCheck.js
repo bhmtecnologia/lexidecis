@@ -96,7 +96,7 @@ export default class StatusCheck {
 
             console.log(`Status recebido da OpenAI: ${status}`); // Adicionado para depuração
 
-            if (status !== 'All Systems Operational') {
+            if (status !== 'All Systems Operational2') {
                 // Pergunta ao usuário se deseja continuar
                 return await this.showDecisionModal(
                     'Instabilidade no Sistema',

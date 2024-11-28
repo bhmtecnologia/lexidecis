@@ -721,8 +721,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         // Verifica o status antes de continuar
         const userAgreed = await statusCheck.checkStatus();
+
         if (!userAgreed) {
-            console.log('Usuário escolheu sair.');
+            console.warn('Usuário escolheu sair. Encerrando aplicação...');
+            loadingScreen.hide(); // Oculta o loading antes de sair
             window.location.href = '../index.html';
             return; // Interrompe a inicialização
         }
@@ -748,11 +750,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             await gptManager.selectDefaultGPT(defaultGPTId);
         }
 
-        showToast('Seu sistema de IA está pronto para uso.', 'success');
+        console.log('Inicialização concluída. Sistema pronto para uso.');
+        showAlert('Seu sistema de IA está pronto para uso.', 'success');
     } catch (error) {
         console.error('Erro ao inicializar a aplicação:', error);
-        alert('Erro ao carregar o sistema. Consulte o console para mais detalhes.');
+        showAlert('Erro ao carregar o sistema. Consulte o console para mais detalhes.', 'error');
     } finally {
-        loadingScreen.hide(); // Oculta a tela de loading
+        loadingScreen.hide(); // Oculta a tela de loading mesmo em caso de erro
     }
 });

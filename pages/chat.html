@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="../styles/chat.css">
     <link rel="stylesheet" href="../styles/notifications.css">
     <link rel="stylesheet" href="../styles/loadingScreen.css">
-
+    <script defer src="../services/temperatureManager.js"></script> <!-- Importa a lógica -->
     <!--
 chat.html
     -->
@@ -31,12 +31,17 @@ chat.html
 
         <!-- Barra de Ícones como Botões -->
         <div class="d-flex justify-content-around mb-3">
+            <!-- Novo Botão de Configurações -->
+            <button id="settings-button" class="btn btn-link text-white" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Configurações">
+                <i class="bi bi-gear" style="font-size: 1.5rem;"></i>
+            </button>
             <button id="select-gpt-button" class="btn btn-link text-white" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Selecionar o modelo GPT para esta conversa">
                 <i class="bi bi-robot" style="font-size: 1.5rem;"></i>
             </button>
             <button id="new-chat-button" class="btn btn-link text-white" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Iniciar uma nova conversa">
                 <i class="bi bi-plus-square" style="font-size: 1.5rem;"></i>
             </button>
+
         </div>
 
         <!-- Campo de pesquisa -->
@@ -76,10 +81,11 @@ chat.html
         <!-- Componente do chatbot -->
         <div id="chatbot-container">
             <!--    <flowise-fullchatbot></flowise-fullchatbot> -->
+                
         </div>
     </div>
 
- 
+
     <!-- Container para mensagens de erro -->
     <div id="error-container" class="alert alert-danger position-fixed bottom-0 end-0 m-3 d-none" role="alert">
         <!-- Mensagem de erro será exibida aqui -->
@@ -181,6 +187,8 @@ chat.html
         });
     </script>
 
+    <!-- Containers adicionais -->
+    <div id="temperature-component" style="position: fixed; bottom: 20px; right: 20px;"></div>
     <div id="toast-container" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1055;">
         <!-- Os toasts serão dinamicamente adicionados aqui -->
     </div>

@@ -1,4 +1,5 @@
 // renderer.js
+import { showRenamePrompt, showAlert, showDeleteConfirmation } from './alertManager.js';
 import { showToast } from './notificationManager.js';
 import Chatbot from "./web.js";
 import ApiService from './apiService.js';
@@ -285,32 +286,35 @@ class UIManager {
     }
 
     // Lida com a renomeação de um chat
+
+
     async handleRenameChat(chatId, oldChatName) {
-        const newChatName = prompt(`Renomear "${oldChatName}" para:`, oldChatName);
-        if (!newChatName || newChatName.trim() === oldChatName.trim()) return;
-    
         try {
+            const newChatName = await showRenamePrompt(oldChatName);
+    
+            if (!newChatName || newChatName === oldChatName) return;
+    
             const params = {
                 company_name: CONFIG.companyName,
                 user_name: CONFIG.userName,
                 user_id: CONFIG.userId,
                 sessionid: chatId,
-                new_chat_name: newChatName.trim()
+                new_chat_name: newChatName
             };
+    
             const renameResponse = await this.apiService.request(
                 'updateChat',
                 params,
                 'POST',
                 null,
-                { includeParamsInQuery: true } // Adiciona esta linha
+                { includeParamsInQuery: true }
             );
-            console.log('Resposta da API de renomeação:', renameResponse);
     
             if (renameResponse.status === "success") {
-                this.showAlert('Chat renomeado com sucesso.', 'success');
+                showAlert('Chat renomeado com sucesso.', 'success');
                 const chatToRename = this.stateManager.chats.find(chat => chat.id === chatId);
                 if (chatToRename) {
-                    chatToRename.name = newChatName.trim();
+                    chatToRename.name = newChatName;
                     this.populateChatMenu(this.stateManager.chats);
                 }
             } else {
@@ -318,49 +322,52 @@ class UIManager {
             }
         } catch (error) {
             console.error('Erro ao renomear o chat:', error);
-            this.showError('Erro ao renomear o chat. Verifique o console para mais detalhes.');
+            showAlert('Erro ao renomear o chat.', 'error');
         }
     }
 
     // Lida com a exclusão de um chat
-    async handleDeleteChat(chatId, chatName) {
-        const confirmDelete = confirm(`Tem certeza que deseja excluir o chat "${chatName}"?`);
-        if (!confirmDelete) return;
+// Lida com a exclusão de um chat
+async handleDeleteChat(chatId, chatName) {
+    try {
+        // Exibe o modal de confirmação
+        const confirmDelete = await showDeleteConfirmation(chatName);
+        if (!confirmDelete) return; // Sai se o usuário cancelar
 
-        try {
-            const params = {
-                company_name: CONFIG.companyName,
-                user_name: CONFIG.userName,
-                user_id: CONFIG.userId,
-                session_id: chatId
-            };
-            const deleteResponse = await this.apiService.request('deleteChat', params, 'DELETE');
-            console.log('Resposta da API de exclusão:', deleteResponse);
+        // Chamada à API para excluir o chat
+        const params = {
+            company_name: CONFIG.companyName,
+            user_name: CONFIG.userName,
+            user_id: CONFIG.userId,
+            session_id: chatId
+        };
 
-            if (deleteResponse.status === "success") {
-                showToast('Chat excluído com sucesso.', 'info');
-                this.stateManager.removeChat(chatId);
-                this.populateChatMenu(this.stateManager.chats);
+        const deleteResponse = await this.apiService.request('deleteChat', params, 'DELETE');
+        console.log('Resposta da API de exclusão:', deleteResponse);
 
-                if (this.stateManager.currentSessionId === chatId) {
-                    this.stateManager.setSessionId("");
-                    await this.initializeChatbot();
-                }
+        if (deleteResponse.status === "success") {
+            showAlert('Chat excluído com sucesso.', 'info');
+            this.stateManager.removeChat(chatId);
+            this.populateChatMenu(this.stateManager.chats);
 
-                // Remover do localStorage se estava selecionado
-                const selectedChatId = localStorage.getItem('selectedChatId');
-                if (selectedChatId === chatId) {
-                    localStorage.removeItem('selectedChatId');
-                }
-            } else {
-                throw new Error(deleteResponse.message || 'Erro desconhecido.');
+            if (this.stateManager.currentSessionId === chatId) {
+                this.stateManager.setSessionId("");
+                await this.initializeChatbot();
             }
-        } catch (error) {
-            showToast('Erro ao excluir o chat', 'danger');
-            console.error('Erro ao excluir o chat:', error);
-            this.showError('Erro ao excluir o chat. Verifique o console para mais detalhes.');
+
+            // Remover do localStorage se estava selecionado
+            const selectedChatId = localStorage.getItem('selectedChatId');
+            if (selectedChatId === chatId) {
+                localStorage.removeItem('selectedChatId');
+            }
+        } else {
+            throw new Error(deleteResponse.message || 'Erro desconhecido.');
         }
+    } catch (error) {
+        showAlert('Erro ao excluir o chat.', 'error');
+        console.error('Erro ao excluir o chat:', error);
     }
+}
 
     /* --- Funções de Seleção de Chats --- */
     // Destaca o chat selecionado na interface

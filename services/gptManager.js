@@ -3,7 +3,7 @@
  * @classdesc Gerencia a interação com os GPTs, incluindo carregamento, seleção e configuração.
  */
 import { showToast } from './notificationManager.js';
-
+import { showRenamePrompt, showAlert, showDeleteConfirmation } from './alertManager.js';
 export default class GPTManager {
     /**
      * @constructor
@@ -188,7 +188,8 @@ export default class GPTManager {
      * @returns {Promise<void>}
      */
     async openModal() {
-        showToast('Carregando lista de GPTs...', 'info');
+        showAlert('Carregando lista de GPTs...', 'success');
+        //showToast('Carregando lista de GPTs...', 'info');
 
         if (this.stateManager.isLoadingGPTsActive()) {
             console.log('A lista de GPTs já está sendo carregada.');

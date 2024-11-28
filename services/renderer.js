@@ -491,8 +491,8 @@ async handleDeleteChat(chatId, chatName) {
                         botMessage: {
                             backgroundColor: "#ffffff",
                             textColor: "#000000",
-                            showAvatar: true,
-                            avatarSrc: "https://www.bhm.tec.br/images/152x152/10788698/favicon.png",
+                            showAvatar: false,
+                            //avatarSrc: "https://www.bhm.tec.br/images/152x152/10788698/favicon.png",
                         },
                         userMessage: {
                             backgroundColor: "#282828",
@@ -546,7 +546,8 @@ async handleDeleteChat(chatId, chatName) {
     // Cria um novo chat e inicializa o chatbot
     async createNewChat() {
         if (this.stateManager.currentSessionId) {
-            showToast('Criando um novo chat...', 'info');
+            showAlert('Criando um novo chat...', 'success');
+            //showToast('Criando um novo chat...', 'info');
             console.log('Criando um novo chat...');
             this.stateManager.setSessionId("");
         }
@@ -751,7 +752,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         console.log('Inicialização concluída. Sistema pronto para uso.');
-        showAlert('Seu sistema de IA está pronto para uso.', 'success');
+        showAlert('LexiDecis: Estou pronto.', 'success');
     } catch (error) {
         console.error('Erro ao inicializar a aplicação:', error);
         showAlert('Erro ao carregar o sistema. Consulte o console para mais detalhes.', 'error');

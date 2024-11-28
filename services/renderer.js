@@ -356,6 +356,7 @@ class UIManager {
                 throw new Error(deleteResponse.message || 'Erro desconhecido.');
             }
         } catch (error) {
+            showToast('Erro ao excluir o chat', 'danger');
             console.error('Erro ao excluir o chat:', error);
             this.showError('Erro ao excluir o chat. Verifique o console para mais detalhes.');
         }
@@ -433,7 +434,7 @@ class UIManager {
                     name: defaultChatName,
                     date: new Date().toISOString()
                 };
-                this.stateManager.addChat(defaultChat);
+                //this.stateManager.addChat(defaultChat); acho que nao precisa disso
                 this.populateChatMenu(this.stateManager.chats);
             }
 
@@ -535,25 +536,10 @@ class UIManager {
         }
     }
 
-    /* --- Funções de Seleção de GPT --- */
-    // Abre o modal para seleção de um GPT
-    // Esta função agora está delegada ao GPTManager
-    // async openModal() {
-    //     await this.gptManager.loadGPTList();
-    //     if (this.modal) {
-    //         this.modal.show();
-    //     } else {
-    //         console.error('Modal não está inicializado.');
-    //     }
-    // }
-
-    // Carrega a lista de GPTs disponíveis a partir da API
-    // Agora delegada ao GPTManager
-
-    /* --- Funções de Criação de Novo Chat --- */
     // Cria um novo chat e inicializa o chatbot
     async createNewChat() {
         if (this.stateManager.currentSessionId) {
+            showToast('Criando um novo chat...', 'info');
             console.log('Criando um novo chat...');
             this.stateManager.setSessionId("");
         }
@@ -564,12 +550,13 @@ class UIManager {
             name: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.name : 'LexiDecis Bot 1',
             date: new Date().toISOString()
         };
-        this.stateManager.addChat(newChat);
+        //this.stateManager.addChat(newChat);
         this.populateChatMenu(this.stateManager.chats);
         this.stateManager.setSessionId(newSessionId);
 
         const chatbotContainer = document.getElementById('chatbot-container');
         if (chatbotContainer) {
+            //showToast('Criando um novo chat...', 'info');
             console.log('Iniciando Flowise FullChatbot');
             chatbotContainer.innerHTML = '';
         }
@@ -716,35 +703,42 @@ class UIManager {
    5. Inicialização da Aplicação
 ========================== */
 // Evento que inicia a aplicação quando o documento é carregado
+// Importa o módulo de LoadingScreen
+import LoadingScreen from './loadingScreen.js';
+
 document.addEventListener('DOMContentLoaded', async () => {
-    const apiService = new ApiService(CONFIG);
-    const stateManager = new StateManager();
-    const uiManager = new UIManager(apiService, stateManager);
-    const gptManager = uiManager.gptManager; // Acessa o GPTManager a partir do UIManager
+    // Inicializa a tela de loading
+    const loadingScreen = new LoadingScreen();
+    loadingScreen.show(); // Exibe a tela de loading
 
-    // Inicialização dos tooltips
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
+    try {
+        // Inicializar a aplicação
+        const apiService = new ApiService(CONFIG);
+        const stateManager = new StateManager();
+        const uiManager = new UIManager(apiService, stateManager);
+        const gptManager = uiManager.gptManager;
 
-    // Carregar GPT selecionado ou padrão
-    const defaultGPTId = "1"; // ID do GPT padrão (LEXIDECIS GPT MINI) versao default
-    await stateManager.loadSelectedGPT(defaultGPTId, apiService);
+        // Inicialização dos tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 
-    // Carregar lista de chats
-    await uiManager.loadChatList();
+        // Carregar configurações iniciais
+        const defaultGPTId = "1"; // GPT padrão
+        await stateManager.loadSelectedGPT(defaultGPTId, apiService);
+        await uiManager.loadChatList();
+        stateManager.loadSelectedChat();
+        await uiManager.initializeChatbot();
 
-    // Carregar chat selecionado
-    stateManager.loadSelectedChat();
+        if (!stateManager.selectedGPTId) {
+            await gptManager.selectDefaultGPT(defaultGPTId);
+        }
 
-    // Inicializar o chatbot após carregar GPT e chat
-    await uiManager.initializeChatbot();
-
-    // Selecionar o GPT padrão se nenhum estiver selecionado
-    if (!stateManager.selectedGPTId) {
-        await gptManager.selectDefaultGPT(defaultGPTId);
+        showToast('Seu sistema de IA está pronto para uso.', 'success');
+    } catch (error) {
+        console.error('Erro ao inicializar a aplicação:', error);
+        alert('Erro ao carregar o sistema. Consulte o console para mais detalhes.');
+    } finally {
+        // Oculta a tela de loading
+        loadingScreen.hide();
     }
-
-    showToast('Seu sistema de IA está pronto para uso.', 'success');
 });

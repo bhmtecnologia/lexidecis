@@ -12,6 +12,8 @@
     <!-- CSS externo (se houver) -->
     <link rel="stylesheet" href="../styles/chat.css">
     <link rel="stylesheet" href="../styles/notifications.css">
+    <link rel="stylesheet" href="../styles/loadingScreen.css">
+
     <!--
     <style>
         /* Manter estilos existentes e evitar sobreposição */
@@ -26,14 +28,25 @@
     -->
 </head>
 <body>
+
     <!-- Sidebar -->
-    <nav id="sidebarMenu" class="sidebar d-flex flex-column p-3">
+    <nav id="sidebarMenu" class="sidebar d-flex flex-column p-3 bg-dark">
         <!--
         <a href="#" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
             <img src="https://www.bhm.tec.br/images/152x152/10788698/favicon.png" alt="Logo" width="30" height="30" class="me-2">
             <span class="fs-4">BHM Tecnologia</span>
         </a>
         -->
+
+        <!-- Barra de Ícones como Botões -->
+        <div class="d-flex justify-content-around mb-3">
+            <button id="select-gpt-button" class="btn btn-link text-white" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Selecionar o modelo GPT para esta conversa">
+                <i class="bi bi-robot" style="font-size: 1.5rem;"></i>
+            </button>
+            <button id="new-chat-button" class="btn btn-link text-white" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Iniciar uma nova conversa">
+                <i class="bi bi-plus-square" style="font-size: 1.5rem;"></i>
+            </button>
+        </div>
 
         <!-- Campo de pesquisa -->
         <div class="input-group mb-3">
@@ -46,22 +59,14 @@
             <!-- A lista de chats será populada dinamicamente -->
         </ul>
 
-        <hr>
+        <hr class="bg-white">
+
         <!-- Botões e campos na sidebar -->
         <ul class="nav nav-pills flex-column overflow-auto mb-auto">
-            <li class="nav-item">
-                <button id="new-chat-button" class="nav-link text-white btn btn-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Iniciar uma nova conversa">
-                    <i class="bi bi-chat-dots"></i> Novo Chat
-                </button>
-            </li>
-            <li>
-                <button id="select-gpt-button" class="nav-link text-white btn btn-link" data-bs-toggle="tooltip" data-bs-placement="right" title="Selecionar o modelo GPT para esta conversa">
-                    <i class="bi bi-robot"></i> Escolher GPT
-                </button>
-            </li>
+            <!-- Mantemos apenas os itens que não foram movidos para a barra de ícones -->
             <li>
                 <a href="#" class="nav-link text-white" data-bs-toggle="collapse" data-bs-target="#submenu" aria-expanded="false">
-                    <i class="bi bi-gear"></i> Configurações
+                    <i class="bi bi-person-fill-gear"></i> USER_MAIL
                 </a>
                 <ul class="collapse list-unstyled" id="submenu">
                     <li><a href="#" class="nav-link text-white ms-3">Perfil</a></li>
@@ -72,12 +77,11 @@
             </li>
         </ul>
 
-        <hr>
+        <hr class="bg-white">
     </nav>
 
     <!-- Conteúdo Principal -->
     <div class="content">
-
         <!-- Componente do chatbot -->
         <div id="chatbot-container">
             <!--    <flowise-fullchatbot></flowise-fullchatbot> -->
@@ -90,7 +94,6 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Escolha um GPT</h5>
-                    
                 </div>
                 <div class="modal-body">
                     <ul class="list-group" id="gpt-list">
@@ -101,30 +104,7 @@
         </div>
     </div>
 
-    <!-- Modal de Renomear Chat -->
-    <div class="modal fade" id="rename-chat-modal" tabindex="-1" aria-labelledby="renameChatModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form id="rename-chat-form">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="renameChatModalLabel">Renomear Chat</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="new-chat-name" class="form-label">Novo Nome do Chat</label>
-                            <input type="text" class="form-control" id="new-chat-name" required>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Salvar</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
+ 
     <!-- Container para mensagens de erro -->
     <div id="error-container" class="alert alert-danger position-fixed bottom-0 end-0 m-3 d-none" role="alert">
         <!-- Mensagem de erro será exibida aqui -->
@@ -152,7 +132,7 @@
         // Verifica se os dados existem
         if (!tenant || !email || !uuid) {
             alert('Sessão expirada ou inválida. Por favor, faça login novamente.');
-            window.location.href = 'index.html';
+            window.location.href = '../index.html';
         } else {
             // Se necessário, você pode usar essas informações aqui
             console.log('Usuário autenticado:', { tenant, email, uuid });
@@ -168,67 +148,67 @@
     </script>
 
     <!-- Implementação do Hammer.js para Swipe -->
-<!-- Adicione uma div de overlay para fechar a sidebar ao clicar fora -->
-<div id="sidebarOverlay" class="sidebar-overlay"></div>
+    <!-- Adicione uma div de overlay para fechar a sidebar ao clicar fora -->
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const sidebar = document.getElementById('sidebarMenu');
-        const overlay = document.getElementById('sidebarOverlay');
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const sidebar = document.getElementById('sidebarMenu');
+            const overlay = document.getElementById('sidebarOverlay');
 
-        // Inicializar o Hammer.js no body
-        const hammer = new Hammer(document.body);
+            // Inicializar o Hammer.js no body
+            const hammer = new Hammer(document.body);
 
-        // Configurar gestos de swipe apenas em áreas fora de inputs e botões
-        hammer.get('swipe').set({ direction: Hammer.DIRECTION_HORIZONTAL });
+            // Configurar gestos de swipe apenas em áreas fora de inputs e botões
+            hammer.get('swipe').set({ direction: Hammer.DIRECTION_HORIZONTAL });
 
-        // Desativar gestos em inputs e botões
-        document.querySelectorAll('input, button').forEach((element) => {
-            const childHammer = new Hammer(element);
-            childHammer.get('swipe').set({ enable: false });
-        });
+            // Desativar gestos em inputs e botões
+            document.querySelectorAll('input, button').forEach((element) => {
+                const childHammer = new Hammer(element);
+                childHammer.get('swipe').set({ enable: false });
+            });
 
-        // Função para abrir a sidebar
-        function openSidebar() {
-            sidebar.classList.add('active');
-            overlay.classList.add('active');
-            document.body.classList.add('sidebar-active');
-        }
-
-        // Função para fechar a sidebar
-        function closeSidebar() {
-            sidebar.classList.remove('active');
-            overlay.classList.remove('active');
-            document.body.classList.remove('sidebar-active');
-        }
-
-        // Detectar swipe para a direita para abrir a sidebar
-        hammer.on('swiperight', function (ev) {
-            if (!sidebar.classList.contains('active')) {
-                console.log('Swipe Right Detectado - Abrindo Sidebar');
-                openSidebar();
+            // Função para abrir a sidebar
+            function openSidebar() {
+                sidebar.classList.add('active');
+                overlay.classList.add('active');
+                document.body.classList.add('sidebar-active');
             }
-        });
 
-        // Detectar swipe para a esquerda para fechar a sidebar
-        hammer.on('swipeleft', function (ev) {
-            if (sidebar.classList.contains('active')) {
-                console.log('Swipe Left Detectado - Fechando Sidebar');
+            // Função para fechar a sidebar
+            function closeSidebar() {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+                document.body.classList.remove('sidebar-active');
+            }
+
+            // Detectar swipe para a direita para abrir a sidebar
+            hammer.on('swiperight', function (ev) {
+                if (!sidebar.classList.contains('active')) {
+                    console.log('Swipe Right Detectado - Abrindo Sidebar');
+                    openSidebar();
+                }
+            });
+
+            // Detectar swipe para a esquerda para fechar a sidebar
+            hammer.on('swipeleft', function (ev) {
+                if (sidebar.classList.contains('active')) {
+                    console.log('Swipe Left Detectado - Fechando Sidebar');
+                    closeSidebar();
+                }
+            });
+
+            // Fechar a sidebar ao clicar no overlay
+            overlay.addEventListener('click', function () {
+                console.log('Clique no Overlay Detectado - Fechando Sidebar');
                 closeSidebar();
-            }
+            });
         });
+    </script>
 
-        // Fechar a sidebar ao clicar no overlay
-        overlay.addEventListener('click', function () {
-            console.log('Clique no Overlay Detectado - Fechando Sidebar');
-            closeSidebar();
-        });
-    });
-</script>
-
-<div id="toast-container" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1055;">
-    <!-- Os toasts serão dinamicamente adicionados aqui -->
-</div>
+    <div id="toast-container" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1055;">
+        <!-- Os toasts serão dinamicamente adicionados aqui -->
+    </div>
 
 </body>
 </html>

@@ -3,115 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Status da OpenAI</title>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }
-        button {
-            padding: 10px 15px;
-            font-size: 16px;
-            margin: 10px;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
-            background-color: #007bff;
-            color: #fff;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-    </style>
+    <title>Modal de Perfil</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <h1>Status da OpenAI - Teste Simulação</h1>
-    <button onclick="toggleMockStatus()">Alternar Status Simulado</button>
-    <button onclick="checkOpenAIStatus()">Consultar Status</button>
+    <div class="container mt-4">
+        <h1>Aplicação Simples</h1>
+        <!-- Ícone de perfil -->
+        <button id="profile-icon" class="btn btn-primary">
+            <i class="bi bi-person-circle"></i> Perfil
+        </button>
+    </div>
 
-    <script>
-        // Variáveis para alternar entre diferentes status simulados
-        const mockStatuses = [
-            "All Systems Operational",
-            "Partial System Outage",
-            "Major Service Outage",
-            "Degraded Performance"
-        ];
-        let currentMockIndex = 0;
+    <!-- Espaço para o modal (carregado dinamicamente) -->
+    <div id="modal-container"></div>
 
-        // Mock fetch para simular diferentes respostas da API
-        const originalFetch = window.fetch;
-        window.fetch = async (...args) => {
-            if (args[0] === 'https://status.openai.com/api/v2/status.json') {
-                return Promise.resolve({
-                    json: () => Promise.resolve({
-                        status: {
-                            description: mockStatuses[currentMockIndex]
-                        }
-                    })
-                });
-            }
-            return originalFetch(...args);
-        };
-
-        // Alterna entre os diferentes status simulados
-        function toggleMockStatus() {
-            currentMockIndex = (currentMockIndex + 1) % mockStatuses.length;
-            alert(`Status simulado alterado para: ${mockStatuses[currentMockIndex]}`);
-        }
-
-        // Função para verificar o status da OpenAI
-        async function checkOpenAIStatus() {
-            try {
-                const response = await fetch('https://status.openai.com/api/v2/status.json');
-                const data = await response.json();
-                const status = data.status.description;
-
-                if (status !== 'All Systems Operational') {
-                    Swal.fire({
-                        title: 'Instabilidade no Sistema',
-                        text: `Status atual: ${status}. Deseja continuar?`,
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonText: 'Continuar',
-                        cancelButtonText: 'Sair do Sistema',
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            console.log('Usuário escolheu continuar.');
-                            // Continuação no sistema
-                        } else {
-                            console.log('Usuário escolheu sair.');
-                            logout(); // Chama a função de logout
-                        }
-                    });
-                } else {
-                    Swal.fire({
-                        title: 'Tudo operacional',
-                        text: 'O sistema está funcionando normalmente.',
-                        icon: 'success',
-                        confirmButtonText: 'OK'
-                    });
-                }
-            } catch (error) {
-                console.error('Erro ao verificar o status:', error);
-            }
-        }
-
-        // Função de logout simulada
-        function logout() {
-            console.log('Fazendo logout...');
-            Swal.fire({
-                title: 'Logout efetuado',
-                text: 'Você saiu do sistema.',
-                icon: 'info',
-                confirmButtonText: 'OK'
-            }).then(() => {
-                window.location.href = '/logout'; // Simulação de logout
-            });
-        }
-    </script>
+    <!-- Bootstrap Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Profile Manager -->
+    <script type="module" src="../services/profileManager.js"></script>
 </body>
 </html>

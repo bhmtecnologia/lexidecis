@@ -188,7 +188,7 @@ export default class GPTManager {
      * @returns {Promise<void>}
      */
     async openModal() {
-        showAlert('Carregando lista de GPTs...', 'success');
+        showAlert('Carregando lista de GPTs...', 'info');
         //showToast('Carregando lista de GPTs...', 'info');
 
         if (this.stateManager.isLoadingGPTsActive()) {
@@ -358,7 +358,7 @@ export default class GPTManager {
      */
     async handleGPTSelection(event, gpt, gptItem) {
         event.preventDefault();
-        showAlert('Selecionando GPT...', 'success');
+        showAlert('GPT selecionado com sucesso.', 'success');
         //showToast('Selecionando GPT...', 'info');
 
         if (this.isEventLocked || this.stateManager.isGPTSelectionLoadingActive()) {

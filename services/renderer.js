@@ -374,17 +374,27 @@ async handleDeleteChat(chatId, chatName) {
     selectChatItem(chatId) {
         console.log('selectChatItem chamado com chatId:', chatId); // Log inicial
     
-        const chatItems = document.querySelectorAll('#chat-list .chat-item');
+        // Filtrar apenas os itens com data-chat-id válido
+        const chatItems = Array.from(document.querySelectorAll('#chat-list .chat-item'))
+            .filter(item => item.dataset.chatId); // Ignora itens inválidos (sem data-chat-id)
+    
         chatItems.forEach(item => {
-            if (item.dataset.chatId === chatId) {
-                item.classList.add('active');
-                localStorage.setItem('selectedChatId', chatId); // Grava no localStorage
-                console.log('Chat selecionado e salvo no localStorage:', chatId); // Log ao salvar no localStorage
+            const itemChatId = item.dataset.chatId; // Obtem o chatId do item
+    
+            if (itemChatId === chatId) {
+                item.classList.add('active'); // Adiciona classe 'active' ao chat selecionado
+                localStorage.setItem('selectedChatId', chatId); // Salva no localStorage
+                //console.log(`Chat selecionado: ${chatId}`);
             } else {
-                item.classList.remove('active');
-                console.log('Chat não selecionado:', item.dataset.chatId); // Log para itens não selecionados
+                item.classList.remove('active'); // Remove classe 'active' de outros itens
+                //console.log(`Chat não selecionado: ${itemChatId}`); // Loga apenas IDs válidos
             }
         });
+    
+        // Caso não haja elementos válidos, mostrar uma mensagem
+        if (chatItems.length === 0) {
+            console.warn('Nenhum chat válido encontrado na lista.');
+        }
     }
 
     /* --- Funções de Filtragem de Chats --- */
@@ -486,7 +496,7 @@ async handleDeleteChat(chatId, chatName) {
                         welcomeMessage: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.description : 'TEXTO DE DESCRIPTION (ENTRADA) DO GPT',
                         backgroundColor: '#ffffff',
                         fontSize: 15,
-                        starterPrompts: [this.stateManager.selectedGPT ? this.stateManager.selectedGPT.starterPrompts : 'TEXTO DE PROMPT (ENTRADA) DO GPT'],
+                        starterPrompts: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.starterPrompts : 'TEXTO DE PROMPT (ENTRADA) DO GPT',
                         clearChatOnReload: false, // Se verdadeiro, o chat será limpo ao recarregar a página. Está desativado para permitir o injection
                         botMessage: {
                             backgroundColor: "#ffffff",

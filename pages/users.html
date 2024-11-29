@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciamento de Usuários</title>
+    <script type="module">
+        import { 
+            initializeApp 
+        } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { 
+            getAuth, 
+            signInWithEmailAndPassword, 
+            signOut, 
+            updateProfile, 
+            updateEmail, 
+            updatePassword, 
+            sendPasswordResetEmail 
+        } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyD7Gh-UfV-LyueKtlUcY9nny_o-UWmlmJM",
+            authDomain: "lexidecis.firebaseapp.com",
+            projectId: "lexidecis",
+            storageBucket: "lexidecis.firebasestorage.app",
+            messagingSenderId: "267899611161",
+            appId: "1:267899611161:web:6d1160f5ade72515ee6288",
+            measurementId: "G-0QSNF8MKR1"
+        };
+
+        // Inicialização do Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // Referências aos elementos do DOM
+        const loginSection = document.getElementById("login-section");
+        const userSection = document.getElementById("user-section");
+        const loginForm = document.getElementById("login-form");
+        const logoutBtn = document.getElementById("logout-btn");
+        const updateForm = document.getElementById("update-form");
+        const resetPasswordForm = document.getElementById("reset-password-form");
+        const userName = document.getElementById("user-name");
+        const userEmail = document.getElementById("user-email");
+
+        // Alterna entre login e perfil
+        function toggleSections(loggedIn) {
+            loginSection.style.display = loggedIn ? "none" : "block";
+            userSection.style.display = loggedIn ? "block" : "none";
+        }
+
+        // Função de login
+        loginForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const email = document.getElementById("login-email").value;
+            const password = document.getElementById("login-password").value;
+
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                toggleSections(true);
+                userName.textContent = user.displayName || "Usuário";
+                userEmail.textContent = user.email;
+                alert("Login bem-sucedido!");
+            } catch (error) {
+                alert("Erro ao fazer login: " + error.message);
+            }
+        });
+
+        // Função de logout
+        logoutBtn.addEventListener("click", async () => {
+            try {
+                await signOut(auth);
+                toggleSections(false);
+                alert("Você saiu da sua conta.");
+            } catch (error) {
+                alert("Erro ao deslogar: " + error.message);
+            }
+        });
+
+        // Função de atualização de perfil
+        updateForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const newName = document.getElementById("update-name").value;
+            const newEmail = document.getElementById("update-email").value;
+            const newPassword = document.getElementById("update-password").value;
+
+            const user = auth.currentUser;
+            if (!user) {
+                alert("Nenhum usuário logado!");
+                return;
+            }
+
+            try {
+                if (newName) {
+                    await updateProfile(user, { displayName: newName });
+                }
+                if (newEmail) {
+                    await updateEmail(user, newEmail);
+                }
+                if (newPassword) {
+                    await updatePassword(user, newPassword);
+                }
+                alert("Perfil atualizado com sucesso!");
+                toggleSections(true);
+                userName.textContent = user.displayName || "Usuário";
+                userEmail.textContent = user.email;
+            } catch (error) {
+                alert("Erro ao atualizar perfil: " + error.message);
+            }
+        });
+
+        // Função de redefinição de senha
+        resetPasswordForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const email = document.getElementById("reset-email").value;
+
+            try {
+                await sendPasswordResetEmail(auth, email);
+                alert("Email de redefinição enviado!");
+            } catch (error) {
+                alert("Erro ao enviar email de redefinição: " + error.message);
+            }
+        });
+
+        // Verifica autenticação ao carregar a página
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                toggleSections(true);
+                userName.textContent = user.displayName || "Usuário";
+                userEmail.textContent = user.email;
+            } else {
+                toggleSections(false);
+            }
+        });
+    </script>
+</head>
+<body>
+    <h1>Gerenciamento de Usuários</h1>
+    
+    <!-- Login -->
+    <div id="login-section">
+        <h2>Login</h2>
+        <form id="login-form">
+            <input type="email" id="login-email" placeholder="Email" required>
+            <input type="password" id="login-password" placeholder="Senha" required>
+            <button type="submit">Entrar</button>
+        </form>
+    </div>
+
+    <!-- Perfil do Usuário -->
+    <div id="user-section" style="display: none;">
+        <h2>Bem-vindo, <span id="user-name"></span></h2>
+        <p>Email: <span id="user-email"></span></p>
+        <button id="logout-btn">Sair</button>
+
+        <h3>Atualizar Perfil</h3>
+        <form id="update-form">
+            <input type="text" id="update-name" placeholder="Novo Nome">
+            <input type="email" id="update-email" placeholder="Novo Email">
+            <input type="password" id="update-password" placeholder="Nova Senha (opcional)">
+            <button type="submit">Atualizar</button>
+        </form>
+
+        <h3>Redefinir Senha</h3>
+        <form id="reset-password-form">
+            <input type="email" id="reset-email" placeholder="Email para redefinição" required>
+            <button type="submit">Enviar Email de Redefinição</button>
+        </form>
+    </div>
+</body>
+</html>

@@ -358,8 +358,8 @@ export default class GPTManager {
      */
     async handleGPTSelection(event, gpt, gptItem) {
         event.preventDefault();
-
-        showToast('Selecionando GPT...', 'info');
+        showAlert('Selecionando GPT...', 'success');
+        //showToast('Selecionando GPT...', 'info');
 
         if (this.isEventLocked || this.stateManager.isGPTSelectionLoadingActive()) {
             console.log('A seleção de GPT está bloqueada.');

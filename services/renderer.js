@@ -482,11 +482,11 @@ async handleDeleteChat(chatId, chatName) {
                         },
                         showTitle: true,
                         title: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.name : 'Escolha um GPT',
-                        titleAvatarSrc:  "https://www.bhm.tec.br/images/152x152/10788698/favicon.png",
-                        welcomeMessage: 'Como posso ajudar?',
+                        //titleAvatarSrc:  "https://www.bhm.tec.br/images/152x152/10788698/favicon.png",
+                        welcomeMessage: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.description : 'TEXTO DE DESCRIPTION (ENTRADA) DO GPT',
                         backgroundColor: '#ffffff',
                         fontSize: 15,
-                        starterPrompts: ['Quem é você?', 'O que sabe fazer?'],
+                        starterPrompts: [this.stateManager.selectedGPT ? this.stateManager.selectedGPT.starterPrompts : 'TEXTO DE PROMPT (ENTRADA) DO GPT'],
                         clearChatOnReload: false, // Se verdadeiro, o chat será limpo ao recarregar a página. Está desativado para permitir o injection
                         botMessage: {
                             backgroundColor: "#ffffff",

@@ -1,29 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modal de Perfil</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Validador de ID Token no Firebase</title>
+  <script src="https://cdn.jsdelivr.net/npm/jwt-decode/build/jwt-decode.min.js"></script>
 </head>
 <body>
-    <div class="container mt-4">
-        <h1>Aplicação Simples</h1>
-        <!-- Ícone de perfil -->
-        <button id="profile-icon" class="btn btn-primary">
-            <i class="bi bi-person-circle"></i> Perfil
-        </button>
-    </div>
+  <div style="max-width: 600px; margin: 50px auto; font-family: Arial, sans-serif;">
+    <h2>Validador de ID Token no Firebase</h2>
+    <p>Cole o seu ID Token JWT no campo abaixo e clique em "Validar" para verificar:</p>
+    <textarea id="jwtInput" rows="8" style="width: 100%; padding: 10px; font-family: monospace;"></textarea>
+    <button onclick="validateIDToken()" style="margin-top: 10px; padding: 10px 20px; font-size: 16px;">Validar</button>
+    <pre id="result" style="margin-top: 20px; background: #f5f5f5; padding: 10px; border: 1px solid #ddd; overflow: auto;"></pre>
+  </div>
 
-    <!-- Espaço para o modal (carregado dinamicamente) -->
-    <div id="modal-container"></div>
+  <script>
+    function validateIDToken() {
+      const resultElement = document.getElementById("result");
+      const token = document.getElementById("jwtInput").value;
 
-    <!-- Bootstrap Bundle JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- Profile Manager -->
-    <script type="module" src="../services/profileManager.js"></script>
+      if (!token) {
+        resultElement.textContent = "Por favor, insira um token.";
+        return;
+      }
+
+      try {
+        // Decodificar o token JWT
+        const decoded = jwt_decode(token);
+        const now = Math.floor(Date.now() / 1000);
+
+        // Validar campos principais
+        if (decoded.iss !== "https://securetoken.google.com/lexidecis") {
+          throw new Error("O emissor (iss) não corresponde.");
+        }
+        if (decoded.aud !== "lexidecis") {
+          throw new Error("O público-alvo (aud) não corresponde.");
+        }
+        if (decoded.exp < now) {
+          throw new Error("O token expirou.");
+        }
+
+        // Exibir informações do token
+        resultElement.textContent = "Token válido! Informações decodificadas:\n" + JSON.stringify(decoded, null, 2);
+      } catch (error) {
+        resultElement.textContent = "Erro ao validar o token:\n" + error.message;
+      }
+    }
+  </script>
 </body>
 </html>

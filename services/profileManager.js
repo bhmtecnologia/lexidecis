@@ -25,17 +25,14 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-class ProfileManager {
+class LexiProfileManager {
     constructor() {
-        this.modalId = "profileModal";
+        this.modalId = "lexi-profile-modal";
         this.ensureBootstrapLoaded();
         this.renderModal();
         this.addEventListeners();
     }
 
-    /**
-     * Garante que as dependências do Bootstrap sejam carregadas apenas uma vez.
-     */
     ensureBootstrapLoaded() {
         const bootstrapCSSUrl = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css";
         const bootstrapIconsUrl = "https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css";
@@ -47,7 +44,6 @@ class ProfileManager {
             );
         }
 
-        // Carregar CSS do Bootstrap
         if (!isResourceLoaded(bootstrapCSSUrl, "link", "href")) {
             const bootstrapCSS = document.createElement("link");
             bootstrapCSS.rel = "stylesheet";
@@ -55,7 +51,6 @@ class ProfileManager {
             document.head.appendChild(bootstrapCSS);
         }
 
-        // Carregar Icons do Bootstrap
         if (!isResourceLoaded(bootstrapIconsUrl, "link", "href")) {
             const bootstrapIcons = document.createElement("link");
             bootstrapIcons.rel = "stylesheet";
@@ -63,7 +58,6 @@ class ProfileManager {
             document.head.appendChild(bootstrapIcons);
         }
 
-        // Carregar JS do Bootstrap
         if (!isResourceLoaded(bootstrapJSUrl, "script", "src")) {
             const bootstrapJS = document.createElement("script");
             bootstrapJS.src = bootstrapJSUrl;
@@ -71,50 +65,47 @@ class ProfileManager {
         }
     }
 
-    /**
-     * Renderiza o modal no DOM.
-     */
     renderModal() {
         const modalHTML = `
-            <div class="modal fade" id="${this.modalId}" tabindex="-1" aria-labelledby="profileModalLabel" aria-hidden="true">
+            <div class="modal fade" id="${this.modalId}" tabindex="-1" aria-labelledby="lexi-profile-modal-label" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="profileModalLabel">Gerenciamento de Perfil</h5>
+                            <h5 class="modal-title" id="lexi-profile-modal-label">Gerenciamento de Perfil</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <form id="login-form">
+                            <form id="lexi-login-form">
                                 <h6>Login</h6>
                                 <div class="mb-3">
-                                    <label for="login-email" class="form-label">Email</label>
-                                    <input type="email" id="login-email" class="form-control" placeholder="Email" required>
+                                    <label for="lexi-login-email" class="form-label">Email</label>
+                                    <input type="email" id="lexi-login-email" class="form-control" placeholder="Email" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="login-password" class="form-label">Senha</label>
-                                    <input type="password" id="login-password" class="form-control" placeholder="Senha" required>
+                                    <label for="lexi-login-password" class="form-label">Senha</label>
+                                    <input type="password" id="lexi-login-password" class="form-control" placeholder="Senha" required>
                                 </div>
                                 <button type="submit" class="btn btn-primary w-100">Entrar</button>
                             </form>
 
                             <hr>
 
-                            <form id="update-form" style="display:none;">
+                            <form id="lexi-update-form" style="display:none;">
                                 <h6>Atualizar Perfil</h6>
                                 <div class="mb-3">
-                                    <label for="profile-name" class="form-label">Nome</label>
-                                    <input type="text" id="profile-name" class="form-control" placeholder="Nome">
+                                    <label for="lexi-profile-name" class="form-label">Nome</label>
+                                    <input type="text" id="lexi-profile-name" class="form-control" placeholder="Nome">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="profile-email" class="form-label">Email</label>
-                                    <input type="email" id="profile-email" class="form-control" placeholder="Email" readonly>
+                                    <label for="lexi-profile-email" class="form-label">Email</label>
+                                    <input type="email" id="lexi-profile-email" class="form-control" placeholder="Email" readonly>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="profile-password" class="form-label">Senha</label>
-                                    <input type="password" id="profile-password" class="form-control" placeholder="Nova senha">
+                                    <label for="lexi-profile-password" class="form-label">Senha</label>
+                                    <input type="password" id="lexi-profile-password" class="form-control" placeholder="Nova senha">
                                 </div>
                                 <button type="submit" class="btn btn-primary w-100">Salvar</button>
-                                <button id="logout-btn" class="btn btn-danger w-100 mt-2">Sair</button>
+                                <button id="lexi-logout-btn" class="btn btn-danger w-100 mt-2">Sair</button>
                             </form>
                         </div>
                     </div>
@@ -122,35 +113,30 @@ class ProfileManager {
             </div>
         `;
 
-        document.getElementById("modal-container").innerHTML = modalHTML;
+        document.getElementById("lexi-modal-container").innerHTML = modalHTML;
     }
 
-    /**
-     * Adiciona eventos ao modal.
-     */
     addEventListeners() {
-        const loginForm = document.getElementById("login-form");
-        const updateForm = document.getElementById("update-form");
-        const logoutBtn = document.getElementById("logout-btn");
+        const loginForm = document.getElementById("lexi-login-form");
+        const updateForm = document.getElementById("lexi-update-form");
+        const logoutBtn = document.getElementById("lexi-logout-btn");
 
-        // Abrir o modal ao clicar no botão
-        document.getElementById("profile-icon").addEventListener("click", () => {
+        document.getElementById("lexi-profile-icon").addEventListener("click", () => {
             const modal = new bootstrap.Modal(document.getElementById(this.modalId));
             modal.show();
         });
 
-        // Login
         loginForm.addEventListener("submit", async (e) => {
             e.preventDefault();
-            const email = document.getElementById("login-email").value;
-            const password = document.getElementById("login-password").value;
+            const email = document.getElementById("lexi-login-email").value;
+            const password = document.getElementById("lexi-login-password").value;
 
             try {
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
 
-                document.getElementById("profile-name").value = user.displayName || "";
-                document.getElementById("profile-email").value = user.email;
+                document.getElementById("lexi-profile-name").value = user.displayName || "";
+                document.getElementById("lexi-profile-email").value = user.email;
 
                 loginForm.style.display = "none";
                 updateForm.style.display = "block";
@@ -161,11 +147,10 @@ class ProfileManager {
             }
         });
 
-        // Atualizar Perfil
         updateForm.addEventListener("submit", async (e) => {
             e.preventDefault();
-            const name = document.getElementById("profile-name").value;
-            const password = document.getElementById("profile-password").value;
+            const name = document.getElementById("lexi-profile-name").value;
+            const password = document.getElementById("lexi-profile-password").value;
 
             const user = auth.currentUser;
             try {
@@ -178,7 +163,6 @@ class ProfileManager {
             }
         });
 
-        // Logout
         logoutBtn.addEventListener("click", async () => {
             try {
                 await signOut(auth);
@@ -193,4 +177,4 @@ class ProfileManager {
 }
 
 // Inicializar o ProfileManager
-new ProfileManager();
+new LexiProfileManager();

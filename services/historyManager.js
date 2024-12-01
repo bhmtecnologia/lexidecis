@@ -8,12 +8,12 @@ export default class HistoryManager {
      * @returns {Promise<void>}
      */
     static async injectChatHistory(sessionId, config) {
-        const apiURL = `${config.flowiseApiHost}/api/v1/chatmessage/${config.flowiseChatflowId}?sessionId=${sessionId}&user_id=${encodeURIComponent(config.userId)}`;
+        const apiURL = `${config.flowise.apiHost}/api/v1/chatmessage/${config.flowise.chatflowId}?sessionId=${sessionId}&user_id=${encodeURIComponent(config.userId)}`;
         try {
             const response = await fetch(apiURL, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${config.flowiseToken}`
+                    'Authorization': `Bearer ${config.flowise.token}`
                 }
             });
 
@@ -36,9 +36,9 @@ export default class HistoryManager {
                 chatId: apiHistory[0]?.chatId || sessionId
             };
 
-            const historyKey = `${config.flowiseChatflowId}_EXTERNAL`;
+            const historyKey = `${config.flowise.chatflowId}_EXTERNAL`;
             localStorage.setItem(historyKey, JSON.stringify(chatData));
-            localStorage.setItem(`${config.flowiseChatflowId}_historyInjected`, 'true');
+            localStorage.setItem(`${config.flowise.chatflowId}_historyInjected`, 'true');
         } catch (error) {
             console.error('Erro ao injetar histórico no localStorage:', error);
             throw new Error('Erro ao buscar histórico de mensagens da API.');
@@ -52,12 +52,12 @@ export default class HistoryManager {
      * @returns {Promise<Array>} - Retorna o histórico de mensagens.
      */
     static async fetchChatHistory(sessionId, config) {
-        const apiURL = `${config.flowiseApiHost}/api/v1/chatmessage/${config.flowiseChatflowId}?sessionId=${sessionId}&user_id=${encodeURIComponent(config.userId)}`;
+        const apiURL = `${config.flowise.apiHost}/api/v1/chatmessage/${config.flowise.chatflowId}?sessionId=${sessionId}&user_id=${encodeURIComponent(config.userId)}`;
         try {
             const response = await fetch(apiURL, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${config.flowiseToken}`
+                    'Authorization': `Bearer ${config.flowise.token}`
                 }
             });
 

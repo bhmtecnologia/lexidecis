@@ -1,4 +1,4 @@
-import { login, resetPassword, verifyAuthState } from './auth.js'; // Importa funções do auth.js
+import { login, resetPassword, verifyAuthState, getJwt } from './auth.js'; // Importa funções do auth.js
 
 document.addEventListener("DOMContentLoaded", () => {
     verifyAuthState(); // Verifica a sessão ao carregar a página
@@ -20,14 +20,23 @@ document.getElementById('login-form').addEventListener('submit', async (event) =
     }
 
     try {
+        // Realiza o login e obtém os dados do usuário
         const user = await login(email, password);
 
+        // Salva os dados do usuário no sessionStorage
         sessionStorage.setItem("tenant", tenant);
         sessionStorage.setItem("uuid", user.uid);
         sessionStorage.setItem("email", user.email);
 
+        // Obtém e salva o JWT no sessionStorage
+        const jwt = await getJwt();
+        sessionStorage.setItem("jwt", jwt);
+
         console.log("Login bem-sucedido:", user);
-        window.location.href = "../pages/chat.html";  /* URL DO CHAT PROTEGIDA APOS LOGIN */
+        console.log("JWT salvo no sessionStorage:", jwt);
+
+        // Redireciona para a página protegida
+        window.location.href = "../pages/chat.html"; /* URL DO CHAT PROTEGIDA APÓS LOGIN */
     } catch (error) {
         console.error("Erro ao realizar login:", error);
         alert(`Erro ao fazer login: ${error.message}`);

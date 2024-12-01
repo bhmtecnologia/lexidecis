@@ -1,0 +1,64 @@
+/* Estilos para a sidebar */
+body {
+    overflow-x: hidden;
+  }
+  
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -250px;
+    width: 250px;
+    height: 100%;
+    background: #343a40;
+    color: white;
+    transition: left 0.3s ease;
+    padding-top: 60px;
+    z-index: 999;
+  }
+  
+  .sidebar.active {
+    left: 0;
+  }
+  
+  .sidebar a {
+    color: white;
+    padding: 15px 20px;
+    display: block;
+    text-decoration: none;
+  }
+  
+  .sidebar a:hover {
+    background: #495057;
+  }
+  
+  /* Estilos para o botão */
+  .toggle-btn-wrapper {
+    position: fixed;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    z-index: 1000;
+  }
+  
+  .toggle-btn {
+    background: #343a40;
+    color: white;
+    border: none;
+    padding: 0;
+    border-radius: 10px 0 0 10px;
+    cursor: pointer;
+    transition: background 0.3s;
+    writing-mode: vertical-lr;
+    text-align: center;
+    font-size: 10px;
+    width: 25px;
+    height: 150px;
+    transform: rotate(180deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .toggle-btn:hover {
+    background: #495057;
+  }

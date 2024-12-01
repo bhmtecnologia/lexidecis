@@ -14,20 +14,68 @@
 =========================== */
 
 :root {
-    --background-color: #363839; /* Cor de fundo uniforme */
-    --text-color: #ffffff; /* Cor do texto */
-    --highlight-bg-color: #ffeb3b; /* Fundo amarelo vibrante para destaque */
-    --highlight-text-color: #000000; /* Cor do texto no destaque */
-    --sidebar-bg-color: #363839; /* Cor de fundo da sidebar */
-    --content-bg-color: #363839; /* Cor de fundo do conteúdo principal */
-    --chatbot-bg-color: #363839; /* Cor de fundo do chatbot */
-    
-    /* Definições das variáveis ausentes */
-    --secondary-color: #f30f0f; /* Cor de fundo das notificações (cinza escuro) */
-    --accent-color: #6200ea; /* Cor da borda lateral das notificações */
-    --card-shadow: rgba(0, 0, 0, 0.2); /* Sombra das notificações */
-    --primary-color: #6200ea; /* Cor dos ícones das notificações */
-    
+    /* Cor de fundo uniforme */
+    --background-color: #363839;
+
+    /* Cor do texto principal dos chats na lista*/
+    --text-color: white;
+
+    /* Fundo amarelo vibrante para destaque nos itens de chat na lista apresentados com a identificacao da pesquisa*/
+    --highlight-bg-color: #ffeb3b;
+
+    /* Cor do texto no destaque nos itens de chat na lista apresentados com a identificacao da pesquisa */
+    --highlight-text-color: #000000;
+
+    /* Cor de fundo da sidebar */
+    --sidebar-bg-color: #363839;
+
+    /* Cor de fundo do conteúdo principal */
+    --content-bg-color: #363839;
+
+    /* Cor de fundo do chatbot */
+    --chatbot-bg-color: #363839;
+
+    /* Cor de fundo das notificações */
+    --secondary-color: #f30f0f;
+
+    /* Cor da borda lateral das notificações */
+    --accent-color: #6200ea;
+
+    /* Sombra das notificações */
+    --card-shadow: rgba(0, 0, 0, 0.2);
+
+    /* Cor dos ícones das notificações */
+    --primary-color: #6200ea;
+
+    /* Cor de fundo do botão de toggle */
+    --sidebar-toggle-bg: #495057;
+
+    /* Cor de fundo do botão de toggle ao passar o mouse */
+    --sidebar-toggle-hover-bg: #3B81F6;
+
+    /* Cor de fundo dos itens de chat ao passar o mouse */
+    --chat-item-hover-bg: #495057;
+
+    /* Cor de texto dos itens de chat ao passar o mouse */
+    --chat-item-hover-text: #f4f6f8;
+
+    /* Cor de fundo dos agrupadores de chat */
+    --chat-group-header-bg: var(--background-color);
+
+    /* Cor de texto dos agrupadores de chat */
+    --chat-group-header-text: var(--text-color);
+
+    /* Cor de fundo do menu dropdown */
+    --dropdown-menu-bg: var(--background-color);
+
+    /* Cor de texto do menu dropdown */
+    --dropdown-menu-text: var(--text-color);
+
+    /* Cor de fundo dos itens do menu dropdown ao passar o mouse */
+    --dropdown-item-hover-bg: #f1f2f3;
+
+    /* Cor de texto dos itens do menu dropdown ao passar o mouse */
+    --dropdown-item-hover-text: #000000;
 }
 
 /* ===========================
@@ -115,7 +163,7 @@ body.sidebar-active .content {
     left: 10px;
     width: 40px;
     height: 40px;
-    background-color: #495057; /* Fundo do botão */
+    background-color: var(--sidebar-toggle-bg); /* Fundo do botão */
     border: none;
     border-radius: 50%; /* Botão arredondado */
     color: var(--text-color); /* Cor do ícone */
@@ -128,7 +176,7 @@ body.sidebar-active .content {
 }
 
 #sidebarToggle:hover {
-    background-color: #3B81F6; /* Cor ao passar o mouse */
+    background-color: var(--sidebar-toggle-hover-bg); /* Cor ao passar o mouse */
 }
 
 /* Notificações em Tempo Real */
@@ -194,7 +242,7 @@ body.sidebar-active .content {
 =========================== */
 
 .modal-content {
-    border: 1px solid rgb(0, 0, 0); /* Define borda roxa */
+    border: 1px solid rgb(0, 0, 0); /* Define borda preta */
     background-color: var(--background-color); /* Fundo consistente */
     color: var(--text-color); /* Cor do texto */
 }
@@ -233,8 +281,8 @@ body.sidebar-active .content {
 
 /* Opção 1: Se você adicionou a classe 'chat-group-header' aos agrupadores */
 #chat-list .chat-group-header {
-    background-color: var(--background-color) !important; /* Sobrescreve o fundo */
-    color: var(--text-color) !important; /* Sobrescreve a cor do texto */
+    background-color: var(--chat-group-header-bg) !important; /* Sobrescreve o fundo */
+    color: var(--chat-group-header-text) !important; /* Sobrescreve a cor do texto */
     font-weight: bold; /* Garante que o texto esteja em negrito */
     border: none; /* Remove a borda */
     cursor: default; /* Indica que não é clicável */
@@ -242,8 +290,8 @@ body.sidebar-active .content {
 
 /* Opção 2: Se você NÃO adicionou uma classe específica, sobrescreva as classes do Bootstrap */
 #chat-list .list-group-item.fw-bold.bg-light.text-muted {
-    background-color: var(--background-color) !important; /* Sobrescreve o fundo */
-    color: var(--text-color) !important; /* Sobrescreve a cor do texto */
+    background-color: var(--chat-group-header-bg) !important; /* Sobrescreve o fundo */
+    color: var(--chat-group-header-text) !important; /* Sobrescreve a cor do texto */
     font-weight: bold; /* Garante que o texto esteja em negrito */
     border: none; /* Remove a borda */
     cursor: default; /* Indica que não é clicável */
@@ -277,8 +325,8 @@ body.sidebar-active .content {
 
 /* Ajuste para realce em hover */
 .chat-item:hover {
-    background-color: #495057; /* Fundo escuro ao passar o mouse */
-    color: #f4f6f8; /* Ajuste sutil na cor do texto */
+    background-color: var(--chat-item-hover-bg); /* Fundo escuro ao passar o mouse */
+    color: var(--chat-item-hover-text); /* Ajuste sutil na cor do texto */
 }
 
 /* Espaçamento entre os itens, exceto o último */
@@ -298,8 +346,13 @@ body.sidebar-active .content {
 
 .dropdown-menu {
     min-width: 8rem; /* Define largura mínima */
-    background-color: var(--background-color); /* Fundo consistente */
-    color: var(--text-color); /* Cor do texto */
+    background-color: var(--dropdown-menu-bg); /* Fundo consistente */
+    color: var(--dropdown-menu-text); /* Cor do texto */
+}
+
+.dropdown-menu .dropdown-item:hover {
+    background-color: var(--dropdown-item-hover-bg); /* Fundo ao passar o mouse */
+    color: var(--dropdown-item-hover-text); /* Cor do texto ao passar o mouse */
 }
 
 /* ===========================
@@ -368,12 +421,6 @@ body.sidebar-active .content {
 /* Cursor para agrupadores (não clicáveis) */
 #chat-list .chat-group-header {
     cursor: default;
-}
-
-/* Tooltip para opções */
-.dropdown-menu .dropdown-item:hover {
-    background-color: #495057; /* Fundo ao passar o mouse */
-    color: #f4f6f8; /* Cor do texto ao passar o mouse */
 }
 
 /* Ajuste da largura do menu de opções para manter consistência */
@@ -457,43 +504,4 @@ body.sidebar-active .content {
 input, button {
     /* Por exemplo, garantir que não haja estilos inesperados ao interagir */
     touch-action: manipulation; /* Melhora a responsividade dos toques */
-}
-
-
-
-
-
-
-
-
-/* Estilos para os itens de GPT */
-.gpt-card {
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-.gpt-card:hover {
-    transform: scale(1.03);
-}
-
-.gpt-card.loading {
-    opacity: 0.6;
-    pointer-events: none;
-}
-
-/* Imagem do GPT */
-.gpt-image {
-    width: 100%;
-    height: 200px; /* Ajuste conforme necessário */
-    object-fit: cover;
-    border-bottom: 1px solid #dee2e6;
-}
-
-/* Título e descrição */
-.card-title {
-    font-size: 1.25rem;
-}
-
-.card-text {
-    flex-grow: 1; /* Garante que a descrição ocupe o espaço disponível */
 }

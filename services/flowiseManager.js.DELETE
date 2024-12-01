@@ -1,0 +1,135 @@
+// flowiseManager.js
+import Chatbot from "./web.js";
+
+export default class FlowiseManager {
+    constructor(config, stateManager, chatManager) {
+        this.config = config; // Configurações globais, como flowiseApiHost, etc.
+        this.stateManager = stateManager; // Gerencia o estado da aplicação
+        this.chatManager = chatManager; // Gerencia a lista de chats e sua exibição
+    }
+
+    async initializeChatbot(containerId) {
+        try {
+            const chatflowConfig = {
+                sessionId: this.stateManager.currentSessionId,
+                ...this.stateManager.gptConfig, // Integração direta do gptConfig
+            };
+
+            console.log('Flowise Chatflow Config:', chatflowConfig);
+
+            // Garantir que o contêiner do chatbot existe
+            const container = document.getElementById(containerId);
+            if (!container) {
+                console.error('Contêiner do chatbot não encontrado.');
+                return;
+            }
+
+            // Limpar o contêiner antes de injetar o chatbot
+            container.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
+
+            // Inicializar o chatbot com as configurações fornecidas
+            Chatbot.initFull({
+                chatflowid: this.config.flowiseChatflowId,
+                apiHost: this.config.flowiseApiHost,
+                chatflowConfig: chatflowConfig,
+                theme: this.getThemeConfig(),
+                observersConfig: {
+                    observeUserInput: (userInput) => this.logUserInput(userInput),
+                    observeMessages: (messages) => this.logMessages(messages),
+                    observeLoading: (loading) => this.handleLoadingState(loading),
+                },
+            });
+
+            console.log('Chatbot inicializado com sucesso.');
+
+        } catch (error) {
+            console.error('Erro ao inicializar o chatbot:', error);
+            throw new Error('Falha ao inicializar o chatbot.');
+        }
+    }
+
+    getThemeConfig() {
+        return {
+            chatWindow: {
+                showTitle: true,
+                title: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.name : 'Escolha um GPT',
+                welcomeMessage: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.description : 'Mensagem inicial padrão',
+                backgroundColor: '#ffffff',
+                fontSize: 15,
+                starterPrompts: (() => {
+                    const prompts = this.stateManager.selectedGPT?.starterPrompts;
+                    if (!prompts) return ['O que sabe fazer?'];
+
+                    return Array.isArray(prompts) ? prompts : prompts.split(',').map(p => p.trim());
+                })(),
+                clearChatOnReload: false, // Evita limpar o chat ao recarregar a página
+                botMessage: {
+                    backgroundColor: "#ffffff",
+                    textColor: "#000000",
+                    showAvatar: false,
+                },
+                userMessage: {
+                    backgroundColor: "#282828",
+                    textColor: "#ffffff",
+                    showAvatar: false,
+                },
+                textInput: {
+                    placeholder: 'Mensagem',
+                    backgroundColor: '#282828',
+                    textColor: '#ffffff',
+                    sendButtonColor: '#ffffff',
+                    maxChars: 5000,
+                    maxCharsWarningMessage: 'Você excedeu o limite de caracteres. Por favor, insira menos de 5000 caracteres.',
+                    autoFocus: true,
+                    sendMessageSound: true,
+                    receiveMessageSound: true,
+                },
+                footer: {
+                    textColor: '#303235',
+                    text: 'Powered by',
+                    company: 'LexiDecis',
+                    companyLink: 'https://lexidecis.com.br',
+                },
+            },
+        };
+    }
+
+    logUserInput(userInput) {
+        console.log('Entrada do usuário:', userInput);
+    }
+
+    logMessages(messages) {
+        console.log('Mensagens do chatbot:', messages);
+    }
+
+    async handleLoadingState(loading) {
+        console.log('Estado de carregamento:', loading);
+
+        if (loading) {
+            console.log('Carregando chatbot...');
+            try {
+                const params = {
+                    company_name: this.config.companyName,
+                    user_name: this.config.userName,
+                    user_id: this.config.userId,
+                    sessionid: this.stateManager.currentSessionId,
+                };
+
+                const response = await this.chatManager.apiService.request('updateChat', params, 'POST', null, { includeParamsInQuery: true });
+                console.log('Resposta da API:', response);
+
+                if (response.status !== "success") {
+                    throw new Error(response.message || 'Erro desconhecido ao atualizar o chat.');
+                }
+
+                // Atualiza a lista de chats após o sucesso
+                await this.chatManager.loadChatList(this.chatManager.populateChatMenu.bind(this.chatManager));
+            } catch (error) {
+                console.error('Erro ao fazer a requisição de atualização do chat:', error);
+                throw new Error('Falha ao atualizar o chat.');
+            }
+        } else {
+            console.log('Chatbot carregado.');
+        }
+    }
+}

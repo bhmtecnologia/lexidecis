@@ -1,4 +1,3 @@
-// auth.js
 import { 
     initializeApp 
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
@@ -30,7 +29,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
 // Limite de inatividade (em milissegundos)
-const INACTIVITY_LIMIT = 15 * 60 * 1000; 
+const INACTIVITY_LIMIT = 10 * 60 * 1000; // 10 minutos para teste
 let inactivityTimeout;
 
 /**
@@ -39,10 +38,37 @@ let inactivityTimeout;
 export async function login(email, password) {
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        console.log("[Login] Usuário logado com sucesso:", {
+            uid: userCredential.user.uid,
+            email: userCredential.user.email,
+        });
+
+        // Configura monitoramento de inatividade após login
+        monitorInactivity();
+
         return userCredential.user;
     } catch (error) {
-        console.error("Erro ao realizar login:", error);
+        console.error("[Login] Erro ao realizar login:", error);
         throw new Error(error.message);
+    }
+}
+
+/**
+ * Obtém o JWT do usuário autenticado.
+ */
+export async function getJwt() {
+    const user = auth.currentUser;
+    if (!user) {
+        throw new Error("[JWT] Usuário não autenticado. Faça login para obter o token.");
+    }
+
+    try {
+        const token = await user.getIdToken(/* forceRefresh */ true);
+        console.log("[JWT] Token obtido com sucesso:", token);
+        return token;
+    } catch (error) {
+        console.error("[JWT] Erro ao obter o token:", error);
+        throw new Error("Erro ao obter o token JWT.");
     }
 }
 
@@ -53,9 +79,10 @@ export async function logout() {
     try {
         await signOut(auth);
         sessionStorage.clear();
-        console.log("Usuário deslogado com sucesso.");
+        console.log("[Logout] Usuário deslogado com sucesso.");
+        window.location.href = "../index.html"; // Garante o redirecionamento para a página de login
     } catch (error) {
-        console.error("Erro ao realizar logout:", error);
+        console.error("[Logout] Erro ao realizar logout:", error);
         throw new Error(error.message);
     }
 }
@@ -66,9 +93,9 @@ export async function logout() {
 export async function resetPassword(email) {
     try {
         await sendPasswordResetEmail(auth, email);
-        console.log("E-mail de redefinição de senha enviado.");
+        console.log("[ResetPassword] E-mail de redefinição de senha enviado.");
     } catch (error) {
-        console.error("Erro ao enviar e-mail de redefinição:", error);
+        console.error("[ResetPassword] Erro ao enviar e-mail de redefinição:", error);
         throw new Error(error.message);
     }
 }
@@ -79,18 +106,20 @@ export async function resetPassword(email) {
 export async function updateUserProfile({ username, newPassword }) {
     const user = auth.currentUser;
     if (!user) {
-        throw new Error("Usuário não autenticado.");
+        throw new Error("[UpdateProfile] Usuário não autenticado.");
     }
 
     if (username) {
         await updateProfile(user, { displayName: username });
+        console.log("[UpdateProfile] Nome de usuário atualizado para:", username);
     }
 
     if (newPassword) {
         if (newPassword.length < 6) {
-            throw new Error("A nova senha deve ter pelo menos 6 caracteres.");
+            throw new Error("[UpdateProfile] A nova senha deve ter pelo menos 6 caracteres.");
         }
         await updatePassword(user, newPassword);
+        console.log("[UpdateProfile] Senha atualizada com sucesso.");
     }
 }
 
@@ -100,11 +129,12 @@ export async function updateUserProfile({ username, newPassword }) {
 export async function reauthenticateUser(currentPassword) {
     const user = auth.currentUser;
     if (!user) {
-        throw new Error("Usuário não autenticado.");
+        throw new Error("[Reauthenticate] Usuário não autenticado.");
     }
 
     const credential = EmailAuthProvider.credential(user.email, currentPassword);
     await reauthenticateWithCredential(user, credential);
+    console.log("[Reauthenticate] Usuário reautenticado com sucesso.");
 }
 
 /**
@@ -112,10 +142,11 @@ export async function reauthenticateUser(currentPassword) {
  */
 export function resetInactivityTimer() {
     clearTimeout(inactivityTimeout);
+    console.log(`[Inatividade] Temporizador reiniciado. O limite é de ${INACTIVITY_LIMIT / 1000} segundos.`);
+
     inactivityTimeout = setTimeout(async () => {
-        await logout();
-        alert("Você foi desconectado por inatividade.");
-        window.location.href = "../index.html";
+        console.log("[Inatividade] Limite de inatividade atingido. Desconectando o usuário...");
+        await logout(); // Executa logout e redireciona
     }, INACTIVITY_LIMIT);
 }
 
@@ -123,11 +154,13 @@ export function resetInactivityTimer() {
  * Configura monitoramento de inatividade do usuário.
  */
 export function monitorInactivity() {
+    console.log("[Inatividade] Monitoramento de inatividade iniciado.");
     window.addEventListener("mousemove", resetInactivityTimer);
     window.addEventListener("keydown", resetInactivityTimer);
     window.addEventListener("scroll", resetInactivityTimer);
     window.addEventListener("click", resetInactivityTimer);
     window.addEventListener("touchstart", resetInactivityTimer);
+
     resetInactivityTimer();
 }
 
@@ -141,19 +174,30 @@ export function verifyAuthState() {
     const publicPages = ["index.html", "login.html"];
 
     if (publicPages.includes(currentPage)) {
-        console.log("Página pública acessada. Verificação de autenticação ignorada.");
+        console.log("[AuthState] Página pública acessada. Verificação de autenticação ignorada.");
         return;
     }
 
-    const tenant = sessionStorage.getItem("tenant");
-    const email = sessionStorage.getItem("email");
-    const uuid = sessionStorage.getItem("uuid");
+    // Verificar estado de autenticação no Firebase
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            console.log("[AuthState] Usuário autenticado:", {
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName,
+            });
 
-    if (!tenant || !email || !uuid) {
-        alert("Sessão expirada ou inválida. Faça login novamente.");
-        window.location.href = "../index.html";
-    } else {
-        console.log("Sessão válida:", { tenant, email, uuid });
-        monitorInactivity();
-    }
+            // Configura monitoramento de inatividade
+            monitorInactivity();
+        } else {
+            alert("Sua sessão expirou. Por favor, faça login novamente.");
+            sessionStorage.clear(); // Limpa dados locais
+            window.location.href = "../index.html"; // Redireciona para login
+        }
+    });
 }
+
+// Torna funções acessíveis no console para depuração
+window.monitorInactivity = monitorInactivity;
+window.resetInactivityTimer = resetInactivityTimer;
+window.verifyAuthState = verifyAuthState;

@@ -48,8 +48,8 @@ export default class GPTManager {
                 <div class="modal-dialog modal-xl modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title">Explorar GPTs</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <h5 class="modal-title" id="gpt-modal-title">Explorar GPTs</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
                         </div>
                         <div class="modal-body">
                             <!-- Barra de Categorias/Tags -->
@@ -72,15 +72,25 @@ export default class GPTManager {
                                 <!-- Itens de GPT serão inseridos aqui dinamicamente -->
                             </div>
                         </div>
+                        <!-- Adição da Seção de Rodapé com Botão Fechar -->
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                        </div>
                     </div>
                 </div>
             </div>
         `;
 
+        // Insere o modal no DOM
         document.body.insertAdjacentHTML('beforeend', modalHtml);
 
         const gptModalElement = document.getElementById('gpt-modal');
-        this.modal = new bootstrap.Modal(gptModalElement);
+
+        // Inicializa o modal corretamente usando getOrCreateInstance
+        this.modal = bootstrap.Modal.getOrCreateInstance(gptModalElement);
+
+        // Reatribui eventos aos elementos com data-bs-dismiss="modal"
+        this.reassignModalEvents(gptModalElement);
 
         // Adiciona evento de input ao campo de busca
         const searchInput = document.getElementById('gpt-search');
@@ -94,6 +104,20 @@ export default class GPTManager {
 
         // Inicializa as categorias
         this.initializeCategories();
+    }
+
+    /**
+     * Reatribui os eventos do Bootstrap aos elementos do modal após inserção dinâmica.
+     * @param {HTMLElement} modalElement - O elemento do modal recém-inserido.
+     */
+    reassignModalEvents(modalElement) {
+        // Seleciona todos os elementos com data-bs-dismiss="modal"
+        const dismissElements = modalElement.querySelectorAll('[data-bs-dismiss="modal"]');
+        dismissElements.forEach((element) => {
+            element.addEventListener('click', () => {
+                this.modal.hide();
+            });
+        });
     }
 
     /**

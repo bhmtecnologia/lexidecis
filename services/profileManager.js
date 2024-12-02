@@ -3,178 +3,183 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
 import { 
     getAuth, 
-    signInWithEmailAndPassword, 
-    signOut, 
     updateProfile, 
-    updateEmail, 
-    updatePassword 
+    updatePassword, 
+    onAuthStateChanged 
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
 
-// Configuração do Firebase
-const firebaseConfig = {
-    apiKey: "AIzaSyD7Gh-UfV-LyueKtlUcY9nny_o-UWmlmJM",
-    authDomain: "lexidecis.firebaseapp.com",
-    projectId: "lexidecis",
-    storageBucket: "lexidecis.firebasestorage.app",
-    messagingSenderId: "267899611161",
-    appId: "1:267899611161:web:6d1160f5ade72515ee6288",
-    measurementId: "G-0QSNF8MKR1"
-};
+/**
+ * @class ProfileManager
+ * @classdesc Gerencia as informações de perfil do usuário autenticado.
+ */
+export default class ProfileManager {
+    /**
+     * @constructor
+     * @param {Object} uiManager - Instância do UIManager para interação com a interface do usuário.
+     */
+    constructor(uiManager) {
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyD7Gh-UfV-LyueKtlUcY9nny_o-UWmlmJM",
+            authDomain: "lexidecis.firebaseapp.com",
+            projectId: "lexidecis",
+            storageBucket: "lexidecis.firebasestorage.app",
+            messagingSenderId: "267899611161",
+            appId: "1:267899611161:web:6d1160f5ade72515ee6288",
+            measurementId: "G-0QSNF8MKR1"
+        };
 
-// Inicialização do Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+        // Inicialização do Firebase
+        this.firebaseApp = initializeApp(firebaseConfig);
+        this.auth = getAuth(this.firebaseApp);
 
-class LexiProfileManager {
-    constructor() {
-        this.modalId = "lexi-profile-modal";
-        this.ensureBootstrapLoaded();
+        this.uiManager = uiManager; // Para exibição de mensagens
+        this.modal = null; // Modal Bootstrap
+        this.modalId = "profile-modal"; // ID do modal no DOM
+
         this.renderModal();
         this.addEventListeners();
     }
 
-    ensureBootstrapLoaded() {
-        const bootstrapCSSUrl = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css";
-        const bootstrapIconsUrl = "https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css";
-        const bootstrapJSUrl = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js";
-
-        function isResourceLoaded(resourceUrl, tagName, attribute) {
-            return Array.from(document.getElementsByTagName(tagName)).some(
-                (tag) => tag[attribute] && tag[attribute].includes(resourceUrl)
-            );
-        }
-
-        if (!isResourceLoaded(bootstrapCSSUrl, "link", "href")) {
-            const bootstrapCSS = document.createElement("link");
-            bootstrapCSS.rel = "stylesheet";
-            bootstrapCSS.href = bootstrapCSSUrl;
-            document.head.appendChild(bootstrapCSS);
-        }
-
-        if (!isResourceLoaded(bootstrapIconsUrl, "link", "href")) {
-            const bootstrapIcons = document.createElement("link");
-            bootstrapIcons.rel = "stylesheet";
-            bootstrapIcons.href = bootstrapIconsUrl;
-            document.head.appendChild(bootstrapIcons);
-        }
-
-        if (!isResourceLoaded(bootstrapJSUrl, "script", "src")) {
-            const bootstrapJS = document.createElement("script");
-            bootstrapJS.src = bootstrapJSUrl;
-            document.body.appendChild(bootstrapJS);
-        }
-    }
-
+    /**
+     * Renderiza o modal de gerenciamento de perfil.
+     */
     renderModal() {
+        if (document.getElementById(this.modalId)) {
+            console.log("Modal de perfil já existe.");
+            return;
+        }
+
         const modalHTML = `
-            <div class="modal fade" id="${this.modalId}" tabindex="-1" aria-labelledby="lexi-profile-modal-label" aria-hidden="true">
-                <div class="modal-dialog">
+            <div class="modal fade" id="${this.modalId}" tabindex="-1" aria-labelledby="profile-modal-title" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="lexi-profile-modal-label">Gerenciamento de Perfil</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <h5 class="modal-title" id="profile-modal-title">Gerenciar Perfil</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
                         </div>
                         <div class="modal-body">
-                            <form id="lexi-login-form">
-                                <h6>Login</h6>
+                            <form id="profile-form">
                                 <div class="mb-3">
-                                    <label for="lexi-login-email" class="form-label">Email</label>
-                                    <input type="email" id="lexi-login-email" class="form-control" placeholder="Email" required>
+                                    <label for="profile-name" class="form-label">Nome</label>
+                                    <input type="text" id="profile-name" class="form-control" placeholder="Nome do usuário">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="lexi-login-password" class="form-label">Senha</label>
-                                    <input type="password" id="lexi-login-password" class="form-control" placeholder="Senha" required>
+                                    <label for="profile-email" class="form-label">Email</label>
+                                    <input type="email" id="profile-email" class="form-control" placeholder="Email do usuário" readonly>
                                 </div>
-                                <button type="submit" class="btn btn-primary w-100">Entrar</button>
+                                <div class="mb-3">
+                                    <label for="profile-password" class="form-label">Nova Senha</label>
+                                    <input type="password" id="profile-password" class="form-control" placeholder="Nova senha">
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Salvar Alterações</button>
                             </form>
-
-                            <hr>
-
-                            <form id="lexi-update-form" style="display:none;">
-                                <h6>Atualizar Perfil</h6>
-                                <div class="mb-3">
-                                    <label for="lexi-profile-name" class="form-label">Nome</label>
-                                    <input type="text" id="lexi-profile-name" class="form-control" placeholder="Nome">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="lexi-profile-email" class="form-label">Email</label>
-                                    <input type="email" id="lexi-profile-email" class="form-control" placeholder="Email" readonly>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="lexi-profile-password" class="form-label">Senha</label>
-                                    <input type="password" id="lexi-profile-password" class="form-control" placeholder="Nova senha">
-                                </div>
-                                <button type="submit" class="btn btn-primary w-100">Salvar</button>
-                                <button id="lexi-logout-btn" class="btn btn-danger w-100 mt-2">Sair</button>
-                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
                         </div>
                     </div>
                 </div>
             </div>
         `;
 
-        document.getElementById("lexi-modal-container").innerHTML = modalHTML;
+        document.body.insertAdjacentHTML("beforeend", modalHTML);
+        const modalElement = document.getElementById(this.modalId);
+        this.modal = new bootstrap.Modal(modalElement);
     }
 
+    /**
+     * Adiciona eventos ao modal e ao formulário.
+     */
     addEventListeners() {
-        const loginForm = document.getElementById("lexi-login-form");
-        const updateForm = document.getElementById("lexi-update-form");
-        const logoutBtn = document.getElementById("lexi-logout-btn");
+        const profileForm = document.getElementById("profile-form");
 
-        document.getElementById("lexi-profile-icon").addEventListener("click", () => {
-            const modal = new bootstrap.Modal(document.getElementById(this.modalId));
-            modal.show();
+        profileForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            await this.saveProfile();
         });
 
-        loginForm.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const email = document.getElementById("lexi-login-email").value;
-            const password = document.getElementById("lexi-login-password").value;
+        document.getElementById(this.modalId).addEventListener("show.bs.modal", () => {
+            this.loadProfileData();
+        });
+    }
 
-            try {
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
+    /**
+     * Carrega os dados do perfil do usuário autenticado.
+     */
+    loadProfileData() {
+        const user = this.auth.currentUser;
 
-                document.getElementById("lexi-profile-name").value = user.displayName || "";
-                document.getElementById("lexi-profile-email").value = user.email;
+        if (!user) {
+            this.uiManager?.showError("Erro: Usuário não autenticado. Faça login novamente.");
+            return;
+        }
 
-                loginForm.style.display = "none";
-                updateForm.style.display = "block";
+        const profileName = document.getElementById("profile-name");
+        const profileEmail = document.getElementById("profile-email");
 
-                alert("Login bem-sucedido!");
-            } catch (error) {
-                alert("Erro ao fazer login: " + error.message);
+        profileName.value = user.displayName || "";
+        profileEmail.value = user.email || "";
+    }
+
+    /**
+     * Salva as alterações feitas no perfil do usuário.
+     */
+    async saveProfile() {
+        const user = this.auth.currentUser;
+
+        if (!user) {
+            this.uiManager?.showError("Erro: Usuário não autenticado.");
+            return;
+        }
+
+        const profileName = document.getElementById("profile-name").value.trim();
+        const profilePassword = document.getElementById("profile-password").value.trim();
+
+        try {
+            if (profileName && profileName !== user.displayName) {
+                await updateProfile(user, { displayName: profileName });
+                console.log("Nome atualizado para:", profileName);
+            }
+
+            if (profilePassword) {
+                if (profilePassword.length < 6) {
+                    this.uiManager?.showError("A senha deve ter pelo menos 6 caracteres.");
+                    return;
+                }
+                await updatePassword(user, profilePassword);
+                console.log("Senha atualizada com sucesso.");
+            }
+
+            this.uiManager?.showSuccess("Perfil atualizado com sucesso!");
+            this.modal.hide();
+        } catch (error) {
+            console.error("Erro ao salvar alterações do perfil:", error);
+            this.uiManager?.showError("Erro ao salvar alterações do perfil. Tente novamente.");
+        }
+    }
+
+    /**
+     * Monitora mudanças no estado de autenticação.
+     */
+    monitorAuthState() {
+        onAuthStateChanged(this.auth, (user) => {
+            if (user) {
+                console.log("Usuário autenticado:", user);
+            } else {
+                console.error("Usuário não autenticado.");
             }
         });
+    }
 
-        updateForm.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const name = document.getElementById("lexi-profile-name").value;
-            const password = document.getElementById("lexi-profile-password").value;
-
-            const user = auth.currentUser;
-            try {
-                if (name) await updateProfile(user, { displayName: name });
-                if (password) await updatePassword(user, password);
-
-                alert("Perfil atualizado com sucesso!");
-            } catch (error) {
-                alert("Erro ao atualizar perfil: " + error.message);
-            }
-        });
-
-        logoutBtn.addEventListener("click", async () => {
-            try {
-                await signOut(auth);
-                loginForm.style.display = "block";
-                updateForm.style.display = "none";
-                alert("Você saiu da sua conta.");
-            } catch (error) {
-                alert("Erro ao deslogar: " + error.message);
-            }
-        });
+    /**
+     * Abre o modal de perfil.
+     */
+    openModal() {
+        if (!this.modal) {
+            console.error("Modal de perfil não inicializado.");
+            return;
+        }
+        this.modal.show();
     }
 }
-
-// Inicializar o ProfileManager
-new LexiProfileManager();

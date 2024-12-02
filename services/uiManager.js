@@ -1,15 +1,20 @@
 import GPTManager from './gptManager.js';
 import HistoryManager from './historyManager.js'; // Importação do HistoryManager
+import ProfileManager from './profileManager.js'; // Importação do ProfileManager
 
 class UIManager {
-    constructor(apiService, stateManager, chatManager, config) {
+    constructor(apiService, stateManager, chatManager, config, auth) {
         this.apiService = apiService;
         this.stateManager = stateManager;
         this.chatManager = chatManager;
         this.config = config; // Armazena o CONFIG na instância
+        this.auth = auth; // Instância do Firebase Auth
 
         // Inicializar o GPTManager com o CONFIG correto
         this.gptManager = new GPTManager(this.apiService, this.stateManager, this, this.config);
+
+        // Inicializar o ProfileManager
+        this.profileManager = new ProfileManager(this.auth, this);
 
         const gptModalElement = document.getElementById('gpt-modal');
         if (gptModalElement) {
@@ -57,6 +62,12 @@ class UIManager {
             selectGPTButton.addEventListener('click', () => this.gptManager.openModal());
         }
 
+        // Botão para abrir o modal de perfil
+        const profileIcon = document.getElementById('profile-icon');
+        if (profileIcon) {
+            profileIcon.addEventListener('click', () => this.profileManager.openModal());
+        }
+
         // Eventos do menu suspenso de configurações (exemplo de logout)
         const logoutItem = document.querySelector('.dropdown-item[href="#logout"]');
         if (logoutItem) {
@@ -98,10 +109,6 @@ class UIManager {
                 name: defaultChatName,
                 date: new Date().toISOString(),
             };
-    
-            // Adiciona o novo chat no estado
-            //this.stateManager.addChat(newChat);
-            //this.chatManager.populateChatMenu(this.stateManager.chats);
     
             // Inicializa o chatbot com o novo chat
             await this.initializeChatbot();

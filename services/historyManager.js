@@ -23,7 +23,7 @@ export default class HistoryManager {
                 message: msg.content,
                 type: msg.role === 'userMessage' ? 'userMessage' : 'apiMessage',
                 dateTime: msg.createdDate || new Date().toISOString(),
-                messageId: msg.id || Math.random().toString(36).substring(2),
+                messageId: msg.id || Math.random().toString(36).substring(2), //sem pressa nenhuma pode ser futuramentesubstituido pelo valor que voltar na api
                 fileUploads: msg.fileUploads || []
             }));
         } catch (error) {

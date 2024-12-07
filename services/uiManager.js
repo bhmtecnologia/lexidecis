@@ -267,7 +267,7 @@ class UIManager {
             console.log('O chatbot está carregando...');
             try {
                 const params = {
-                    company_name: this.config.companyName,
+                    gpt_id: this.stateManager.selectedGPT.id,
                     user_name: this.config.userName,
                     user_id: this.config.userId,
                     sessionid: this.stateManager.currentSessionId

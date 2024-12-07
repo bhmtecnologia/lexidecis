@@ -2,7 +2,6 @@
  * @class GPTManager
  * @classdesc Gerencia a interação com os GPTs, incluindo carregamento, seleção e configuração.
  */
-import { showToast } from './notificationManager.js';
 import { showRenamePrompt, showAlert, showDeleteConfirmation } from './alertManager.js';
 export default class GPTManager {
     /**
@@ -399,7 +398,8 @@ export default class GPTManager {
             await this.selectGPTItem(gpt);
         } catch (error) {
             console.error('Erro ao selecionar GPT:', error);
-            showToast('Erro ao selecionar GPT. Por favor, tente novamente.', 'danger');
+            showAlert('Erro ao selecionar GPT. Por favor, tente novamente.', 'info');
+            //showToast('Erro ao selecionar GPT. Por favor, tente novamente.', 'danger');
         } finally {
             this.isEventLocked = false;
             this.stateManager.setGPTSelectionLoading(false);

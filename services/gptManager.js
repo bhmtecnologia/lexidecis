@@ -3,6 +3,7 @@
  * @classdesc Gerencia a interação com os GPTs, incluindo carregamento, seleção e configuração.
  */
 import { showRenamePrompt, showAlert, showDeleteConfirmation } from './alertManager.js';
+
 export default class GPTManager {
     /**
      * @constructor
@@ -228,6 +229,7 @@ export default class GPTManager {
             }
         } catch (error) {
             console.error('Erro ao abrir o modal de GPT:', error);
+            this.uiManager.showError('Erro ao abrir o modal de GPT. Verifique o console para mais detalhes.');
         }
     }
 
@@ -253,6 +255,16 @@ export default class GPTManager {
         try {
             const gptData = await this.apiService.request('readGPT', params, 'GET');
             console.log('Lista de GPTs:', gptData);
+            
+            // Verificar se gptData está no formato esperado (Array)
+            if (!Array.isArray(gptData)) {
+                throw new Error('Dados de GPT recebidos não são um array.');
+            }
+
+            // Armazenar os GPTs no StateManager
+            this.stateManager.setGPTs(gptData);
+            console.log('GPTs armazenados no StateManager:', this.stateManager.getGPTs());
+
             this.populateCategories(gptData); // Popula as categorias
             this.populateGPTMenu(gptData);
         } catch (error) {
@@ -417,8 +429,8 @@ export default class GPTManager {
         this.stateManager.setSelectedGPT(gpt);
         console.log('GPT selecionado:', gpt);
 
-        if (this.stateManager.selectedGPTId) {
-            await this.fetchGPTConfig(this.stateManager.selectedGPTId);
+        if (gpt.id) {
+            await this.fetchGPTConfig(gpt.id);
 
             if (!this.stateManager.currentSessionId) {
                 this.stateManager.setSessionId(this.generateSessionId());
@@ -426,9 +438,10 @@ export default class GPTManager {
                     id: this.stateManager.currentSessionId,
                     name: gpt.name,
                     date: new Date().toISOString(),
+                    fk_gpt_id: gpt.id // Associar GPT ao chat
                 };
                 this.stateManager.addChat(defaultChat);
-                this.uiManager.populateChatMenu(this.stateManager.chats);
+                this.uiManager.chatManager.populateChatMenu(this.stateManager.chats);
             }
 
             await this.uiManager.initializeChatbot();

@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         tooltipTriggerList.map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 
         // Carrega GPT e inicializa a interface
-        const defaultGPTId = "1";
+        const defaultGPTId = "e1e3cc7b-0ddb-4f7b-981e-0d9d1e20f69b";
         await stateManager.loadSelectedGPT(defaultGPTId, apiService);
         await chatManager.loadChatList(chatManager.populateChatMenu.bind(chatManager));
         stateManager.loadSelectedChat();

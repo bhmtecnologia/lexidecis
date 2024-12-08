@@ -97,22 +97,29 @@ class UIManager {
             // Gera um novo ID de sessão usando o GPTManager
             const newSessionId = this.gptManager.generateSessionId();
             this.stateManager.setSessionId(newSessionId);
-    
+
             // Define o nome padrão do novo chat
             const defaultChatName = this.stateManager.selectedGPT
                 ? this.stateManager.selectedGPT.name
                 : 'Novo Chat';
             
-            // Cria o objeto de novo chat
+            // Cria o objeto de novo chat, associando ao GPT selecionado
             const newChat = {
                 id: newSessionId,
                 name: defaultChatName,
                 date: new Date().toISOString(),
+                fk_gpt_id: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.id : null // Associar GPT ao chat
             };
-    
+
+            // Adiciona o novo chat ao StateManager
+            this.stateManager.addChat(newChat);
+
+            // Atualiza a lista de chats na interface
+            this.chatManager.populateChatMenu(this.stateManager.chats);
+
             // Inicializa o chatbot com o novo chat
             await this.initializeChatbot();
-    
+
             console.log('Novo chat criado com sucesso.');
         } catch (error) {
             console.error('Erro ao criar um novo chat:', error);
@@ -131,18 +138,22 @@ class UIManager {
                 const defaultChat = {
                     id: newSessionId,
                     name: defaultChatName,
-                    date: new Date().toISOString()
+                    date: new Date().toISOString(),
+                    fk_gpt_id: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.id : null // Associar GPT ao chat
                 };
                 this.stateManager.addChat(defaultChat);
                 this.chatManager.populateChatMenu(this.stateManager.chats);
             }
 
             // Limpar histórico injetado
-            localStorage.removeItem(`${this.config.flowise.chatflowId}_historyInjected`);
-            localStorage.removeItem(`${this.config.flowise.chatflowId}_EXTERNAL`);
+// Limpar histórico injetado com as configurações específicas do Flowise do GPT selecionado
+const selectedFlowiseConfig = this.stateManager.selectedGPT.flowiseConfig.flowise;
+localStorage.removeItem(`${selectedFlowiseConfig.chatflowId}_historyInjected`);
+localStorage.removeItem(`${selectedFlowiseConfig.chatflowId}_EXTERNAL`);
 
             // Injetar histórico
-            await HistoryManager.injectChatHistory(this.stateManager.currentSessionId, this.config);
+// Injetar histórico com as configurações específicas do Flowise do GPT selecionado
+await HistoryManager.injectChatHistory(this.stateManager.currentSessionId, this.stateManager.selectedGPT.flowiseConfig);
 
             // Remover o chatbot anterior e inserir um novo
             const chatbotContainer = document.getElementById('chatbot-container');
@@ -153,18 +164,25 @@ class UIManager {
                 return;
             }
 
-            // Configurar o objeto de chatflowConfig com gptConfig completo
+            // Verificar se o GPT selecionado possui flowiseConfig
+            if (!this.stateManager.selectedGPT || !this.stateManager.selectedGPT.flowiseConfig || !this.stateManager.selectedGPT.flowiseConfig.flowise) {
+                console.error('flowiseConfig está indefinido ou incompleto para o GPT selecionado.');
+                this.showError('Configuração do GPT está incompleta. Por favor, selecione outro GPT.');
+                return;
+            }
+
+            // Configurar o objeto de chatflowConfig com flowiseConfig completo
             const chatflowConfig = {
                 sessionId: this.stateManager.currentSessionId,
-                ...this.stateManager.gptConfig
+                ...this.stateManager.selectedGPT.flowiseConfig // Inclui flowiseConfig diretamente
             };
 
             console.log('Chatflow Config:', chatflowConfig);
 
             // Inicializar o chatbot flowise-embed-html com as configurações atualizadas
             Chatbot.initFull({
-                chatflowid: this.config.flowise.chatflowId,
-                apiHost: this.config.flowise.apiHost,
+                chatflowid: this.stateManager.selectedGPT.flowiseConfig.flowise.chatflowId,
+                apiHost: this.stateManager.selectedGPT.flowiseConfig.flowise.apiHost,
                 chatflowConfig: chatflowConfig,
                 theme: {
                     chatWindow: {
@@ -228,9 +246,12 @@ class UIManager {
 
             // Rolagem suave até o contêiner do chatbot
             setTimeout(() => {
-                document.getElementById('chatbot-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                const chatbotElement = document.getElementById('chatbot-container');
+                if (chatbotElement) {
+                    chatbotElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
             }, 500);
-        } catch (error) {
+        } catch (error) { // Bloco catch adicionado
             console.error('Erro ao inicializar o chatbot:', error);
             this.showError('Erro ao inicializar o chatbot. Consulte o console para mais detalhes.');
         }

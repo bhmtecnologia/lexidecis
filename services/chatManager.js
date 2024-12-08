@@ -1,8 +1,19 @@
+/**
+ * @file chatManager.js
+ * @description Gerencia a lista de chats, interações do usuário e comunicação com a API.
+ */
+
 import { showRenamePrompt, showAlert, showDeleteConfirmation } from './alertManager.js';
 import ApiService from './apiService.js'; // Importação corrigida
 import StateManager from './stateManager.js';
 
 class ChatManager {
+    /**
+     * Cria uma instância de ChatManager.
+     * @param {ApiService} apiService - Instância do serviço de API.
+     * @param {StateManager} stateManager - Instância do gerenciador de estado.
+     * @param {Object} config - Configurações da aplicação.
+     */
     constructor(apiService, stateManager, config) {
         this.apiService = apiService;
         this.stateManager = stateManager;
@@ -11,6 +22,11 @@ class ChatManager {
     }
 
     /* --- Funções de Carregamento e População de Menus --- */
+
+    /**
+     * Carrega a lista de chats a partir da API e popula o menu de chats.
+     * @param {Function} populateCallback - Função de callback para popular o menu de chats.
+     */
     async loadChatList(populateCallback) {
         const params = {
             company_name: this.config.companyName,
@@ -18,38 +34,39 @@ class ChatManager {
             user_id: this.config.userId
         };
         try {
+            // Faz a requisição à API para obter a lista de chats
             const chatData = await this.apiService.request('readChat', params, 'GET');
             console.log('Lista de chats recebida da API:', chatData);
 
-            if (chatData.status === 'success' && chatData.data) {
-                let dataArray;
+            let dataArray = [];
 
-                if (typeof chatData.data === 'string') {
-                    dataArray = JSON.parse(chatData.data);
-                    if (!Array.isArray(dataArray)) throw new Error('Dados da API não são um array.');
+            // Verifica se a resposta da API é um objeto com a propriedade 'data'
+            if (chatData && typeof chatData === 'object') {
+                if (Array.isArray(chatData)) {
+                    // Se a resposta for um array diretamente
+                    dataArray = chatData;
                 } else if (Array.isArray(chatData.data)) {
+                    // Se a resposta tiver uma propriedade 'data' que é um array
                     dataArray = chatData.data;
-                } else if (typeof chatData.data === 'object') {
-                    if (Array.isArray(chatData.data.chats)) {
-                        dataArray = chatData.data.chats;
-                    } else {
-                        throw new Error('Estrutura inesperada para a propriedade "data".');
-                    }
+                } else if (chatData.data && Array.isArray(chatData.data.chats)) {
+                    // Se a resposta tiver uma propriedade 'data.chats' que é um array
+                    dataArray = chatData.data.chats;
                 } else {
-                    throw new Error('Tipo desconhecido para a propriedade "data".');
-                }
-
-                // Atualizar estado
-                this.stateManager.chats = dataArray.map(chat => ({
-                    ...chat,
-                    date: chat.last_modified || new Date().toISOString()
-                })).filter(chat => chat.date !== null);
-
-                if (typeof populateCallback === 'function') {
-                    populateCallback(this.stateManager.chats);
+                    throw new Error('Estrutura inesperada da resposta da API.');
                 }
             } else {
-                throw new Error(chatData.message || 'Formato inesperado de resposta.');
+                throw new Error('Resposta da API inválida.');
+            }
+
+            // Atualiza o estado com os chats recebidos
+            this.stateManager.chats = dataArray.map(chat => ({
+                ...chat,
+                date: chat.last_modified || new Date().toISOString()
+            })).filter(chat => chat.date !== null);
+
+            // Chama o callback para popular o menu de chats
+            if (typeof populateCallback === 'function') {
+                populateCallback(this.stateManager.chats);
             }
         } catch (error) {
             console.error('Erro ao carregar lista de chats:', error);
@@ -57,6 +74,10 @@ class ChatManager {
         }
     }
 
+    /**
+     * Popula o menu de chats na interface do usuário.
+     * @param {Array<Object>} chatsToDisplay - Lista de chats a serem exibidos.
+     */
     populateChatMenu(chatsToDisplay) {
         const chatList = document.getElementById('chat-list');
         if (!chatList) {
@@ -118,7 +139,9 @@ class ChatManager {
 
                     chatItem.dataset.chatId = chat.id;
                     chatItem.dataset.chatDate = chat.date;
+                    chatItem.dataset.fkGptId = chat.fk_gpt_id; // Adiciona fk_gpt_id
 
+                    // Adiciona event listeners para os botões de renomear e excluir
                     chatItem.querySelector('.rename-chat-button').addEventListener('click', (event) => {
                         event.stopPropagation();
                         this.handleRenameChat(chat.id, chat.name || 'Chat sem nome');
@@ -128,6 +151,7 @@ class ChatManager {
                         this.handleDeleteChat(chat.id, chat.name);
                     });
 
+                    // Adiciona event listener para o clique no item do chat
                     chatItem.addEventListener('click', this.handleChatClick.bind(this)); // Garante o contexto correto
                     fragment.appendChild(chatItem);
                 });
@@ -138,8 +162,11 @@ class ChatManager {
     }
 
     /* --- Funções de Manipulação de Chats --- */
-    // Lida com o clique em um chat existente na lista
 
+    /**
+     * Lida com o clique em um chat existente na lista.
+     * @param {Event} event - Evento de clique.
+     */
     handleChatClick(event) {
         // Prevenir comportamento padrão do evento
         event.preventDefault();
@@ -154,21 +181,52 @@ class ChatManager {
     
         console.log('Chat clicado:', chatId);
     
-        // Salvar o ID do chat no StateManager
+        // Recupera o chat selecionado
+        const selectedChat = this.stateManager.chats.find(chat => chat.id === chatId);
+    
+        if (!selectedChat) {
+            console.error('Chat selecionado não encontrado:', chatId);
+            this.uiManager.showError('Chat selecionado não encontrado.');
+            return;
+        }
+    
+        const gptId = selectedChat.fk_gpt_id;
+    
+        if (!gptId) {
+            console.warn('Nenhum fk_gpt_id associado ao chat:', chatId);
+            this.uiManager.showError('Este chat não está associado a nenhum GPT.');
+            return;
+        }
+    
+        // Recupera o GPT associado ao fk_gpt_id
+        const associatedGPT = this.stateManager.getGPTById(gptId);
+    
+        if (!associatedGPT) {
+            console.error(`GPT com ID ${gptId} não encontrado para o chat ${chatId}.`);
+            this.uiManager.showError('Configuração do GPT associada ao chat não encontrada.');
+            return;
+        }
+    
+        // Define o GPT selecionado no StateManager
+        this.stateManager.setSelectedGPT(associatedGPT);
+    
+        // Define o sessionId no StateManager
         this.stateManager.setSessionId(chatId);
     
-        // Atualizar o chat selecionado na interface
+        // Atualiza a interface
         this.selectChatItem(chatId);
     
-        // Inicializar o chatbot com o novo chat selecionado
+        // Inicializa o chatbot com o GPT associado
         if (this.uiManager) {
             this.uiManager.initializeChatbot();
         }
     }
 
-
-
-    // Lida com a renomeação de um chat
+    /**
+     * Lida com a renomeação de um chat.
+     * @param {string} chatId - ID do chat a ser renomeado.
+     * @param {string} oldChatName - Nome atual do chat.
+     */
     async handleRenameChat(chatId, oldChatName) {
         try {
             const newChatName = await showRenamePrompt(oldChatName);
@@ -207,7 +265,11 @@ class ChatManager {
         }
     }
 
-    // Lida com a exclusão de um chat
+    /**
+     * Lida com a exclusão de um chat.
+     * @param {string} chatId - ID do chat a ser excluído.
+     * @param {string} chatName - Nome do chat a ser excluído.
+     */
     async handleDeleteChat(chatId, chatName) {
         try {
             // Exibe o modal de confirmação
@@ -250,17 +312,21 @@ class ChatManager {
     }
 
     /* --- Funções de Seleção de Chats --- */
-    // Destaca o chat selecionado na interface
+
+    /**
+     * Destaca o chat selecionado na interface do usuário.
+     * @param {string} chatId - ID do chat a ser destacado.
+     */
     selectChatItem(chatId) {
         console.log('selectChatItem chamado com chatId:', chatId); // Log inicial
-    
+
         // Filtrar apenas os itens com data-chat-id válido
         const chatItems = Array.from(document.querySelectorAll('#chat-list .chat-item'))
             .filter(item => item.dataset.chatId); // Ignora itens inválidos (sem data-chat-id)
-    
+
         chatItems.forEach(item => {
             const itemChatId = item.dataset.chatId; // Obtem o chatId do item
-    
+
             if (itemChatId === chatId) {
                 item.classList.add('active'); // Adiciona classe 'active' ao chat selecionado
                 localStorage.setItem('selectedChatId', chatId); // Salva no localStorage
@@ -270,7 +336,7 @@ class ChatManager {
                 //console.log(`Chat não selecionado: ${itemChatId}`); // Loga apenas IDs válidos
             }
         });
-    
+
         // Caso não haja elementos válidos, mostrar uma mensagem
         if (chatItems.length === 0) {
             console.warn('Nenhum chat válido encontrado na lista.');
@@ -278,7 +344,10 @@ class ChatManager {
     }
 
     /* --- Funções de Filtragem de Chats --- */
-    // Filtra a lista de chats com base no termo de pesquisa
+
+    /**
+     * Filtra a lista de chats com base no termo de pesquisa.
+     */
     filterChatList() {
         const searchInput = document.getElementById('search-input').value.toLowerCase();
         const clearButton = document.getElementById('clear-search-button');
@@ -297,7 +366,9 @@ class ChatManager {
         this.populateChatMenu(filteredChats);
     }
 
-    // Limpa o campo de pesquisa e restaura a lista de chats
+    /**
+     * Limpa o campo de pesquisa e restaura a lista completa de chats.
+     */
     clearSearch() {
         const searchInput = document.getElementById('search-input');
         searchInput.value = '';
@@ -306,7 +377,11 @@ class ChatManager {
         searchInput.focus();
     }
 
-    // Destaca o termo de pesquisa nos nomes dos chats
+    /**
+     * Destaca o termo de pesquisa nos nomes dos chats.
+     * @param {string} text - Texto do nome do chat.
+     * @returns {string} - Texto com o termo de pesquisa destacado.
+     */
     highlightSearch(text) {
         const searchQuery = document.getElementById('search-input').value.toLowerCase();
         if (!searchQuery) return text;
@@ -314,13 +389,22 @@ class ChatManager {
         return text.replace(regex, '<span class="highlight">$1</span>');
     }
 
-    // Escapa caracteres especiais para uso em expressões regulares
+    /**
+     * Escapa caracteres especiais para uso em expressões regulares.
+     * @param {string} string - String a ser escapada.
+     * @returns {string} - String escapada.
+     */
     escapeRegExp(string) {
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
     /* --- Funções Auxiliares --- */
-    // Retorna o grupo de data para agrupar os chats na interface
+
+    /**
+     * Retorna o grupo de data para agrupar os chats na interface.
+     * @param {string} date - Data do chat em formato ISO.
+     * @returns {string} - Grupo de data correspondente.
+     */
     getDateGroup(date) {
         const today = new Date();
         const chatDate = new Date(date);
@@ -340,7 +424,11 @@ class ChatManager {
     }
 
     /* --- Funções de Log e Erro --- */
-    // Exibe uma mensagem de erro na interface
+
+    /**
+     * Exibe uma mensagem de erro na interface do usuário.
+     * @param {string} message - Mensagem de erro a ser exibida.
+     */
     showError(message) {
         const errorContainer = document.getElementById('error-container');
         if (errorContainer) {
@@ -356,16 +444,23 @@ class ChatManager {
         }
     }
 
-    // Exibe uma mensagem de alerta na interface
+    /**
+     * Exibe uma mensagem de alerta na interface do usuário.
+     * @param {string} message - Mensagem a ser exibida.
+     * @param {string} [type='danger'] - Tipo de alerta (e.g., 'success', 'info', 'warning', 'danger').
+     */
     showAlert(message, type = 'danger') {
-        const errorContainer = document.getElementById('error-container');
-        if (errorContainer) {
-            errorContainer.textContent = message;
-            errorContainer.className = `alert alert-${type} position-fixed bottom-0 end-0 m-3`;
-            errorContainer.classList.remove('d-none');
+        const alertContainer = document.getElementById('alert-container');
+        if (alertContainer) {
+            alertContainer.textContent = message;
+            alertContainer.className = `alert alert-${type} position-fixed bottom-0 end-0 m-3`;
+            alertContainer.classList.remove('d-none');
             setTimeout(() => {
-                errorContainer.classList.add('d-none');
+                alertContainer.classList.add('d-none');
             }, 5000);
+        } else {
+            // Se não houver um container específico para alertas, usar o container de erros
+            this.showError(message);
         }
     }
 }

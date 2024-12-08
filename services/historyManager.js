@@ -23,7 +23,7 @@ export default class HistoryManager {
                 message: msg.content,
                 type: msg.role === 'userMessage' ? 'userMessage' : 'apiMessage',
                 dateTime: msg.createdDate || new Date().toISOString(),
-                messageId: msg.id || Math.random().toString(36).substring(2), //sem pressa nenhuma pode ser futuramentesubstituido pelo valor que voltar na api
+                messageId: msg.id || Math.random().toString(36).substring(2), // Pode ser futuramente substituído pelo valor que voltar na API
                 fileUploads: msg.fileUploads || []
             }));
         } catch (error) {
@@ -44,7 +44,7 @@ export default class HistoryManager {
 
             const chatData = {
                 chatHistory: formattedHistory,
-                chatId: formattedHistory[0]?.chatId || sessionId
+                chatId: sessionId // Define chatId como sessionId diretamente
             };
 
             const historyKey = `${config.flowise.chatflowId}_EXTERNAL`;

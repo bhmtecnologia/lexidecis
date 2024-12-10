@@ -188,16 +188,52 @@ await HistoryManager.injectChatHistory(this.stateManager.currentSessionId, this.
                 chatflowid: this.stateManager.selectedGPT.flowiseConfig.flowise.chatflowId,
                 apiHost: this.stateManager.selectedGPT.flowiseConfig.flowise.apiHost,
                 chatflowConfig: chatflowConfig,
+                observersConfig: {
+                    observeUserInput: (userInput) => this.logUserInput(userInput),
+                    observeMessages: (messages) => this.logMessages(messages),
+                    observeLoading: (loading) => this.handleLoadingState(loading)
+                },
                 theme: {
-                    chatWindow: {
-                        button: {
-                            backgroundColor: "#000000"
+                    button: {
+                        backgroundColor: '#282828',
+                        right: 20,
+                        bottom: 20,
+                        size: 48, // small | medium | large | number
+                        dragAndDrop: true,
+                        iconColor: 'white',
+                        customIconSrc: 'https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/google-messages.svg',
+                        autoWindowOpen: {
+                          autoOpen: true, //parameter to control automatic window opening
+                          openDelay: 2, // Optional parameter for delay time in seconds
+                          autoOpenOnMobile: false, //parameter to control automatic window opening in mobile
                         },
+                      },
+                      disclaimer: {
+                        title: 'Aviso',
+                        message: 'Ao utilizar esse serviço, está concordando com os termos de uso <a target="_blank" href="https://v1.lexidecis.com.br/terms.html">Terms & Condition</a>',
+                        textColor: 'black',
+                        buttonColor: '#3b82f6',
+                        buttonText: 'Concordo, iniciar LexiDecis',
+                        buttonTextColor: 'white',
+                        blurredBackgroundColor: 'rgba(0, 0, 0, 0.4)', //The color of the blurred background that overlays the chat interface
+                        backgroundColor: 'white',
+                      },
+                      customCSS: ``, // Add custom CSS styles. Use !important to override default styles
+                      chatWindow: {
                         showTitle: true,
+                        showAgentMessages: true,
+                        //title: 'Flowise Bot',
                         title: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.name : 'Escolha um GPT',
+                        titleAvatarSrc: 'https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/google-messages.svg',
+                        //welcomeMessage: 'Hello! This is custom welcome message',
                         welcomeMessage: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.description : 'Bem-vindo ao assistente',
+                        errorMessage: 'This is a custom error message',
                         backgroundColor: '#ffffff',
-                        fontSize: 14,
+                        backgroundImage: 'enter image path or link', // If set, this will overlap the background color of the chat window.
+                        //height: 700,
+                        //width: 400,
+                        fontSize: 16,
+                        //starterPrompts: ['What is a bot?', 'Who are you?'], // It overrides the starter prompts set by the chat flow passed
                         starterPrompts: (() => {
                             const prompts = this.stateManager.selectedGPT?.starterPrompts;
                         
@@ -211,41 +247,52 @@ await HistoryManager.injectChatHistory(this.stateManager.currentSessionId, this.
                                 ? prompts.split(',').map(p => p.trim()) 
                                 : [prompts];
                         })(),
-                        clearChatOnReload: false,
+                        starterPromptFontSize: 15,
+                        clearChatOnReload: false, // If set to true, the chat will be cleared when the page reloads
+                        sourceDocsTitle: 'Sources:',
+                        renderHTML: true,
                         botMessage: {
-                            backgroundColor: "#ffffff",
-                            textColor: "#000000",
-                            showAvatar: true
+                          backgroundColor: '#ffffff',
+                          textColor: '#000000',
+                          showAvatar: true,
+                          avatarSrc: 'https://raw.githubusercontent.com/zahidkhawaja/langchain-chat-nextjs/main/public/parroticon.png',
                         },
                         userMessage: {
-                            backgroundColor: "#282828",
-                            textColor: "#ffffff",
-                            showAvatar: true
-                        },                
+                          backgroundColor: '#282828',
+                          textColor: '#ffffff',
+                          showAvatar: true,
+                          avatarSrc: 'https://raw.githubusercontent.com/zahidkhawaja/langchain-chat-nextjs/main/public/usericon.png',
+                        },
                         textInput: {
-                            placeholder: 'Digite sua mensagem...',
-                            backgroundColor: '#282828',                    
-                            textColor: '#ffffff',
-                            sendButtonColor: '#ffffff',
-                            maxChars: 5000,
-                            maxCharsWarningMessage: 'Você excedeu o limite de caracteres. Por favor, insira menos de 5000 caracteres.',
-                            autoFocus: true,
-                            sendMessageSound: true,
-                            receiveMessageSound: true,
+                          placeholder: 'Mensagem',
+                          backgroundColor: '#ffffff',
+                          textColor: '#303235',
+                          sendButtonColor: '#3B81F6',
+                          maxChars: 5000,
+                          maxCharsWarningMessage: 'You exceeded the characters limit. Please input less than 5000 characters.',
+                          autoFocus: true, // If not used, autofocus is disabled on mobile and enabled on desktop. true enables it on both, false disables it on both.
+                          sendMessageSound: true,
+                          // sendSoundLocation: "send_message.mp3", // If this is not used, the default sound effect will be played if sendSoundMessage is true.
+                          receiveMessageSound: true,
+                          // receiveSoundLocation: "receive_message.mp3", // If this is not used, the default sound effect will be played if receiveSoundMessage is true.
+                        },
+                        feedback: {
+                          color: '#303235',
+                        },
+                        dateTimeToggle: {
+                          date: true,
+                          time: true,
                         },
                         footer: {
                             textColor: '#303235',
                             text: 'Powered by',
                             company: 'LexiDecis',
                             companyLink: 'https://lexidecis.com.br',
-                        }
-                    },
-                },
-                observersConfig: {
-                    observeUserInput: (userInput) => this.logUserInput(userInput),
-                    observeMessages: (messages) => this.logMessages(messages),
-                    observeLoading: (loading) => this.handleLoadingState(loading)
+                        },
+                      },
+
                 }
+
             });
 
             // Rolagem suave até o contêiner do chatbot

@@ -210,7 +210,7 @@ await HistoryManager.injectChatHistory(this.stateManager.currentSessionId, this.
                       },
                       disclaimer: {
                         title: 'Aviso',
-                        message: 'Ao utilizar esse serviço, está concordando com os termos de uso <a target="_blank" href="https://v1.lexidecis.com.br/terms.html">Terms & Condition</a>',
+                        message: 'Ao utilizar esse serviço, está concordando com os termos de uso <a target="_blank" href="https://v1.lexidecis.com.br/terms.html">Termos & Conditiçoes</a>',
                         textColor: 'black',
                         buttonColor: '#3b82f6',
                         buttonText: 'Concordo, quero iniciar o LexiDecis',
@@ -232,7 +232,7 @@ await HistoryManager.injectChatHistory(this.stateManager.currentSessionId, this.
                         backgroundImage: 'enter image path or link', // If set, this will overlap the background color of the chat window.
                         //height: 700,
                         //width: 400,
-                        fontSize: 13,
+                        fontSize: 14,
                         //starterPrompts: ['What is a bot?', 'Who are you?'], // It overrides the starter prompts set by the chat flow passed
                         starterPrompts: (() => {
                             const prompts = this.stateManager.selectedGPT?.starterPrompts;
@@ -247,7 +247,7 @@ await HistoryManager.injectChatHistory(this.stateManager.currentSessionId, this.
                                 ? prompts.split(',').map(p => p.trim()) 
                                 : [prompts];
                         })(),
-                        starterPromptFontSize: 13,
+                        starterPromptFontSize: 14,
                         clearChatOnReload: false, // If set to true, the chat will be cleared when the page reloads
                         sourceDocsTitle: 'Sources:',
                         renderHTML: true,
@@ -255,7 +255,7 @@ await HistoryManager.injectChatHistory(this.stateManager.currentSessionId, this.
                           backgroundColor: '#ffffff',
                           textColor: '#000000',
                           showAvatar: true,
-                          avatarSrc: 'https://raw.githubusercontent.com/zahidkhawaja/langchain-chat-nextjs/main/public/parroticon.png',
+                          //avatarSrc: 'https://raw.githubusercontent.com/zahidkhawaja/langchain-chat-nextjs/main/public/parroticon.png',
                         },
                         userMessage: {
                           backgroundColor: '#282828',

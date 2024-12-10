@@ -174,7 +174,11 @@ await HistoryManager.injectChatHistory(this.stateManager.currentSessionId, this.
             // Configurar o objeto de chatflowConfig com flowiseConfig completo
             const chatflowConfig = {
                 sessionId: this.stateManager.currentSessionId,
-                ...this.stateManager.selectedGPT.flowiseConfig // Inclui flowiseConfig diretamente
+                // Configurações do flowiseConfig
+                ...this.stateManager.selectedGPT.flowiseConfig,
+                // Adiciona as configurações específicas do GPT
+                ...this.stateManager.gptConfig,
+ 
             };
 
             console.log('Chatflow Config:', chatflowConfig);
@@ -187,13 +191,13 @@ await HistoryManager.injectChatHistory(this.stateManager.currentSessionId, this.
                 theme: {
                     chatWindow: {
                         button: {
-                            backgroundColor: "black"
+                            backgroundColor: "#000000"
                         },
                         showTitle: true,
                         title: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.name : 'Escolha um GPT',
                         welcomeMessage: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.description : 'Bem-vindo ao assistente',
                         backgroundColor: '#ffffff',
-                        fontSize: 15,
+                        fontSize: 14,
                         starterPrompts: (() => {
                             const prompts = this.stateManager.selectedGPT?.starterPrompts;
                         
@@ -211,12 +215,12 @@ await HistoryManager.injectChatHistory(this.stateManager.currentSessionId, this.
                         botMessage: {
                             backgroundColor: "#ffffff",
                             textColor: "#000000",
-                            showAvatar: false
+                            showAvatar: true
                         },
                         userMessage: {
                             backgroundColor: "#282828",
                             textColor: "#ffffff",
-                            showAvatar: false
+                            showAvatar: true
                         },                
                         textInput: {
                             placeholder: 'Digite sua mensagem...',

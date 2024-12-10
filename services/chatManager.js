@@ -70,7 +70,8 @@ class ChatManager {
             }
         } catch (error) {
             console.error('Erro ao carregar lista de chats:', error);
-            this.showError('Erro ao carregar a lista de chats. Verifique o console para mais detalhes.');
+            showAlert('Erro ao carregar a lista de chats. Verifique o console para mais detalhes.', 'error');
+            //this.showError('Erro ao carregar a lista de chats. Verifique o console para mais detalhes.');
         }
     }
 
@@ -186,7 +187,8 @@ class ChatManager {
     
         if (!selectedChat) {
             console.error('Chat selecionado não encontrado:', chatId);
-            this.uiManager.showError('Chat selecionado não encontrado.');
+            showAlert('Chat selecionado não encontrado.', 'error');
+            //this.uiManager.showError('Chat selecionado não encontrado.');
             return;
         }
     
@@ -194,7 +196,8 @@ class ChatManager {
     
         if (!gptId) {
             console.warn('Nenhum fk_gpt_id associado ao chat:', chatId);
-            this.uiManager.showError('Este chat não está associado a nenhum GPT.');
+            showAlert('Este chat não está associado a nenhum GPT.', 'error');
+            //this.uiManager.showError('Este chat não está associado a nenhum GPT.');
             return;
         }
     
@@ -203,7 +206,8 @@ class ChatManager {
     
         if (!associatedGPT) {
             console.error(`GPT com ID ${gptId} não encontrado para o chat ${chatId}.`);
-            this.uiManager.showError('Configuração do GPT associada ao chat não encontrada.');
+            showAlert('Configuração do GPT associada ao chat não encontrada.', 'error');
+            //this.uiManager.showError('Configuração do GPT associada ao chat não encontrada.');
             return;
         }
     
@@ -260,8 +264,8 @@ class ChatManager {
                 throw new Error(renameResponse.message || 'Erro desconhecido.');
             }
         } catch (error) {
-            console.error('Erro ao renomear o chat:', error);
             showAlert('Erro ao renomear o chat.', 'error');
+            console.error('Erro ao renomear o chat:', error);
         }
     }
 

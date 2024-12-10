@@ -114,25 +114,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         const chatManager = new ChatManager(apiService, stateManager, CONFIG);
         const uiManager = new UIManager(apiService, stateManager, chatManager, CONFIG);
 
-        // Instancia o GPTManager
-        const gptManager = new GPTManager(apiService, stateManager, uiManager, CONFIG);
-
-        // Associa o uiManager ao chatManager e vice-versa, se necessário
+        // Associa o uiManager ao chatManager
         chatManager.uiManager = uiManager;
-        chatManager.gptManager = gptManager;
-        uiManager.gptManager = gptManager;
 
         // Configura tooltips do Bootstrap
         const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         tooltipTriggerList.map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 
-        // Carrega a lista de GPTs no início da aplicação
-        await gptManager.loadGPTList();
-
-        // Se desejar exibir automaticamente o modal após carregar
-        // await gptManager.openModal();
-
-        // Inicializa o menu de chats e GPTs
+        // Carrega GPT e inicializa a interface
         const defaultGPTId = "e1e3cc7b-0ddb-4f7b-981e-0d9d1e20f69b";
         await stateManager.loadSelectedGPT(defaultGPTId, apiService);
         await chatManager.loadChatList(chatManager.populateChatMenu.bind(chatManager));
@@ -158,3 +147,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         loadingScreen.hide();
     }
 });
+
+

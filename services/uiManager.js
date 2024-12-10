@@ -213,7 +213,7 @@ await HistoryManager.injectChatHistory(this.stateManager.currentSessionId, this.
                         message: 'Ao utilizar esse serviço, está concordando com os termos de uso <a target="_blank" href="https://v1.lexidecis.com.br/terms.html">Terms & Condition</a>',
                         textColor: 'black',
                         buttonColor: '#3b82f6',
-                        buttonText: 'Concordo, iniciar LexiDecis',
+                        buttonText: 'Concordo, quero iniciar o LexiDecis',
                         buttonTextColor: 'white',
                         blurredBackgroundColor: 'rgba(0, 0, 0, 0.4)', //The color of the blurred background that overlays the chat interface
                         backgroundColor: 'white',
@@ -232,7 +232,7 @@ await HistoryManager.injectChatHistory(this.stateManager.currentSessionId, this.
                         backgroundImage: 'enter image path or link', // If set, this will overlap the background color of the chat window.
                         //height: 700,
                         //width: 400,
-                        fontSize: 16,
+                        fontSize: 13,
                         //starterPrompts: ['What is a bot?', 'Who are you?'], // It overrides the starter prompts set by the chat flow passed
                         starterPrompts: (() => {
                             const prompts = this.stateManager.selectedGPT?.starterPrompts;
@@ -247,7 +247,7 @@ await HistoryManager.injectChatHistory(this.stateManager.currentSessionId, this.
                                 ? prompts.split(',').map(p => p.trim()) 
                                 : [prompts];
                         })(),
-                        starterPromptFontSize: 15,
+                        starterPromptFontSize: 13,
                         clearChatOnReload: false, // If set to true, the chat will be cleared when the page reloads
                         sourceDocsTitle: 'Sources:',
                         renderHTML: true,

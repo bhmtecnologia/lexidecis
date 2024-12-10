@@ -202,17 +202,17 @@ await HistoryManager.injectChatHistory(this.stateManager.currentSessionId, this.
                         dragAndDrop: true,
                         iconColor: 'white',
                         customIconSrc: 'https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/google-messages.svg',
-                        autoWindowOpen: {
-                          autoOpen: true, //parameter to control automatic window opening
-                          openDelay: 2, // Optional parameter for delay time in seconds
-                          autoOpenOnMobile: false, //parameter to control automatic window opening in mobile
-                        },
+                        //autoWindowOpen: {
+                        //  autoOpen: true, //parameter to control automatic window opening
+                        //  openDelay: 2, // Optional parameter for delay time in seconds
+                        //  autoOpenOnMobile: false, //parameter to control automatic window opening in mobile
+                        //},
                       },
                       disclaimer: {
                         title: 'Aviso',
-                        message: 'Ao utilizar esse serviço, está concordando com os termos de uso <a target="_blank" href="https://v1.lexidecis.com.br/terms.html">Termos & Conditiçoes</a>',
+                        message: 'Ao utilizar esse serviço, está concordando com os termos de uso <a target="_blank" href="https://v1.lexidecis.com.br/terms.html">Termos & Condiçoes</a>',
                         textColor: 'black',
-                        buttonColor: '#3b82f6',
+                        buttonColor: '#282828',
                         buttonText: 'Concordo, quero iniciar o LexiDecis',
                         buttonTextColor: 'white',
                         blurredBackgroundColor: 'rgba(0, 0, 0, 0.4)', //The color of the blurred background that overlays the chat interface
@@ -229,7 +229,7 @@ await HistoryManager.injectChatHistory(this.stateManager.currentSessionId, this.
                         welcomeMessage: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.description : 'Bem-vindo ao assistente',
                         errorMessage: 'This is a custom error message',
                         backgroundColor: '#ffffff',
-                        backgroundImage: 'enter image path or link', // If set, this will overlap the background color of the chat window.
+                        //backgroundImage: 'https://v1.lexidecis.com.br/prod/images/gpts/image_dr-lgpd-ico.png', // If set, this will overlap the background color of the chat window.
                         //height: 700,
                         //width: 400,
                         fontSize: 14,
@@ -264,7 +264,7 @@ await HistoryManager.injectChatHistory(this.stateManager.currentSessionId, this.
                           avatarSrc: 'https://raw.githubusercontent.com/zahidkhawaja/langchain-chat-nextjs/main/public/usericon.png',
                         },
                         textInput: {
-                          placeholder: 'Mensagem',
+                          placeholder: 'Mensagem...',
                           backgroundColor: '#ffffff',
                           textColor: '#303235',
                           sendButtonColor: '#3B81F6',

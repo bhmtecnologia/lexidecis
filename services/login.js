@@ -10,21 +10,15 @@ document.addEventListener("DOMContentLoaded", () => {
 document.getElementById('login-form').addEventListener('submit', async (event) => {
     event.preventDefault();
 
-    const tenant = document.getElementById("tenant").value;
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
 
-    if (tenant !== "bhm") {
-        alert("Tenant inválido. Use 'bhm' como tenant.");
-        return;
-    }
 
     try {
         // Realiza o login e obtém os dados do usuário
         const user = await login(email, password);
 
         // Salva os dados do usuário no sessionStorage
-        sessionStorage.setItem("tenant", tenant);
         sessionStorage.setItem("uuid", user.uid);
         sessionStorage.setItem("email", user.email);
 

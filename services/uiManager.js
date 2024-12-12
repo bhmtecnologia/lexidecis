@@ -99,9 +99,7 @@ class UIManager {
             this.stateManager.setSessionId(newSessionId);
 
             // Define o nome padrão do novo chat
-            const defaultChatName = this.stateManager.selectedGPT
-                ? this.stateManager.selectedGPT.name
-                : 'Novo Chat';
+            const defaultChatName = this.stateManager.selectedGPT ? this.stateManager.selectedGPT.name : 'Novo Chat';
             
             // Cria o objeto de novo chat, associando ao GPT selecionado
             const newChat = {
@@ -112,7 +110,7 @@ class UIManager {
             };
 
             // Adiciona o novo chat ao StateManager
-            this.stateManager.addChat(newChat);
+            //this.stateManager.addChat(newChat); //comentei pra n criar chat fantasma
 
             // Atualiza a lista de chats na interface
             this.chatManager.populateChatMenu(this.stateManager.chats);
@@ -202,6 +200,7 @@ await HistoryManager.injectChatHistory(this.stateManager.currentSessionId, this.
                         dragAndDrop: true,
                         iconColor: 'white',
                         customIconSrc: 'https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/google-messages.svg',
+                        //customIconSrc: 'https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/google-messages.svg',
                         //autoWindowOpen: {
                         //  autoOpen: true, //parameter to control automatic window opening
                         //  openDelay: 2, // Optional parameter for delay time in seconds
@@ -224,7 +223,8 @@ await HistoryManager.injectChatHistory(this.stateManager.currentSessionId, this.
                         showAgentMessages: true,
                         //title: 'Flowise Bot',
                         title: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.name : 'Escolha um GPT',
-                        titleAvatarSrc: 'https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/google-messages.svg',
+                        titleAvatarSrc: 'https://www.bhm.tec.br/images/152x152/10788698/favicon.png',
+                        //titleAvatarSrc: 'https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/google-messages.svg',
                         //welcomeMessage: 'Hello! This is custom welcome message',
                         welcomeMessage: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.description : 'Bem-vindo ao assistente',
                         errorMessage: 'This is a custom error message',
@@ -268,8 +268,8 @@ await HistoryManager.injectChatHistory(this.stateManager.currentSessionId, this.
                           backgroundColor: '#ffffff',
                           textColor: '#303235',
                           sendButtonColor: '#3B81F6',
-                          maxChars: 5000,
-                          maxCharsWarningMessage: 'You exceeded the characters limit. Please input less than 5000 characters.',
+                          maxChars: 50000,
+                          maxCharsWarningMessage: 'You exceeded the characters limit. Please input less than 50000 characters.',
                           autoFocus: true, // If not used, autofocus is disabled on mobile and enabled on desktop. true enables it on both, false disables it on both.
                           sendMessageSound: true,
                           // sendSoundLocation: "send_message.mp3", // If this is not used, the default sound effect will be played if sendSoundMessage is true.

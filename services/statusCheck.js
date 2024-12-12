@@ -100,7 +100,7 @@ export default class StatusCheck {
                 // Pergunta ao usuário se deseja continuar
                 return await this.showDecisionModal(
                     'Instabilidade no Sistema',
-                    `O status atual é: ${status}. Deseja continuar?`
+                    `LexiDecis detectou instabilidade na openAI. Status: ${status}. Deseja continuar?`
                 );
             }
 

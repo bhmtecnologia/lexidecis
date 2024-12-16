@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const jwt = await getJwt();
 
         // Faz a chamada à API para obter os endpoints
-        const response = await fetch('https://n8n.prod.bhm.tec.br/webhook/c91017f6-f876-4c56-a4f2-4193efb4fdd7', {
+        const response = await fetch('https://n8n.prod.bhm.tec.br/webhook/5ef965e9-3af4-40c6-b730-2efbd21da0cf', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${jwt}`,

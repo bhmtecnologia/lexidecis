@@ -1,3 +1,11 @@
+const DEBUG_MODE = false; // Altere para true se quiser habilitar os logs
+
+function debugLog(...args) {
+    if (DEBUG_MODE) {
+        console.log(...args);
+    }
+}
+
 export default class StateManager {
     constructor() {
         // Sessão atual
@@ -25,7 +33,7 @@ export default class StateManager {
      */
     setSessionId(sessionId) {
         this.currentSessionId = sessionId;
-        console.log(`Sessão definida para ID: ${sessionId}`);
+        debugLog(`Sessão definida para ID: ${sessionId}`);
     }
 
     /**
@@ -44,7 +52,7 @@ export default class StateManager {
      */
     addChat(chat) {
         this.chats.push(chat);
-        console.log(`Chat adicionado: ${chat.id}`);
+        debugLog(`Chat adicionado: ${chat.id}`);
     }
 
     /**
@@ -53,7 +61,7 @@ export default class StateManager {
      */
     removeChat(chatId) {
         this.chats = this.chats.filter(chat => chat.id !== chatId);
-        console.log(`Chat removido: ${chatId}`);
+        debugLog(`Chat removido: ${chatId}`);
     }
 
     /**
@@ -73,12 +81,12 @@ export default class StateManager {
             const selectedChat = this.chats.find(chat => chat.id === selectedChatId);
             if (selectedChat) {
                 this.setSessionId(selectedChat.id);
-                console.log('Chat selecionado do localStorage:', selectedChat);
+                debugLog('Chat selecionado do localStorage:', selectedChat);
             } else {
                 console.warn('Chat salvo no localStorage não encontrado na lista atual.');
             }
         } else {
-            console.log('Nenhum chat selecionado previamente encontrado no localStorage.');
+            debugLog('Nenhum chat selecionado previamente encontrado no localStorage.');
         }
     }
 
@@ -88,7 +96,7 @@ export default class StateManager {
      */
     saveSelectedChat(chatId) {
         localStorage.setItem('selectedChatId', chatId);
-        console.log(`Chat selecionado salvo no localStorage: ${chatId}`);
+        debugLog(`Chat selecionado salvo no localStorage: ${chatId}`);
     }
 
     /* === GPTs === */
@@ -99,7 +107,7 @@ export default class StateManager {
      */
     setGPTs(gpts) {
         this.gpts = gpts;
-        console.log('GPTs atualizados no StateManager:', this.gpts);
+        debugLog('GPTs atualizados no StateManager:', this.gpts);
     }
 
     /**
@@ -131,7 +139,7 @@ export default class StateManager {
     setSelectedGPT(gpt) {
         this.selectedGPT = gpt;
         this.selectedGPTId = gpt.id || null;
-        console.log(`GPT selecionado: ${gpt.id}`);
+        debugLog(`GPT selecionado: ${gpt.id}`);
     }
 
     /**
@@ -148,7 +156,7 @@ export default class StateManager {
      */
     setGPTConfig(config) {
         this.gptConfig = config;
-        console.log('Configurações do GPT atualizadas:', this.gptConfig);
+        debugLog('Configurações do GPT atualizadas:', this.gptConfig);
     }
 
     /**
@@ -173,9 +181,9 @@ export default class StateManager {
             this.setSelectedGPT(JSON.parse(storedGPT));
             this.selectedGPTId = storedGPTId;
             this.setGPTConfig(JSON.parse(storedGPTConfig));
-            console.log('GPT carregado do localStorage:', this.getSelectedGPT());
+            debugLog('GPT carregado do localStorage:', this.getSelectedGPT());
         } else {
-            console.log(`Selecionando GPT padrão com ID: ${defaultGPTId}`);
+            debugLog(`Selecionando GPT padrão com ID: ${defaultGPTId}`);
             const params = {
                 company_name: sessionStorage.getItem("tenant"),
                 user_name: sessionStorage.getItem("email"),
@@ -189,7 +197,7 @@ export default class StateManager {
                         this.setSelectedGPT(defaultGPT);
                         localStorage.setItem('selectedGPT', JSON.stringify(defaultGPT));
                         localStorage.setItem('selectedGPTId', defaultGPT.id);
-                        console.log('GPT padrão selecionado:', defaultGPT);
+                        debugLog('GPT padrão selecionado:', defaultGPT);
                     } else {
                         console.warn('GPT padrão não encontrado na lista.');
                     }
@@ -210,7 +218,7 @@ export default class StateManager {
      */
     setLoadingGPTs(isLoading) {
         this.isLoadingGPTs = isLoading;
-        console.log(`Estado de carregamento dos GPTs definido para: ${isLoading}`);
+        debugLog(`Estado de carregamento dos GPTs definido para: ${isLoading}`);
     }
 
     /**
@@ -229,7 +237,7 @@ export default class StateManager {
      */
     setGPTSelectionLoading(isLoading) {
         this.isGPTSelectionLoading = isLoading;
-        console.log(`Estado de carregamento na seleção de GPT definido para: ${isLoading}`);
+        debugLog(`Estado de carregamento na seleção de GPT definido para: ${isLoading}`);
     }
 
     /**
@@ -254,6 +262,6 @@ export default class StateManager {
         this.gptConfig = {};
         this.isLoadingGPTs = false;
         this.isGPTSelectionLoading = false;
-        console.log('StateManager foi resetado.');
+        debugLog('StateManager foi resetado.');
     }
 }

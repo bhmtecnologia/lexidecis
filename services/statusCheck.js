@@ -1,3 +1,11 @@
+const DEBUG_MODE = false; // Altere para true se quiser habilitar os logs
+
+function debugLog(...args) {
+    if (DEBUG_MODE) {
+        console.log(...args);
+    }
+}
+
 export default class StatusCheck {
     constructor() {
         this.createAlertStyles();
@@ -94,22 +102,19 @@ export default class StatusCheck {
             const data = await response.json();
             const status = data.status.description;
 
-            console.log(`Status recebido da OpenAI: ${status}`); // Adicionado para depuração
+            debugLog(`Status recebido da OpenAI: ${status}`);
 
             if (status !== 'All Systems Operational') {
-                // Pergunta ao usuário se deseja continuar
                 return await this.showDecisionModal(
                     'Instabilidade no Sistema',
                     `LexiDecis detectou instabilidade na openAI. Status: ${status}. Deseja continuar?`
                 );
             }
 
-            // Tudo operacional, segue automaticamente
-            console.log('Status operacional. Nenhum alerta exibido.');
+            debugLog('Status operacional. Nenhum alerta exibido.');
             return true;
         } catch (error) {
             console.error('Erro ao verificar o status da OpenAI:', error);
-            // Mostra erro ao usuário e pede decisão
             return await this.showDecisionModal(
                 'Erro na Verificação',
                 'Não foi possível verificar o status da OpenAI. Deseja continuar?'

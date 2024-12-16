@@ -1,3 +1,12 @@
+// Defina esta variável no topo do arquivo
+const DEBUG_MODE = false; // Alterar para true para habilitar os logs de debug
+
+function debugLog(...args) {
+    if (DEBUG_MODE) {
+        console.log(...args);
+    }
+}
+
 import { 
     initializeApp 
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
@@ -38,7 +47,7 @@ let inactivityTimeout;
 export async function login(email, password) {
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        console.log("[Login] Usuário logado com sucesso:", {
+        debugLog("[Login] Usuário logado com sucesso:", {
             uid: userCredential.user.uid,
             email: userCredential.user.email,
         });
@@ -64,7 +73,7 @@ export async function getJwt() {
 
     try {
         const token = await user.getIdToken(/* forceRefresh */ true);
-        console.log("[JWT] Token obtido com sucesso:", token);
+        debugLog("[JWT] Token obtido com sucesso:", token);
         return token;
     } catch (error) {
         console.error("[JWT] Erro ao obter o token:", error);
@@ -79,7 +88,7 @@ export async function logout() {
     try {
         await signOut(auth);
         sessionStorage.clear();
-        console.log("[Logout] Usuário deslogado com sucesso.");
+        debugLog("[Logout] Usuário deslogado com sucesso.");
         window.location.href = "../index.html"; // Garante o redirecionamento para a página de login
     } catch (error) {
         console.error("[Logout] Erro ao realizar logout:", error);
@@ -93,7 +102,7 @@ export async function logout() {
 export async function resetPassword(email) {
     try {
         await sendPasswordResetEmail(auth, email);
-        console.log("[ResetPassword] E-mail de redefinição de senha enviado.");
+        debugLog("[ResetPassword] E-mail de redefinição de senha enviado.");
     } catch (error) {
         console.error("[ResetPassword] Erro ao enviar e-mail de redefinição:", error);
         throw new Error(error.message);
@@ -111,7 +120,7 @@ export async function updateUserProfile({ username, newPassword }) {
 
     if (username) {
         await updateProfile(user, { displayName: username });
-        console.log("[UpdateProfile] Nome de usuário atualizado para:", username);
+        debugLog("[UpdateProfile] Nome de usuário atualizado para:", username);
     }
 
     if (newPassword) {
@@ -119,7 +128,7 @@ export async function updateUserProfile({ username, newPassword }) {
             throw new Error("[UpdateProfile] A nova senha deve ter pelo menos 6 caracteres.");
         }
         await updatePassword(user, newPassword);
-        console.log("[UpdateProfile] Senha atualizada com sucesso.");
+        debugLog("[UpdateProfile] Senha atualizada com sucesso.");
     }
 }
 
@@ -134,7 +143,7 @@ export async function reauthenticateUser(currentPassword) {
 
     const credential = EmailAuthProvider.credential(user.email, currentPassword);
     await reauthenticateWithCredential(user, credential);
-    console.log("[Reauthenticate] Usuário reautenticado com sucesso.");
+    debugLog("[Reauthenticate] Usuário reautenticado com sucesso.");
 }
 
 /**
@@ -142,10 +151,10 @@ export async function reauthenticateUser(currentPassword) {
  */
 export function resetInactivityTimer() {
     clearTimeout(inactivityTimeout);
-    console.log(`[Inatividade] Temporizador reiniciado. O limite é de ${INACTIVITY_LIMIT / 1000} segundos.`);
+    debugLog(`[Inatividade] Temporizador reiniciado. O limite é de ${INACTIVITY_LIMIT / 1000} segundos.`);
 
     inactivityTimeout = setTimeout(async () => {
-        console.log("[Inatividade] Limite de inatividade atingido. Desconectando o usuário...");
+        debugLog("[Inatividade] Limite de inatividade atingido. Desconectando o usuário...");
         await logout(); // Executa logout e redireciona
     }, INACTIVITY_LIMIT);
 }
@@ -154,7 +163,7 @@ export function resetInactivityTimer() {
  * Configura monitoramento de inatividade do usuário.
  */
 export function monitorInactivity() {
-    console.log("[Inatividade] Monitoramento de inatividade iniciado.");
+    debugLog("[Inatividade] Monitoramento de inatividade iniciado.");
     window.addEventListener("mousemove", resetInactivityTimer);
     window.addEventListener("keydown", resetInactivityTimer);
     window.addEventListener("scroll", resetInactivityTimer);
@@ -174,14 +183,13 @@ export function verifyAuthState() {
     const publicPages = ["index.html", "login.html"];
 
     if (publicPages.includes(currentPage)) {
-        console.log("[AuthState] Página pública acessada. Verificação de autenticação ignorada.");
+        debugLog("[AuthState] Página pública acessada. Verificação de autenticação ignorada.");
         return;
     }
 
-    // Verificar estado de autenticação no Firebase
     onAuthStateChanged(auth, (user) => {
         if (user) {
-            console.log("[AuthState] Usuário autenticado:", {
+            debugLog("[AuthState] Usuário autenticado:", {
                 uid: user.uid,
                 email: user.email,
                 displayName: user.displayName,

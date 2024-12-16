@@ -1,3 +1,11 @@
+const DEBUG_MODE = false; // Altere para true se quiser habilitar os logs
+
+function debugLog(...args) {
+    if (DEBUG_MODE) {
+        console.log(...args);
+    }
+}
+
 import { getJwt } from './auth.js';
 
 /**
@@ -54,8 +62,8 @@ export default class ApiService {
             fetchOptions.body = JSON.stringify(body);
         }
 
-        // Log para depuração
-        console.log(`Fazendo requisição para ${url} com opções:`, fetchOptions);
+        // Log de debug
+        debugLog(`Fazendo requisição para ${url} com opções:`, fetchOptions);
 
         try {
             const response = await fetch(url, fetchOptions);

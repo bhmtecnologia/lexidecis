@@ -1,3 +1,6 @@
+// Defina esta variável no topo do arquivo
+const DEBUG_MODE = false; // altere para true se quiser habilitar os logs
+
 import GPTManager from './gptManager.js';
 import HistoryManager from './historyManager.js'; // Importação do HistoryManager
 import ProfileManager from './profileManager.js'; // Importação do ProfileManager
@@ -22,6 +25,13 @@ class UIManager {
         }
 
         this.setupUIEvents();
+    }
+
+    /* Método auxiliar para logs */
+    debugLog(...args) {
+        if (DEBUG_MODE) {
+            console.log(...args);
+        }
     }
 
     /* --- Configuração de Eventos da UI --- */
@@ -92,7 +102,7 @@ class UIManager {
     /* --- Função para Criar Novo Chat --- */
     async createNewChat() {
         try {
-            console.log('Criando um novo chat...');
+            this.debugLog('Criando um novo chat...');
             
             // Gera um novo ID de sessão usando o GPTManager
             const newSessionId = this.gptManager.generateSessionId();
@@ -101,24 +111,21 @@ class UIManager {
             // Define o nome padrão do novo chat
             const defaultChatName = this.stateManager.selectedGPT ? this.stateManager.selectedGPT.name : 'Novo Chat';
             
-            // Cria o objeto de novo chat, associando ao GPT selecionado
             const newChat = {
                 id: newSessionId,
                 name: defaultChatName,
                 date: new Date().toISOString(),
-                fk_gpt_id: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.id : null // Associar GPT ao chat
+                fk_gpt_id: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.id : null
             };
 
-            // Adiciona o novo chat ao StateManager
-            //this.stateManager.addChat(newChat); //comentei pra n criar chat fantasma
+            // Não cria chat fantasma
+            // this.stateManager.addChat(newChat);
 
-            // Atualiza a lista de chats na interface
             this.chatManager.populateChatMenu(this.stateManager.chats);
 
-            // Inicializa o chatbot com o novo chat
             await this.initializeChatbot();
 
-            console.log('Novo chat criado com sucesso.');
+            this.debugLog('Novo chat criado com sucesso.');
         } catch (error) {
             console.error('Erro ao criar um novo chat:', error);
             this.showError('Erro ao criar um novo chat. Consulte o console para mais detalhes.');
@@ -129,7 +136,7 @@ class UIManager {
     async initializeChatbot() {
         try {
             if (!this.stateManager.currentSessionId) {
-                const newSessionId = this.gptManager.generateSessionId(); // Usando GPTManager
+                const newSessionId = this.gptManager.generateSessionId();
                 this.stateManager.setSessionId(newSessionId);
 
                 const defaultChatName = this.stateManager.selectedGPT ? this.stateManager.selectedGPT.name : 'Novo chat';
@@ -137,23 +144,20 @@ class UIManager {
                     id: newSessionId,
                     name: defaultChatName,
                     date: new Date().toISOString(),
-                    fk_gpt_id: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.id : null // Associar GPT ao chat
+                    fk_gpt_id: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.id : null
                 };
                 this.stateManager.addChat(defaultChat);
                 this.chatManager.populateChatMenu(this.stateManager.chats);
             }
 
             // Limpar histórico injetado
-// Limpar histórico injetado com as configurações específicas do Flowise do GPT selecionado
-const selectedFlowiseConfig = this.stateManager.selectedGPT.flowiseConfig.flowise;
-localStorage.removeItem(`${selectedFlowiseConfig.chatflowId}_historyInjected`);
-localStorage.removeItem(`${selectedFlowiseConfig.chatflowId}_EXTERNAL`);
+            const selectedFlowiseConfig = this.stateManager.selectedGPT.flowiseConfig.flowise;
+            localStorage.removeItem(`${selectedFlowiseConfig.chatflowId}_historyInjected`);
+            localStorage.removeItem(`${selectedFlowiseConfig.chatflowId}_EXTERNAL`);
 
             // Injetar histórico
-// Injetar histórico com as configurações específicas do Flowise do GPT selecionado
-await HistoryManager.injectChatHistory(this.stateManager.currentSessionId, this.stateManager.selectedGPT.flowiseConfig);
+            await HistoryManager.injectChatHistory(this.stateManager.currentSessionId, this.stateManager.selectedGPT.flowiseConfig);
 
-            // Remover o chatbot anterior e inserir um novo
             const chatbotContainer = document.getElementById('chatbot-container');
             if (chatbotContainer) {
                 chatbotContainer.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
@@ -162,26 +166,20 @@ await HistoryManager.injectChatHistory(this.stateManager.currentSessionId, this.
                 return;
             }
 
-            // Verificar se o GPT selecionado possui flowiseConfig
             if (!this.stateManager.selectedGPT || !this.stateManager.selectedGPT.flowiseConfig || !this.stateManager.selectedGPT.flowiseConfig.flowise) {
                 console.error('flowiseConfig está indefinido ou incompleto para o GPT selecionado.');
                 this.showError('Configuração do GPT está incompleta. Por favor, selecione outro GPT.');
                 return;
             }
 
-            // Configurar o objeto de chatflowConfig com flowiseConfig completo
             const chatflowConfig = {
                 sessionId: this.stateManager.currentSessionId,
-                // Configurações do flowiseConfig
                 ...this.stateManager.selectedGPT.flowiseConfig,
-                // Adiciona as configurações específicas do GPT
                 ...this.stateManager.gptConfig,
- 
             };
 
-            console.log('Chatflow Config:', chatflowConfig);
+            this.debugLog('Chatflow Config:', chatflowConfig);
 
-            // Inicializar o chatbot flowise-embed-html com as configurações atualizadas
             Chatbot.initFull({
                 chatflowid: this.stateManager.selectedGPT.flowiseConfig.flowise.chatflowId,
                 apiHost: this.stateManager.selectedGPT.flowiseConfig.flowise.apiHost,
@@ -196,66 +194,47 @@ await HistoryManager.injectChatHistory(this.stateManager.currentSessionId, this.
                         backgroundColor: '#282828',
                         right: 20,
                         bottom: 20,
-                        size: 48, // small | medium | large | number
+                        size: 48,
                         dragAndDrop: true,
                         iconColor: 'white',
                         customIconSrc: 'https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/google-messages.svg',
-                        //customIconSrc: 'https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/google-messages.svg',
-                        //autoWindowOpen: {
-                        //  autoOpen: true, //parameter to control automatic window opening
-                        //  openDelay: 2, // Optional parameter for delay time in seconds
-                        //  autoOpenOnMobile: false, //parameter to control automatic window opening in mobile
-                        //},
-                      },
-                      disclaimer: {
+                    },
+                    disclaimer: {
                         title: 'Aviso',
                         message: 'Ao utilizar esse serviço, está concordando com os termos de uso <a target="_blank" href="https://v1.lexidecis.com.br/terms.html">Termos & Condiçoes</a>',
                         textColor: 'black',
                         buttonColor: '#282828',
                         buttonText: 'Concordo, quero iniciar o LexiDecis',
                         buttonTextColor: 'white',
-                        blurredBackgroundColor: 'rgba(0, 0, 0, 0.4)', //The color of the blurred background that overlays the chat interface
+                        blurredBackgroundColor: 'rgba(0, 0, 0, 0.4)',
                         backgroundColor: 'white',
-                      },
-                      customCSS: ``, // Add custom CSS styles. Use !important to override default styles
-                      chatWindow: {
+                    },
+                    customCSS: ``,
+                    chatWindow: {
                         showTitle: true,
                         showAgentMessages: true,
-                        //title: 'Flowise Bot',
                         title: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.name : 'Escolha um GPT',
                         titleAvatarSrc: 'https://www.bhm.tec.br/images/152x152/10788698/favicon.png',
-                        //titleAvatarSrc: 'https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/google-messages.svg',
-                        //welcomeMessage: 'Hello! This is custom welcome message',
                         welcomeMessage: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.description : 'Bem-vindo ao assistente',
-                        errorMessage: 'This is a custom error message',
-                        backgroundColor: '#ffffff',
-                        //backgroundImage: 'https://v1.lexidecis.com.br/prod/images/gpts/image_dr-lgpd-ico.png', // If set, this will overlap the background color of the chat window.
-                        //height: 700,
-                        //width: 400,
+                        errorMessage: 'Ops, algo deu errado...',
+                        backgroundColor: '#f1f1f1',
                         fontSize: 14,
-                        //starterPrompts: ['What is a bot?', 'Who are you?'], // It overrides the starter prompts set by the chat flow passed
                         starterPrompts: (() => {
                             const prompts = this.stateManager.selectedGPT?.starterPrompts;
-                        
-                            if (!prompts) return ['TEXTO DE PROMPT (ENTRADA) DO GPT'];
-                        
-                            // Verificar se já é um array
+                            if (!prompts) return ['Quem é voce?'];
                             if (Array.isArray(prompts)) return prompts;
-                        
-                            // Dividir a string em um array, assumindo que as perguntas estão separadas por vírgula
                             return prompts.includes(',') 
                                 ? prompts.split(',').map(p => p.trim()) 
                                 : [prompts];
                         })(),
                         starterPromptFontSize: 14,
-                        clearChatOnReload: false, // If set to true, the chat will be cleared when the page reloads
+                        clearChatOnReload: false,
                         sourceDocsTitle: 'Sources:',
                         renderHTML: true,
                         botMessage: {
-                          backgroundColor: '#ffffff',
+                          backgroundColor: '#f1f1f1',
                           textColor: '#000000',
                           showAvatar: true,
-                          //avatarSrc: 'https://raw.githubusercontent.com/zahidkhawaja/langchain-chat-nextjs/main/public/parroticon.png',
                         },
                         userMessage: {
                           backgroundColor: '#282828',
@@ -265,44 +244,39 @@ await HistoryManager.injectChatHistory(this.stateManager.currentSessionId, this.
                         },
                         textInput: {
                           placeholder: 'Mensagem...',
-                          backgroundColor: '#ffffff',
-                          textColor: '#303235',
-                          sendButtonColor: '#3B81F6',
+                          backgroundColor: '#282828',
+                          textColor: '#f1f1f1',
+                          sendButtonColor: '#f1f1f1',
                           maxChars: 50000,
-                          maxCharsWarningMessage: 'You exceeded the characters limit. Please input less than 50000 characters.',
-                          autoFocus: true, // If not used, autofocus is disabled on mobile and enabled on desktop. true enables it on both, false disables it on both.
+                          maxCharsWarningMessage: 'Você excedeu o limite de caracteres. Insira menos de 50000 caracteres.',
+                          autoFocus: true,
                           sendMessageSound: true,
-                          // sendSoundLocation: "send_message.mp3", // If this is not used, the default sound effect will be played if sendSoundMessage is true.
                           receiveMessageSound: true,
-                          // receiveSoundLocation: "receive_message.mp3", // If this is not used, the default sound effect will be played if receiveSoundMessage is true.
                         },
                         feedback: {
-                          color: '#303235',
+                          color: '#282828',
                         },
                         dateTimeToggle: {
                           date: true,
                           time: true,
                         },
                         footer: {
-                            textColor: '#303235',
+                            textColor: '#282828',
                             text: 'Powered by',
                             company: 'LexiDecis',
                             companyLink: 'https://lexidecis.com.br',
                         },
-                      },
-
+                    }
                 }
-
             });
 
-            // Rolagem suave até o contêiner do chatbot
             setTimeout(() => {
                 const chatbotElement = document.getElementById('chatbot-container');
                 if (chatbotElement) {
                     chatbotElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
             }, 500);
-        } catch (error) { // Bloco catch adicionado
+        } catch (error) {
             console.error('Erro ao inicializar o chatbot:', error);
             this.showError('Erro ao inicializar o chatbot. Consulte o console para mais detalhes.');
         }
@@ -325,18 +299,18 @@ await HistoryManager.injectChatHistory(this.stateManager.currentSessionId, this.
     }
 
     logUserInput(userInput) {
-        console.log({ userInput });
+        this.debugLog({ userInput });
     }
 
     logMessages(messages) {
-        console.log({ messages });
+        this.debugLog({ messages });
     }
 
     async handleLoadingState(loading) {
-        console.log({ loading });
+        this.debugLog({ loading });
 
         if (loading) {
-            console.log('O chatbot está carregando...');
+            this.debugLog('O chatbot está carregando...');
             try {
                 const params = {
                     gpt_id: this.stateManager.selectedGPT.id,
@@ -345,10 +319,10 @@ await HistoryManager.injectChatHistory(this.stateManager.currentSessionId, this.
                     sessionid: this.stateManager.currentSessionId
                 };
                 const response = await this.apiService.request('updateChat', params, 'POST', null, { includeParamsInQuery: true });
-                console.log('Resposta da API:', response);
+                this.debugLog('Resposta da API:', response);
 
                 if (response.status === "success") {
-                    console.log('Resposta da API bem-sucedida:', response.message);
+                    this.debugLog('Resposta da API bem-sucedida:', response.message);
                     await this.chatManager.loadChatList(this.chatManager.populateChatMenu.bind(this.chatManager));
                 } else {
                     throw new Error(response.message || 'Erro desconhecido.');
@@ -358,7 +332,7 @@ await HistoryManager.injectChatHistory(this.stateManager.currentSessionId, this.
                 this.showError('Erro ao atualizar o chat. Verifique o console para mais detalhes.');
             }
         } else {
-            console.log('O chatbot terminou de carregar.');
+            this.debugLog('O chatbot terminou de carregar.');
         }
     }
 

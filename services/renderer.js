@@ -1,3 +1,11 @@
+const DEBUG_MODE = false; // Altere para true se quiser habilitar os logs
+
+function debugLog(...args) {
+    if (DEBUG_MODE) {
+        console.log(...args);
+    }
+}
+
 import { showRenamePrompt, showAlert, showDeleteConfirmation } from './alertManager.js';
 import { showToast } from './notificationManager.js';
 import Chatbot from "./web.js";
@@ -49,7 +57,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await new Promise((resolve, reject) => {
             onAuthStateChanged(auth, (user) => {
                 if (user) {
-                    console.log("[AuthState] Usuário autenticado:", {
+                    debugLog("[AuthState] Usuário autenticado:", {
                         uid: user.uid,
                         email: user.email,
                         displayName: user.displayName,
@@ -85,7 +93,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const data = await response.json();
 
         // Verifica e acessa corretamente os dados de endpoints
-        const endpoints = data?.endpoints; // Acessa diretamente "endpoints"
+        const endpoints = data?.endpoints;
         if (!endpoints || !endpoints.flowise || !endpoints.apiCredentials) {
             throw new Error("Dados de endpoints inválidos ou não encontrados.");
         }
@@ -94,7 +102,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         CONFIG.flowise = { ...endpoints.flowise };
         CONFIG.apiCredentials = { ...endpoints.apiCredentials };
 
-        console.log("[Endpoints] Configurações atualizadas com sucesso:", CONFIG);
+        debugLog("[Endpoints] Configurações atualizadas com sucesso:", CONFIG);
 
         // Verifica o status do sistema
         const userAgreed = await statusCheck.checkStatus();
@@ -106,13 +114,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        console.log('Sistema ok ou status aprovado pelo usuário. Continuando inicialização...');
+        debugLog('Sistema ok ou status aprovado pelo usuário. Continuando inicialização...');
 
         // Inicializa os serviços e gerenciadores
         const apiService = new ApiService(CONFIG);
         const stateManager = new StateManager();
         const chatManager = new ChatManager(apiService, stateManager, CONFIG);
-        const uiManager = new UIManager(apiService, stateManager, chatManager, CONFIG);
+        const uiManager = new UIManager(apiService, stateManager, chatManager, CONFIG, auth);
 
         // Associa o uiManager ao chatManager
         chatManager.uiManager = uiManager;
@@ -122,7 +130,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         tooltipTriggerList.map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 
         // Carrega GPT e inicializa a interface
-        const defaultGPTId = "e1e3cc7b-0ddb-4f7b-981e-0d9d1e20f69b"; // carrega o gpt padrao a partir do id dele. trazendo todas as configuracoes
+        const defaultGPTId = "e1e3cc7b-0ddb-4f7b-981e-0d9d1e20f69b"; // carrega o gpt padrao
         await stateManager.loadSelectedGPT(defaultGPTId, apiService);
         await chatManager.loadChatList(chatManager.populateChatMenu.bind(chatManager));
         stateManager.loadSelectedChat();
@@ -132,14 +140,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             await chatManager.selectDefaultGPT(defaultGPTId);
         }
 
-        console.log('Inicialização concluída. Sistema pronto para uso.');
+        debugLog('Inicialização concluída. Sistema pronto para uso.');
         showAlert('LexiDecis: Estou pronto.', 'success');
     } catch (error) {
         console.error('Erro ao inicializar a aplicação:', error);
         showAlert('Erro ao carregar o sistema. Consulte o console para mais detalhes.', 'error');
 
         // Redireciona para a página de login se necessário
-        if (error.message.includes("não autenticado")) {
+        if (error.message.includes("não autenticado") || error.message.includes("não autenticado")) {
             window.location.href = "../index.html";
         }
     } finally {
@@ -147,5 +155,3 @@ document.addEventListener('DOMContentLoaded', async () => {
         loadingScreen.hide();
     }
 });
-
-

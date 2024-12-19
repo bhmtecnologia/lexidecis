@@ -1,4 +1,3 @@
-// Defina esta variável no topo do arquivo
 const DEBUG_MODE = false; // Alterar para true para habilitar os logs de debug
 
 function debugLog(...args) {
@@ -7,6 +6,7 @@ function debugLog(...args) {
     }
 }
 
+import { showAlert } from './alertManager.js'; // Importe a função showAlert
 import { 
     initializeApp 
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
@@ -58,6 +58,8 @@ export async function login(email, password) {
         return userCredential.user;
     } catch (error) {
         console.error("[Login] Erro ao realizar login:", error);
+        // Mostra alerta amigável ao usuário em caso de falha de login
+        showAlert('Credenciais inválidas. Verifique seu email e senha.', 'error');
         throw new Error(error.message);
     }
 }

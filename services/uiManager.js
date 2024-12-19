@@ -1,5 +1,7 @@
+// uiManager.js
+
 // Defina esta variável no topo do arquivo
-const DEBUG_MODE = false; // altere para true se quiser habilitar os logs
+const DEBUG_MODE = true; // altere para true se quiser habilitar os logs
 
 import GPTManager from './gptManager.js';
 import HistoryManager from './historyManager.js'; // Importação do HistoryManager
@@ -9,7 +11,7 @@ class UIManager {
     constructor(apiService, stateManager, chatManager, config, auth) {
         this.apiService = apiService;
         this.stateManager = stateManager;
-        this.chatManager = chatManager;
+        this.chatManager = chatManager; // Referência ao ChatManager
         this.config = config; // Armazena o CONFIG na instância
         this.auth = auth; // Instância do Firebase Auth
 
@@ -52,12 +54,16 @@ class UIManager {
         const searchInput = document.getElementById('search-input');
         const clearSearchButton = document.getElementById('clear-search-button');
 
-        if (searchInput) {
-            searchInput.addEventListener('input', () => this.filterChatList());
+        if (searchInput && this.chatManager && typeof this.chatManager.filterChatList === 'function') {
+            searchInput.addEventListener('input', () => this.chatManager.filterChatList());
+        } else if (searchInput) {
+            console.warn('ChatManager ou método filterChatList não está disponível.');
         }
 
-        if (clearSearchButton) {
-            clearSearchButton.addEventListener('click', () => this.clearSearch());
+        if (clearSearchButton && this.chatManager && typeof this.chatManager.clearSearch === 'function') {
+            clearSearchButton.addEventListener('click', () => this.chatManager.clearSearch());
+        } else if (clearSearchButton) {
+            console.warn('ChatManager ou método clearSearch não está disponível.');
         }
 
         // Botões da barra lateral
@@ -218,7 +224,7 @@ class UIManager {
                         welcomeMessage: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.description : 'Bem-vindo ao assistente',
                         errorMessage: 'Ops, algo deu errado...',
                         backgroundColor: '#f1f1f1',
-                        fontSize: 14,
+                        fontSize: 13,
                         starterPrompts: (() => {
                             const prompts = this.stateManager.selectedGPT?.starterPrompts;
                             if (!prompts) return ['Quem é voce?'];
@@ -262,7 +268,7 @@ class UIManager {
                         },
                         footer: {
                             textColor: '#282828',
-                            text: 'Powered by',
+                            text: 'O LexiDecis pode cometer erros. Por isso, é bom checar as respostas - ',
                             company: 'LexiDecis',
                             companyLink: 'https://lexidecis.com.br',
                         },

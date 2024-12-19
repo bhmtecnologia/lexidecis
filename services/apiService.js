@@ -1,4 +1,4 @@
-const DEBUG_MODE = false; // Altere para true se quiser habilitar os logs
+const DEBUG_MODE = true; // altere para true se quiser habilitar os logs
 
 function debugLog(...args) {
     if (DEBUG_MODE) {

@@ -1,4 +1,4 @@
-const DEBUG_MODE = false; // Altere para true se quiser habilitar os logs
+const DEBUG_MODE = true; // Altere para true se quiser habilitar os logs
 
 function debugLog(...args) {
     if (DEBUG_MODE) {
@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const jwt = await getJwt();
 
         // Faz a chamada à API para obter os endpoints
-        const response = await fetch('https://n8n.prod.bhm.tec.br/webhook/5ef965e9-3af4-40c6-b730-2efbd21da0cf', {
+        const response = await fetch('https://n8n.bhm.tec.br/webhook/readEndpoints', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${jwt}`,

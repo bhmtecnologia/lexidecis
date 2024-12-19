@@ -18,25 +18,12 @@ export default class GPTManager {
         this.uiManager = uiManager;
         this.config = config;
 
-        /**
-         * @type {bootstrap.Modal|undefined}
-         * @description Instância do modal Bootstrap para seleção de GPTs.
-         */
         this.modal = null;
-
-        /**
-         * @type {boolean}
-         * @description Indica se eventos estão bloqueados para evitar seleções simultâneas.
-         */
         this.isEventLocked = false;
 
-        // Inicializa o modal na interface, caso não exista
         this.createModal();
     }
 
-    /**
-     * Cria dinamicamente o modal de seleção de GPT na interface com duas colunas e categorias.
-     */
     createModal() {
         if (document.getElementById('gpt-modal')) {
             console.log('Modal já existe.');
@@ -52,13 +39,9 @@ export default class GPTManager {
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
                         </div>
                         <div class="modal-body">
-                            <!-- Barra de Categorias/Tags -->
                             <div class="mb-4">
-                                <div id="gpt-categories" class="d-flex flex-wrap gap-2">
-                                    <!-- Categorias serão inseridas aqui dinamicamente -->
-                                </div>
+                                <div id="gpt-categories" class="d-flex flex-wrap gap-2"></div>
                             </div>
-                            <!-- Campo de Busca -->
                             <div class="mb-3">
                                 <input 
                                     type="text" 
@@ -67,12 +50,8 @@ export default class GPTManager {
                                     placeholder="Pesquisar GPT..."
                                 >
                             </div>
-                            <!-- Lista de GPTs em duas colunas -->
-                            <div class="row" id="gpt-list">
-                                <!-- Itens de GPT serão inseridos aqui dinamicamente -->
-                            </div>
+                            <div class="row" id="gpt-list"></div>
                         </div>
-                        <!-- Adição da Seção de Rodapé com Botão Fechar -->
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
                         </div>
@@ -81,37 +60,24 @@ export default class GPTManager {
             </div>
         `;
 
-        // Insere o modal no DOM
         document.body.insertAdjacentHTML('beforeend', modalHtml);
 
         const gptModalElement = document.getElementById('gpt-modal');
-
-        // Inicializa o modal corretamente usando getOrCreateInstance
         this.modal = bootstrap.Modal.getOrCreateInstance(gptModalElement);
-
-        // Reatribui eventos aos elementos com data-bs-dismiss="modal"
         this.reassignModalEvents(gptModalElement);
 
-        // Adiciona evento de input ao campo de busca
         const searchInput = document.getElementById('gpt-search');
         searchInput.addEventListener('input', (event) => {
             const searchTerm = event.target.value;
             const activeCategoryBadge = document.querySelector('.category-tag.bg-success') || document.querySelector('.category-tag[data-category="all"]');
             const activeCategory = activeCategoryBadge.dataset.category;
-            console.log('Evento de input acionado:', searchTerm); // Debug do input
             this.filterGPTList(searchTerm, activeCategory);
         });
 
-        // Inicializa as categorias
         this.initializeCategories();
     }
 
-    /**
-     * Reatribui os eventos do Bootstrap aos elementos do modal após inserção dinâmica.
-     * @param {HTMLElement} modalElement - O elemento do modal recém-inserido.
-     */
     reassignModalEvents(modalElement) {
-        // Seleciona todos os elementos com data-bs-dismiss="modal"
         const dismissElements = modalElement.querySelectorAll('[data-bs-dismiss="modal"]');
         dismissElements.forEach((element) => {
             element.addEventListener('click', () => {
@@ -120,19 +86,11 @@ export default class GPTManager {
         });
     }
 
-    /**
-     * Inicializa e renderiza as categorias/tags no modal.
-     */
     initializeCategories() {
-        // Inicialmente, as categorias não estão carregadas. Será populado após carregar GPTs.
         const categoriesContainer = document.getElementById('gpt-categories');
         categoriesContainer.innerHTML = '<span class="badge bg-secondary cursor-pointer category-tag" data-category="all">Todas</span>';
     }
 
-    /**
-     * Popula as categorias com base nos GPTs recebidos.
-     * @param {Array<Object>} gpts - Lista de GPTs recebida da API.
-     */
     populateCategories(gpts) {
         const categoriesContainer = document.getElementById('gpt-categories');
         if (!categoriesContainer) {
@@ -140,7 +98,6 @@ export default class GPTManager {
             return;
         }
 
-        // Extrai categorias únicas
         const categories = new Set();
         gpts.forEach(gpt => {
             if (gpt.category) {
@@ -148,27 +105,20 @@ export default class GPTManager {
             }
         });
 
-        // Limpa categorias existentes, mantendo 'Todas'
         categoriesContainer.innerHTML = '<span class="badge bg-secondary cursor-pointer category-tag" data-category="all">Todas</span>';
 
-        // Adiciona categorias
         categories.forEach(category => {
             const categoryBadge = document.createElement('span');
             categoryBadge.classList.add('badge', 'bg-primary', 'cursor-pointer', 'category-tag');
             categoryBadge.textContent = category;
             categoryBadge.dataset.category = category;
-
-            // Adiciona evento de clique para filtragem
             categoryBadge.addEventListener('click', () => {
                 this.filterByCategory(category);
-                // Atualiza a aparência das categorias para indicar a selecionada
                 this.updateActiveCategory(category);
             });
-
             categoriesContainer.appendChild(categoryBadge);
         });
 
-        // Adiciona evento para 'Todas'
         const allCategory = categoriesContainer.querySelector('[data-category="all"]');
         allCategory.addEventListener('click', () => {
             this.filterByCategory('all');
@@ -176,10 +126,6 @@ export default class GPTManager {
         });
     }
 
-    /**
-     * Atualiza a aparência das categorias para indicar a selecionada.
-     * @param {string} activeCategory - Categoria atualmente selecionada.
-     */
     updateActiveCategory(activeCategory) {
         const categories = document.querySelectorAll('.category-tag');
         categories.forEach(category => {
@@ -197,24 +143,13 @@ export default class GPTManager {
         });
     }
 
-    /**
-     * Filtra a lista de GPTs com base na categoria selecionada.
-     * @param {string} category - Categoria selecionada.
-     */
     filterByCategory(category) {
         const searchTerm = document.getElementById('gpt-search').value;
         this.filterGPTList(searchTerm, category);
     }
 
-    /**
-     * Abre o modal para seleção de um GPT.
-     * @async
-     * @returns {Promise<void>}
-     */
     async openModal() {
         showAlert('Carregando lista de GPTs...', 'info');
-        //showToast('Carregando lista de GPTs...', 'info');
-
         if (this.stateManager.isLoadingGPTsActive()) {
             console.log('A lista de GPTs já está sendo carregada.');
             return;
@@ -233,11 +168,6 @@ export default class GPTManager {
         }
     }
 
-    /**
-     * Carrega a lista de GPTs disponíveis a partir da API.
-     * @async
-     * @returns {Promise<void>}
-     */
     async loadGPTList() {
         if (this.stateManager.isLoadingGPTsActive()) {
             console.log('A lista de GPTs já está sendo carregada.');
@@ -254,18 +184,12 @@ export default class GPTManager {
 
         try {
             const gptData = await this.apiService.request('readGPT', params, 'GET');
-            console.log('Lista de GPTs:', gptData);
-            
-            // Verificar se gptData está no formato esperado (Array)
             if (!Array.isArray(gptData)) {
                 throw new Error('Dados de GPT recebidos não são um array.');
             }
 
-            // Armazenar os GPTs no StateManager
             this.stateManager.setGPTs(gptData);
-            console.log('GPTs armazenados no StateManager:', this.stateManager.getGPTs());
-
-            this.populateCategories(gptData); // Popula as categorias
+            this.populateCategories(gptData);
             this.populateGPTMenu(gptData);
         } catch (error) {
             console.error('Erro ao carregar lista de GPTs:', error);
@@ -275,10 +199,6 @@ export default class GPTManager {
         }
     }
 
-    /**
-     * Popula o menu de seleção de GPTs na interface em duas colunas.
-     * @param {Array<Object>} gpts - Lista de GPTs recebida da API.
-     */
     populateGPTMenu(gpts) {
         const gptList = document.getElementById('gpt-list');
         if (!gptList) {
@@ -286,7 +206,7 @@ export default class GPTManager {
             return;
         }
 
-        gptList.innerHTML = ''; // Garante que a lista está limpa antes de adicionar itens.
+        gptList.innerHTML = '';
 
         if (!gpts || gpts.length === 0) {
             const emptyMessage = document.createElement('div');
@@ -309,13 +229,11 @@ export default class GPTManager {
             cardDiv.dataset.gptId = gpt.id;
             cardDiv.dataset.category = gpt.category || 'Sem Categoria';
 
-            // Imagem do GPT
             const img = document.createElement('img');
-            img.src = gpt.imageUrl || 'path/to/default-image.jpg'; // Substitua pelo caminho padrão
+            img.src = gpt.imageUrl || 'path/to/default-image.jpg';
             img.classList.add('card-img-top', 'gpt-image');
             img.alt = `${gpt.name} Image`;
 
-            // Corpo do cartão
             const cardBody = document.createElement('div');
             cardBody.classList.add('card-body', 'd-flex', 'flex-column');
 
@@ -333,7 +251,6 @@ export default class GPTManager {
             cardDiv.appendChild(img);
             cardDiv.appendChild(cardBody);
 
-            // Adiciona evento de clique para seleção de GPT
             cardDiv.addEventListener('click', async (event) => {
                 await this.handleGPTSelection(event, gpt, cardDiv);
             });
@@ -345,63 +262,92 @@ export default class GPTManager {
         gptList.appendChild(fragment);
     }
 
-    /**
-     * Filtra a lista de GPTs com base no termo de busca e na categoria selecionada.
-     * @param {string} searchTerm - Termo de busca inserido pelo usuário.
-     * @param {string} category - Categoria selecionada.
-     */
     filterGPTList(searchTerm, category = 'all') {
-        const gptListItems = document.querySelectorAll('#gpt-list .gpt-card');
+        const allGpts = this.stateManager.getGPTs() || [];
+        const searchQuery = (searchTerm || '').toLowerCase();
+        const selectedCategory = (category || 'all').toLowerCase();
 
-        if (!gptListItems) {
-            console.error('Nenhum item encontrado na lista de GPTs.');
+        const filteredGpts = allGpts.filter((gpt) => {
+            if (!gpt.enabled) return false;
+            const name = (gpt.name || '').toLowerCase();
+            const description = (gpt.description || '').toLowerCase();
+            const itemCategory = (gpt.category || 'Sem Categoria').toLowerCase();
+            const matchesSearch = name.includes(searchQuery) || description.includes(searchQuery);
+            const matchesCategory = selectedCategory === 'all' || itemCategory === selectedCategory;
+            return matchesSearch && matchesCategory;
+        });
+
+        filteredGpts.sort((a, b) => a.name.localeCompare(b.name));
+        this.renderFilteredGPTs(filteredGpts);
+    }
+
+    renderFilteredGPTs(gpts) {
+        const gptList = document.getElementById('gpt-list');
+        if (!gptList) {
+            console.error('Elemento gpt-list não encontrado.');
             return;
         }
 
-        const searchQuery = searchTerm.toLowerCase();
-        const selectedCategory = category.toLowerCase();
+        gptList.innerHTML = '';
 
-        console.log('Termo de busca:', searchQuery);
-        console.log('Categoria selecionada:', selectedCategory);
+        if (gpts.length === 0) {
+            const emptyMessage = document.createElement('div');
+            emptyMessage.textContent = 'Nenhum GPT encontrado.';
+            emptyMessage.classList.add('text-center', 'w-100');
+            gptList.appendChild(emptyMessage);
+            return;
+        }
 
-        gptListItems.forEach((item) => {
-            const nameElement = item.querySelector('.card-title');
-            const descriptionElement = item.querySelector('.card-text');
+        const fragment = document.createDocumentFragment();
+        gpts.forEach((gpt) => {
+            const colDiv = document.createElement('div');
+            colDiv.classList.add('col-md-6', 'mb-4');
 
-            const name = nameElement?.textContent.toLowerCase() || '';
-            const description = descriptionElement?.textContent.toLowerCase() || '';
-            const itemCategory = item.dataset.category.toLowerCase();
+            const cardDiv = document.createElement('div');
+            cardDiv.classList.add('card', 'gpt-card', 'h-100', 'd-flex', 'flex-column');
+            cardDiv.dataset.gptId = gpt.id;
+            cardDiv.dataset.category = gpt.category || 'Sem Categoria';
 
-            const matchesSearch = name.includes(searchQuery) || description.includes(searchQuery);
-            const matchesCategory = (selectedCategory === 'all') || (itemCategory === selectedCategory);
+            const img = document.createElement('img');
+            img.src = gpt.imageUrl || 'path/to/default-image.jpg';
+            img.classList.add('card-img-top', 'gpt-image');
+            img.alt = `${gpt.name} Image`;
 
-            if (matchesSearch && matchesCategory) {
-                item.classList.remove('d-none');
-            } else {
-                item.classList.add('d-none');
-            }
+            const cardBody = document.createElement('div');
+            cardBody.classList.add('card-body', 'd-flex', 'flex-column');
+
+            const title = document.createElement('h5');
+            title.classList.add('card-title');
+            title.textContent = gpt.name;
+
+            const description = document.createElement('p');
+            description.classList.add('card-text', 'text-muted');
+            description.textContent = gpt.description || 'Sem descrição disponível.';
+
+            cardBody.appendChild(title);
+            cardBody.appendChild(description);
+
+            cardDiv.appendChild(img);
+            cardDiv.appendChild(cardBody);
+
+            cardDiv.addEventListener('click', async (event) => {
+                await this.handleGPTSelection(event, gpt, cardDiv);
+            });
+
+            colDiv.appendChild(cardDiv);
+            fragment.appendChild(colDiv);
         });
+        gptList.appendChild(fragment);
     }
 
-    /**
-     * Gerencia a seleção de um GPT.
-     * @param {Event} event - Evento de clique.
-     * @param {Object} gpt - Objeto GPT selecionado.
-     * @param {HTMLElement} gptItem - Elemento DOM do GPT selecionado.
-     * @async
-     * @returns {Promise<void>}
-     */
     async handleGPTSelection(event, gpt, gptItem) {
         event.preventDefault();
         showAlert('GPT selecionado com sucesso.', 'success');
-        //showToast('Selecionando GPT...', 'info');
-
         if (this.isEventLocked || this.stateManager.isGPTSelectionLoadingActive()) {
             console.log('A seleção de GPT está bloqueada.');
             return;
         }
 
-        console.log('Bloqueio ativado: iniciando seleção de GPT.');
         this.isEventLocked = true;
         this.stateManager.setGPTSelectionLoading(true);
 
@@ -411,7 +357,6 @@ export default class GPTManager {
         } catch (error) {
             console.error('Erro ao selecionar GPT:', error);
             showAlert('Erro ao selecionar GPT. Por favor, tente novamente.', 'info');
-            //showToast('Erro ao selecionar GPT. Por favor, tente novamente.', 'danger');
         } finally {
             this.isEventLocked = false;
             this.stateManager.setGPTSelectionLoading(false);
@@ -419,15 +364,8 @@ export default class GPTManager {
         }
     }
 
-    /**
-     * Seleciona um GPT e realiza as operações necessárias.
-     * @param {Object} gpt - Objeto GPT selecionado.
-     * @async
-     * @returns {Promise<void>}
-     */
     async selectGPTItem(gpt) {
         this.stateManager.setSelectedGPT(gpt);
-        console.log('GPT selecionado:', gpt);
 
         if (gpt.id) {
             await this.fetchGPTConfig(gpt.id);
@@ -438,7 +376,7 @@ export default class GPTManager {
                     id: this.stateManager.currentSessionId,
                     name: gpt.name,
                     date: new Date().toISOString(),
-                    fk_gpt_id: gpt.id // Associar GPT ao chat
+                    fk_gpt_id: gpt.id
                 };
                 this.stateManager.addChat(defaultChat);
                 this.uiManager.chatManager.populateChatMenu(this.stateManager.chats);
@@ -458,12 +396,6 @@ export default class GPTManager {
         }
     }
 
-    /**
-     * Busca as configurações detalhadas do GPT selecionado.
-     * @param {string} gptId - ID do GPT selecionado.
-     * @async
-     * @returns {Promise<void>}
-     */
     async fetchGPTConfig(gptId) {
         const params = {
             gpt_id: gptId,
@@ -474,23 +406,14 @@ export default class GPTManager {
 
         try {
             const configData = await this.apiService.request('overrideConfig', params, 'GET');
-            console.log('Configurações do GPT:', configData);
-
             const aggregatedConfig = configData.reduce((acc, current) => ({ ...acc, ...current.value }), {});
-
             this.stateManager.setGPTConfig(aggregatedConfig);
-
-            console.log('Configurações agregadas do GPT:', this.stateManager.gptConfig);
         } catch (error) {
             console.error('Erro ao buscar configurações do GPT:', error);
             this.uiManager.showError('Erro ao buscar configurações do GPT. Verifique o console para mais detalhes.');
         }
     }
 
-    /**
-     * Gera um novo ID de sessão único.
-     * @returns {string} - Novo ID de sessão.
-     */
     generateSessionId() {
         return crypto.randomUUID();
     }

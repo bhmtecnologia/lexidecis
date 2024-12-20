@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fretes.app.br - Gestão de Fretes Simplificada</title>
+    <meta name="description" content="Fretes.app.br oferece soluções completas para gestão de fretes com eficiência, segurança e pontualidade. Faça seu pedido de frete de forma rápida e fácil.">
+    <meta name="keywords" content="gestão de fretes, transporte rodoviário, armazenagem, gestão de cargas, logística">
+    <meta name="author" content="Sua Empresa">
+    <!-- Bootstrap CSS via CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome via CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <!-- AOS CSS for Animations -->
+    <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            scroll-behavior: smooth;
+        }
+        /* Navegação Fixa */
+        .navbar {
+            transition: background-color 0.3s;
+        }
+        .navbar.scrolled {
+            background-color: rgba(52, 58, 64, 0.9) !important;
+        }
+        /* Hero Section */
+        .hero {
+            background: url('https://www.hivecloud.com.br/wp-content/uploads/2021/08/sistema-de-gestao-de-entregas-1400x460.jpg') no-repeat center center;
+            background-size: cover;
+            height: 100vh;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            transition: background-color 0.3s;
+        }
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            animation: fadeInUp 1s ease-out;
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        /* Seções */
+        .section {
+            padding: 60px 0;
+        }
+        .section-bg-light {
+            background-color: #f9f9f9;
+        }
+        /* Footer */
+        .footer {
+            background-color: #343a40;
+            color: white;
+        }
+        /* Chatbot */
+        .chatbot-section {
+            background-color: #e9ecef;
+            padding: 60px 0;
+        }
+        .chatbot-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        /* Botão de Retorno ao Topo */
+        #backToTop {
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            display: none;
+            z-index: 99;
+        }
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .hero {
+                height: 70vh;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navegação -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-transparent fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#home">Fretes.app.br</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Alterna navegação">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="#home">Início</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#sobre">Sobre Nós</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#servicos">Serviços</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#pedido">Pedido</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#contato">Contato</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header / Hero Section -->
+    <section class="hero" id="home">
+        <div class="hero-content">
+            <h1 class="display-4">Gestão de Fretes Simplificada</h1>
+            <p class="lead">Faça seu pedido de frete de forma rápida e fácil.</p>
+            <a href="#pedido" class="btn btn-primary btn-lg"><i class="fas fa-shipping-fast me-2"></i> Começar</a>
+        </div>
+    </section>
+
+    <!-- Sobre Nós -->
+    <section id="sobre" class="section" data-aos="fade-up">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6" data-aos="fade-right">
+                    <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBxITEhUQEhIVFRUVFRUSFRUVEBUVFhAVFRUWFhYVFRUYHSggGBolGxUVITEhJSkrLi4uFx8zODMtNygtLisBCgoKDg0OGBAQFy0lHyUtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tKy0tLS0tLS0tLf/AABEIAIkBcQMBIgACEQEDEQH/xAAcAAACAgMBAQAAAAAAAAAAAAADBAIFAAEGBwj/xABAEAACAQIEAwUFBQUIAgMAAAABAgADEQQSITEFQVETImFxgQYykaGxQlLB0fAUIzNy4QdigpKissLxc4MVJEP/xAAYAQADAQEAAAAAAAAAAAAAAAAAAQIDBP/EACERAQEBAQACAwACAwAAAAAAAAABEQIhMQMSQVFhIjKR/9oADAMBAAIRAxEAPwDzZVhFWYohVWdTkaVYRVklWEVIEgFkwkKqQgWMgVpwypJBYRUjLUAsmFhFpwgSBaBkmClGgkzLGWgCnMZYxbwimIY3tGWgsbyBMlBtflGDnB+JdjUDcuflO/4gRVoiqmuk8mxbkDxnR+w3tHlb9nqnutoL8j0hYmg4ypZrTVLEWMuPafgrC7pqu+nKcp+0FRHA6NKuYRXiNDKuZPWKYLHi0YrV6hGg0hhIUMLmF7azquDCyZbbSt4Fwkn97UYhenWdFTCKO7FStBegPtSblVGkBVrC+sRxeM+EAFjMXuTKZqhOvWRx2Ivp4yudqitmTvLzB+zHimuIVcovzjqYo16Qb7aix8ZR46sWJJ/6heA1itS2pvyAhgOtVYagfCQSoxNyp8zLp8CG7yHflKzjdQ0EBIFybDWI4AzdTFuPkrSUbZjoPARLg/FrVB2uqk2v928sPbL3kttbSLdi8s6yudQSyw7m0QAjdI7ecJD6PMhXXlCI94RWBFjA5LQTrVcxHjDa+kaxrd2V3EWuYqrn2r8QmgaLSxZe7bwJ+Er5j3HRxdiM1JTUzaNTJuZANTJuZAOtUQyiLqYZJu5TCiFUQKQ6RkIqwipNJDLGlEJCBZsCTVIyaAkgsmqQqrBOhinCLShAJIERkG62F5TVG1ltjqtl85SkXjDLyQkVHhJ5BaMK/HUb7SnzEG40I1nQ1VlPjKXP4/nBUr072L42MTRyPbOmjDqORmuLey6E9og21K9fKeccA4m2GrrVB0uAw6qd57gtQMgcG6lcwPUEXvEjqZXiow5asyLprcCd5wf2XqMitUcZSL2G5nD42r2WJ7Ye6zm/kTPaOG2NCmeqg/KO0dKbjqClhmC6WFhORwfFyRqdRvOw9q6gXDVCx0A08Tynj9LEkNnvudoQpHbVuIXF4jUxJMpTirHwOo8JM4zSPDw2TcyVWqcuXax2HPxiWHrXMPialircvdP4H4/WBksSg584DBVeyqq9yLML2+6d/lLOrRG45yur04w7zH0TSsy95CL6a785zfHEaqxut0UaX0udyRLT2XxrVKIpWH7vu6A3I5EzftECKLkaEKfpIKPN6LWa42Bl1xpHy0i5vobeF9bfSUmXTx+s6rj1jhMK455gT5ACTy379xzqxihuIECHo7y4mnQ0MGvFc2klTaGJB4idIhWOZoXilXl4iCw6kmw35n7o6yb7xpzPGsqjQn/CPTUn6SsYWNpZ4w27o6W8hFMVT0VvMTPuNPjpWam5kxbtTJkyIMmTJkA6pDDIYqjQ6GbuamkMOhi1OM040mEEYRYCmYyhjTRVWEAkUhFWNFYJMXklSECxkgtOFVQJsCAxmJCqTfW0Aq+JYnM1hsIqDAB4VR1lAZDJ1dBpF3xCrufh+cXq8UU6XPygE6pieJQEQjVwRca+UTrV4wQCNnyctfgAT+E9F9juK1K2BrYRCDWpqRTzG10bQfDUfCee13Nsy6Eb+I5x72a4t+z4iniB7oOVx/cOjD039BJX1Ng3GqZ7AEjUMDruOU9O/s54t2+BVSe9RPZN5DVT/lI+BnGe3GHCvWVbWa1Rbcw65r/5s0V/sp4t2eKNAnu11y/+xbsnyzj1EV9lm8Os/tNZhhltovaDN8DYTyzFLYKOdr/Gen/2ngmjQpffrgHyCt+c8v4hWu7EbXsPADQR74HxxNKhy5Ty1H4ydGrE6Dc5MGxtCVd5WVKtawEcUhrqdrSvww1zdISlV1lslpQc5SjbrofHofURfEJJNW1D9NG8V/pv8ZKuIgtPYbii0KzI4utVQoNtmG3yJ+U6L2swt8PU/lJHwM4ClWKOrjdGDfA7T1Ti9MVqIZTcOlwRzBW4iqb7eHOOR3l7iK+bA4Yc1q1l+hHyMoztY/GOUqv7gJ0qs3oyKP8AjInt0degwIRDr6yF5JNpoiilpjVIItBs0CkAxN2YAdd5ZYYKiE8t/Fj4yqZbuBGa9c3CKL25TOftaWeJG6eGv33IF9fH4TMemalcCwDadbWk0wJbUk3Mb4kAipT/AEYZ4H28uYmQlenlYr0P/UHOeuqNTcyaiNuZMmQDpEEOkXSMJNXNTCRinF6cZpykmKYjdMRWmYwjRpptIZYsjQyiNFFzzYJOwmIsOsZBihfcxTjaBaJt1H1lmsrvaAjsWF9dPqIw5qgYPEYu3dXfmYClUOU6+HzMTqYVxqNYzwPEVdYuWjeHqITZxY9YxVw6730izV7n4r6VRhqIV6t9fjI1HUbfSDz3h6PNSvAIcrEcjCwWIW4v0k3+Vc/w6kY8VqVNW9+nS7FvFKbE0z8KhH+GctRqtSqBkNmpuGU9GU3HzEc4NiO9Y8xlPrtFOIC1RvO/yh1fEo4mdWPUfbvHpUwdDFrswLL4NUp2t5i7fCeUC5NusssVxhmwdLCHalUqOPEPYgehL/GK4Vcqmodz3V/Exe/A55+srDpp00mVTsZASbbWjA1OuSLQqmI0anl6gH6xlKngPhb6Suek9cnqdXlGMHU3Q8vd8R/TaIUn/uj/AFfnD1DoGA1GvPUcxqZbMeuLGd57HcVDYRkc60bgdchF1/Eek4LMCLiPcBxZp1ct7CoOzPn9k/HT1iqa5eoLeX0m6HMes3W3J8Tcesjhxv6SP10fgrHTz0k7wdQ6gev6+ckZSMbJgnMkzQFR5NquYirWYnoPnHsFQ0udzrEsMASSdhr59BLGjnblYcr9IuT7PYMXa/JdSYk57aqTy2HlD4i9hRp63ALHrG0wnY0ybXe1gPEyqznhy3E/4ref0FvwipljxXDFQrHc39ecrpzdzy6+LvMZNTc1JW3MmpuAdKgh0EEohkE1c1GSHSBQRhBKSNTjNMQCQytGmmqcOjRNWhVaNNOB5IVTyEXSHQxpECE7m3lFeMUQKFTTYXv5EGOI0FxJb0ag6o30MA4EHukW2JmUMQw3GkyjYg3NhoTfy/pHM1Q0i1DSzkOw95FCrkIO6gk1LkfdAvK1eFqtJHF/pElqlNN1+knWrVrgtqRzsLt/MftHxOscw7IUNRlAe/ZoGF1JtdmI2NgV0Ol28LFaef8ACdSzaixHUb+sA8sP2iupuWzL91+8lugQ6L6W8ItxIqCCmiuodRe+XUqy38GVxfmADzhb/JyfwVUzI3SxLJRQq2XNVrAkG1wqULAnwzN8TJvUz0md7XVlCPlALXBzKSLZtADc3I0+9rOrsVCtla8PxKoGcMOag/nC4JAa9Ln+9pgjke+sjR4hWbKv8QkgBHUOHvbu2OvqLHXeRbmxcm5S1BMxC/oQuJrgmw0VdAPD+u8HiQq1HVDdQ7hTe91DEKb89OcsWxr06dEK+UGkTYWFya1XU/AfCEvgWeSKSRM3XxjPYsxa23hIEytTYGp1MOpksBUCmoWUOOy1B5g1KYOU/ZaxNjymVqWQ6HMpGZGtbOp2NuRuCCORBHKLmq6njR6em8ItWCxh7w/8dE/GihPzjVIimgqWBZyQtwCEVbXbKdCSTYXGmU8yCNJ0wvImGCgaut2N1QakDW5YjRbm1hvvtpfdQ66b/SAPEX+2e0X7rm4/wk6p5raM1wASFNx3WF9yrqHUnxysL+Mcpdc/qlZtTfe5v4yeG5x/HM9NUekSisDnqJoTUDMMjONQMuQhb2N7xIYgsC5AvzsoW56kDS8ie2t/1aU94n0+Ek5g6O0i7R74TnljGLu0IxgGMz6rXmC4XMDcAW8dhH/2/SxN/Ib+cq6d/dHMy9wWAtYm1x+rk84+LfxPySfqOE4i4uAVQnmUZj8hN1qtXRjXv0KqLfOWlSrcWubjnaV1e53sQd9BeWy1XY9qjCztnHI81PjKuWeI02/XgZWtMfkjo+O+GpqbmTNq1MmTcQdUohlglhFm7lGUwymAWGSBDIYZYBTCK0ZGVMIrRYPJBoyNq8ItWKKYemY04aR2O2kI9IFTfXQ7+UDTMMDAnntIaNcXsdfn/WSo0qikVKRZb3ykXG2+UyDXzMBzb6XjuH4nUW6KQFGrAqCtxzykWv4ylnKlZ+yWpWC3zOM2UAuoC2Jtublhfc89om3E1eky06YLU2NSxG6MoDMB/dKJfwa+wMrMfxB6zXYluQudvDwHhBU0sQRdSNQVJBB6g8jJ2/ipzJ7QNVnNr3J0AGtydgAN4XiIylKd7mmgRiCCMxd6jAW6GoV8cpPOHfEVdbPYnQsAFZx0d1AZvUmV1U8pNl/WnNnqH6WLdKCZKjpetXvldlvanhrXsddzCftL1adTtCX7NVKO2rKTUVcufcgqXNjf3dNjEMPjXQZVawve1gRcgAnUaHQfAQlbFu9gzsQNgToPIbCKKovDB+/o/wDlpf71m8NjS6mkzLTzDuuqJSF7WyVSgF6Z8fdNjteKo5BDA2IIII3BGoIgnEOppc3A2QqxVhYqSpBGoINiCJZ4jH1VSgFq1FHZE2Woyj+PW5AytrVCWuSSbKLk3NgAAPQAD0j1HG1LBAdtFAGYgEk878yT6yZNVbhepWLHM7Fj1Zix+JgzUEcxCM2r628ALX5aCLOvQEeP9JWWJllWfBcMalDFd33aSsGtswqp3L/3h/tESwdQMOxYgAm6Mf8A83NhqeStYA9CFPI3tsHxRxgKtMkWV0RbblWbMbjzG/5Tnqh1hfQ5t2n8eCKmUgghKIIOhBFGncGMk5qKkb0iyv4IxzK3lcuCeXd6iVZqMxzMSxsBckk2UBQLnoAB6Q1OuykMrFSNiCQR5ER80up5ERSzBVBLNoANzGcTiQKt1OZQtOncbN2dNaeYeBy3HgYucdUYFc1gfeCqqZ/58oGb1vAkSt/U5MxYYxqiDMrMhsGuCVzKfqvyiuNbu0zlCs6Z2CqFB77BWyjRbqAbAAc+cZwPEHC9nm0FyoZVYL1y5gcp8RaVdRmLksSxvqSSSfEk7xde9Pj1YNfSDJmO0heK0SNPB2vCqpJsBcy1wPDsveY6/SKTTvX1R4dhcguwFz62HSOGqBtt8hCPpF3e3Lzmk8Mb5ujGrEa9Q3kKj9BANVvvA5AqrRExuoYsyzHt0ceEJkyYZm0am5qZEHUqYVWiwaTDTdzGleEDxVWhFMCMq8KrRVTCq0CNKYRTFVeEV4yNBoVXiitCLGWG1rdNZPMx528oBDJVKlgT4QLHHO3fb1+shXWyhBu2rflNF++T5yDud+ZlKTp0ANNofs1UZi2kHSp2Gd9APnFKpaq21lGwhuDNRrYknRRYfMxaqtjbnzjSlRtrbc8h5dYm+8z6a8/0yEUwUksUVRbzUnhqLOcqi/0A6mWeH4MD7z/BfxMqS1F6k9qOpvLLhbgDp1Mt14LRG4LebH6C0Z4bwuhUr06RsgZstwbAnkG8zYddZXPNl1HfySzEsFTRxtoNh4nn5wWL4au40no+D9mcPS7rUFB5HtGZW32zHfTaOrwygpuKSg/yiV9mGvEMTw6rqERmBtcKha9jpsIliMDWpjNUpVEBNgXpsoJ6XIn0KoA22guIUg9NkdVZSLFWAII6WMzs1rz81njHz2Gmw06T2u9kmwxNWjdqG/U0r8j1Xx+PWcuDJ9OiWWbDCGGBEXVrSLVJU6xF50ZqgB0gqz3N+v1hMFg6tZslKmzt0VSbeZ2A8TO79kfZU0T2+KC5x/DS4bIfvtbTN06fRbaLZy17E+zBX/7GIQAkdxGFyAR7xH2Tv4+XO+4lwHCV0ydkq5dA1NQhTTa4GvkdIRsQah0Nk2LDdj0X8/0CDED3FGw0A5DqfzMpherbpHhfBsLhxkNJWJ3qOAzN8dvIWlf7QcBCjtaFyu5XfKOq8yPDeXNcctNd9YtQx2Q5W5m3ryMBtcPUeKVKpEtfaSkEqnKLKwzAfX5/WUdRo9aRqpUvFqrQjGK1AZPVXzEM83eQImplrbE2EgRJBpkQQmSVpkWHq+BhFMCDJBpqwHDSYaLhpMGBGA8mGi6mEUxgwrQymKq0mrwLDqNCq8SV4VXjI4Hi+PxFkbymKYjxar3LQLFEG1m2qEEW3gQdYXNbXnsI1Yx6jE5T3rb32mVaubujuoNz18BNW+yNzqx526eZmrAbkX2Fvdp+PiYaYThiLKtgPiZulgi2p09IxTrDlsLW+YF/r6yQxdz8fy/CGT9H2s9If/GDm3yhsLhQjb3BBBvIrXuSZt62p8F+ZjkkTb1Ru1C+4ABfW3PzjdCt85VI4tDDE5VJErU4sK+J3EQbEEG4NiNQehGxlc+IY7mDz3k/dU+N7antVRxGGp2de2cIzLe3ZsD3jflqDaNUcZoLsDf1+k8a4S9szKdRa/iP1edNhfaGmwAY67DWx8oT0z648vSFqk7Wi+NrC4HP8/8AqcthuOZRZWuT15eYhcZxbVSTcjU2Phb84JwxhuIB81CoBaxXXZxqLfCeYcf4WcNWanuvvIeqk6X8RtO6oUw5NU6C5Nh9o31t4S1UUnGqq9tsyKxHxEVmr46+rx9dTYa+AF/pCVcNUUZmR1B0BZGAJ6XInseEokHRco6ZbfCa41w4Ymn2NRiEuCcts3dN7C4sJFjWfL/Tz/2M9oVw2em6sUdg5ZBcrbQ5h92361ndVsStcBqbXpndhcZh0W/1/Qjw7gWGoBhTp6sMrFiWLLzBvy02Eni2suVQoAFhdsoGltLRxHdluwGtibnsqW4FiR7tIePU+Am7rSXKDvux95z+uXKV6VEp6doOvcW9z5kxDGYiiGFRlJYbNVqlbeSiwlJx0QsBmOp6X0E5bimKqHEUlQEjOGYgE2APX4zKntMoFrqTf7NMmw6AsQPrKrF+09T7IJ/mb/ioAi1XPNM+0uMzOq9LyiqtB4jHvVYM1vQWg6zxfZpOcEDXkGEjTMIYarAGWCYRloNlkWKlAmwZJlkCJC27zJqZDQuwZIGREkJqxSBkw0gJKBJhpINBiSEAKGhFaBEIsZDK0KrQCwqwIbtJU8UrX0li20puIbwEIKdYUNApvJjnCLqBJJt11P4CRqvyE2vvGB5+sm1Ugmbl13mZ9fkJpNz5SENPBRWtJdppru2p8uUWaGrb+g+kJaV5iXaTT1SRaDEwbiG0ZGAGbZbQlLl5fjBwNa+zaBnZDzW/qD/WM8V4IQC6kdct7X8j+EuuD/wxAYv+IJpJ4xhev8tVnBXd1IzZculydb9Lby+4fg1OjOfPMq/W843i/wDGf+b8BBN7vqPoYSneXsGHw9IACymwsOenqTD9siaAADwFhPL8PuJ13BdoWM8xd1uJoNdT4L3j8BKzE+0WXTIB/PVVfkuY/KC9oP4fr+E4v7Qiw5NdBxf2pAsLtc62S48PeJ8Ok5+v7QMx7qC/V2LH8BEOKe8v8v4mKJJtbc8zD1filc6FyPBbKP8ATFL31Os036+cyI8SvNNME0Yw1eRJm5EyaqJIYYQCw6xwqwyJk5EwAZEGywpkTFVQK0yEmRYb/9k=" class="img-fluid rounded" alt="Sobre Nós">
+                </div>
+                <div class="col-md-6" data-aos="fade-left">
+                    <h2>Sobre Nós</h2>
+                    <p>Somos uma empresa dedicada a oferecer soluções completas para gestão de fretes. Com anos de experiência no mercado, garantimos eficiência, segurança e pontualidade em todas as suas operações logísticas.</p>
+                    <p>Nossa missão é simplificar o processo de envio de cargas, proporcionando uma experiência transparente e confiável para nossos clientes.</p>
+                    <a href="#servicos" class="btn btn-outline-primary mt-3"><i class="fas fa-arrow-down me-2"></i> Nossos Serviços</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Serviços -->
+    <section id="servicos" class="section section-bg-light" data-aos="fade-up">
+        <div class="container">
+            <h2 class="text-center mb-5">Nossos Serviços</h2>
+            <div class="row">
+                <div class="col-md-4 text-center mb-4" data-aos="zoom-in" data-aos-delay="100">
+                    <i class="fas fa-truck fa-3x mb-3 text-primary"></i>
+                    <h4>Transporte Rodoviário</h4>
+                    <p>Oferecemos soluções de transporte rodoviário eficientes para todo o território nacional.</p>
+                </div>
+                <div class="col-md-4 text-center mb-4" data-aos="zoom-in" data-aos-delay="200">
+                    <i class="fas fa-warehouse fa-3x mb-3 text-primary"></i>
+                    <h4>Armazenagem</h4>
+                    <p>Dispomos de armazéns modernos e seguros para armazenagem temporária ou de longo prazo.</p>
+                </div>
+                <div class="col-md-4 text-center mb-4" data-aos="zoom-in" data-aos-delay="300">
+                    <i class="fas fa-box-open fa-3x mb-3 text-primary"></i>
+                    <h4>Gestão de Cargas</h4>
+                    <p>Gerenciamos suas cargas com tecnologia de ponta para garantir rastreamento e segurança.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Formulário de Pedido -->
+    <section id="pedido" class="section" data-aos="fade-up">
+        <div class="container">
+            <h2 class="mb-4 text-center">Faça seu Pedido de Frete</h2>
+            <form id="freightForm" novalidate>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="peso" class="form-label">Peso (kg)</label>
+                        <input type="number" class="form-control" id="peso" name="peso" placeholder="Digite o peso da carga" required>
+                        <div class="invalid-feedback">
+                            Por favor, insira o peso da carga.
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="tipoCarga" class="form-label">Tipo de Carga</label>
+                        <select class="form-select" id="tipoCarga" name="tipoCarga" required>
+                            <option value="" selected disabled>Selecione o tipo de carga</option>
+                            <option value="geral">Geral</option>
+                            <option value="perigosa">Perigosa</option>
+                            <option value="refrigerada">Refrigerada</option>
+                            <option value="frágil">Frágil</option>
+                        </select>
+                        <div class="invalid-feedback">
+                            Por favor, selecione o tipo de carga.
+                        </div>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="origem" class="form-label">Origem</label>
+                        <input type="text" class="form-control" id="origem" name="origem" placeholder="Cidade de origem" required>
+                        <div class="invalid-feedback">
+                            Por favor, insira a cidade de origem.
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="destino" class="form-label">Destino</label>
+                        <input type="text" class="form-control" id="destino" name="destino" placeholder="Cidade de destino" required>
+                        <div class="invalid-feedback">
+                            Por favor, insira a cidade de destino.
+                        </div>
+                    </div>
+                </div>
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label for="dataEnvio" class="form-label">Data de Envio</label>
+                        <input type="date" class="form-control" id="dataEnvio" name="dataEnvio" required>
+                        <div class="invalid-feedback">
+                            Por favor, selecione a data de envio.
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="observacoes" class="form-label">Observações</label>
+                        <textarea class="form-control" id="observacoes" name="observacoes" rows="3" placeholder="Adicione alguma observação (opcional)"></textarea>
+                    </div>
+                </div>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-success btn-lg"><i class="fas fa-paper-plane me-2"></i> Enviar Pedido</button>
+                </div>
+            </form>
+            <!-- Mensagem de Sucesso -->
+            <div id="successMessage" class="alert alert-success mt-4 d-none" role="alert">
+                Seu pedido foi enviado com sucesso!
+            </div>
+        </div>
+    </section>
+
+    <!-- Chatbot -->
+    <section id="chatbot" class="chatbot-section" data-aos="fade-up">
+        <div class="container">
+            <h2 class="mb-4 text-center">Precisa de Ajuda? Converse com nosso consultor especializado!</h2>
+            <div class="chatbot-container">
+                <flowise-fullchatbot></flowise-fullchatbot>
+                <script type="module">
+                    import Chatbot from "https://cdn.jsdelivr.net/npm/flowise-embed/dist/web.js"
+                    Chatbot.initFull({
+                        chatflowid: "f10f7379-8b8d-44be-a970-8ca11e45a214",
+                        apiHost: "https://flowise.bhm.tec.br",
+                        chatflowConfig: {
+                            /* Chatflow Config */
+                        },
+                        observersConfig: {
+                            /* Observers Config */
+                        },
+                        theme: {
+                            button: {
+                                backgroundColor: '#28a745',
+                                right: 20,
+                                bottom: 20,
+                                size: 48,
+                                dragAndDrop: true,
+                                iconColor: 'white',
+                                customIconSrc: 'https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/google-messages.svg',
+                                autoWindowOpen: {
+                                    autoOpen: true,
+                                    openDelay: 2,
+                                    autoOpenOnMobile: false
+                                }
+                            },
+                            customCSS: `
+                                .flowise-container {
+                                    font-family: 'Roboto', sans-serif;
+                                }
+                            `,
+                            chatWindow: {
+                                showTitle: true,
+                                showAgentMessages: true,
+                                title: 'Atendente - Online',
+                                titleAvatarSrc: 'https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/google-messages.svg',
+                                welcomeMessage: 'Olá! Como posso ajudar você hoje?',
+                                errorMessage: 'Desculpe, ocorreu um erro. Por favor, tente novamente.',
+                                backgroundColor: '#ffffff',
+                                backgroundImage: '',
+                                height: '600px',
+                                width: '100%',
+                                fontSize: 16,
+                                starterPrompts: [
+                                    "Quero fazer uma cotação",
+                                    "O que você sabe fazer?"
+                                ],
+                                starterPromptFontSize: 15,
+                                clearChatOnReload: false,
+                                sourceDocsTitle: 'Fontes:',
+                                renderHTML: true,
+                                botMessage: {
+                                    backgroundColor: '#f7f8ff',
+                                    textColor: '#303235',
+                                    showAvatar: true,
+                                    avatarSrc: 'https://raw.githubusercontent.com/zahidkhawaja/langchain-chat-nextjs/main/public/parroticon.png'
+                                },
+                                userMessage: {
+                                    backgroundColor: '#3B81F6',
+                                    textColor: '#ffffff',
+                                    showAvatar: true,
+                                    avatarSrc: 'https://raw.githubusercontent.com/zahidkhawaja/langchain-chat-nextjs/main/public/usericon.png'
+                                },
+                                textInput: {
+                                    placeholder: 'Digite sua mensagem aqui...',
+                                    backgroundColor: '#ffffff',
+                                    textColor: '#303235',
+                                    sendButtonColor: '#3B81F6',
+                                    maxChars: 5000,
+                                    maxCharsWarningMessage: 'Você excedeu o limite de caracteres. Por favor, insira menos de 5000 caracteres.',
+                                    autoFocus: true,
+                                    sendMessageSound: true,
+                                    sendSoundLocation: 'send_message.mp3',
+                                    receiveMessageSound: true,
+                                    receiveSoundLocation: 'receive_message.mp3'
+                                },
+                                feedback: {
+                                    color: '#303235'
+                                },
+                                dateTimeToggle: {
+                                    date: true,
+                                    time: true
+                                },
+                                footer: {
+                                    textColor: '#303235',
+                                    text: 'Powered by',
+                                    company: 'LexiDecis',
+                                    companyLink: 'https://www.lexidecis.com.br'
+                                }
+                            }
+                        }
+                    })
+                </script>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contato -->
+    <section id="contato" class="section section-bg-light" data-aos="fade-up">
+        <div class="container">
+            <h2 class="text-center mb-5">Contato</h2>
+            <div class="row">
+                <div class="col-md-6 mb-4" data-aos="fade-right">
+                    <h5>Fale Conosco</h5>
+                    <p>Tem alguma dúvida ou precisa de mais informações? Entre em contato conosco!</p>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-map-marker-alt me-2 text-primary"></i> Rua das Logísticas, 123, São Paulo - SP</li>
+                        <li><i class="fas fa-phone me-2 text-primary"></i> (11) 1234-5678</li>
+                        <li><i class="fas fa-envelope me-2 text-primary"></i> contato@fretes.app.br</li>
+                    </ul>
+                </div>
+                <div class="col-md-6" data-aos="fade-left">
+                    <h5>Envie uma Mensagem</h5>
+                    <form id="contactForm" novalidate>
+                        <div class="mb-3">
+                            <label for="nomeContato" class="form-label">Nome</label>
+                            <input type="text" class="form-control" id="nomeContato" name="nomeContato" placeholder="Seu nome" required>
+                            <div class="invalid-feedback">
+                                Por favor, insira seu nome.
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="emailContato" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="emailContato" name="emailContato" placeholder="Seu email" required>
+                            <div class="invalid-feedback">
+                                Por favor, insira um email válido.
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="mensagemContato" class="form-label">Mensagem</label>
+                            <textarea class="form-control" id="mensagemContato" name="mensagemContato" rows="4" placeholder="Sua mensagem" required></textarea>
+                            <div class="invalid-feedback">
+                                Por favor, insira sua mensagem.
+                            </div>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane me-2"></i> Enviar Mensagem</button>
+                        </div>
+                    </form>
+                    <!-- Mensagem de Sucesso Contato -->
+                    <div id="successContactMessage" class="alert alert-success mt-4 d-none" role="alert">
+                        Sua mensagem foi enviada com sucesso!
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Botão de Retorno ao Topo -->
+    <button id="backToTop" class="btn btn-primary rounded-circle" aria-label="Retornar ao Topo">
+        <i class="fas fa-chevron-up"></i>
+    </button>
+
+    <!-- Footer -->
+    <footer class="footer py-4">
+        <div class="container text-center">
+            <p class="mb-0">&copy; 2024 Fretes.app.br. Todos os direitos reservados.</p>
+            <div class="mt-2">
+                <a href="#" class="text-white me-3"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" class="text-white me-3"><i class="fab fa-twitter"></i></a>
+                <a href="#" class="text-white me-3"><i class="fab fa-linkedin-in"></i></a>
+                <a href="#" class="text-white"><i class="fab fa-instagram"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS e Popper via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
+    <!-- AOS JS for Animations -->
+    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js" defer></script>
+    <!-- JavaScript Personalizado -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar AOS
+            AOS.init({
+                duration: 800,
+                easing: 'slide',
+                once: true
+            });
+
+            // Navbar Background Change on Scroll
+            const navbar = document.querySelector('.navbar');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    navbar.classList.add('scrolled');
+                } else {
+                    navbar.classList.remove('scrolled');
+                }
+
+                // Mostrar ou esconder botão de retorno ao topo
+                const backToTop = document.getElementById('backToTop');
+                if (window.scrollY > 300) {
+                    backToTop.style.display = 'block';
+                } else {
+                    backToTop.style.display = 'none';
+                }
+            });
+
+            // Botão de Retorno ao Topo
+            document.getElementById('backToTop').addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+
+            // Validação de Formulários Bootstrap
+            const freightForm = document.getElementById('freightForm');
+            const contactForm = document.getElementById('contactForm');
+
+            // Função para aplicar validação
+            function applyValidation(form) {
+                form.addEventListener('submit', function(e) {
+                    if (!form.checkValidity()) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    } else {
+                        e.preventDefault();
+                        // Exibir mensagem de sucesso
+                        if (form.id === 'freightForm') {
+                            document.getElementById('successMessage').classList.remove('d-none');
+                            form.reset();
+                            document.getElementById('successMessage').scrollIntoView({ behavior: 'smooth' });
+                        } else if (form.id === 'contactForm') {
+                            document.getElementById('successContactMessage').classList.remove('d-none');
+                            form.reset();
+                            document.getElementById('successContactMessage').scrollIntoView({ behavior: 'smooth' });
+                        }
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            }
+
+            applyValidation(freightForm);
+            applyValidation(contactForm);
+        });
+    </script>
+</body>
+</html>

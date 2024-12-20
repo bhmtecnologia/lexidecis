@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luxo Minimalista | Relógios e Óculos</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #ffffff;
+            color: #000000;
+        }
+        .navbar {
+            background-color: #000000;
+        }
+        .navbar-brand, .nav-link, .cart-icon {
+            color: #FFD700 !important;
+        }
+        .hero {
+            background: url('https://th.bing.com/th/id/OIP.-FTmUei-WKZBJSgQFwIDdAHaE8?rs=1&pid=ImgDetMain') center center/cover no-repeat;
+            height: 60vh;
+            position: relative;
+            color: #ffffff;
+        }
+        .hero::after {
+            content: "";
+            position: absolute;
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .hero-content {
+            position: relative;
+            top: 50%;
+            transform: translateY(-50%);
+            text-align: center;
+        }
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 700;
+        }
+        .hero p {
+            font-size: 1.2rem;
+        }
+        .section-title {
+            border-bottom: 2px solid #000000;
+            display: inline-block;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            color: #000000;
+        }
+        .card {
+            border: none;
+            transition: transform 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-10px);
+        }
+        .card-img-top {
+            height: 250px;
+            object-fit: cover;
+        }
+        .btn-custom {
+            background-color: #000000;
+            color: #FFD700;
+            border: none;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .btn-custom:hover {
+            background-color: #FFD700;
+            color: #000000;
+        }
+        footer {
+            background-color: #000000;
+            color: #FFD700;
+            padding: 20px 0;
+        }
+        .footer-links a {
+            color: #FFD700;
+            text-decoration: none;
+        }
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#">Luxo Minimalista</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Alternar navegação">
+                <span class="navbar-toggler-icon" style="color: #FFD700;"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="#">Início</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#produtos">Produtos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#sobre">Sobre</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#contato">Contato</a>
+                    </li>
+                </ul>
+                <a href="#" class="cart-icon ms-3">
+                    <i class="fas fa-shopping-cart fa-lg"></i>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero d-flex align-items-center justify-content-center">
+        <div class="hero-content">
+            <h1>Descubra a Elegância</h1>
+            <p>Relógios e Óculos de Alto Nível Personalizados para Você</p>
+            <a href="#produtos" class="btn btn-custom mt-3">Ver Produtos</a>
+        </div>
+    </section>
+
+    <!-- Produtos -->
+    <section id="produtos" class="py-5">
+        <div class="container">
+            <h2 class="section-title text-center">Nossos Produtos</h2>
+            <div class="row">
+                <!-- Produto 1 -->
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <img src="https://lojavivara.vtexassets.com/arquivos/ids/845881/Relogio-Movado-Bold-Quest-Masculino-Dourado-3601223-95570_1_set.jpg?v=638475822115500000" class="card-img-top" alt="Relógio Ouro">
+                        <div class="card-body">
+                            <h5 class="card-title">Relógio Ouro</h5>
+                            <p class="card-text">Elegante relógio com detalhes em ouro 18k.</p>
+                            <p class="fw-bold">R$ 5.000,00</p>
+                            <a href="#" class="btn btn-custom">Comprar</a>
+                        </div>
+                    </div>
+                </div>
+                <!-- Produto 2 -->
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <img src="https://images2.ray-ban.com//cdn-record-files-pi/3b3a86a6-76f4-4123-9c7e-a35701843477/b6a157c9-26d1-4eba-96e8-ae4000a344dc/0RB4179__601S9A__STD__shad__qt.png?impolicy=RB_Product_clone&width=720&bgc=%23f2f2f2" class="card-img-top" alt="Óculos Preto">
+                        <div class="card-body">
+                            <h5 class="card-title">Óculos Preto</h5>
+                            <p class="card-text">Óculos de design minimalista com armação preta.</p>
+                            <p class="fw-bold">R$ 2.500,00</p>
+                            <a href="#" class="btn btn-custom">Comprar</a>
+                        </div>
+                    </div>
+                </div>
+                <!-- Produto 3 -->
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <img src="https://th.bing.com/th/id/OIP.F60xORY_NHi7skyj8j9S3wHaHa?rs=1&pid=ImgDetMain" class="card-img-top" alt="Relógio Personalizado">
+                        <div class="card-body">
+                            <h5 class="card-title">Relógio Personalizado</h5>
+                            <p class="card-text">Relógio exclusivo com opções de personalização.</p>
+                            <p class="fw-bold">R$ 7.500,00</p>
+                            <a href="#" class="btn btn-custom">Comprar</a>
+                        </div>
+                    </div>
+                </div>
+                <!-- Produto 4 -->
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <img src="https://source.unsplash.com/400x400/?luxury,glasses" class="card-img-top" alt="Óculos Dourado">
+                        <div class="card-body">
+                            <h5 class="card-title">Óculos Dourado</h5>
+                            <p class="card-text">Óculos sofisticados com detalhes dourados.</p>
+                            <p class="fw-bold">R$ 3.200,00</p>
+                            <a href="#" class="btn btn-custom">Comprar</a>
+                        </div>
+                    </div>
+                </div>
+                <!-- Produto 5 -->
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <img src="https://source.unsplash.com/400x400/?luxury,watches" class="card-img-top" alt="Relógio Preto">
+                        <div class="card-body">
+                            <h5 class="card-title">Relógio Preto</h5>
+                            <p class="card-text">Relógio moderno com pulseira de couro preto.</p>
+                            <p class="fw-bold">R$ 4.800,00</p>
+                            <a href="#" class="btn btn-custom">Comprar</a>
+                        </div>
+                    </div>
+                </div>
+                <!-- Produto 6 -->
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <img src="https://source.unsplash.com/400x400/?luxury,glasses" class="card-img-top" alt="Óculos Personalizado">
+                        <div class="card-body">
+                            <h5 class="card-title">Óculos Personalizado</h5>
+                            <p class="card-text">Customize seus óculos com várias opções de armação.</p>
+                            <p class="fw-bold">R$ 3.800,00</p>
+                            <a href="#" class="btn btn-custom">Comprar</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sobre -->
+    <section id="sobre" class="py-5 bg-light">
+        <div class="container">
+            <h2 class="section-title text-center">Sobre Nós</h2>
+            <p class="text-center">Na Luxo Minimalista, nos dedicamos a oferecer relógios e óculos de alto nível, combinando design sofisticado com qualidade excepcional. Cada peça é cuidadosamente selecionada e personalizada para atender às suas necessidades e estilo de vida.</p>
+        </div>
+    </section>
+
+    <!-- Contato -->
+    <section id="contato" class="py-5">
+        <div class="container">
+            <h2 class="section-title text-center">Contato</h2>
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <form>
+                        <div class="mb-3">
+                            <label for="nome" class="form-label">Nome</label>
+                            <input type="text" class="form-control" id="nome" placeholder="Seu nome">
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" placeholder="Seu email">
+                        </div>
+                        <div class="mb-3">
+                            <label for="mensagem" class="form-label">Mensagem</label>
+                            <textarea class="form-control" id="mensagem" rows="4" placeholder="Sua mensagem"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-custom w-100">Enviar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container text-center">
+            <p>&copy; 2024 Luxo Minimalista. Todos os direitos reservados.</p>
+            <div class="footer-links">
+                <a href="#">Política de Privacidade</a> | 
+                <a href="#">Termos de Serviço</a> | 
+                <a href="#">Suporte</a>
+            </div>
+            <div class="mt-3">
+                <a href="#" class="me-3"><i class="fab fa-facebook fa-lg"></i></a>
+                <a href="#" class="me-3"><i class="fab fa-instagram fa-lg"></i></a>
+                <a href="#"><i class="fab fa-twitter fa-lg"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS e dependências -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Font Awesome JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+</body>
+</html>

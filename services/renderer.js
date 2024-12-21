@@ -5,14 +5,14 @@ function debugLog(...args) {
         console.log(...args);
     }
 }
-
+// ... imports
+import GPTManager from './gptManager.js';
 import { showRenamePrompt, showAlert, showDeleteConfirmation } from './alertManager.js';
 import { showToast } from './notificationManager.js';
 import Chatbot from "./web.js";
 import ApiService from './apiService.js';
 import StateManager from './stateManager.js';
 import HistoryManager from './historyManager.js';
-import GPTManager from './gptManager.js';
 import ChatManager from './chatManager.js';
 import UIManager from './uiManager.js';
 import StatusCheck from './statusCheck.js';
@@ -121,6 +121,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const stateManager = new StateManager();
         const chatManager = new ChatManager(apiService, stateManager, CONFIG);
         const uiManager = new UIManager(apiService, stateManager, chatManager, CONFIG, auth);
+        const gptManager = new GPTManager(apiService, stateManager, uiManager, CONFIG); // Instância do GPTManager
 
         // Associa o uiManager ao chatManager
         chatManager.uiManager = uiManager;
@@ -129,9 +130,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         tooltipTriggerList.map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 
-        // Carrega GPT e inicializa a interface
-        const defaultGPTId = "e1e3cc7b-0ddb-4f7b-981e-0d9d1e20f69b"; // carrega o gpt padrao
-        await stateManager.loadSelectedGPT(defaultGPTId, apiService);
+        // Carrega GPTs préviamente
+        await gptManager.preloadGPTs();
+
+        // Carrega a lista de chats
         await chatManager.loadChatList(chatManager.populateChatMenu.bind(chatManager));
         stateManager.loadSelectedChat();
         await uiManager.initializeChatbot();

@@ -1,222 +1,69 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Status do OpenAI</title>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome para ícones -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Toastr CSS -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
-    <style>
-        :root {
-            --green: #28a745;
-            --yellow: #ffc107;
-            --red: #dc3545;
-            --gray: #6c757d;
-            --background: #f0f2f5;
-            --card-bg: #ffffff;
-            --box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s ease;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: var(--background);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            padding: 20px;
-        }
-
-        .status-card {
-            background-color: var(--card-bg);
-            padding: 30px 40px;
-            border-radius: 12px;
-            box-shadow: var(--box-shadow);
-            display: flex;
-            align-items: center;
-            max-width: 400px;
-            width: 100%;
-            animation: fadeIn 1s ease-in-out;
-        }
-
-        .status-icon {
-            font-size: 2.5rem;
-            margin-right: 20px;
-            transition: color var(--transition);
-        }
-
-        .status-text {
-            font-size: 1.2rem;
-            color: #333;
-        }
-
-        .loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            font-size: 1.5rem;
-            color: var(--gray);
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Responsividade */
-        @media (max-width: 480px) {
-            .status-card {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .status-icon {
-                margin-right: 0;
-                margin-bottom: 15px;
-            }
-        }
-    </style>
+    <title>Consulta de CT-e</title>
 </head>
 <body>
-    <div id="status-container" class="loading">
-        <i class="fas fa-spinner fa-spin"></i> Carregando status...
-    </div>
+    <h1>Consulta de CT-e</h1>
+    <form id="cte-form">
+        <label for="chave">Chave de Acesso do CT-e:</label><br>
+        <input type="text" id="chave" name="chave" maxlength="44" required placeholder="Insira a chave de acesso"><br><br>
+        <label for="ambiente">Ambiente:</label><br>
+        <select id="ambiente" name="ambiente" required>
+            <option value="1">Produção</option>
+            <option value="2">Homologação</option>
+        </select><br><br>
+        <button type="submit">Consultar</button>
+    </form>
 
-    <!-- Toastr JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-    <!-- JavaScript Atualizado -->
+    <h2>Resultado:</h2>
+    <pre id="resultado"></pre>
+
     <script>
-        let previousStatus = null; // Para rastrear mudanças de status
+        document.getElementById("cte-form").addEventListener("submit", async function(event) {
+            event.preventDefault();
 
-        // Configurações do Toastr
-        toastr.options = {
-            "closeButton": true,
-            "debug": false,
-            "newestOnTop": true,
-            "progressBar": true,
-            "positionClass": "toast-top-right",
-            "preventDuplicates": false,
-            "onclick": null,
-            "showDuration": "300",
-            "hideDuration": "1000",
-            "timeOut": "5000",
-            "extendedTimeOut": "1000",
-            "showEasing": "swing",
-            "hideEasing": "linear",
-            "showMethod": "fadeIn",
-            "hideMethod": "fadeOut"
-        };
+            const chave = document.getElementById("chave").value.trim();
+            const ambiente = document.getElementById("ambiente").value;
 
-        async function fetchOpenAIStatus() {
+            // Montar o XML da consulta
+            const xmlRequest = `
+                <consSitCTe xmlns="http://www.portalfiscal.inf.br/cte" versao="3.00">
+                    <tpAmb>${ambiente}</tpAmb>
+                    <xServ>CONSULTAR</xServ>
+                    <chCTe>${chave}</chCTe>
+                </consSitCTe>
+            `;
+
+            // URL do serviço (substituir pela URL correta da Sefaz para produção ou homologação)
+            const url = ambiente === "1"
+                ? "https://cte.fazenda.sp.gov.br/ws/cteconsulta.asmx" // Produção
+                : "https://homologacao.cte.fazenda.sp.gov.br/ws/cteconsulta.asmx"; // Homologação
+
             try {
-                const response = await fetch("https://status.openai.com/history.rss");
-                const text = await response.text();
-                const parser = new DOMParser();
-                const rss = parser.parseFromString(text, "application/xml");
+                const response = await fetch(url, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/xml; charset=utf-8",
+                    },
+                    body: xmlRequest,
+                });
 
-                // Verifica se há erros no parsing
-                const parserError = rss.querySelector("parsererror");
-                if (parserError) {
-                    throw new Error("Erro ao parsear o RSS.");
+                if (!response.ok) {
+                    throw new Error(`Erro na consulta: ${response.status} ${response.statusText}`);
                 }
 
-                // Obtém o título e descrição do item mais recente
-                const latestItem = rss.querySelector("item");
-                const title = latestItem.querySelector("title").textContent;
-                const description = latestItem.querySelector("description").textContent;
+                // Ler a resposta como texto
+                const result = await response.text();
 
-                // Analisa o status com base no título e descrição
-                if (title.includes("Operational")) {
-                    return { color: "var(--green)", message: "OpenAI está operacional", icon: "fas fa-check-circle" };
-                } else if (title.includes("Elevated") || title.includes("Degraded") || title.includes("Partial Outage")) {
-                    return { color: "var(--yellow)", message: "Desempenho reduzido ou congestionado", icon: "fas fa-exclamation-triangle" };
-                } else if (title.includes("Major Outage") || description.includes("unavailable")) {
-                    return { color: "var(--red)", message: "OpenAI está fora do ar", icon: "fas fa-times-circle" };
-                } else {
-                    return { color: "var(--gray)", message: "Status desconhecido", icon: "fas fa-question-circle" };
-                }
+                // Exibir o resultado no campo de saída
+                document.getElementById("resultado").textContent = result;
             } catch (error) {
-                console.error("Erro ao buscar o status do OpenAI:", error);
-                return { color: "var(--gray)", message: "Erro ao buscar o status", icon: "fas fa-exclamation-circle" };
+                document.getElementById("resultado").textContent = `Erro: ${error.message}`;
             }
-        }
-
-        async function updateOpenAIStatus() {
-            const { color, message, icon } = await fetchOpenAIStatus();
-
-            // Verifica se o status mudou
-            if (previousStatus && previousStatus.message !== message) {
-                showNotification(message, color, icon);
-            }
-            previousStatus = { color, message, icon };
-
-            // Cria o conteúdo do cartão de status
-            const statusCard = document.createElement("div");
-            statusCard.classList.add("status-card");
-
-            const statusIcon = document.createElement("i");
-            statusIcon.className = `${icon} status-icon`;
-            statusIcon.style.color = color;
-
-            const statusText = document.createElement("div");
-            statusText.classList.add("status-text");
-            statusText.textContent = message;
-
-            statusCard.appendChild(statusIcon);
-            statusCard.appendChild(statusText);
-
-            // Atualiza o DOM
-            const statusContainer = document.getElementById("status-container");
-            statusContainer.innerHTML = ""; // Limpa o conteúdo atual
-            statusContainer.classList.remove("loading");
-            statusContainer.appendChild(statusCard);
-        }
-
-        function showNotification(message, color, icon) {
-            let type;
-            switch(color) {
-                case 'var(--green)':
-                    type = 'success';
-                    break;
-                case 'var(--yellow)':
-                    type = 'warning';
-                    break;
-                case 'var(--red)':
-                    type = 'error';
-                    break;
-                default:
-                    type = 'info';
-            }
-
-            toastr[type](message, 'Status Atualizado', {
-                iconClass: `toast-${type}`,
-                // Adiciona o ícone personalizado do Font Awesome
-                onShown: function () {
-                    const toast = document.querySelector('.toast');
-                    if (toast) {
-                        const iconElement = document.createElement('i');
-                        iconElement.className = `${icon} me-2`;
-                        toast.querySelector('.toast-title').prepend(iconElement);
-                    }
-                }
-            });
-        }
-
-        // Atualiza o status a cada 5 minutos (300000 ms)
-        setInterval(updateOpenAIStatus, 300000);
-        updateOpenAIStatus(); // Atualiza imediatamente ao carregar
+        });
     </script>
 </body>
 </html>

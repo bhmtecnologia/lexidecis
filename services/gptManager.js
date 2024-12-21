@@ -1,7 +1,12 @@
-/**
- * @class GPTManager
- * @classdesc Gerencia a interação com os GPTs, incluindo carregamento, seleção e configuração.
- */
+// Defina debugLog antes da classe
+const DEBUG_MODE = true; // Altere para true se quiser habilitar os logs
+
+function debugLog(...args) {
+    if (DEBUG_MODE) {
+        console.log(...args);
+    }
+}
+
 import { showRenamePrompt, showAlert, showDeleteConfirmation } from './alertManager.js';
 
 export default class GPTManager {
@@ -408,9 +413,23 @@ export default class GPTManager {
             const configData = await this.apiService.request('overrideConfig', params, 'GET');
             const aggregatedConfig = configData.reduce((acc, current) => ({ ...acc, ...current.value }), {});
             this.stateManager.setGPTConfig(aggregatedConfig);
+            debugLog("flowiseConfig definido:", this.stateManager.getFlowiseConfig());
         } catch (error) {
             console.error('Erro ao buscar configurações do GPT:', error);
             this.uiManager.showError('Erro ao buscar configurações do GPT. Verifique o console para mais detalhes.');
+        }
+    }
+
+    /**
+     * Realiza o carregamento prévio dos GPTs sem exibir o modal.
+     */
+    async preloadGPTs() {
+        try {
+            await this.loadGPTList();
+            debugLog('GPTs pré-carregados com sucesso.');
+        } catch (error) {
+            console.error('Erro ao pré-carregar GPTs:', error);
+            this.uiManager.showError('Erro ao carregar GPTs. Verifique o console para mais detalhes.');
         }
     }
 

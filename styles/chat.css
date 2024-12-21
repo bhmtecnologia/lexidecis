@@ -69,7 +69,7 @@
     --dropdown-menu-bg: var(--background-color);
 
     /* Cor de texto do menu dropdown */
-    --dropdown-menu-text: var(--text-color);
+    --dropdown-menu-text: white; /* Definido como branco */
 
     /* Cor de fundo dos itens do menu dropdown ao passar o mouse */
     --dropdown-item-hover-bg: #f1f2f3;
@@ -112,13 +112,6 @@ body {
     flex-direction: column;
 }
 
-/* ======== Alteração Importante ======== */
-/* Remova ou ajuste a regra abaixo para evitar conflito com media queries */
-#sidebarMenu.active {
-    transform: translateX(0); /* Sidebar visível quando .active é adicionado */
-}
-/* ======================================== */
-
 /* ===========================
    5. Conteúdo Principal
 =========================== */
@@ -157,26 +150,34 @@ body.sidebar-active .content {
    7. Botão Toggle da Sidebar e Notificações em Tempo Real
 =========================== */
 
-#sidebarToggle {
-    position: fixed; /* Fixa o botão no canto superior esquerdo */
+/* Botão Toggle Sidebar */
+#toggle-sidebar-btn {
+    display: none; /* Oculto por padrão */
+    position: fixed;
+    z-index: 10000;
     top: 10px;
-    left: 10px;
-    width: 40px;
-    height: 40px;
-    background-color: var(--sidebar-toggle-bg); /* Fundo do botão */
+    right: 10px;
+    font-size: 1.2rem; /* Aproximadamente 20% menor que 1.5rem */
+    background-color: var(--sidebar-toggle-bg);
     border: none;
-    border-radius: 50%; /* Botão arredondado */
-    color: var(--text-color); /* Cor do ícone */
+    border-radius: 5px;
+    color: var(--text-color);
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1100; /* Sobrepõe a sidebar */
-    transition: background-color 0.3s ease; /* Transição para hover */
+    padding: 0.5rem;
 }
 
-#sidebarToggle:hover {
-    background-color: var(--sidebar-toggle-hover-bg); /* Cor ao passar o mouse */
+/* Exibe o botão apenas em telas pequenas */
+@media (max-width: 767px) {
+    #toggle-sidebar-btn {
+        display: block; /* Exibe o botão em dispositivos móveis */
+    }
+}
+
+/* Oculta o botão em telas maiores */
+@media (min-width: 768px) {
+    #toggle-sidebar-btn {
+        display: none; /* Não mostrar o botão em telas maiores */
+    }
 }
 
 /* Notificações em Tempo Real */
@@ -350,9 +351,14 @@ body.sidebar-active .content {
     color: var(--dropdown-menu-text); /* Cor do texto */
 }
 
-.dropdown-menu .dropdown-item:hover {
-    background-color: var(--dropdown-item-hover-bg); /* Fundo ao passar o mouse */
-    color: var(--dropdown-item-hover-text); /* Cor do texto ao passar o mouse */
+.dropdown-menu .dropdown-item {
+    color: var(--dropdown-menu-text) !important; /* Garante texto branco */
+}
+
+.dropdown-menu .dropdown-item:hover,
+.dropdown-menu .dropdown-item:focus {
+    background-color: var(--dropdown-item-hover-bg) !important; /* Fundo ao passar o mouse */
+    color: var(--dropdown-menu-text) !important; /* Mantém o texto branco */
 }
 
 /* ===========================

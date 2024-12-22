@@ -1,6 +1,9 @@
 // renderer.js
 
-const DEBUG_MODE = true; // Altere para true se quiser habilitar os logs
+// Verifica se está rodando em localhost ou 127.0.0.1
+const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+
+const DEBUG_MODE = isLocalhost; // Define DEBUG_MODE com base no hostname
 
 function debugLog(...args) {
     if (DEBUG_MODE) {

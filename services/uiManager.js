@@ -113,38 +113,25 @@ class UIManager {
     /* --- Função para Criar Novo Chat --- */
     async createNewChat() {
         try {
-            this.debugLog('Criando um novo chat...');
-
+            this.debugLog('Iniciando nova sessão de chat...');
+    
             // Verifica se um GPT está selecionado
             const selectedGPT = this.stateManager.selectedGPT;
             if (!selectedGPT) {
-                throw new Error('Nenhum GPT selecionado. Por favor, selecione um GPT antes de criar um chat.');
+                throw new Error('Nenhum GPT selecionado. Por favor, selecione um GPT antes de iniciar.');
             }
-
-            // Gera um novo ID de sessão usando o GPTManager
+    
+            // Gera um novo ID de sessão e salva no StateManager
             const newSessionId = this.gptManager.generateSessionId();
             this.stateManager.setSessionId(newSessionId);
-
-            // Define o nome padrão do novo chat
-            const defaultChatName = selectedGPT.name || 'Novo Chat';
-
-            const newChat = {
-                id: newSessionId,
-                name: defaultChatName,
-                date: new Date().toISOString(),
-                fk_gpt_id: selectedGPT.id || null
-            };
-
-            // Adiciona o novo chat ao stateManager
-            this.stateManager.addChat(newChat);
-            this.chatManager.populateChatMenu(this.stateManager.chats);
-
+    
+            // Inicializa o chatbot, mas não adiciona o chat ainda
             await this.initializeChatbot();
-
-            this.debugLog('Novo chat criado com sucesso.');
+    
+            this.debugLog('Sessão criada e chatbot inicializado com sucesso.');
         } catch (error) {
-            console.error('Erro ao criar um novo chat:', error);
-            this.showError('Erro ao criar um novo chat. Consulte o console para mais detalhes.');
+            console.error('Erro ao criar nova sessão de chat:', error);
+            this.showError('Erro ao criar nova sessão de chat. Consulte o console para mais detalhes.');
         }
     }
 

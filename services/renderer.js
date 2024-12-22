@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await chatManager.loadChatList(chatManager.populateChatMenu.bind(chatManager));
         stateManager.loadSelectedChat();
         await uiManager.initializeChatbot();
-
+        const defaultGPTId = "6d71f8f4-b91d-45ed-80a9-803ae61a7c98";
         if (!stateManager.selectedGPTId) {
             await chatManager.selectDefaultGPT(defaultGPTId);
         }

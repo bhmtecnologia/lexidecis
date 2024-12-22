@@ -1,4 +1,5 @@
-// Defina debugLog antes da classe
+// gptManager.js
+
 const DEBUG_MODE = true; // Altere para true se quiser habilitar os logs
 
 function debugLog(...args) {
@@ -435,5 +436,23 @@ export default class GPTManager {
 
     generateSessionId() {
         return crypto.randomUUID();
+    }
+
+    /**
+     * Obtém um GPT pelo seu ID.
+     * @param {string} gptId - ID do GPT a ser buscado.
+     * @returns {Object|null} - GPT encontrado ou null se não encontrado.
+     */
+    getGPTById(gptId) {
+        const gpts = this.stateManager.getGPTs(); // Supondo que StateManager possui o método getGPTs
+        debugLog('Buscando GPT com ID:', gptId);
+        debugLog('Lista de GPTs:', gpts);
+        if (!gpts || !Array.isArray(gpts)) {
+            debugLog('Lista de GPTs não está disponível.');
+            return null;
+        }
+        const foundGPT = gpts.find(gpt => gpt.id === gptId) || null;
+        debugLog('GPT encontrado:', foundGPT);
+        return foundGPT;
     }
 }

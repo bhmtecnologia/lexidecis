@@ -1,3 +1,5 @@
+// renderer.js
+
 const DEBUG_MODE = true; // Altere para true se quiser habilitar os logs
 
 function debugLog(...args) {
@@ -5,6 +7,7 @@ function debugLog(...args) {
         console.log(...args);
     }
 }
+
 // ... imports
 import GPTManager from './gptManager.js';
 import { showRenamePrompt, showAlert, showDeleteConfirmation } from './alertManager.js';
@@ -66,6 +69,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // Atualiza o sessionStorage com dados do usuário, se necessário
                     sessionStorage.setItem("uuid", user.uid);
                     sessionStorage.setItem("email", user.email);
+                    sessionStorage.setItem("tenant", user.tenant || 'defaultTenant'); // Ajuste conforme a estrutura do usuário
 
                     resolve();
                 } else {
@@ -74,10 +78,33 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         });
 
-        // Obtém o JWT do usuário autenticado
-        const jwt = await getJwt();
+        // Recuperar as variáveis do sessionStorage
+        const tenant = sessionStorage.getItem("tenant");
+        const uuid = sessionStorage.getItem("uuid");
+        const email = sessionStorage.getItem("email");
+
+        if (!tenant || !uuid || !email) {
+            console.warn('Dados do usuário incompletos no sessionStorage.');
+            showAlert('Dados do usuário incompletos. Por favor, faça login novamente.', 'error');
+            window.location.href = '../login.html'; // Ou a página apropriada
+            return;
+        }
+
+        // Definição inicial das configurações da aplicação
+        const CONFIG = {
+            userId: uuid,
+            companyName: tenant,
+            userName: email,
+            flowise: {
+                chatflowId: '',
+                apiHost: '',
+                token: ''
+            },
+            apiCredentials: {}
+        };
 
         // Faz a chamada à API para obter os endpoints
+        const jwt = await getJwt(); // Obtém o JWT do usuário autenticado
         const response = await fetch('https://n8n.bhm.tec.br/webhook/readEndpoints', {
             method: 'GET',
             headers: {
@@ -130,17 +157,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         tooltipTriggerList.map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 
-        // Carrega GPTs préviamente
-        await gptManager.preloadGPTs();
+// Carrega GPTs previamente
+await gptManager.preloadGPTs();
 
-        // Carrega a lista de chats
-        await chatManager.loadChatList(chatManager.populateChatMenu.bind(chatManager));
-        stateManager.loadSelectedChat();
+// Carrega a lista de chats
+await chatManager.loadChatList(chatManager.populateChatMenu.bind(chatManager));
+stateManager.loadSelectedChat();
+
+// Verifique se há um chat selecionado
+if (!stateManager.selectedChat) {
+    // Se não houver, selecione o GPT padrão e crie um novo chat
+    const defaultGPTId = "6d71f8f4-b91d-45ed-80a9-803ae61a7c98";
+    const defaultGPT = gptManager.getGPTById(defaultGPTId); // Usa o método getGPTById
+
+    if (defaultGPT) {
+        // Define o GPT selecionado no stateManager
+        stateManager.setSelectedGPT(defaultGPT);
+        debugLog(`[Renderer] GPT padrão selecionado: ${defaultGPT.name}`);
+
+        // Cria um novo chat com o GPT padrão
+        await uiManager.createNewChat();
+    } else {
+        showAlert('GPT padrão não encontrado. Consulte o suporte.', 'error');
+        throw new Error('GPT padrão não encontrado.');
+    }
+}
+
+        // Inicializa o chatbot após garantir que selectedGPT está definido
         await uiManager.initializeChatbot();
-        const defaultGPTId = "6d71f8f4-b91d-45ed-80a9-803ae61a7c98";
-        if (!stateManager.selectedGPTId) {
-            await chatManager.selectDefaultGPT(defaultGPTId);
-        }
 
         debugLog('Inicialização concluída. Sistema pronto para uso.');
         showAlert('LexiDecis: Estou pronto.', 'success');
@@ -149,7 +193,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         showAlert('Erro ao carregar o sistema. Consulte o console para mais detalhes.', 'error');
 
         // Redireciona para a página de login se necessário
-        if (error.message.includes("não autenticado") || error.message.includes("não autenticado")) {
+        if (error.message.includes("não autenticado")) {
             window.location.href = "../index.html";
         }
     } finally {

@@ -1,7 +1,12 @@
 // uiManager.js
 
-// Defina esta variável no topo do arquivo
-const DEBUG_MODE = true; // altere para true se quiser habilitar os logs
+const DEBUG_MODE = true; // Altere para true se quiser habilitar os logs
+
+function debugLog(...args) {
+    if (DEBUG_MODE) {
+        console.log(...args);
+    }
+}
 
 import GPTManager from './gptManager.js';
 import HistoryManager from './historyManager.js'; // Importação do HistoryManager
@@ -109,24 +114,29 @@ class UIManager {
     async createNewChat() {
         try {
             this.debugLog('Criando um novo chat...');
-            
+
+            // Verifica se um GPT está selecionado
+            const selectedGPT = this.stateManager.selectedGPT;
+            if (!selectedGPT) {
+                throw new Error('Nenhum GPT selecionado. Por favor, selecione um GPT antes de criar um chat.');
+            }
+
             // Gera um novo ID de sessão usando o GPTManager
             const newSessionId = this.gptManager.generateSessionId();
             this.stateManager.setSessionId(newSessionId);
 
             // Define o nome padrão do novo chat
-            const defaultChatName = this.stateManager.selectedGPT ? this.stateManager.selectedGPT.name : 'Novo Chat';
-            
+            const defaultChatName = selectedGPT.name || 'Novo Chat';
+
             const newChat = {
                 id: newSessionId,
                 name: defaultChatName,
                 date: new Date().toISOString(),
-                fk_gpt_id: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.id : null
+                fk_gpt_id: selectedGPT.id || null
             };
 
-            // Não cria chat fantasma
-            // this.stateManager.addChat(newChat);
-
+            // Adiciona o novo chat ao stateManager
+            this.stateManager.addChat(newChat);
             this.chatManager.populateChatMenu(this.stateManager.chats);
 
             await this.initializeChatbot();
@@ -141,16 +151,28 @@ class UIManager {
     /* --- Funções de Inicialização do Chatbot --- */
     async initializeChatbot() {
         try {
+            // Adicione logs para depuração
+            this.debugLog('Iniciando a inicialização do chatbot...');
+            this.debugLog('selectedGPT:', this.stateManager.selectedGPT);
+
+            if (!this.stateManager.selectedGPT) {
+                throw new Error('Nenhum GPT selecionado.');
+            }
+
+            if (!this.stateManager.selectedGPT.flowiseConfig || !this.stateManager.selectedGPT.flowiseConfig.flowise) {
+                throw new Error('flowiseConfig está indefinido ou incompleto para o GPT selecionado.');
+            }
+
             if (!this.stateManager.currentSessionId) {
                 const newSessionId = this.gptManager.generateSessionId();
                 this.stateManager.setSessionId(newSessionId);
 
-                const defaultChatName = this.stateManager.selectedGPT ? this.stateManager.selectedGPT.name : 'Novo chat';
+                const defaultChatName = this.stateManager.selectedGPT.name || 'Novo chat';
                 const defaultChat = {
                     id: newSessionId,
                     name: defaultChatName,
                     date: new Date().toISOString(),
-                    fk_gpt_id: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.id : null
+                    fk_gpt_id: this.stateManager.selectedGPT.id || null
                 };
                 this.stateManager.addChat(defaultChat);
                 this.chatManager.populateChatMenu(this.stateManager.chats);
@@ -172,12 +194,6 @@ class UIManager {
                 return;
             }
 
-            if (!this.stateManager.selectedGPT || !this.stateManager.selectedGPT.flowiseConfig || !this.stateManager.selectedGPT.flowiseConfig.flowise) {
-                console.error('flowiseConfig está indefinido ou incompleto para o GPT selecionado.');
-                this.showError('Configuração do GPT está incompleta. Por favor, selecione outro GPT.');
-                return;
-            }
-
             const chatflowConfig = {
                 sessionId: this.stateManager.currentSessionId,
                 ...this.stateManager.selectedGPT.flowiseConfig,
@@ -187,8 +203,8 @@ class UIManager {
             this.debugLog('Chatflow Config:', chatflowConfig);
 
             Chatbot.initFull({
-                chatflowid: this.stateManager.selectedGPT.flowiseConfig.flowise.chatflowId,
-                apiHost: this.stateManager.selectedGPT.flowiseConfig.flowise.apiHost,
+                chatflowid: selectedFlowiseConfig.chatflowId,
+                apiHost: selectedFlowiseConfig.apiHost,
                 chatflowConfig: chatflowConfig,
                 observersConfig: {
                     observeUserInput: (userInput) => this.logUserInput(userInput),
@@ -207,7 +223,7 @@ class UIManager {
                     },
                     disclaimer: {
                         title: 'Aviso',
-                        message: 'Ao utilizar esse serviço, está concordando com os termos de uso <a target="_blank" href="https://v1.lexidecis.com.br/terms.html">Termos & Condiçoes</a>',
+                        message: 'Ao utilizar esse serviço, está concordando com os termos de uso <a target="_blank" href="https://v1.lexidecis.com.br/terms.html">Termos & Condições</a>',
                         textColor: 'black',
                         buttonColor: '#282828',
                         buttonText: 'Concordo, quero iniciar o LexiDecis',
@@ -227,7 +243,7 @@ class UIManager {
                         fontSize: 13,
                         starterPrompts: (() => {
                             const prompts = this.stateManager.selectedGPT?.starterPrompts;
-                            if (!prompts) return ['Quem é voce?'];
+                            if (!prompts) return ['Quem é você?'];
                             if (Array.isArray(prompts)) return prompts;
                             return prompts.includes(',') 
                                 ? prompts.split(',').map(p => p.trim()) 
@@ -289,6 +305,7 @@ class UIManager {
     }
 
     /* --- Outros Métodos Auxiliares --- */
+
     showError(message) {
         const errorContainer = document.getElementById('error-container');
         if (errorContainer) {
@@ -300,7 +317,7 @@ class UIManager {
                 errorContainer.classList.add('d-none');
             }, 5000);
         } else {
-            console.error(message); // Fallback para exibir no console
+            alert(message); 
         }
     }
 

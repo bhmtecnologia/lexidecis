@@ -23,55 +23,65 @@ export default class SettingsManager {
         this.uiManager = uiManager;
         this.config = config;
 
-        /**
-         * @type {bootstrap.Modal|undefined}
-         * @description Instância do modal Bootstrap para configurações.
-         */
+        /** @type {bootstrap.Modal|null} */
         this.modal = null;
 
-        // Inicializa o modal na interface, caso não exista
-        this.createModal();
+        // Inicializa os componentes
+        this.init();
+    }
 
-        // Adiciona o botão de configurações na barra lateral
+    /**
+     * Método de inicialização para configurar o modal e o botão de configurações.
+     * @private
+     */
+    init() {
+        this.createModal();
         this.addSettingsButton();
     }
 
     /**
      * Adiciona o botão de configurações na barra lateral.
-     * @method
+     * @private
      */
     addSettingsButton() {
-        // Localiza o container onde os botões estão inseridos
         const buttonContainer = document.querySelector('.d-flex.justify-content-around.mb-3');
         if (!buttonContainer) {
             console.error('Container de botões não encontrado. Verifique a estrutura do HTML.');
             return;
         }
 
-        // Cria o botão de configurações
+        // Evita adicionar múltiplos botões
+        if (document.getElementById('settings-button')) {
+            console.warn('Botão de Configurações já existe.');
+            return;
+        }
+
         const settingsButton = document.createElement('button');
         settingsButton.id = 'settings-button';
         settingsButton.classList.add('btn', 'btn-link', 'text-white');
-        settingsButton.setAttribute('data-bs-toggle', 'tooltip');
-        settingsButton.setAttribute('data-bs-placement', 'bottom');
-        settingsButton.setAttribute('title', 'Configurações');
+        settingsButton.setAttribute('aria-label', 'Configurações'); // Melhor acessibilidade
         settingsButton.innerHTML = `<i class="bi bi-gear" style="font-size: 1.5rem;"></i>`;
 
-        // Adiciona evento de clique para abrir o modal
+        // Tooltip (inicializa somente se necessário)
+        new bootstrap.Tooltip(settingsButton, {
+            title: 'Configurações',
+            placement: 'bottom'
+        });
+
         settingsButton.addEventListener('click', () => this.openModal());
 
-        // Adiciona o botão ao container
         buttonContainer.appendChild(settingsButton);
     }
 
     /**
      * Cria dinamicamente o modal de configurações na interface.
-     * @method
+     * @private
      */
     createModal() {
-        if (document.getElementById('settings-modal')) {
+        const existingModal = document.getElementById('settings-modal');
+        if (existingModal) {
             console.log('Modal de Configurações já existe.');
-            this.modal = new bootstrap.Modal(document.getElementById('settings-modal'));
+            this.modal = new bootstrap.Modal(existingModal);
             return;
         }
 
@@ -85,13 +95,16 @@ export default class SettingsManager {
                         </div>
                         <div class="modal-body">
                             <!-- Formulário de Configurações -->
-                            <form id="settings-form">
+                            <form id="settings-form" novalidate>
                                 <div class="mb-3">
                                     <label for="theme-select" class="form-label">Tema</label>
-                                    <select class="form-select" id="theme-select">
+                                    <select class="form-select" id="theme-select" required>
                                         <option value="light">Claro</option>
                                         <option value="dark">Escuro</option>
                                     </select>
+                                    <div class="invalid-feedback">
+                                        Por favor, selecione um tema.
+                                    </div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="notifications-toggle" class="form-label">Notificações</label>
@@ -113,19 +126,26 @@ export default class SettingsManager {
         `;
 
         document.body.insertAdjacentHTML('beforeend', modalHtml);
-        this.modal = new bootstrap.Modal(document.getElementById('settings-modal'));
+        const modalElement = document.getElementById('settings-modal');
+        this.modal = new bootstrap.Modal(modalElement);
 
-        // Adiciona evento de clique no botão de salvar
-        document.getElementById('save-settings-button').addEventListener('click', () => this.saveSettings());
+        // Event delegation para otimizar o gerenciamento de eventos
+        modalElement.querySelector('#save-settings-button').addEventListener('click', () => this.saveSettings());
+
+        // Opcional: Resetar o formulário ao fechar o modal
+        modalElement.addEventListener('hidden.bs.modal', () => {
+            modalElement.querySelector('#settings-form').reset();
+            this.loadSettings(); // Recarrega as configurações para refletir o estado atual
+        });
     }
 
     /**
      * Abre o modal de configurações.
-     * @method
+     * @public
      */
     openModal() {
         if (this.modal) {
-            this.loadSettings(); // Carrega as configurações atuais antes de abrir
+            this.loadSettings();
             this.modal.show();
         } else {
             console.error('Modal de Configurações não está inicializado.');
@@ -134,22 +154,22 @@ export default class SettingsManager {
 
     /**
      * Carrega as configurações atuais e atualiza o formulário.
-     * @method
+     * @private
      */
     loadSettings() {
+        const form = document.getElementById('settings-form');
+        if (!form) {
+            console.error('Formulário de configurações não encontrado.');
+            return;
+        }
+
         // Carregar o tema atual
         const currentTheme = this.stateManager.getSetting('theme') || 'light';
-        const themeSelect = document.getElementById('theme-select');
-        if (themeSelect) {
-            themeSelect.value = currentTheme;
-        }
+        form.querySelector('#theme-select').value = currentTheme;
 
         // Carregar o estado das notificações
         const notificationsEnabled = this.stateManager.getSetting('notifications') || false;
-        const notificationsToggle = document.getElementById('notifications-toggle');
-        if (notificationsToggle) {
-            notificationsToggle.checked = notificationsEnabled;
-        }
+        form.querySelector('#notifications-toggle').checked = notificationsEnabled;
 
         // Carregar outras configurações conforme necessário
     }
@@ -157,20 +177,32 @@ export default class SettingsManager {
     /**
      * Salva as configurações do formulário.
      * @async
-     * @method
+     * @private
      */
     async saveSettings() {
-        const theme = document.getElementById('theme-select').value;
-        const notifications = document.getElementById('notifications-toggle').checked;
+        const form = document.getElementById('settings-form');
+        if (!form) {
+            console.error('Formulário de configurações não encontrado.');
+            return;
+        }
 
-        // Atualizar o estado
+        // Validação básica do formulário
+        if (!form.checkValidity()) {
+            form.classList.add('was-validated');
+            return;
+        }
+
+        const theme = form.querySelector('#theme-select').value;
+        const notifications = form.querySelector('#notifications-toggle').checked;
+
+        // Atualizar o estado local
         this.stateManager.setSetting('theme', theme);
         this.stateManager.setSetting('notifications', notifications);
 
         // Aplicar as configurações imediatamente
         this.applySettings();
 
-        // Enviar as configurações para a API
+        // Preparar os parâmetros para a API
         const params = {
             company_name: this.config.companyName,
             user_name: this.config.userName,
@@ -192,33 +224,35 @@ export default class SettingsManager {
             }
         } catch (error) {
             console.error('Erro ao salvar configurações:', error);
-            this.uiManager.showError('Erro ao salvar configurações. Verifique o console para mais detalhes.');
+            this.uiManager.showError('Erro ao salvar configurações. Por favor, tente novamente mais tarde.');
         }
     }
 
     /**
-     * Aplica as configurações carregadas.
-     * @method
+     * Aplica as configurações carregadas à interface.
+     * @private
      */
     applySettings() {
         const theme = this.stateManager.getSetting('theme') || 'light';
+        const bodyClassList = document.body.classList;
+
         if (theme === 'dark') {
-            document.body.classList.add('bg-dark', 'text-white');
+            bodyClassList.add('bg-dark', 'text-white');
             // Adicione mais ajustes de tema conforme necessário
         } else {
-            document.body.classList.remove('bg-dark', 'text-white');
+            bodyClassList.remove('bg-dark', 'text-white');
             // Remova ou ajuste outras classes conforme necessário
         }
 
         const notifications = this.stateManager.getSetting('notifications') || false;
         if (notifications) {
-            // Habilitar notificações (implementação específica depende da sua aplicação)
+            // Implementação específica para habilitar notificações
             console.log('Notificações ativadas.');
-            // Exemplo: Iniciar notificações ou alterar o estado de notificações
+            // Exemplo: Iniciar serviços de notificação
         } else {
-            // Desabilitar notificações
+            // Implementação específica para desabilitar notificações
             console.log('Notificações desativadas.');
-            // Exemplo: Parar notificações ou alterar o estado de notificações
+            // Exemplo: Parar serviços de notificação
         }
 
         // Aplique outras configurações conforme necessário

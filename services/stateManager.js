@@ -1,3 +1,4 @@
+// Defina debugLog antes da classe
 const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
 
 const DEBUG_MODE = isLocalhost; // Define DEBUG_MODE com base no hostname
@@ -265,5 +266,17 @@ export default class StateManager {
         this.isLoadingGPTs = false;
         this.isGPTSelectionLoading = false;
         debugLog('StateManager foi resetado.');
+    }
+
+    /**
+     * Recupera a configuração do Flowise.
+     * @returns {Object|null} Configuração do Flowise ou null se não estiver definido.
+     */
+    getFlowiseConfig() {
+        if (this.gptConfig && this.gptConfig.flowise) {
+            return this.gptConfig.flowise;
+        }
+        console.warn('Configuração do Flowise não está definida.');
+        return null;
     }
 }

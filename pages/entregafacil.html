@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Entrega Fácil - Last Mile Delivery App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* Reset básico */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Estilos Gerais */
+        body {
+            font-family: Arial, sans-serif;
+            /* Aumenta a fonte base e fornece boa legibilidade em mobile */
+            font-size: 18px;
+            line-height: 1.4;
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        /* Container Principal */
+        #container {
+            width: 100%;
+            max-width: 420px; /* um pouco maior para acomodar mais espaço nos inputs */
+            background-color: #ffffff;
+            padding: 20px 25px;
+            border-radius: 12px; /* cantos mais arredondados */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Título */
+        h1 {
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 1.8em; /* título maior e mais destacado */
+            color: #333333;
+        }
+
+        /* Labels e Inputs */
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555555;
+            font-size: 1.05em;
+        }
+
+        input[type="number"],
+        input[type="text"],
+        input[type="file"] {
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 18px;
+            border: 1px solid #cccccc;
+            border-radius: 8px;
+            font-size: 1.05em; /* facilita leitura em telas menores */
+        }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        /* Botão */
+        button {
+            width: 100%;
+            padding: 16px;
+            background-color: #28a745;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        /* Pré-visualização de Imagem */
+        #previewComprovante {
+            width: 100%;
+            max-height: 220px; /* um pouco maior */
+            margin-bottom: 15px;
+            border: 1px solid #cccccc;
+            border-radius: 8px;
+            display: none;
+            object-fit: cover;
+        }
+
+        /* Resultados da Busca */
+        #resultados {
+            max-height: 160px;
+            overflow-y: auto;
+            border: 1px solid #cccccc;
+            border-radius: 8px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            margin-bottom: 18px;
+        }
+
+        .item-resultado {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            font-size: 0.95em; /* levemente menor que o input, mas ainda boa leitura */
+        }
+
+        .item-resultado:last-child {
+            border-bottom: none;
+        }
+
+        .item-resultado:hover {
+            background-color: #e9ecef;
+        }
+
+        /* Mensagens */
+        #mensagem {
+            padding: 14px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-weight: bold;
+            display: none;
+            font-size: 0.95em;
+        }
+
+        #mensagem.sucesso {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        #mensagem.erro {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Indicador de Carregamento */
+        #loading {
+            display: none;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #28a745;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsividade Adicional */
+        @media (max-width: 450px) {
+            #container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.6em;
+            }
+
+            label {
+                font-size: 1em;
+            }
+
+            input[type="number"],
+            input[type="text"],
+            input[type="file"] {
+                font-size: 1em;
+                padding: 12px;
+            }
+
+            button {
+                font-size: 1em;
+                padding: 14px;
+            }
+
+            .item-resultado {
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>Entrega Fácil</h1>
+
+        <!-- Busca de NF -->
+        <label for="buscaNF">Buscar NF (Primeiros 3 dígitos do ID):</label>
+        <input type="number" id="buscaNF" name="buscaNF" placeholder="Ex: 100" minlength="3" maxlength="20" min="100" aria-describedby="buscaNFHelp">
+
+        <!-- Resultados da Busca -->
+        <div id="resultados" aria-live="polite" aria-atomic="true"></div>
+
+        <!-- NF Selecionada -->
+        <label for="nf">NF Selecionada:</label>
+        <input type="text" id="nf" name="nf" placeholder="NF será exibida aqui" readonly>
+
+        <!-- Upload de Comprovante -->
+        <label for="comprovante">Foto do Comprovante:</label>
+        <input type="file" id="comprovante" accept="image/png, image/jpeg, image/jpg" aria-describedby="comprovanteHelp" disabled>
+        <small id="comprovanteHelp" style="display: block; margin-bottom: 10px; color: #777;">
+            Formatos: PNG, JPEG, JPG. Máx: 5MB.
+        </small>
+
+        <!-- Pré-visualização -->
+        <img id="previewComprovante" src="#" alt="Pré-visualização do Comprovante">
+
+        <!-- Botão de Salvar -->
+        <button onclick="salvarComprovante()" id="btnSalvar" disabled>Salvar Comprovante</button>
+
+        <!-- Indicador de Carregamento Durante o Envio -->
+        <div id="loading">
+            <div class="spinner"></div>
+            <p>Salvando...</p>
+        </div>
+
+        <!-- Mensagens -->
+        <div id="mensagem"></div>
+    </div>
+
+    <script>
+        // Seleção de elementos
+        const inputBusca = document.getElementById("buscaNF");
+        const resultadosDiv = document.getElementById("resultados");
+        const inputNF = document.getElementById("nf");
+        const comprovanteInput = document.getElementById("comprovante");
+        const previewComprovante = document.getElementById("previewComprovante");
+        const btnSalvar = document.getElementById("btnSalvar");
+        const mensagemDiv = document.getElementById("mensagem");
+        const loadingDiv = document.getElementById("loading");
+
+        // Variável para armazenar as NFs
+        let nfs = [];
+
+        // Função para buscar todas as NFs no carregamento da página
+        async function carregarTodasNFs() {
+            try {
+                mostrarLoading(true);
+                // URL da API para obter todas as NFs
+                const url = "https://n8n.bhm.tec.br/webhook/readnfs";
+
+                const response = await fetch(url, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erro na requisição: ${response.status} - ${response.statusText}`);
+                }
+
+                const textData = await response.text();
+
+                console.log("Resposta da API como texto:", textData);
+
+                // Verificar se a resposta já é um array
+                let parsedData;
+                if (textData.trim().startsWith('[')) {
+                    // Resposta é um array
+                    parsedData = JSON.parse(textData);
+                } else {
+                    // Resposta contém múltiplos objetos JSON separados por vírgulas
+                    // Envolver a resposta em colchetes para formar um array válido
+                    parsedData = JSON.parse(`[${textData}]`);
+                }
+
+                console.log("Dados parseados:", parsedData);
+
+                // Processar cada objeto da resposta
+                nfs = parsedData.map(item => {
+                    if (typeof item.data !== 'string') {
+                        throw new TypeError("Campo 'data' não é uma string.");
+                    }
+
+                    // Parse do campo 'data' que é uma string JSON
+                    let nfData;
+                    try {
+                        nfData = JSON.parse(item.data);
+                    } catch (parseError) {
+                        console.error("Erro ao parsear 'data':", parseError);
+                        throw new Error("Erro ao parsear 'data' da NF.");
+                    }
+
+                    return {
+                        id: nfData.id,
+                        cliente: nfData.cliente,
+                        data_prevista_entrega: nfData.data_prevista_entrega,
+                        last_modified: nfData.last_modified,
+                        last_modified_user: nfData.last_modified_user
+                    };
+                });
+
+                console.log("NFs processadas:", nfs);
+
+            } catch (error) {
+                console.error("Erro ao carregar NFs:", error);
+                mostrarMensagem(`Erro ao carregar NFs: ${error.message}`, "erro");
+            } finally {
+                mostrarLoading(false);
+            }
+        }
+
+        // Chamada inicial para carregar todas as NFs quando a página carrega
+        window.addEventListener("DOMContentLoaded", carregarTodasNFs);
+
+        // Função para exibir mensagens
+        function mostrarMensagem(mensagem, tipo) {
+            mensagemDiv.textContent = mensagem;
+            mensagemDiv.className = ""; // Resetar classes
+            mensagemDiv.classList.add(tipo);
+            mensagemDiv.style.display = 'block';
+            mensagemDiv.setAttribute('role', 'alert');
+            mensagemDiv.focus(); // Para leitores de tela
+        }
+
+        // Função para limpar mensagens
+        function limparMensagens() {
+            mensagemDiv.textContent = "";
+            mensagemDiv.className = "";
+            mensagemDiv.style.display = 'none';
+        }
+
+        // Função para mostrar ou esconder o indicador de carregamento
+        function mostrarLoading(status) {
+            if (status) {
+                btnSalvar.disabled = true;
+                inputBusca.disabled = true;
+                comprovanteInput.disabled = true;
+                loadingDiv.style.display = 'block';
+            } else {
+                btnSalvar.disabled = false;
+                inputBusca.disabled = false;
+                // Se uma NF está selecionada, manter comprovanteInput habilitado
+                if (inputNF.value.trim() !== "") {
+                    comprovanteInput.disabled = false;
+                }
+                loadingDiv.style.display = 'none';
+            }
+        }
+
+        // Evento de input para buscar NFs a partir dos primeiros 3 dígitos do ID
+        inputBusca.addEventListener("input", () => {
+            const busca = inputBusca.value.trim();
+
+            // Limitar a busca a 3 ou mais dígitos
+            if (busca.length >= 3) { 
+                buscarNFs(busca);
+            } else {
+                resultadosDiv.innerHTML = "";
+                ativarCamposComprovante(false);
+            }
+        });
+
+        // Função para buscar NFs com base nos dígitos inseridos (primeiros 3 dígitos do ID)
+        function buscarNFs(digits) {
+            // Filtrar as NFs onde 'id' começa com os dígitos inseridos
+            const resultadosFiltrados = nfs.filter(nf => nf.id.startsWith(digits));
+
+            exibirResultados(resultadosFiltrados);
+        }
+
+        // Função para exibir os resultados da busca
+        function exibirResultados(nfsEncontradas) {
+            resultadosDiv.innerHTML = "";
+
+            if (nfsEncontradas.length > 0) {
+                nfsEncontradas.forEach(nf => {
+                    const item = document.createElement("div");
+                    item.classList.add("item-resultado");
+                    item.textContent = `NF: ${nf.id} - ${nf.cliente}`;
+                    item.tabIndex = 0; // Permitir foco via teclado
+
+                    // Selecionar NF ao clicar
+                    item.addEventListener("click", () => selecionarNF(nf.id));
+
+                    // Selecionar NF ao pressionar Enter ou Espaço
+                    item.addEventListener("keypress", (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            selecionarNF(nf.id);
+                        }
+                    });
+
+                    resultadosDiv.appendChild(item);
+                });
+            } else {
+                resultadosDiv.textContent = "Nenhuma NF encontrada.";
+            }
+        }
+
+        // Função para selecionar uma NF
+        function selecionarNF(numero) {
+            inputNF.value = numero;
+            resultadosDiv.innerHTML = "";
+            inputBusca.value = "";
+            ativarCamposComprovante(true);
+        }
+
+        // Função para ativar ou desativar os campos de comprovante e salvar
+        function ativarCamposComprovante(ativar) {
+            comprovanteInput.disabled = !ativar;
+            btnSalvar.disabled = !ativar;
+            if (!ativar) {
+                limparCampos();
+            }
+        }
+
+        // Pré-visualização de imagem
+        comprovanteInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            previewComprovante.style.display = 'none';
+            previewComprovante.src = "#";
+
+            if (file) {
+                const isValidType = ['image/png', 'image/jpeg', 'image/jpg'].includes(file.type);
+                const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB
+
+                if (!isValidType) {
+                    mostrarMensagem("Formato de imagem inválido. Aceitamos PNG, JPEG e JPG.", "erro");
+                    comprovanteInput.value = "";
+                    ativarCamposComprovante(false);
+                    return;
+                }
+
+                if (!isValidSize) {
+                    mostrarMensagem("O arquivo é muito grande. O tamanho máximo permitido é 5MB.", "erro");
+                    comprovanteInput.value = "";
+                    ativarCamposComprovante(false);
+                    return;
+                }
+
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    previewComprovante.src = e.target.result;
+                    previewComprovante.style.display = 'block';
+                }
+
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Função para salvar o comprovante
+        async function salvarComprovante() {
+            const nf = inputNF.value.trim();
+            const comprovanteFile = comprovanteInput.files[0];
+
+            limparMensagens();
+
+            // Validações
+            if (!nf) {
+                mostrarMensagem("Por favor, selecione uma NF.", "erro");
+                return;
+            }
+
+            if (!comprovanteFile) {
+                mostrarMensagem("Por favor, faça upload de um comprovante de entrega.", "erro");
+                return;
+            }
+
+            if (comprovanteFile.size > 5 * 1024 * 1024) { // 5MB
+                mostrarMensagem("O arquivo é muito grande. O tamanho máximo permitido é 5MB.", "erro");
+                return;
+            }
+
+            const isValidType = ['image/png', 'image/jpeg', 'image/jpg'].includes(comprovanteFile.type);
+            if (!isValidType) {
+                mostrarMensagem("Formato de imagem inválido. Aceitamos PNG, JPEG e JPG.", "erro");
+                return;
+            }
+
+            try {
+                mostrarLoading(true);
+
+                const comprovanteBase64 = await toBase64(comprovanteFile);
+
+                const data = {
+                    nf: nf,
+                    comprovante: comprovanteBase64
+                };
+
+                const response = await fetch("https://n8n.bhm.tec.br/webhook/criaComprovante", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Erro na requisição: ${response.status} - ${errorText}`);
+                }
+
+                mostrarMensagem(`Comprovante salvo com sucesso para a NF ${nf}!`, "sucesso");
+                limparCampos();
+            } catch (error) {
+                console.error("Erro ao salvar comprovante:", error);
+                mostrarMensagem(`Ocorreu um erro ao salvar o comprovante: ${error.message}`, "erro");
+            } finally {
+                mostrarLoading(false);
+            }
+        }
+
+        // Função para converter arquivo em Base64
+        function toBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result); // Mantém o prefixo
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        // Função para limpar campos após sucesso
+        function limparCampos() {
+            inputNF.value = "";
+            comprovanteInput.value = "";
+            previewComprovante.src = "#";
+            previewComprovante.style.display = 'none';
+            // Não chamar ativarCamposComprovante aqui para evitar recursão
+        }
+    </script>
+</body>
+</html>

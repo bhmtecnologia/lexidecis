@@ -2,284 +2,580 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+    <title>Entrega Fácil - Last Mile Delivery App</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestão de Fretes</title>
-    <!-- Bootstrap CSS via CDN -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome via CDN -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    <!-- Custom CSS -->
     <style>
+        /* Reset básico */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Estilos Gerais */
         body {
-            font-family: 'Roboto', sans-serif;
-            scroll-behavior: smooth;
-        }
-        .hero {
-            background: url('https://source.unsplash.com/1600x900/?freight,logistics') no-repeat center center;
-            background-size: cover;
-            height: 100vh;
-            color: white;
+            font-family: Arial, sans-serif;
+            background-color: #f0f4f8;
             display: flex;
-            align-items: center;
             justify-content: center;
-            text-align: center;
-            position: relative;
+            align-items: center;
+            min-height: 100vh;
         }
-        .hero::after {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
+
+        /* Container Principal */
+        #container {
             width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.6);
+            max-width: 400px;
+            background-color: #ffffff;
+            padding: 20px 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
-        .hero-content {
-            position: relative;
-            z-index: 1;
+
+        /* Título */
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            color: #333333;
         }
-        .section {
-            padding: 60px 0;
+
+        /* Labels e Inputs */
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: bold;
+            color: #555555;
+            font-size: 0.95em;
         }
-        .section-bg-light {
+
+        input[type="number"],
+        input[type="text"],
+        input[type="file"] {
+            width: 100%;
+            padding: 12px 10px;
+            margin-bottom: 15px;
+            border: 1px solid #cccccc;
+            border-radius: 6px;
+            font-size: 1em;
+        }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        /* Botão */
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: #28a745;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        /* Pré-visualização de Imagem */
+        #previewComprovante {
+            width: 100%;
+            max-height: 200px;
+            margin-bottom: 15px;
+            border: 1px solid #cccccc;
+            border-radius: 6px;
+            display: none;
+            object-fit: cover;
+        }
+
+        /* Resultados da Busca */
+        #resultados {
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #cccccc;
+            border-radius: 6px;
+            padding: 10px;
             background-color: #f9f9f9;
+            margin-bottom: 15px;
         }
-        .footer {
-            background-color: #343a40;
-            color: white;
+
+        .item-resultado {
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
         }
-        .chatbot-section {
+
+        .item-resultado:last-child {
+            border-bottom: none;
+        }
+
+        .item-resultado:hover {
             background-color: #e9ecef;
-            padding: 60px 0;
         }
-        .chatbot-container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+
+        /* Mensagens */
+        #mensagem {
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-weight: bold;
+            display: none;
         }
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .hero {
-                height: 70vh;
+
+        #mensagem.sucesso {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        #mensagem.erro {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Indicador de Carregamento */
+        #loading {
+            display: none;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #28a745;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsividade Adicional */
+        @media (max-width: 400px) {
+            #container {
+                padding: 15px 20px;
+            }
+
+            h1 {
+                font-size: 1.3em;
+            }
+
+            button {
+                padding: 12px;
+                font-size: 0.95em;
             }
         }
     </style>
 </head>
 <body>
+    <div id="container">
+        <h1>Entrega Fácil</h1>
 
-    <!-- Header / Hero Section -->
-    <section class="hero" id="home">
-        <div class="hero-content">
-            <h1 class="display-4">Gestão de Fretes Simplificada</h1>
-            <p class="lead">Faça seu pedido de frete de forma rápida e fácil.</p>
-            <a href="#pedido" class="btn btn-primary btn-lg">Começar</a>
+        <!-- Busca de NF -->
+        <label for="buscaNF">Buscar NF (Primeiros 3 dígitos do ID):</label>
+        <input type="number" id="buscaNF" name="buscaNF" placeholder="Ex: 100" minlength="3" maxlength="3" min="100" max="999" aria-describedby="buscaNFHelp">
+
+        <!-- Resultados da Busca -->
+        <div id="resultados" aria-live="polite" aria-atomic="true"></div>
+
+        <!-- NF Selecionada -->
+        <label for="nf">NF Selecionada:</label>
+        <input type="text" id="nf" name="nf" placeholder="NF será exibida aqui" readonly>
+
+        <!-- Upload de Comprovante -->
+        <label for="comprovante">Foto do Comprovante:</label>
+        <input type="file" id="comprovante" accept="image/png, image/jpeg, image/jpg" aria-describedby="comprovanteHelp" disabled>
+        <small id="comprovanteHelp">Formatos: PNG, JPEG, JPG. Máx: 5MB.</small>
+
+        <!-- Pré-visualização -->
+        <img id="previewComprovante" src="#" alt="Pré-visualização do Comprovante">
+
+        <!-- Botão de Salvar -->
+        <button onclick="salvarComprovante()" id="btnSalvar" disabled>Salvar Comprovante</button>
+
+        <!-- Indicador de Carregamento Durante o Envio -->
+        <div id="loading">
+            <div class="spinner"></div>
+            <p>Salvando...</p>
         </div>
-    </section>
 
-    <!-- Sobre Nós -->
-    <section id="sobre" class="section">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <img src="https://source.unsplash.com/800x600/?team,office" class="img-fluid rounded" alt="Sobre Nós">
-                </div>
-                <div class="col-md-6">
-                    <h2>Sobre Nós</h2>
-                    <p>Somos uma empresa dedicada a oferecer soluções completas para gestão de fretes. Com anos de experiência no mercado, garantimos eficiência, segurança e pontualidade em todas as suas operações logísticas.</p>
-                    <p>Nossa missão é simplificar o processo de envio de cargas, proporcionando uma experiência transparente e confiável para nossos clientes.</p>
-                </div>
-            </div>
-        </div>
-    </section>
+        <!-- Mensagens -->
+        <div id="mensagem"></div>
+    </div>
 
-    <!-- Serviços -->
-    <section id="servicos" class="section section-bg-light">
-        <div class="container">
-            <h2 class="text-center mb-5">Nossos Serviços</h2>
-            <div class="row">
-                <div class="col-md-4 text-center mb-4">
-                    <i class="fas fa-truck fa-3x mb-3 text-primary"></i>
-                    <h4>Transporte Rodoviário</h4>
-                    <p>Oferecemos soluções de transporte rodoviário eficientes para todo o território nacional.</p>
-                </div>
-                <div class="col-md-4 text-center mb-4">
-                    <i class="fas fa-warehouse fa-3x mb-3 text-primary"></i>
-                    <h4>Armazenagem</h4>
-                    <p>Dispomos de armazéns modernos e seguros para armazenagem temporária ou de longo prazo.</p>
-                </div>
-                <div class="col-md-4 text-center mb-4">
-                    <i class="fas fa-box-open fa-3x mb-3 text-primary"></i>
-                    <h4>Gestão de Cargas</h4>
-                    <p>Gerenciamos suas cargas com tecnologia de ponta para garantir rastreamento e segurança.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Formulário de Pedido -->
-    <section id="pedido" class="section">
-        <div class="container">
-            <h2 class="mb-4 text-center">Faça seu Pedido de Frete</h2>
-            <form id="freightForm">
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label for="peso" class="form-label">Peso (kg)</label>
-                        <input type="number" class="form-control" id="peso" name="peso" placeholder="Digite o peso da carga" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="tipoCarga" class="form-label">Tipo de Carga</label>
-                        <select class="form-select" id="tipoCarga" name="tipoCarga" required>
-                            <option value="" selected disabled>Selecione o tipo de carga</option>
-                            <option value="geral">Geral</option>
-                            <option value="perigosa">Perigosa</option>
-                            <option value="refrigerada">Refrigerada</option>
-                            <option value="frágil">Frágil</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label for="origem" class="form-label">Origem</label>
-                        <input type="text" class="form-control" id="origem" name="origem" placeholder="Cidade de origem" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="destino" class="form-label">Destino</label>
-                        <input type="text" class="form-control" id="destino" name="destino" placeholder="Cidade de destino" required>
-                    </div>
-                </div>
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <label for="dataEnvio" class="form-label">Data de Envio</label>
-                        <input type="date" class="form-control" id="dataEnvio" name="dataEnvio" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="observacoes" class="form-label">Observações</label>
-                        <textarea class="form-control" id="observacoes" name="observacoes" rows="3" placeholder="Adicione alguma observação (opcional)"></textarea>
-                    </div>
-                </div>
-                <div class="d-grid">
-                    <button type="submit" class="btn btn-success btn-lg"><i class="fas fa-paper-plane"></i> Enviar Pedido</button>
-                </div>
-            </form>
-            <!-- Mensagem de Sucesso -->
-            <div id="successMessage" class="alert alert-success mt-4 d-none" role="alert">
-                Seu pedido foi enviado com sucesso!
-            </div>
-        </div>
-    </section>
-
-    <!-- Chatbot -->
-    <section id="chatbot" class="chatbot-section">
-        <div class="container">
-            <h2 class="mb-4 text-center">Precisa de Ajuda? Converse com Nosso Chatbot!</h2>
-            <div class="chatbot-container">
-                <flowise-fullchatbot></flowise-fullchatbot>
-                <script type="module">
-                    import Chatbot from "https://cdn.jsdelivr.net/npm/flowise-embed/dist/web.js"
-                    Chatbot.initFull({
-                        chatflowid: "e10c27fa-5676-464e-ac6b-57ae86aeadd1",
-                        apiHost: "https://flowise.bhm.tec.br",
-                    })
-                </script>
-            </div>
-        </div>
-    </section>
-
-    <!-- Contato -->
-    <section id="contato" class="section section-bg-light">
-        <div class="container">
-            <h2 class="text-center mb-5">Contato</h2>
-            <div class="row">
-                <div class="col-md-6 mb-4">
-                    <h5>Fale Conosco</h5>
-                    <p>Tem alguma dúvida ou precisa de mais informações? Entre em contato conosco!</p>
-                    <ul class="list-unstyled">
-                        <li><i class="fas fa-map-marker-alt me-2 text-primary"></i> Rua das Logísticas, 123, São Paulo - SP</li>
-                        <li><i class="fas fa-phone me-2 text-primary"></i> (11) 1234-5678</li>
-                        <li><i class="fas fa-envelope me-2 text-primary"></i> contato@gestaofretes.com.br</li>
-                    </ul>
-                </div>
-                <div class="col-md-6">
-                    <h5>Envie uma Mensagem</h5>
-                    <form id="contactForm">
-                        <div class="mb-3">
-                            <label for="nomeContato" class="form-label">Nome</label>
-                            <input type="text" class="form-control" id="nomeContato" name="nomeContato" placeholder="Seu nome" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="emailContato" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="emailContato" name="emailContato" placeholder="Seu email" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="mensagemContato" class="form-label">Mensagem</label>
-                            <textarea class="form-control" id="mensagemContato" name="mensagemContato" rows="4" placeholder="Sua mensagem" required></textarea>
-                        </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Enviar Mensagem</button>
-                        </div>
-                    </form>
-                    <!-- Mensagem de Sucesso Contato -->
-                    <div id="successContactMessage" class="alert alert-success mt-4 d-none" role="alert">
-                        Sua mensagem foi enviada com sucesso!
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="footer py-4">
-        <div class="container text-center">
-            <p class="mb-0">&copy; 2024 Gestão de Fretes. Todos os direitos reservados.</p>
-            <div class="mt-2">
-                <a href="#" class="text-white me-3"><i class="fab fa-facebook-f"></i></a>
-                <a href="#" class="text-white me-3"><i class="fab fa-twitter"></i></a>
-                <a href="#" class="text-white me-3"><i class="fab fa-linkedin-in"></i></a>
-                <a href="#" class="text-white"><i class="fab fa-instagram"></i></a>
-            </div>
-        </div>
-    </footer>
-
-    <!-- Bootstrap JS e Popper via CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- JavaScript Personalizado -->
     <script>
-        // Formulário de Pedido
-        document.getElementById('freightForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+        // Seleção de elementos
+        const inputBusca = document.getElementById("buscaNF");
+        const resultadosDiv = document.getElementById("resultados");
+        const inputNF = document.getElementById("nf");
+        const comprovanteInput = document.getElementById("comprovante");
+        const previewComprovante = document.getElementById("previewComprovante");
+        const btnSalvar = document.getElementById("btnSalvar");
+        const mensagemDiv = document.getElementById("mensagem");
+        const loadingDiv = document.getElementById("loading");
 
-            // Aqui você pode adicionar validações adicionais ou enviar os dados para o servidor
+        // Variável para armazenar as NFs
+        let nfs = [];
 
-            // Exibir mensagem de sucesso
-            document.getElementById('successMessage').classList.remove('d-none');
+        // Função para buscar todas as NFs no carregamento da página
+        async function carregarTodasNFs() {
+            try {
+                mostrarLoading(true);
+                // URL da API para obter todas as NFs
+                const url = "https://n8n.bhm.tec.br/webhook/readnfs";
 
-            // Resetar o formulário
-            this.reset();
+                const response = await fetch(url, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                });
 
-            // Scroll para a mensagem de sucesso
-            document.getElementById('successMessage').scrollIntoView({ behavior: 'smooth' });
+                if (!response.ok) {
+                    throw new Error(`Erro na requisição: ${response.status} - ${response.statusText}`);
+                }
+
+                const textData = await response.text();
+
+                console.log("Resposta da API como texto:", textData);
+
+                // Parsear a resposta como JSON
+                let parsedData;
+                try {
+                    parsedData = JSON.parse(textData);
+                } catch (parseError) {
+                    console.error("Erro ao parsear a resposta como JSON:", parseError);
+                    throw new Error("Formato da resposta da API inválido.");
+                }
+
+                console.log("Dados parseados:", parsedData);
+
+                // Supondo que a API retorna um array de NFs ou um único objeto
+                if (Array.isArray(parsedData)) {
+                    nfs = parsedData.map(item => {
+                        if (typeof item.data !== 'string') {
+                            throw new TypeError("Campo 'data' não é uma string.");
+                        }
+
+                        // Parse do campo 'data' que é uma string JSON
+                        let nfData;
+                        try {
+                            nfData = JSON.parse(item.data);
+                        } catch (parseError) {
+                            console.error("Erro ao parsear 'data':", parseError);
+                            throw new Error("Erro ao parsear 'data' da NF.");
+                        }
+
+                        return {
+                            id: nfData.id,
+                            cliente: nfData.cliente,
+                            data_prevista_entrega: nfData.data_prevista_entrega,
+                            last_modified: nfData.last_modified,
+                            last_modified_user: nfData.last_modified_user
+                            // Não é mais necessário armazenar 'numero', pois vamos buscar pelos primeiros 3 dígitos do 'id'
+                        };
+                    });
+                } else if (typeof parsedData === 'object' && parsedData !== null) {
+                    // Se a resposta for um único objeto
+                    if (parsedData.status === "success" && parsedData.data) {
+                        let nfData;
+                        try {
+                            nfData = JSON.parse(parsedData.data);
+                        } catch (parseError) {
+                            console.error("Erro ao parsear 'data':", parseError);
+                            throw new Error("Erro ao parsear 'data' da NF.");
+                        }
+
+                        nfs = [{
+                            id: nfData.id,
+                            cliente: nfData.cliente,
+                            data_prevista_entrega: nfData.data_prevista_entrega,
+                            last_modified: nfData.last_modified,
+                            last_modified_user: nfData.last_modified_user
+                        }];
+                    } else {
+                        throw new Error("Resposta da API indica falha.");
+                    }
+                } else {
+                    throw new TypeError("Resposta da API não é um objeto ou array válido.");
+                }
+
+                console.log("NFs processadas:", nfs);
+
+                // **ADICIONANDO MÚLTIPLAS NFs PARA TESTE**
+                // Esta parte é apenas para fins de teste e deve ser removida ou adaptada conforme a resposta real da API.
+                // Remova esta seção se a API retornar múltiplas NFs.
+                nfs = [
+                    {
+                        id: "100000001",
+                        cliente: "Cliente 1-1",
+                        data_prevista_entrega: "Mon Jan 01 2024 00:00:00 GMT-0300 (Brasilia Standard Time)",
+                        last_modified: "2024-01-02T11:00:00.000Z",
+                        last_modified_user: "Usuário 2-1"
+                    },
+                    {
+                        id: "100000002",
+                        cliente: "Cliente 1-2",
+                        data_prevista_entrega: "Tue Jan 02 2024 00:00:00 GMT-0300 (Brasilia Standard Time)",
+                        last_modified: "2024-01-03T11:00:00.000Z",
+                        last_modified_user: "Usuário 2-2"
+                    },
+                    {
+                        id: "100000003",
+                        cliente: "Cliente 1-3",
+                        data_prevista_entrega: "Wed Jan 03 2024 00:00:00 GMT-0300 (Brasilia Standard Time)",
+                        last_modified: "2024-01-04T11:00:00.000Z",
+                        last_modified_user: "Usuário 2-3"
+                    }
+                    // Adicione mais NFs conforme necessário para teste
+                ];
+
+                console.log("NFs adicionadas para teste:", nfs);
+            } catch (error) {
+                console.error("Erro ao carregar NFs:", error);
+                mostrarMensagem(`Erro ao carregar NFs: ${error.message}`, "erro");
+            } finally {
+                mostrarLoading(false);
+            }
+        }
+
+        // Chamada inicial para carregar todas as NFs quando a página carrega
+        window.addEventListener("DOMContentLoaded", carregarTodasNFs);
+
+        // Função para exibir mensagens
+        function mostrarMensagem(mensagem, tipo) {
+            mensagemDiv.textContent = mensagem;
+            mensagemDiv.className = ""; // Resetar classes
+            mensagemDiv.classList.add(tipo);
+            mensagemDiv.style.display = 'block';
+            mensagemDiv.setAttribute('role', 'alert');
+            mensagemDiv.focus(); // Para leitores de tela
+        }
+
+        // Função para limpar mensagens
+        function limparMensagens() {
+            mensagemDiv.textContent = "";
+            mensagemDiv.className = "";
+            mensagemDiv.style.display = 'none';
+        }
+
+        // Função para mostrar ou esconder o indicador de carregamento
+        function mostrarLoading(status) {
+            if (status) {
+                btnSalvar.disabled = true;
+                inputBusca.disabled = true;
+                comprovanteInput.disabled = true;
+                loadingDiv.style.display = 'block';
+            } else {
+                btnSalvar.disabled = false;
+                inputBusca.disabled = false;
+                // Se uma NF está selecionada, manter comprovanteInput habilitado
+                if (inputNF.value.trim() !== "") {
+                    comprovanteInput.disabled = false;
+                }
+                loadingDiv.style.display = 'none';
+            }
+        }
+
+        // Evento de input para buscar NFs a partir do 3º dígito do ID
+        inputBusca.addEventListener("input", () => {
+            const busca = inputBusca.value.trim();
+
+            // Limitar a busca a no mínimo 3 dígitos
+            if (busca.length === 3) { // Exatamente 3 dígitos para evitar buscas desnecessárias
+                buscarNFs(busca);
+            } else {
+                resultadosDiv.innerHTML = "";
+                ativarCamposComprovante(false);
+            }
         });
 
-        // Formulário de Contato
-        document.getElementById('contactForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+        // Função para buscar NFs com base nos dígitos inseridos (primeiros 3 dígitos do ID)
+        function buscarNFs(digits) {
+            // Filtrar as NFs onde 'id' começa com os dígitos inseridos
+            const resultadosFiltrados = nfs.filter(nf => nf.id.startsWith(digits));
 
-            // Aqui você pode adicionar validações adicionais ou enviar os dados para o servidor
+            exibirResultados(resultadosFiltrados);
+        }
 
-            // Exibir mensagem de sucesso
-            document.getElementById('successContactMessage').classList.remove('d-none');
+        // Função para exibir os resultados da busca
+        function exibirResultados(nfsEncontradas) {
+            resultadosDiv.innerHTML = "";
 
-            // Resetar o formulário
-            this.reset();
+            if (nfsEncontradas.length > 0) {
+                nfsEncontradas.forEach(nf => {
+                    const item = document.createElement("div");
+                    item.classList.add("item-resultado");
+                    item.textContent = `NF: ${nf.id} - ${nf.cliente}`;
+                    item.tabIndex = 0; // Permitir foco via teclado
 
-            // Scroll para a mensagem de sucesso
-            document.getElementById('successContactMessage').scrollIntoView({ behavior: 'smooth' });
+                    // Selecionar NF ao clicar
+                    item.addEventListener("click", () => selecionarNF(nf.id));
+
+                    // Selecionar NF ao pressionar Enter ou Espaço
+                    item.addEventListener("keypress", (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            selecionarNF(nf.id);
+                        }
+                    });
+
+                    resultadosDiv.appendChild(item);
+                });
+            } else {
+                resultadosDiv.textContent = "Nenhuma NF encontrada.";
+            }
+        }
+
+        // Função para selecionar uma NF
+        function selecionarNF(numero) {
+            inputNF.value = numero;
+            resultadosDiv.innerHTML = "";
+            inputBusca.value = "";
+            ativarCamposComprovante(true);
+        }
+
+        // Função para ativar ou desativar os campos de comprovante e salvar
+        function ativarCamposComprovante(ativar) {
+            comprovanteInput.disabled = !ativar;
+            btnSalvar.disabled = !ativar;
+            if (!ativar) {
+                limparCampos();
+            }
+        }
+
+        // Pré-visualização de imagem
+        comprovanteInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            previewComprovante.style.display = 'none';
+            previewComprovante.src = "#";
+
+            if (file) {
+                const isValidType = ['image/png', 'image/jpeg', 'image/jpg'].includes(file.type);
+                const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB
+
+                if (!isValidType) {
+                    mostrarMensagem("Formato de imagem inválido. Aceitamos PNG, JPEG e JPG.", "erro");
+                    comprovanteInput.value = "";
+                    ativarCamposComprovante(false);
+                    return;
+                }
+
+                if (!isValidSize) {
+                    mostrarMensagem("O arquivo é muito grande. O tamanho máximo permitido é 5MB.", "erro");
+                    comprovanteInput.value = "";
+                    ativarCamposComprovante(false);
+                    return;
+                }
+
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    previewComprovante.src = e.target.result;
+                    previewComprovante.style.display = 'block';
+                }
+
+                reader.readAsDataURL(file);
+            }
         });
+
+        // Função para salvar o comprovante
+        async function salvarComprovante() {
+            const nf = inputNF.value.trim();
+            const comprovanteFile = comprovanteInput.files[0];
+
+            limparMensagens();
+
+            // Validações
+            if (!nf) {
+                mostrarMensagem("Por favor, selecione uma NF.", "erro");
+                return;
+            }
+
+            if (!comprovanteFile) {
+                mostrarMensagem("Por favor, faça upload de um comprovante de entrega.", "erro");
+                return;
+            }
+
+            if (comprovanteFile.size > 5 * 1024 * 1024) { // 5MB
+                mostrarMensagem("O arquivo é muito grande. O tamanho máximo permitido é 5MB.", "erro");
+                return;
+            }
+
+            const isValidType = ['image/png', 'image/jpeg', 'image/jpg'].includes(comprovanteFile.type);
+            if (!isValidType) {
+                mostrarMensagem("Formato de imagem inválido. Aceitamos PNG, JPEG e JPG.", "erro");
+                return;
+            }
+
+            try {
+                mostrarLoading(true);
+
+                const comprovanteBase64 = await toBase64(comprovanteFile);
+
+                const data = {
+                    nf: nf,
+                    comprovante: comprovanteBase64
+                };
+
+                const response = await fetch("https://n8n.bhm.tec.br/webhook-test/criaComprovante", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Erro na requisição: ${response.status} - ${errorText}`);
+                }
+
+                mostrarMensagem(`Comprovante salvo com sucesso para a NF ${nf}!`, "sucesso");
+                limparCampos();
+            } catch (error) {
+                console.error("Erro ao salvar comprovante:", error);
+                mostrarMensagem(`Ocorreu um erro ao salvar o comprovante: ${error.message}`, "erro");
+            } finally {
+                mostrarLoading(false);
+            }
+        }
+
+        // Função para converter arquivo em Base64
+        function toBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result); // Mantém o prefixo
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        // Função para limpar campos após sucesso
+        function limparCampos() {
+            inputNF.value = "";
+            comprovanteInput.value = "";
+            previewComprovante.src = "#";
+            previewComprovante.style.display = 'none';
+            // Não chamar ativarCamposComprovante aqui para evitar recursão
+        }
     </script>
 </body>
 </html>

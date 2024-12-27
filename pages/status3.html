@@ -191,7 +191,7 @@
 
         <!-- Busca de NF -->
         <label for="buscaNF">Buscar NF (Primeiros 3 dígitos do ID):</label>
-        <input type="number" id="buscaNF" name="buscaNF" placeholder="Ex: 100" minlength="3" maxlength="3" min="100" max="999" aria-describedby="buscaNFHelp">
+        <input type="number" id="buscaNF" name="buscaNF" placeholder="Ex: 100" minlength="3" maxlength="20" min="100" aria-describedby="buscaNFHelp">
 
         <!-- Resultados da Busca -->
         <div id="resultados" aria-live="polite" aria-atomic="true"></div>
@@ -257,98 +257,46 @@
 
                 console.log("Resposta da API como texto:", textData);
 
-                // Parsear a resposta como JSON
+                // Verificar se a resposta já é um array
                 let parsedData;
-                try {
+                if (textData.trim().startsWith('[')) {
+                    // Resposta é um array
                     parsedData = JSON.parse(textData);
-                } catch (parseError) {
-                    console.error("Erro ao parsear a resposta como JSON:", parseError);
-                    throw new Error("Formato da resposta da API inválido.");
+                } else {
+                    // Resposta contém múltiplos objetos JSON separados por vírgulas
+                    // Envolver a resposta em colchetes para formar um array válido
+                    // Isso assume que a resposta é algo como: {...}, {...}, {...}
+                    parsedData = JSON.parse(`[${textData}]`);
                 }
 
                 console.log("Dados parseados:", parsedData);
 
-                // Supondo que a API retorna um array de NFs ou um único objeto
-                if (Array.isArray(parsedData)) {
-                    nfs = parsedData.map(item => {
-                        if (typeof item.data !== 'string') {
-                            throw new TypeError("Campo 'data' não é uma string.");
-                        }
-
-                        // Parse do campo 'data' que é uma string JSON
-                        let nfData;
-                        try {
-                            nfData = JSON.parse(item.data);
-                        } catch (parseError) {
-                            console.error("Erro ao parsear 'data':", parseError);
-                            throw new Error("Erro ao parsear 'data' da NF.");
-                        }
-
-                        return {
-                            id: nfData.id,
-                            cliente: nfData.cliente,
-                            data_prevista_entrega: nfData.data_prevista_entrega,
-                            last_modified: nfData.last_modified,
-                            last_modified_user: nfData.last_modified_user
-                            // Não é mais necessário armazenar 'numero', pois vamos buscar pelos primeiros 3 dígitos do 'id'
-                        };
-                    });
-                } else if (typeof parsedData === 'object' && parsedData !== null) {
-                    // Se a resposta for um único objeto
-                    if (parsedData.status === "success" && parsedData.data) {
-                        let nfData;
-                        try {
-                            nfData = JSON.parse(parsedData.data);
-                        } catch (parseError) {
-                            console.error("Erro ao parsear 'data':", parseError);
-                            throw new Error("Erro ao parsear 'data' da NF.");
-                        }
-
-                        nfs = [{
-                            id: nfData.id,
-                            cliente: nfData.cliente,
-                            data_prevista_entrega: nfData.data_prevista_entrega,
-                            last_modified: nfData.last_modified,
-                            last_modified_user: nfData.last_modified_user
-                        }];
-                    } else {
-                        throw new Error("Resposta da API indica falha.");
+                // Processar cada objeto da resposta
+                nfs = parsedData.map(item => {
+                    if (typeof item.data !== 'string') {
+                        throw new TypeError("Campo 'data' não é uma string.");
                     }
-                } else {
-                    throw new TypeError("Resposta da API não é um objeto ou array válido.");
-                }
+
+                    // Parse do campo 'data' que é uma string JSON
+                    let nfData;
+                    try {
+                        nfData = JSON.parse(item.data);
+                    } catch (parseError) {
+                        console.error("Erro ao parsear 'data':", parseError);
+                        throw new Error("Erro ao parsear 'data' da NF.");
+                    }
+
+                    return {
+                        id: nfData.id,
+                        cliente: nfData.cliente,
+                        data_prevista_entrega: nfData.data_prevista_entrega,
+                        last_modified: nfData.last_modified,
+                        last_modified_user: nfData.last_modified_user
+                    };
+                });
 
                 console.log("NFs processadas:", nfs);
 
-                // **ADICIONANDO MÚLTIPLAS NFs PARA TESTE**
-                // Esta parte é apenas para fins de teste e deve ser removida ou adaptada conforme a resposta real da API.
-                // Remova esta seção se a API retornar múltiplas NFs.
-                nfs = [
-                    {
-                        id: "100000001",
-                        cliente: "Cliente 1-1",
-                        data_prevista_entrega: "Mon Jan 01 2024 00:00:00 GMT-0300 (Brasilia Standard Time)",
-                        last_modified: "2024-01-02T11:00:00.000Z",
-                        last_modified_user: "Usuário 2-1"
-                    },
-                    {
-                        id: "100000002",
-                        cliente: "Cliente 1-2",
-                        data_prevista_entrega: "Tue Jan 02 2024 00:00:00 GMT-0300 (Brasilia Standard Time)",
-                        last_modified: "2024-01-03T11:00:00.000Z",
-                        last_modified_user: "Usuário 2-2"
-                    },
-                    {
-                        id: "100000003",
-                        cliente: "Cliente 1-3",
-                        data_prevista_entrega: "Wed Jan 03 2024 00:00:00 GMT-0300 (Brasilia Standard Time)",
-                        last_modified: "2024-01-04T11:00:00.000Z",
-                        last_modified_user: "Usuário 2-3"
-                    }
-                    // Adicione mais NFs conforme necessário para teste
-                ];
-
-                console.log("NFs adicionadas para teste:", nfs);
             } catch (error) {
                 console.error("Erro ao carregar NFs:", error);
                 mostrarMensagem(`Erro ao carregar NFs: ${error.message}`, "erro");
@@ -395,12 +343,12 @@
             }
         }
 
-        // Evento de input para buscar NFs a partir do 3º dígito do ID
+        // Evento de input para buscar NFs a partir dos primeiros 3 dígitos do ID
         inputBusca.addEventListener("input", () => {
             const busca = inputBusca.value.trim();
 
-            // Limitar a busca a no mínimo 3 dígitos
-            if (busca.length === 3) { // Exatamente 3 dígitos para evitar buscas desnecessárias
+            // Limitar a busca a 3 ou mais dígitos
+            if (busca.length >= 3) { 
                 buscarNFs(busca);
             } else {
                 resultadosDiv.innerHTML = "";

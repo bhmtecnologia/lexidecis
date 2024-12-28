@@ -409,10 +409,19 @@
         // Variável para armazenar as NFs
         let nfs = [];
 
-        // Ao carregar a página, buscar todas as NFs
-        window.addEventListener("DOMContentLoaded", carregarTodasNFs);
+        /********************************************
+         * DOMContentLoaded
+         ********************************************/
+        window.addEventListener("DOMContentLoaded", function() {
+            // Deixa a etapa 1 ativa (verde) e exibe o passo 1
+            mostrarPasso(1);
+            // Carrega as NFs da API
+            carregarTodasNFs();
+        });
 
-        /* FUNÇÃO PARA ATUALIZAR INDICADOR DE ETAPAS */
+        /********************************************
+         * ATUALIZAR INDICADOR DE ETAPAS
+         ********************************************/
         function atualizarIndicadorEtapas(passo) {
             // Remove classes de todos
             etapa1Div.classList.remove("active", "completed");
@@ -436,7 +445,9 @@
             }
         }
 
-        // Mostrar/esconder passos
+        /********************************************
+         * MOSTRAR/ESCONDER PASSOS
+         ********************************************/
         function mostrarPasso(passo) {
             // Esconde todos
             [passo1Div, passo2Div, passo3Div].forEach(div => div.classList.remove("mostrar"));
@@ -450,10 +461,13 @@
                 passo3Div.classList.add("mostrar");
             }
 
+            // Atualiza o indicador visual
             atualizarIndicadorEtapas(passo);
         }
 
-        // Navegação entre passos
+        /********************************************
+         * NAVEGACAO ENTRE PASSOS
+         ********************************************/
         btnProximo1.addEventListener("click", () => {
             // Ao avançar para o passo 2, habilitar upload
             comprovanteInput.disabled = false;
@@ -479,9 +493,9 @@
             mostrarPasso(2);
         });
 
-        /**********************************************
+        /********************************************
          * MENSAGENS E LOADING
-         **********************************************/
+         ********************************************/
         function mostrarMensagem(mensagem, tipo) {
             mensagemDiv.textContent = mensagem;
             mensagemDiv.className = ""; // Resetar classes
@@ -509,9 +523,9 @@
             }
         }
 
-        /**********************************************
+        /********************************************
          * CARREGAR TODAS AS NFs
-         **********************************************/
+         ********************************************/
         async function carregarTodasNFs() {
             try {
                 mostrarLoading(true);
@@ -558,9 +572,9 @@
             }
         }
 
-        /**********************************************
+        /********************************************
          * BUSCA DE NFs
-         **********************************************/
+         ********************************************/
         inputBusca.addEventListener("input", () => {
             const busca = inputBusca.value.trim();
             limparMensagens();
@@ -610,9 +624,9 @@
             btnProximo1.disabled = false;
         }
 
-        /**********************************************
+        /********************************************
          * UPLOAD DO COMPROVANTE
-         **********************************************/
+         ********************************************/
         comprovanteInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
             previewComprovante.style.display = 'none';
@@ -651,9 +665,9 @@
             }
         });
 
-        /**********************************************
+        /********************************************
          * SALVAR COMPROVANTE
-         **********************************************/
+         ********************************************/
         async function salvarComprovante() {
             const nf = inputNF.value.trim();
             const comprovanteFile = comprovanteInput.files[0];
@@ -702,7 +716,6 @@
             }
         }
 
-        // Converte arquivo em Base64
         function toBase64(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -712,7 +725,6 @@
             });
         }
 
-        // Limpa campos (após envio bem-sucedido)
         function limparCampos() {
             inputNF.value = "";
             comprovanteInput.value = "";
@@ -726,7 +738,8 @@
             btnProximo1.disabled = true;
             btnProximo2.disabled = true;
 
-            mostrarPasso(1); // Volta para passo 1
+            // Volta para o primeiro passo
+            mostrarPasso(1);
         }
     </script>
 </body>

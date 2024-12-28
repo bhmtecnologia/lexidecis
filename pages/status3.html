@@ -41,6 +41,69 @@
             color: #333333;
         }
 
+        /********************************************
+         * INDICADOR DE ETAPAS (Wizard Steps)
+         ********************************************/
+        .steps {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .circle {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background-color: #ccc; /* Cor padrão (inativo) */
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+
+        .label {
+            margin-top: 5px;
+            font-size: 0.9em;
+            color: #333;
+        }
+
+        .bar {
+            flex: 1; 
+            height: 2px;
+            background-color: #ccc; /* Cor padrão (inativo) */
+            margin: 0 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Etapa ativa: destaque */
+        .step.active .circle {
+            background-color: #28a745; /* verde principal */
+        }
+
+        /* Etapa concluída: pode usar verde mais escuro ou outro tom */
+        .step.completed .circle {
+            background-color: #218838; /* verde mais escuro */
+        }
+
+        /* Quando a etapa à esquerda estiver completa, a barra até a próxima etapa também fica verde */
+        .step.completed + .bar {
+            background-color: #28a745;
+        }
+
+        /********************************************
+         * FIM DO INDICADOR DE ETAPAS
+         ********************************************/
+
         /* Labels e Inputs */
         label {
             display: block;
@@ -215,6 +278,16 @@
             .item-resultado {
                 font-size: 0.9em;
             }
+
+            .label {
+                font-size: 0.85em;
+            }
+
+            .circle {
+                width: 28px;
+                height: 28px;
+                font-size: 0.85em;
+            }
         }
     </style>
 </head>
@@ -222,6 +295,28 @@
     <div id="container">
         <h1>Entrega Fácil</h1>
         
+        <!-- INDICADOR DE ETAPAS -->
+        <div class="steps">
+            <!-- ETAPA 1 -->
+            <div class="step" id="etapa1">
+                <div class="circle">1</div>
+                <div class="label">Selecione NF</div>
+            </div>
+            <div class="bar"></div>
+            <!-- ETAPA 2 -->
+            <div class="step" id="etapa2">
+                <div class="circle">2</div>
+                <div class="label">Anexar Comprovante</div>
+            </div>
+            <div class="bar"></div>
+            <!-- ETAPA 3 -->
+            <div class="step" id="etapa3">
+                <div class="circle">3</div>
+                <div class="label">Confirmar e Enviar</div>
+            </div>
+        </div>
+        <!-- FIM DO INDICADOR DE ETAPAS -->
+
         <!-- Passo 1: Selecionar NF -->
         <div id="passo1" class="passo mostrar">
             <label for="buscaNF">Buscar NF (Mínimo 3 dígitos):</label>
@@ -301,17 +396,58 @@
         const mensagemDiv = document.getElementById("mensagem");
         const loadingDiv = document.getElementById("loading");
 
+        // Divs de Passo
         const passo1Div = document.getElementById("passo1");
         const passo2Div = document.getElementById("passo2");
         const passo3Div = document.getElementById("passo3");
 
+        // Divs de Etapas no indicador
+        const etapa1Div = document.getElementById("etapa1");
+        const etapa2Div = document.getElementById("etapa2");
+        const etapa3Div = document.getElementById("etapa3");
+
         // Variável para armazenar as NFs
         let nfs = [];
 
-        // Ao carregar a página, buscar todas as NFs
-        window.addEventListener("DOMContentLoaded", carregarTodasNFs);
+        /********************************************
+         * DOMContentLoaded
+         ********************************************/
+        window.addEventListener("DOMContentLoaded", function() {
+            // Deixa a etapa 1 ativa (verde) e exibe o passo 1
+            mostrarPasso(1);
+            // Carrega as NFs da API
+            carregarTodasNFs();
+        });
 
-        // Função para mostrar/esconder passos
+        /********************************************
+         * ATUALIZAR INDICADOR DE ETAPAS
+         ********************************************/
+        function atualizarIndicadorEtapas(passo) {
+            // Remove classes de todos
+            etapa1Div.classList.remove("active", "completed");
+            etapa2Div.classList.remove("active", "completed");
+            etapa3Div.classList.remove("active", "completed");
+
+            // Passo 1
+            if (passo === 1) {
+                etapa1Div.classList.add("active");
+            }
+            // Passo 2
+            else if (passo === 2) {
+                etapa1Div.classList.add("completed");
+                etapa2Div.classList.add("active");
+            }
+            // Passo 3
+            else if (passo === 3) {
+                etapa1Div.classList.add("completed");
+                etapa2Div.classList.add("completed");
+                etapa3Div.classList.add("active");
+            }
+        }
+
+        /********************************************
+         * MOSTRAR/ESCONDER PASSOS
+         ********************************************/
         function mostrarPasso(passo) {
             // Esconde todos
             [passo1Div, passo2Div, passo3Div].forEach(div => div.classList.remove("mostrar"));
@@ -324,9 +460,14 @@
             } else if (passo === 3) {
                 passo3Div.classList.add("mostrar");
             }
+
+            // Atualiza o indicador visual
+            atualizarIndicadorEtapas(passo);
         }
 
-        // Navegação entre passos
+        /********************************************
+         * NAVEGACAO ENTRE PASSOS
+         ********************************************/
         btnProximo1.addEventListener("click", () => {
             // Ao avançar para o passo 2, habilitar upload
             comprovanteInput.disabled = false;
@@ -352,7 +493,9 @@
             mostrarPasso(2);
         });
 
-        // Função para exibir mensagens
+        /********************************************
+         * MENSAGENS E LOADING
+         ********************************************/
         function mostrarMensagem(mensagem, tipo) {
             mensagemDiv.textContent = mensagem;
             mensagemDiv.className = ""; // Resetar classes
@@ -361,14 +504,12 @@
             mensagemDiv.setAttribute('role', 'alert');
         }
 
-        // Função para limpar mensagens
         function limparMensagens() {
             mensagemDiv.textContent = "";
             mensagemDiv.className = "";
             mensagemDiv.style.display = 'none';
         }
 
-        // Função para mostrar ou esconder o indicador de carregamento
         function mostrarLoading(status) {
             if (status) {
                 btnSalvar.disabled = true;
@@ -382,7 +523,9 @@
             }
         }
 
-        // Carregar todas as NFs da API
+        /********************************************
+         * CARREGAR TODAS AS NFs
+         ********************************************/
         async function carregarTodasNFs() {
             try {
                 mostrarLoading(true);
@@ -429,7 +572,9 @@
             }
         }
 
-        // Evento de input para buscar NFs a partir de 3 dígitos
+        /********************************************
+         * BUSCA DE NFs
+         ********************************************/
         inputBusca.addEventListener("input", () => {
             const busca = inputBusca.value.trim();
             limparMensagens();
@@ -443,13 +588,11 @@
             }
         });
 
-        // Filtra as NFs que começam com os dígitos buscados
         function buscarNFs(digits) {
             const resultadosFiltrados = nfs.filter(nf => nf.id.startsWith(digits));
             exibirResultados(resultadosFiltrados);
         }
 
-        // Exibe os resultados da busca
         function exibirResultados(nfsEncontradas) {
             resultadosDiv.innerHTML = "";
 
@@ -474,7 +617,6 @@
             }
         }
 
-        // Seleciona a NF e limpa a lista de resultados
         function selecionarNF(numero) {
             inputNF.value = numero;
             resultadosDiv.innerHTML = "";
@@ -482,7 +624,9 @@
             btnProximo1.disabled = false;
         }
 
-        // Monitorar troca de arquivo para pré-visualizar
+        /********************************************
+         * UPLOAD DO COMPROVANTE
+         ********************************************/
         comprovanteInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
             previewComprovante.style.display = 'none';
@@ -521,7 +665,9 @@
             }
         });
 
-        // Função para salvar o comprovante
+        /********************************************
+         * SALVAR COMPROVANTE
+         ********************************************/
         async function salvarComprovante() {
             const nf = inputNF.value.trim();
             const comprovanteFile = comprovanteInput.files[0];
@@ -570,7 +716,6 @@
             }
         }
 
-        // Converte arquivo em Base64
         function toBase64(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -580,7 +725,6 @@
             });
         }
 
-        // Limpa campos (após envio bem-sucedido)
         function limparCampos() {
             inputNF.value = "";
             comprovanteInput.value = "";
@@ -594,7 +738,8 @@
             btnProximo1.disabled = true;
             btnProximo2.disabled = true;
 
-            mostrarPasso(1); // Volta para passo 1
+            // Volta para o primeiro passo
+            mostrarPasso(1);
         }
     </script>
 </body>

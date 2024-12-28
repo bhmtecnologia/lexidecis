@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Sistema de Entregas - Indicadores e Entregas Terrestres</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    /* Reset básico */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f4f8;
+      display: flex; /* Exibe sidebar ao lado do conteúdo */
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 240px;
+      background-color: #343a40;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      padding-top: 20px;
+    }
+
+    .sidebar h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 1.2em;
+      font-weight: normal;
+    }
+
+    .nav-item {
+      padding: 15px 20px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .nav-item:hover {
+      background-color: #495057;
+    }
+
+    .submenu {
+      display: none; /* Submenu inicialmente oculto */
+      background-color: #3c4147;
+    }
+
+    .submenu .nav-item {
+      border-bottom: none;
+      font-size: 0.95em;
+      padding-left: 40px; /* indent */
+    }
+
+    /* Conteúdo Principal */
+    .main-content {
+      flex: 1;
+      padding: 20px;
+      background-color: #ffffff;
+      overflow-y: auto;
+    }
+
+    .main-content h1 {
+      margin-bottom: 15px;
+    }
+
+    /* Controles de busca/filtro/página */
+    .search-filter-container {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+
+    .search-filter-container input[type="text"],
+    .search-filter-container select {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    /* Tabela de dados */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 0.95em;
+    }
+
+    table thead {
+      background-color: #e9ecef;
+    }
+
+    table th, table td {
+      padding: 12px;
+      border: 1px solid #dee2e6;
+      text-align: left;
+      white-space: nowrap; /* evita quebrar textos grandes */
+    }
+
+    table th {
+      cursor: pointer;
+      user-select: none; /* evita seleção de texto ao clicar */
+    }
+
+    /* Setas de ordenação */
+    .sorted-asc::after {
+      content: "▲";
+      margin-left: 5px;
+      font-size: 0.75em;
+    }
+    .sorted-desc::after {
+      content: "▼";
+      margin-left: 5px;
+      font-size: 0.75em;
+    }
+
+    /* Paginação */
+    .pagination {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 15px;
+      align-items: center;
+    }
+
+    .pagination button {
+      padding: 6px 10px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      background-color: #f8f9fa;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .pagination button:hover {
+      background-color: #e2e6ea;
+    }
+
+    .pagination button.active {
+      background-color: #28a745;
+      color: #fff;
+      border-color: #28a745;
+    }
+
+    /* MODAL para exibir o comprovante */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: none; /* oculto por padrão */
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .modal-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 600px;
+      width: 90%;
+      text-align: center;
+      position: relative;
+    }
+
+    .modal-content img {
+      max-width: 100%;
+      height: auto;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .close-modal {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #dc3545;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+
+    .close-modal:hover {
+      background: #c82333;
+    }
+
+    /* Gráficos */
+    .chart-container {
+      width: 100%;
+      margin-bottom: 30px;
+    }
+
+    /* Responsividade */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 200px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      body {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
+
+      .submenu .nav-item {
+        padding-left: 20px;
+      }
+
+      .main-content {
+        padding: 10px;
+      }
+
+      table th, table td {
+        font-size: 0.9em;
+        padding: 8px;
+      }
+
+      .pagination button {
+        padding: 4px 6px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <h2>Minha Aplicação</h2>
+
+    <div class="nav-item" onclick="mostrarHome()">
+      Home
+    </div>
+
+    <div class="nav-item" onclick="mostrarTransportes()">
+      Transportes
+    </div>
+
+    <!-- Documentos (menu pai) -->
+    <div class="nav-item" id="menuDocumentos" onclick="toggleSubmenu()">
+      Documentos
+    </div>
+
+    <!-- Submenu Documentos -->
+    <div class="submenu" id="submenuDocumentos">
+      <div class="nav-item" onclick="mostrarEntregasTerrestres()">
+        Entregas Terrestres
+      </div>
+    </div>
+
+    <div class="nav-item" onclick="mostrarIndicadores()">
+      Indicadores
+    </div>
+
+    <div class="nav-item" onclick="mostrarConfiguracoes()">
+      Configurações
+    </div>
+
+    <div class="nav-item" onclick="fazerLogout()">
+      Sair
+    </div>
+  </div>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <div class="main-content">
+    <div id="conteudoPrincipal">
+      <h1>Bem-vindo(a)!</h1>
+      <p>Selecione um item no menu à esquerda.</p>
+    </div>
+  </div>
+
+  <!-- MODAL PARA EXIBIR COMPROVANTE -->
+  <div class="modal-overlay" id="modalComprovante">
+    <div class="modal-content">
+      <button class="close-modal" onclick="fecharModal()">Fechar</button>
+      <img id="modalImg" src="#" alt="Comprovante">
+    </div>
+  </div>
+
+  <script>
+    // Referências aos elementos de menu
+    const submenuDocumentos = document.getElementById('submenuDocumentos');
+    const conteudoPrincipal = document.getElementById('conteudoPrincipal');
+
+    // Modal
+    const modalOverlay = document.getElementById('modalComprovante');
+    const modalImg = document.getElementById('modalImg');
+
+    // Para armazenar todos os dados parseados (Entregas Terrestres)
+    let entregasData = [];
+    // Para controlar a ordenação
+    let currentSortColumn = null;
+    let currentSortDirection = 'asc'; // ou 'desc'
+
+    // Paginação
+    let currentPage = 1;   
+    let pageSize = 10;     
+    const PAGE_SIZES = [10, 25, 50, 100, 'all'];
+
+    /* === MENU LATERAL === */
+    function toggleSubmenu() {
+      if (submenuDocumentos.style.display === 'block') {
+        submenuDocumentos.style.display = 'none';
+      } else {
+        submenuDocumentos.style.display = 'block';
+      }
+    }
+
+    function mostrarHome() {
+      conteudoPrincipal.innerHTML = `
+        <h1>Home</h1>
+        <p>Conteúdo da home...</p>
+      `;
+    }
+
+    function mostrarTransportes() {
+      conteudoPrincipal.innerHTML = `
+        <h1>Transportes</h1>
+        <p>Exemplo de informações sobre transportes...</p>
+      `;
+    }
+
+    function mostrarIndicadores() {
+      conteudoPrincipal.innerHTML = `
+        <h1>Indicadores</h1>
+        <p>Carregando dados...</p>
+      `;
+      carregarIndicadores();
+    }
+
+    function mostrarConfiguracoes() {
+      conteudoPrincipal.innerHTML = `
+        <h1>Configurações</h1>
+        <p>Aqui ficariam as configurações do sistema...</p>
+      `;
+    }
+
+    function fazerLogout() {
+      alert("Você saiu do sistema!");
+    }
+
+    /* === ENTREGAS TERRESTRES === */
+    async function mostrarEntregasTerrestres() {
+      conteudoPrincipal.innerHTML = `
+        <h1>Entregas Terrestres</h1>
+        <p>Carregando dados...</p>
+      `;
+
+      try {
+        const response = await fetch('https://n8n.bhm.tec.br/webhook/readnfs?filter=all', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Erro na requisição: ${response.status} - ${response.statusText}`);
+        }
+
+        const textData = await response.text();
+        let parsedData;
+
+        if (textData.trim().startsWith('[')) {
+          parsedData = JSON.parse(textData);
+        } else {
+          parsedData = JSON.parse(`[${textData}]`);
+        }
+
+        let allRows = [];
+        parsedData.forEach(item => {
+          if (typeof item.data === 'string') {
+            try {
+              const rowObj = JSON.parse(item.data); 
+              allRows.push(rowObj);
+            } catch (e) {
+              console.error("Erro ao parsear item.data:", e);
+            }
+          }
+        });
+
+        entregasData = allRows;
+        currentPage = 1;
+        pageSize = 10; 
+        currentSortColumn = null;
+        currentSortDirection = 'asc';
+
+        renderEntregasTerrestres();
+
+      } catch (error) {
+        console.error("Erro ao obter dados:", error);
+        conteudoPrincipal.innerHTML = `
+          <h1>Entregas Terrestres</h1>
+          <p style="color: red;">Ocorreu um erro ao obter dados: ${error.message}</p>
+        `;
+      }
+    }
+
+    // Monta a interface
+    function renderEntregasTerrestres() {
+      const allColumns = getAllColumns(entregasData);
+
+      let html = `
+        <h1>Entregas Terrestres</h1>
+        <div class="search-filter-container">
+          <!-- Pesquisa -->
+          <input type="text" id="searchInput" placeholder="Pesquisar..." oninput="aplicarFiltros()" />
+
+          <!-- Filtro por coluna -->
+          <select id="columnFilter" onchange="aplicarFiltros()">
+            <option value="">-- Todas as colunas --</option>
+      `;
+      allColumns.forEach(col => {
+        html += `<option value="${col}">${col}</option>`;
+      });
+      html += `</select>`;
+
+      // Select do tamanho de página
+      html += `<select id="pageSizeSelect" onchange="mudarPageSize()">`;
+      PAGE_SIZES.forEach(size => {
+        let label = (size === 'all') ? 'Todos' : size;
+        let selected = (size === pageSize) ? 'selected' : '';
+        html += `<option value="${size}" ${selected}>${label}</option>`;
+      });
+      html += `</select></div>`; 
+
+      html += `<div id="tableContainer"></div>`;
+
+      conteudoPrincipal.innerHTML = html;
+      aplicarFiltros();
+    }
+
+    function getAllColumns(dataArray) {
+      let columnsSet = new Set();
+      dataArray.forEach(obj => {
+        Object.keys(obj).forEach(key => columnsSet.add(key));
+      });
+      return Array.from(columnsSet);
+    }
+
+    function aplicarFiltros() {
+      const searchValue = (document.getElementById('searchInput') || {}).value || '';
+      const filterColumn = (document.getElementById('columnFilter') || {}).value || '';
+      const searchTerm = searchValue.trim().toLowerCase();
+
+      let dataFiltrada = [...entregasData];
+      if (searchTerm) {
+        dataFiltrada = dataFiltrada.filter(obj => {
+          if (!filterColumn) {
+            return Object.values(obj).some(val => {
+              if (!val) return false;
+              return String(val).toLowerCase().includes(searchTerm);
+            });
+          } else {
+            const val = obj[filterColumn];
+            if (!val) return false;
+            return String(val).toLowerCase().includes(searchTerm);
+          }
+        });
+      }
+
+      if (currentSortColumn) {
+        dataFiltrada.sort((a, b) => {
+          const valA = String(a[currentSortColumn] ?? '').toLowerCase();
+          const valB = String(b[currentSortColumn] ?? '').toLowerCase();
+          if (valA < valB) return currentSortDirection === 'asc' ? -1 : 1;
+          if (valA > valB) return currentSortDirection === 'asc' ? 1 : -1;
+          return 0;
+        });
+      }
+
+      atualizarTabelaEPaginacao(dataFiltrada);
+    }
+
+    function atualizarTabelaEPaginacao(dataFiltrada) {
+      const tableContainer = document.getElementById('tableContainer');
+      if (!tableContainer) return;
+
+      if (!dataFiltrada || dataFiltrada.length === 0) {
+        tableContainer.innerHTML = `<p>Nenhum registro encontrado.</p>`;
+        return;
+      }
+
+      const allColumns = getAllColumns(dataFiltrada);
+
+      let totalRegistros = dataFiltrada.length;
+      let maxPerPage = (pageSize === 'all') ? totalRegistros : pageSize;
+      let totalPages = Math.ceil(totalRegistros / maxPerPage);
+      if (totalPages < 1) totalPages = 1;
+
+      if (currentPage > totalPages) currentPage = totalPages;
+      if (currentPage < 1) currentPage = 1;
+
+      const startIndex = (currentPage - 1) * maxPerPage;
+      const endIndex = startIndex + maxPerPage;
+      const dataPagina = dataFiltrada.slice(startIndex, endIndex);
+
+      // Monta Tabela
+      let tableHTML = `<table><thead><tr>`;
+
+      // Coluna extra no início para o botão do comprovante
+      tableHTML += `<th>Comprovante</th>`;
+
+      // Demais colunas
+      allColumns.forEach(col => {
+        let classForSort = '';
+        if (col === currentSortColumn) {
+          classForSort = (currentSortDirection === 'asc') ? 'sorted-asc' : 'sorted-desc';
+        }
+        tableHTML += `<th onclick="handleColumnClick('${col}')" class="${classForSort}">${col}</th>`;
+      });
+
+      tableHTML += `</tr></thead><tbody>`;
+
+      dataPagina.forEach(obj => {
+        tableHTML += `<tr>`;
+
+        /* Se 'comprovante_base64' não está vazio, mostra botão;
+           Caso contrário, exibe '-' */
+        let comprovanteCell = '-';
+        if (obj.comprovante_base64 && obj.comprovante_base64.trim() !== "") {
+          // Ajuste se for sempre PNG ou se houver outro campo que indique mimeType
+          const base64Image = `data:image/png;base64,${obj.comprovante_base64}`;
+          comprovanteCell = `
+            <button onclick="verComprovante('${base64Image}')">
+              Ver Comprovante
+            </button>
+          `;
+        }
+
+        tableHTML += `<td>${comprovanteCell}</td>`;
+
+        // Preenche as demais colunas
+        allColumns.forEach(col => {
+          let val = obj[col] ?? '';
+          tableHTML += `<td>${val}</td>`;
+        });
+
+        tableHTML += `</tr>`;
+      });
+
+      tableHTML += `</tbody></table>`;
+
+      // Monta paginação
+      let paginationHTML = `<div class="pagination">`;
+      paginationHTML += `
+        <button onclick="irPaginaAnterior()" ${currentPage === 1 ? 'disabled' : ''}>
+          Anterior
+        </button>
+      `;
+
+      for (let p = 1; p <= totalPages; p++) {
+        paginationHTML += `
+          <button onclick="irParaPagina(${p})" class="${p === currentPage ? 'active' : ''}">
+            ${p}
+          </button>
+        `;
+      }
+
+      paginationHTML += `
+        <button onclick="irPaginaProxima()" ${currentPage === totalPages ? 'disabled' : ''}>
+          Próximo
+        </button>
+      `;
+      paginationHTML += `</div>`;
+
+      tableContainer.innerHTML = tableHTML + paginationHTML;
+    }
+
+    function handleColumnClick(col) {
+      if (currentSortColumn === col) {
+        currentSortDirection = (currentSortDirection === 'asc') ? 'desc' : 'asc';
+      } else {
+        currentSortColumn = col;
+        currentSortDirection = 'asc';
+      }
+      aplicarFiltros();
+    }
+
+    function mudarPageSize() {
+      const select = document.getElementById('pageSizeSelect');
+      if (!select) return;
+
+      let newSize = select.value;
+      pageSize = (newSize === 'all') ? 'all' : parseInt(newSize, 10);
+      currentPage = 1;
+      aplicarFiltros();
+    }
+
+    function irParaPagina(p) {
+      currentPage = p;
+      aplicarFiltros();
+    }
+
+    function irPaginaAnterior() {
+      currentPage--;
+      aplicarFiltros();
+    }
+
+    function irPaginaProxima() {
+      currentPage++;
+      aplicarFiltros();
+    }
+
+    /* === MODAL PARA EXIBIR COMPROVANTE === */
+    function verComprovante(base64String) {
+      modalImg.src = base64String;
+      modalOverlay.style.display = 'flex';
+    }
+
+    function fecharModal() {
+      modalOverlay.style.display = 'none';
+      modalImg.src = '#';
+    }
+
+    /* === INDICADORES === */
+    async function carregarIndicadores() {
+      try {
+        // Requisição à API com filter=all
+        const response = await fetch('https://n8n.bhm.tec.br/webhook/readnfs?filter=all', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Erro na requisição: ${response.status} - ${response.statusText}`);
+        }
+
+        const textData = await response.text();
+        let parsedData;
+
+        if (textData.trim().startsWith('[')) {
+          parsedData = JSON.parse(textData);
+        } else {
+          parsedData = JSON.parse(`[${textData}]`);
+        }
+
+        let allRows = [];
+        parsedData.forEach(item => {
+          if (typeof item.data === 'string') {
+            try {
+              const rowObj = JSON.parse(item.data); 
+              allRows.push(rowObj);
+            } catch (e) {
+              console.error("Erro ao parsear item.data:", e);
+            }
+          }
+        });
+
+        // Processar os dados para indicadores
+        processarIndicadores(allRows);
+
+      } catch (error) {
+        console.error("Erro ao carregar indicadores:", error);
+        conteudoPrincipal.innerHTML = `
+          <h1>Indicadores</h1>
+          <p style="color: red;">Ocorreu um erro ao carregar indicadores: ${error.message}</p>
+        `;
+      }
+    }
+
+    function processarIndicadores(dados) {
+      // Total de NFs
+      const totalNFs = dados.length;
+
+      // NFs com comprovante anexado
+      const nfsComComprovante = dados.filter(nf => nf.comprovante_anexado === "true").length;
+
+      // Distribuição das NFs por status (supondo que status está implícito)
+      // Como não há campo 'status' nas NFs, consideraremos 'comprovante_anexado' como um status
+      const statusCounts = {
+        'Com Comprovante': nfsComComprovante,
+        'Sem Comprovante': totalNFs - nfsComComprovante
+      };
+
+      // Distribuição das NFs por dia
+      const nfsPorDia = {};
+      dados.forEach(nf => {
+        const dataEntrega = new Date(nf.data_prevista_entrega);
+        const dia = dataEntrega.toLocaleDateString('pt-BR', { year: 'numeric', month: 'short', day: 'numeric' });
+        if (nfsPorDia[dia]) {
+          nfsPorDia[dia]++;
+        } else {
+          nfsPorDia[dia] = 1;
+        }
+      });
+
+      // Preparar dados para os gráficos
+      const labelsStatus = Object.keys(statusCounts);
+      const dataStatus = Object.values(statusCounts);
+
+      const labelsDia = Object.keys(nfsPorDia);
+      const dataDia = Object.values(nfsPorDia);
+
+      // Exibir os indicadores
+      exibirIndicadoresHTML(totalNFs, nfsComComprovante, labelsStatus, dataStatus, labelsDia, dataDia);
+    }
+
+    function exibirIndicadoresHTML(totalNFs, nfsComComprovante, labelsStatus, dataStatus, labelsDia, dataDia) {
+      let html = `
+        <h1>Indicadores</h1>
+        <p>Total de Notas Fiscais (NFs): <strong>${totalNFs}</strong></p>
+        <p>NFs com Comprovante Anexado: <strong>${nfsComComprovante}</strong></p>
+
+        <div class="chart-container">
+          <canvas id="statusChart"></canvas>
+        </div>
+
+        <div class="chart-container">
+          <canvas id="diaChart"></canvas>
+        </div>
+      `;
+
+      conteudoPrincipal.innerHTML = html;
+
+      // Criar gráficos
+      criarGraficoStatus(labelsStatus, dataStatus);
+      criarGraficoDia(labelsDia, dataDia);
+    }
+
+    function criarGraficoStatus(labels, data) {
+      const ctx = document.getElementById('statusChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Status das NFs',
+            data: data,
+            backgroundColor: [
+              '#28a745',
+              '#dc3545'
+            ],
+            borderColor: [
+              '#ffffff',
+              '#ffffff'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'top',
+            },
+            title: {
+              display: true,
+              text: 'Distribuição das NFs por Comprovante'
+            }
+          }
+        },
+      });
+    }
+
+    function criarGraficoDia(labels, data) {
+      const ctx = document.getElementById('diaChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Número de NFs',
+            data: data,
+            backgroundColor: '#007bff',
+            borderColor: '#007bff',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            x: {
+              ticks: {
+                autoSkip: false,
+                maxRotation: 90,
+                minRotation: 45
+              }
+            },
+            y: {
+              beginAtZero: true,
+              precision:0
+            }
+          },
+          plugins: {
+            legend: {
+              display: false,
+            },
+            title: {
+              display: true,
+              text: 'Distribuição das NFs por Dia de Entrega'
+            }
+          }
+        },
+      });
+    }
+  </script>
+</body>
+</html>

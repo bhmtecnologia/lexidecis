@@ -7,6 +7,8 @@ export default class HistoryManager {
      */
     static async _fetchAndFormatHistory(sessionId, config) {
         const apiURL = `${config.flowise.apiHost}/api/v1/chatmessage/${config.flowise.chatflowId}?sessionId=${sessionId}`;
+        console.log('Tentando buscar histórico em:', apiURL);
+        
         try {
             const response = await fetch(apiURL, {
                 method: 'GET',
@@ -15,9 +17,13 @@ export default class HistoryManager {
                 }
             });
 
+            console.log('Status da resposta:', response.status);
+            const responseBody = await response.text();
+            console.log('Corpo da resposta:', responseBody);
+
             if (!response.ok) throw new Error('Erro ao buscar histórico de mensagens da API.');
 
-            const apiHistory = await response.json();
+            const apiHistory = JSON.parse(responseBody);
 
             return apiHistory.map((msg) => ({
                 message: msg.content,

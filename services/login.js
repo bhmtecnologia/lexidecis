@@ -40,7 +40,7 @@ document.getElementById('login-form').addEventListener('submit', async (event) =
         // Redireciona para a página protegida após curto delay, se desejar
         setTimeout(() => {
             window.location.href = "../pages/chat.html"; // URL da página protegida pós-login
-        }, 2000);
+        }, 0);
     } catch (error) {
         console.error("Erro ao realizar login:", error);
         showAlert(`Erro ao fazer login: ${error.message}`, 'error');

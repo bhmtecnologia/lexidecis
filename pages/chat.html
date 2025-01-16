@@ -9,7 +9,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-    <!-- CSS externo (se houver) -->
+    <!-- CSS externo -->
     <link rel="stylesheet" href="../styles/chat.css">
     <link rel="stylesheet" href="../styles/gptManager.css">
     <link rel="stylesheet" href="../styles/loadingScreen.css">
@@ -52,13 +52,13 @@
             }
         }
 
-        /* Ajustes no botão toggle para ficar no topo à direita e 20% menor */
+        /* Ajustes no botão toggle */
         #toggle-sidebar-btn {
             position: fixed;
             z-index: 10000;
             top: 10px;
             right: 10px;
-            font-size: 1.2rem; /* Ajuste conforme necessário */
+            font-size: 1.2rem;
         }
     </style>
 </head>
@@ -73,6 +73,9 @@
     <nav id="sidebarMenu" class="sidebar d-flex flex-column p-3 bg-dark">
         <!-- Barra de Ícones como Botões -->
         <div class="d-flex justify-content-around mb-3">
+            <button id="config-button" class="btn btn-link text-white" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Configurações">
+                <i class="bi bi-gear" style="font-size: 1.5rem;"></i>
+            </button>
             <button id="profile-icon" class="btn btn-link text-white" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Perfil">
                 <i class="bi bi-person-circle" style="font-size: 1.5rem;"></i> 
             </button>
@@ -91,11 +94,11 @@
             <button class="btn btn-outline-secondary" type="button" id="clear-search-button">&times;</button>
         </div>
 
-        <!-- Lista de chats com rolagem automática -->
+        <!-- Lista de chats -->
         <ul id="chat-list" class="list-group chat-list overflow-auto custom-chat-list-height">
             <li class="list-group-item" data-chat-id="1">Chat 1</li>
             <li class="list-group-item" data-chat-id="2">Chat 2</li>
-            <!-- A lista de chats será populada dinamicamente -->
+            <!-- Lista será populada dinamicamente -->
         </ul>
 
         <hr class="bg-white">
@@ -112,28 +115,29 @@
         <hr class="bg-white">
     </nav>
 
-    <!-- Overlay para quando a sidebar estiver aberta em dispositivos móveis -->
+    <!-- Overlay para sidebar em dispositivos móveis -->
     <div id="sidebarOverlay"></div>
 
     <!-- Conteúdo Principal -->
     <div class="content">
-        <!-- Seção de boas-vindas -->
         <div id="welcome-message" class="d-flex justify-content-center align-items-center vh-100">
             <h1>Bem-vindo à LexiDecis!</h1>
         </div>
         
-        <!-- Componente do chatbot -->
         <div id="chatbot-container" class="d-none">
-            <!-- <flowise-fullchatbot></flowise-fullchatbot> -->
+            <!-- Chatbot será inicializado aqui -->
         </div>
     </div>
 
     <!-- Container para mensagens de erro -->
     <div id="error-container" class="alert alert-danger position-fixed bottom-0 end-0 m-3 d-none" role="alert">
-        <!-- Mensagem de erro será exibida aqui -->
+        <!-- Mensagem de erro -->
     </div>
 
-    <!-- Scripts de Autenticação -->
+    <!-- Modal de Configurações será criado dinamicamente pelo UIManager -->
+
+    <!-- Scripts -->
+    <!-- Scripts de Autenticação e Renderização -->
     <script type="module">
         import { verifyAuthState } from "../services/auth.js";
     
@@ -205,11 +209,8 @@
             });
         });
     </script>
-
+    <script type="module" src="../services/renderer.js"></script>
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- JavaScript externo -->
-    <script type="module" src="../services/renderer.js"></script>
-
 </body>
 </html>

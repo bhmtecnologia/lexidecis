@@ -1,14 +1,7 @@
 // uiManager.js
 
 const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
-
 const DEBUG_MODE = isLocalhost; // Define DEBUG_MODE com base no hostname
-
-function debugLog(...args) {
-    if (DEBUG_MODE) {
-        console.log(...args);
-    }
-}
 
 import GPTManager from './gptManager.js';
 import HistoryManager from './historyManager.js'; // Importação do HistoryManager
@@ -26,6 +19,9 @@ class UIManager {
         this.gptManager = new GPTManager(this.apiService, this.stateManager, this, this.config);
 
         // Inicializar o ProfileManager
+        // Ajuste conforme a assinatura necessária do ProfileManager:
+        // Se a assinatura mudou para aceitar apenas UIManager, use `new ProfileManager(this)`.
+        // Caso contrário, mantenha conforme necessário.
         this.profileManager = new ProfileManager(this.auth, this);
 
         const gptModalElement = document.getElementById('gpt-modal');
@@ -76,6 +72,8 @@ class UIManager {
         // Botões da barra lateral
         const newChatButton = document.getElementById('new-chat-button');
         const selectGPTButton = document.getElementById('select-gpt-button');
+        const profileIcon = document.getElementById('profile-icon');
+        const configButton = document.getElementById('config-button');
 
         if (newChatButton) {
             newChatButton.addEventListener('click', () => this.createNewChat());
@@ -85,10 +83,12 @@ class UIManager {
             selectGPTButton.addEventListener('click', () => this.gptManager.openModal());
         }
 
-        // Botão para abrir o modal de perfil
-        const profileIcon = document.getElementById('profile-icon');
         if (profileIcon) {
             profileIcon.addEventListener('click', () => this.profileManager.openModal());
+        }
+
+        if (configButton) {
+            configButton.addEventListener('click', () => this.openConfigModal());
         }
 
         // Eventos do menu suspenso de configurações (exemplo de logout)
@@ -112,24 +112,57 @@ class UIManager {
         }
     }
 
+    /* --- Método para abrir o Modal de Configurações --- */
+    openConfigModal() {
+        // Verifica se o modal já existe
+        let configModal = document.getElementById('config-modal');
+        if (!configModal) {
+            const modalHTML = `
+            <div class="modal fade" id="config-modal" tabindex="-1" aria-labelledby="config-modal-title" aria-hidden="true">
+                <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="config-modal-title">Configurações</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                        </div>
+                        <div class="modal-body" style="height:80vh;">
+                            <iframe src="config.html" style="width:100%; height:100%; border:none;"></iframe>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            configModal = document.getElementById('config-modal');
+            this.configModalInstance = new bootstrap.Modal(configModal);
+        }
+        // Se já existir, utilize a instância existente
+        if (!this.configModalInstance) {
+            this.configModalInstance = new bootstrap.Modal(configModal);
+        }
+        this.configModalInstance.show();
+    }
+
     /* --- Função para Criar Novo Chat --- */
     async createNewChat() {
         try {
             this.debugLog('Iniciando nova sessão de chat...');
-    
+
             // Verifica se um GPT está selecionado
             const selectedGPT = this.stateManager.selectedGPT;
             if (!selectedGPT) {
                 throw new Error('Nenhum GPT selecionado. Por favor, selecione um GPT antes de iniciar.');
             }
-    
+
             // Gera um novo ID de sessão e salva no StateManager
             const newSessionId = this.gptManager.generateSessionId();
             this.stateManager.setSessionId(newSessionId);
-    
+
             // Inicializa o chatbot, mas não adiciona o chat ainda
             await this.initializeChatbot();
-    
+
             this.debugLog('Sessão criada e chatbot inicializado com sucesso.');
         } catch (error) {
             console.error('Erro ao criar nova sessão de chat:', error);

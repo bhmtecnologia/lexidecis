@@ -174,7 +174,8 @@ if (!stateManager.selectedChat) {
     const defaultGPT = gptManager.getGPTById(defaultGPTId); // Usa o método getGPTById
 
     if (defaultGPT) {
-        // Define o GPT selecionado no stateManager
+       await  gptManager.selectGPTItem(defaultGPT)
+       // Define o GPT selecionado no stateManager
         stateManager.setSelectedGPT(defaultGPT);
         debugLog(`[Renderer] GPT padrão selecionado: ${defaultGPT.name}`);
 

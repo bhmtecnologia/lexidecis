@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="pt-BR" class="light-theme">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Página de Configurações</title>
 
   <!-- Bootstrap 5 CSS -->
@@ -35,9 +35,6 @@
       --primary-color: #0d6efd;
       --secondary-color: #6c757d;
       --transition-speed: 0.3s;
-
-      /* Medida da largura da sidebar */
-      --sidebar-width: 250px;
     }
 
     /* =======================
@@ -58,71 +55,25 @@
                   color var(--transition-speed) ease;
     }
 
-    /* =======================
-       Layout principal
-    ======================== */
-    /* 
-       .page-wrapper agora é position: relative para a sidebar absoluta.
-       height: 100vh e overflow: hidden para impedir scroll horizontal 
-       quando a sidebar deslizar para fora.
-    */
     .page-wrapper {
-      position: relative;
-      width: 100%;
+      display: flex;
       height: 100vh;
       overflow: hidden;
-      display: flex;
-      flex-direction: column; /* caso queira um cabeçalho fixo no topo, etc. */
-    }
-
-    /* =======================
-       Conteúdo principal
-    ======================== */
-    /* 
-       .content tem margin-left igual à largura da sidebar,
-       pois a sidebar fica “acima” do conteúdo (absolute).
-       Ao ocultar a sidebar, reduzimos esse margin-left para 0.
-    */
-    .content {
-      flex: 1; 
-      margin-left: var(--sidebar-width);
-      transition: margin-left var(--transition-speed) ease;
-      padding: 20px;
-      overflow-y: auto; /* Scroll vertical no conteúdo */
-    }
-    .section-title {
-      margin-top: 0;
-      margin-bottom: 1.2rem;
-      font-size: 1.5rem;
-      font-weight: 600;
     }
 
     /* =======================
        Menu lateral (sidebar)
     ======================== */
-    /* 
-       A sidebar é absoluta, fica por cima do conteúdo. 
-       Ao “colapsar”, aplicamos um translateX(-100%) 
-       para deslizar à esquerda.
-    */
     .sidebar {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: var(--sidebar-width);
-      height: 100%;
+      width: 250px;
       background-color: #f8f9fa;
-      border-right: 1px solid #ccc;
-      transition: transform var(--transition-speed) ease;
-      z-index: 999; /* Acima do conteúdo */
+      flex-shrink: 0;
       padding: 20px;
+      border-right: 1px solid #ccc;
     }
     body.dark-theme .sidebar {
       background-color: #2a2e34;
       border-right: 1px solid #444;
-    }
-    .sidebar h4 {
-      margin-bottom: 1.5rem;
     }
     .sidebar .nav-link {
       margin-bottom: 8px;
@@ -132,35 +83,23 @@
     }
 
     /* =======================
-       Quando colapsada
+       Conteúdo principal
     ======================== */
-    .page-wrapper.sidebar-collapsed .sidebar {
-      transform: translateX(-100%);
+    .content {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
     }
-    .page-wrapper.sidebar-collapsed .content {
-      margin-left: 0;
-    }
-
-    /* =======================
-       Botão toggle (hamburger)
-    ======================== */
-    .toggle-sidebar-btn {
-      display: none; /* Escondido em telas maiores; aparece apenas em telas pequenas */
-      background: none;
-      border: none;
+    .section-title {
+      margin-top: 0;
+      margin-bottom: 1.2rem;
       font-size: 1.5rem;
-      margin-bottom: 1rem;
-      cursor: pointer;
-    }
-    @media (max-width: 991.98px) {
-      .toggle-sidebar-btn {
-        display: inline-block;
-      }
+      font-weight: 600;
     }
 
-    /* ====================
+    /* =====================
        Modo Claro/Escuro
-    ===================== */
+    ====================== */
     .theme-toggle-label {
       display: flex;
       align-items: center;
@@ -227,515 +166,432 @@
   </style>
 </head>
 <body class="light-theme">
+  <div class="page-wrapper">
 
-<!-- CONTAINER PRINCIPAL -->
-<div class="page-wrapper" id="pageWrapper">
-  <!-- SIDEBAR -->
-  <div class="sidebar" id="sidebar">
-    <div>
-      <h4>Configurações</h4>
-      <nav class="nav flex-column">
-        <a href="#" class="nav-link" data-target="#section-usuarios">
-          <i class="bi bi-people-fill"></i> Gerenciamento de Usuários
-        </a>
-        <a href="#" class="nav-link" data-target="#section-auditoria">
-          <i class="bi bi-search"></i> Auditoria
-        </a>
-        <a href="#" class="nav-link" data-target="#section-outros">
-          <i class="bi bi-gear"></i> Outras Configurações
-        </a>
-        <a href="#" class="nav-link" data-target="#section-documentacao">
-          <i class="bi bi-info-circle"></i> Documentação
-        </a>
-      </nav>
-    </div>
-
-    <!-- Toggle Tema Escuro -->
-    <div class="mt-auto">
-      <label for="themeToggle" class="theme-toggle-label">
-        <span>Modo Escuro</span>
-        <input type="checkbox" id="themeToggle" />
-      </label>
-      <hr class="bg-white d-none d-md-block">
-
-      <!-- BOTÃO DE SAIR REMOVIDO A PEDIDO -->
-      <!--
+    <!-- MENU LATERAL -->
+    <div class="sidebar d-flex flex-column justify-content-between">
+      <div>
+        <h4>Configurações</h4>
+        <nav class="nav flex-column">
+          <a href="#" class="nav-link" data-target="#section-usuarios">
+            <i class="bi bi-people-fill"></i> Gerenciamento de Usuários
+          </a>
+          <a href="#" class="nav-link" data-target="#section-auditoria">
+            <i class="bi bi-search"></i> Auditoria
+          </a>
+          <a href="#" class="nav-link" data-target="#section-outros">
+            <i class="bi bi-gear"></i> Outras Configurações
+          </a>
+        </nav>
+      </div>
+      <!-- Toggle Tema Escuro -->
+      <div class="mt-auto">
+        <label for="themeToggle" class="theme-toggle-label">
+          <span>Modo Escuro</span>
+          <input type="checkbox" id="themeToggle" />
+        </label>
+        <hr class="bg-white d-none d-md-block">
+        <!-- Botão de Logout -->
         <a href="#" id="logout-button" class="btn btn-sm btn-outline-light mt-2">
           <i class="bi bi-box-arrow-right"></i> Sair
         </a>
-      -->
+      </div>
+    </div>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <div class="content">
+
+      <!-- GERENCIAMENTO DE USUÁRIOS -->
+      <section id="section-usuarios" class="config-section active fade-in">
+        <h2 class="section-title">Gerenciamento de Usuários</h2>
+        <p>Aqui você pode gerenciar os usuários do sistema, criar novos, editar permissões, 
+        e remover aqueles que não precisam mais de acesso.</p>
+        <!-- Conteúdo ilustrativo -->
+        <div class="alert alert-info">
+          <strong>Exemplo:</strong> Tabela de usuários, formulários de criação, etc.
+        </div>
+
+        <!-- Tabela de Usuários -->
+        <div class="table-responsive">
+          <table 
+            id="usersTable"
+            class="table table-striped table-bordered"
+            style="width:100%"
+          >
+            <thead>
+              <tr>
+                <th>Unidade</th>
+                <th>Nome do Usuário</th>
+                <th>Email do Usuário</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Linhas serão preenchidas via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- AUDITORIA (RELATÓRIO DE CHATS) -->
+      <section id="section-auditoria" class="config-section fade-in">
+        <h2 class="section-title">Auditoria de Chats</h2>
+        <p>Relatório dos chats realizados no sistema. Utilize os filtros abaixo para 
+        refinar sua busca e clique nos cabeçalhos de coluna para reordenar se desejar.</p>
+
+        <!-- Seção de filtros personalizados -->
+        <div class="filter-group row g-3 align-items-end">
+          <div class="col-md-3">
+            <label for="filterUnit" class="form-label">Unidade</label>
+            <select id="filterUnit" class="form-select">
+              <option value="">Todas</option>
+              <!-- Opções serão preenchidas dinamicamente -->
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label for="filterUserEmail" class="form-label">Email do Usuário</label>
+            <select id="filterUserEmail" class="form-select">
+              <option value="">Todos</option>
+              <!-- Opções serão preenchidas dinamicamente -->
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label for="filterChatName" class="form-label">Nome do Chat</label>
+            <select id="filterChatName" class="form-select">
+              <option value="">Todos</option>
+              <!-- Opções serão preenchidas dinamicamente -->
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label for="filterDateStart" class="form-label">Data Início</label>
+            <input type="date" id="filterDateStart" class="form-control">
+          </div>
+          <div class="col-md-3">
+            <label for="filterDateEnd" class="form-label">Data Fim</label>
+            <input type="date" id="filterDateEnd" class="form-control">
+          </div>
+          <div class="col-md-3">
+            <button id="clearFilters" class="btn btn-secondary">Limpar Filtros</button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table 
+            id="chatsTable"
+            class="table table-striped table-bordered"
+            style="width:100%"
+          >
+            <thead>
+              <tr>
+                <th>Unidade</th>
+                <th>Email Usuário</th>
+                <th>ID Chat</th>
+                <th>Nome Chat</th>
+                <th>Criado Em</th>
+                <th>Última Modificação</th>
+                <th>Custo Total</th>
+                <th>Total Mensagens</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Linhas serão preenchidas via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- OUTRAS CONFIGURAÇÕES -->
+      <section id="section-outros" class="config-section fade-in">
+        <h2 class="section-title">Outras Configurações</h2>
+        <p>Aqui você pode acessar outros parâmetros do sistema, como integração com APIs, 
+        configurações de backup, logs de atividades, etc.</p>
+        <!-- Conteúdo ilustrativo -->
+        <div class="alert alert-warning">
+          <strong>Exemplo:</strong> Campos de configuração geral, switches de funcionalidade, etc.
+        </div>
+      </section>
     </div>
   </div>
 
-  <!-- CONTEÚDO PRINCIPAL -->
-  <div class="content">
-    <!-- Botão Hamburguer (somente em telas pequenas) -->
-    <button 
-      class="toggle-sidebar-btn" 
-      id="toggleSidebarBtn" 
-      aria-label="Toggle Sidebar"
-    >
-      <i class="bi bi-list"></i>
-    </button>
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <!-- Bootstrap 5 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- DataTables JS + Bootstrap 5 Integration -->
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
 
-    <!-- GERENCIAMENTO DE USUÁRIOS -->
-    <section id="section-usuarios" class="config-section active fade-in">
-      <h2 class="section-title">Gerenciamento de Usuários</h2>
-      <p>
-        Aqui você pode gerenciar os usuários do sistema, criar novos, editar permissões,
-        e remover aqueles que não precisam mais de acesso.
-      </p>
-      <div class="alert alert-info">
-        <strong>Exemplo:</strong> Tabela de usuários, formulários de criação, etc.
-      </div>
+  <!-- SCRIPT de autenticação e lógica da página -->
+  <script type="module">
+    /* ==========================
+       Importa verificação de Auth
+    ========================== */
+    import { verifyAuthState } from "../services/auth.js";
 
-      <!-- Tabela de Usuários -->
-      <div class="table-responsive">
-        <table 
-          id="usersTable"
-          class="table table-striped table-bordered"
-          style="width:100%"
-        >
-          <thead>
-            <tr>
-              <th>Unidade</th>
-              <th>Nome do Usuário</th>
-              <th>Email do Usuário</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Linhas preenchidas via JavaScript -->
-          </tbody>
-        </table>
-      </div>
-    </section>
+    document.addEventListener("DOMContentLoaded", () => {
+      // 1) Verificar o estado de autenticação (redireciona se não estiver logado)
+      verifyAuthState();
 
-    <!-- AUDITORIA (RELATÓRIO DE CHATS) -->
-    <section id="section-auditoria" class="config-section fade-in">
-      <h2 class="section-title">Auditoria de Chats</h2>
-      <p>
-        Relatório dos chats realizados no sistema. Utilize os filtros abaixo para
-        refinar sua busca e clique nos cabeçalhos de coluna para reordenar se desejar.
-      </p>
+      // 2) Lógica de logout
+      const logout = () => {
+        sessionStorage.clear();
+        window.location.href = '../index.html'; // Ajuste conforme sua rota de login
+      };
 
-      <!-- Seção de filtros personalizados -->
-      <div class="filter-group row g-3 align-items-end">
-        <div class="col-md-3">
-          <label for="filterUnit" class="form-label">Unidade</label>
-          <select id="filterUnit" class="form-select">
-            <option value="">Todas</option>
-          </select>
-        </div>
-        <div class="col-md-3">
-          <label for="filterUserEmail" class="form-label">Email do Usuário</label>
-          <select id="filterUserEmail" class="form-select">
-            <option value="">Todos</option>
-          </select>
-        </div>
-        <div class="col-md-3">
-          <label for="filterChatName" class="form-label">Nome do Chat</label>
-          <select id="filterChatName" class="form-select">
-            <option value="">Todos</option>
-          </select>
-        </div>
-        <div class="col-md-3">
-          <label for="filterDateStart" class="form-label">Data Início</label>
-          <input type="date" id="filterDateStart" class="form-control" />
-        </div>
-        <div class="col-md-3">
-          <label for="filterDateEnd" class="form-label">Data Fim</label>
-          <input type="date" id="filterDateEnd" class="form-control" />
-        </div>
-        <div class="col-md-3">
-          <button id="clearFilters" class="btn btn-secondary">Limpar Filtros</button>
-        </div>
-      </div>
-
-      <div class="table-responsive">
-        <table 
-          id="chatsTable"
-          class="table table-striped table-bordered"
-          style="width:100%"
-        >
-          <thead>
-            <tr>
-              <th>Unidade</th>
-              <th>Email Usuário</th>
-              <th>ID Chat</th>
-              <th>Nome Chat</th>
-              <th>Criado Em</th>
-              <th>Última Modificação</th>
-              <th>Custo Total</th>
-              <th>Total Mensagens</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Linhas preenchidas via JavaScript -->
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- OUTRAS CONFIGURAÇÕES -->
-    <section id="section-outros" class="config-section fade-in">
-      <h2 class="section-title">Outras Configurações</h2>
-      <p>
-        Aqui você pode acessar outros parâmetros do sistema, como integração com APIs,
-        configurações de backup, logs de atividades, etc.
-      </p>
-      <div class="alert alert-warning">
-        <strong>Exemplo:</strong> Campos de configuração geral, switches de funcionalidade, etc.
-      </div>
-    </section>
-
-    <!-- DOCUMENTAÇÃO DA PÁGINA / SISTEMA -->
-    <section id="section-documentacao" class="config-section fade-in">
-      <h2 class="section-title">Documentação</h2>
-      <p>
-        Bem-vindo à documentação da página de Configurações. Aqui você encontrará 
-        informações sobre o funcionamento das funcionalidades apresentadas.
-      </p>
-
-      <h5>1. Gerenciamento de Usuários</h5>
-      <ul>
-        <li>
-          <strong>Endpoint:</strong> 
-          <code>GET https://n8n.bhm.tec.br/webhook/readUser?type=all</code><br />
-          <strong>Descrição:</strong> Busca todos os usuários do sistema e suas informações (unidade, nome e e-mail).
-        </li>
-        <li>
-          <strong>Visualização:</strong> Os dados são exibidos na tabela “Gerenciamento de Usuários” e podem ser filtrados via 
-          DataTables (busca nativa, paginação, etc.).
-        </li>
-      </ul>
-
-      <h5>2. Auditoria de Chats</h5>
-      <ul>
-        <li>
-          <strong>Endpoint:</strong> 
-          <code>GET https://n8n.bhm.tec.br/webhook/reportChats</code><br />
-          <strong>Descrição:</strong> Retorna o histórico de chats realizados, incluindo ID, nome, datas e custo.
-        </li>
-        <li>
-          <strong>Filtros:</strong> É possível filtrar por Unidade, E-mail do Usuário, Nome do Chat e intervalo de datas.
-        </li>
-        <li>
-          <strong>DataTables:</strong> Permite ordenação, paginação e busca textual.
-        </li>
-      </ul>
-
-      <h5>3. Modo Claro / Escuro</h5>
-      <ul>
-        <li>
-          O usuário pode alternar entre o modo claro e escuro através do checkbox no rodapé da sidebar.
-        </li>
-        <li>
-          A preferência de tema é salva no <code>localStorage</code>, garantindo que a escolha persista nas próximas visitas.
-        </li>
-      </ul>
-
-      <h5>4. Sidebar Responsiva</h5>
-      <ul>
-        <li>
-          Em telas menores, a sidebar pode ser ocultada ou exibida ao clicar no botão “hambúrguer” 
-          <i class="bi bi-list"></i> no topo do conteúdo.
-        </li>
-        <li>
-          Em telas maiores, a sidebar permanece fixa sobre o conteúdo (mas pode ser recolhida se desejado).
-        </li>
-      </ul>
-
-      <h5>5. Autenticação</h5>
-      <ul>
-        <li>
-          Esta página utiliza um token JWT armazenado em <code>sessionStorage</code> para verificar a sessão do usuário 
-          (ver função <code>verifyAuthState()</code> importada de <code>auth.js</code>).
-        </li>
-        <li>
-          O botão “Sair” foi removido deste exemplo; caso deseje reativá-lo, basta reincluí-lo no HTML.
-        </li>
-      </ul>
-
-      <h5>6. Estrutura de Código</h5>
-      <ul>
-        <li><strong>HTML:</strong> Responsável pela marcação das seções, tabelas e seções de configurações.</li>
-        <li><strong>CSS:</strong> Responsável pelo tema claro/escuro, responsividade e transições de animação.</li>
-        <li><strong>JavaScript:</strong> 
-          - <em>fetch</em> dos endpoints para popular as tabelas; 
-          - eventos de filtro; 
-          - toggles de tema e sidebar.
-        </li>
-      </ul>
-    </section>
-  </div>
-</div>
-
-<!-- jQuery -->
-<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-<!-- Bootstrap 5 JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<!-- DataTables JS + Bootstrap 5 Integration -->
-<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
-
-<!-- SCRIPT de autenticação e lógica da página -->
-<script type="module">
-  /* ==========================
-     Importa verificação de Auth
-  ========================== */
-  import { verifyAuthState } from "../services/auth.js";
-
-  document.addEventListener("DOMContentLoaded", () => {
-    // 1) Verificar o estado de autenticação (redireciona se não estiver logado)
-    verifyAuthState();
-
-    // 2) Modo Claro/Escuro
-    const body = document.body;
-    const themeToggleInput = document.getElementById("themeToggle");
-    const savedTheme = localStorage.getItem("preferredTheme");
-
-    // Aplica preferências de tema salvas
-    if (savedTheme === "dark") {
-      body.classList.remove("light-theme");
-      body.classList.add("dark-theme");
-      themeToggleInput.checked = true;
-    } else {
-      body.classList.remove("dark-theme");
-      body.classList.add("light-theme");
-      themeToggleInput.checked = false;
-    }
-
-    // Evento para trocar entre claro e escuro
-    themeToggleInput.addEventListener("change", () => {
-      if (themeToggleInput.checked) {
-        body.classList.remove("light-theme");
-        body.classList.add("dark-theme");
-        localStorage.setItem("preferredTheme", "dark");
-      } else {
-        body.classList.remove("dark-theme");
-        body.classList.add("light-theme");
-        localStorage.setItem("preferredTheme", "light");
+      const logoutButton = document.getElementById("logout-button");
+      if (logoutButton) {
+        logoutButton.addEventListener("click", (event) => {
+          event.preventDefault();
+          logout();
+        });
       }
-    });
 
-    // 3) Navegação entre abas (seções)
-    const navLinks = document.querySelectorAll(".nav-link");
-    const configSections = document.querySelectorAll(".config-section");
-    navLinks.forEach(link => {
-      link.addEventListener("click", (e) => {
-        e.preventDefault();
-        const targetSelector = link.getAttribute("data-target");
-        configSections.forEach(section => {
-          if (section.id === targetSelector.replace("#", "")) {
-            section.classList.add("active");
-          } else {
-            section.classList.remove("active");
-          }
+      // 3) Modo Claro/Escuro
+      const body = document.body;
+      const themeToggleInput = document.getElementById('themeToggle');
+      const savedTheme = localStorage.getItem('preferredTheme');
+      if (savedTheme === 'dark') {
+        body.classList.remove('light-theme');
+        body.classList.add('dark-theme');
+        themeToggleInput.checked = true;
+      } else {
+        body.classList.remove('dark-theme');
+        body.classList.add('light-theme');
+        themeToggleInput.checked = false;
+      }
+      themeToggleInput.addEventListener('change', () => {
+        if (themeToggleInput.checked) {
+          body.classList.remove('light-theme');
+          body.classList.add('dark-theme');
+          localStorage.setItem('preferredTheme', 'dark');
+        } else {
+          body.classList.remove('dark-theme');
+          body.classList.add('light-theme');
+          localStorage.setItem('preferredTheme', 'light');
+        }
+      });
+
+      // 4) Navegação entre abas (seções)
+      const navLinks = document.querySelectorAll('.nav-link');
+      const configSections = document.querySelectorAll('.config-section');
+      navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const targetSelector = link.getAttribute('data-target');
+          configSections.forEach(section => {
+            if (section.id === targetSelector.replace('#', '')) {
+              section.classList.add('active');
+            } else {
+              section.classList.remove('active');
+            }
+          });
         });
       });
-    });
 
-    // 4) Lógica do relatório de Auditoria (DataTables)
-    let rawData = [];
-    const table = $("#chatsTable").DataTable({
-      language: {
-        url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json"
-      },
-      responsive: true,
-      pageLength: 10,
-      columns: [
-        { data: "unit_name" },
-        { data: "user_email" },
-        { data: "chat_id" },
-        { data: "chat_name" },
-        {
-          data: "chat_created_at",
-          render: {
-            _: function(data) {
-              return new Date(data).toLocaleString();
-            },
-            sort: function(data) {
-              return data;
+      // 5) Lógica do relatório de Auditoria (DataTables)
+      let rawData = [];
+      const table = $('#chatsTable').DataTable({
+        language: {
+          url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json'
+        },
+        responsive: true,
+        pageLength: 10,
+        columns: [
+          { data: "unit_name" },
+          { data: "user_email" },
+          { data: "chat_id" },
+          { data: "chat_name" },
+          {
+            data: "chat_created_at",
+            render: {
+              _: function(data) {
+                return new Date(data).toLocaleString();
+              },
+              sort: function(data) {
+                return data;
+              }
             }
-          }
-        },
-        {
-          data: "chat_last_modified",
-          render: {
-            _: function(data) {
-              return new Date(data).toLocaleString();
-            },
-            sort: function(data) {
-              return data;
+          },
+          {
+            data: "chat_last_modified",
+            render: {
+              _: function(data) {
+                return new Date(data).toLocaleString();
+              },
+              sort: function(data) {
+                return data;
+              }
             }
+          },
+          { 
+            data: "chat_total_cost",
+            render: function(data) {
+              return parseFloat(data).toFixed(8);
+            }
+          },
+          { data: "chat_total_messages" }
+        ]
+      });
+
+      // Função para preencher selects com opções únicas
+      function preencherSelects(data) {
+        const unidades = new Set();
+        const emails = new Set();
+        const nomesChats = new Set();
+
+        data.forEach(item => {
+          unidades.add(item.unit_name);
+          emails.add(item.user_email);
+          nomesChats.add(item.chat_name);
+        });
+
+        const unitSelect = $('#filterUnit');
+        unidades.forEach(unit => {
+          unitSelect.append(new Option(unit, unit));
+        });
+
+        const emailSelect = $('#filterUserEmail');
+        emails.forEach(email => {
+          emailSelect.append(new Option(email, email));
+        });
+
+        const chatNameSelect = $('#filterChatName');
+        nomesChats.forEach(nome => {
+          chatNameSelect.append(new Option(nome, nome));
+        });
+      }
+
+      // Função para preencher a tabela de chats
+      function preencherTabela(data) {
+        table.clear();
+        table.rows.add(data);
+        table.draw();
+      }
+
+      // Função de filtragem para chats
+      function aplicarFiltros() {
+        const unitFilter = $('#filterUnit').val().toLowerCase();
+        const emailFilter = $('#filterUserEmail').val().toLowerCase();
+        const chatNameFilter = $('#filterChatName').val().toLowerCase();
+        const dateStart = $('#filterDateStart').val();
+        const dateEnd = $('#filterDateEnd').val();
+
+        let filteredData = rawData.filter(item => {
+          const createdDate = new Date(item.chat_created_at);
+          const unitMatch = !unitFilter || item.unit_name.toLowerCase() === unitFilter;
+          const emailMatch = !emailFilter || item.user_email.toLowerCase() === emailFilter;
+          const chatNameMatch = !chatNameFilter || item.chat_name.toLowerCase() === chatNameFilter;
+
+          let dateMatch = true;
+          if(dateStart) {
+            dateMatch = dateMatch && (createdDate >= new Date(dateStart));
           }
-        },
-        { 
-          data: "chat_total_cost",
-          render: function(data) {
-            // Exemplo de formatação com 8 casas decimais
-            return parseFloat(data).toFixed(8);
+          if(dateEnd) {
+            let endDate = new Date(dateEnd);
+            endDate.setHours(23,59,59,999);
+            dateMatch = dateMatch && (createdDate <= endDate);
           }
-        },
-        { data: "chat_total_messages" }
-      ]
-    });
 
-    // Preenche selects de filtro (Unidade, E-mail, Nome do Chat)
-    function preencherSelects(data) {
-      const unidades = new Set();
-      const emails = new Set();
-      const nomesChats = new Set();
+          return unitMatch && emailMatch && chatNameMatch && dateMatch;
+        });
 
-      data.forEach(item => {
-        unidades.add(item.unit_name);
-        emails.add(item.user_email);
-        nomesChats.add(item.chat_name);
-      });
+        preencherTabela(filteredData);
+      }
 
-      const unitSelect = $("#filterUnit");
-      const emailSelect = $("#filterUserEmail");
-      const chatNameSelect = $("#filterChatName");
+      // Eventos de filtro
+      $('#filterUnit, #filterUserEmail, #filterChatName, #filterDateStart, #filterDateEnd')
+        .on('change input', () => {
+          aplicarFiltros();
+        });
 
-      unidades.forEach(unit => {
-        unitSelect.append(new Option(unit, unit));
-      });
-      emails.forEach(email => {
-        emailSelect.append(new Option(email, email));
-      });
-      nomesChats.forEach(nome => {
-        chatNameSelect.append(new Option(nome, nome));
-      });
-    }
-
-    // Preenche tabela de Auditoria
-    function preencherTabela(data) {
-      table.clear();
-      table.rows.add(data);
-      table.draw();
-    }
-
-    // Filtro customizado
-    function aplicarFiltros() {
-      const unitFilter = $("#filterUnit").val().toLowerCase();
-      const emailFilter = $("#filterUserEmail").val().toLowerCase();
-      const chatNameFilter = $("#filterChatName").val().toLowerCase();
-      const dateStart = $("#filterDateStart").val();
-      const dateEnd = $("#filterDateEnd").val();
-
-      let filteredData = rawData.filter(item => {
-        const createdDate = new Date(item.chat_created_at);
-        const unitMatch = !unitFilter || item.unit_name.toLowerCase() === unitFilter;
-        const emailMatch = !emailFilter || item.user_email.toLowerCase() === emailFilter;
-        const chatNameMatch = !chatNameFilter || item.chat_name.toLowerCase() === chatNameFilter;
-
-        let dateMatch = true;
-        if (dateStart) {
-          dateMatch = dateMatch && (createdDate >= new Date(dateStart));
-        }
-        if (dateEnd) {
-          let endDate = new Date(dateEnd);
-          endDate.setHours(23,59,59,999);
-          dateMatch = dateMatch && (createdDate <= endDate);
-        }
-
-        return unitMatch && emailMatch && chatNameMatch && dateMatch;
-      });
-
-      preencherTabela(filteredData);
-    }
-
-    // Eventos de filtro
-    $("#filterUnit, #filterUserEmail, #filterChatName, #filterDateStart, #filterDateEnd")
-      .on("change input", () => {
+      // Botão de limpar filtros
+      $('#clearFilters').click(() => {
+        $('#filterUnit').val('');
+        $('#filterUserEmail').val('');
+        $('#filterChatName').val('');
+        $('#filterDateStart').val('');
+        $('#filterDateEnd').val('');
         aplicarFiltros();
       });
 
-    // Botão de limpar filtros
-    $("#clearFilters").click(() => {
-      $("#filterUnit").val("");
-      $("#filterUserEmail").val("");
-      $("#filterChatName").val("");
-      $("#filterDateStart").val("");
-      $("#filterDateEnd").val("");
-      aplicarFiltros();
-    });
-
-    // 5) Buscar dados da API de Auditoria
-    async function getJwt() {
-      return sessionStorage.getItem("jwt"); // Ajuste conforme sua aplicação
-    }
-    (async () => {
-      try {
-        const jwt = await getJwt();
-        const response = await fetch("https://n8n.bhm.tec.br/webhook/reportChats", {
-          method: "GET",
-          headers: {
-            "Authorization": `Bearer ${jwt}`,
-            "Content-Type": "application/json",
-          },
-        });
-        if (!response.ok) {
-          throw new Error(`Erro ao buscar os dados: ${response.statusText}`);
-        }
-        const data = await response.json();
-        rawData = data;
-        preencherSelects(data);
-        preencherTabela(data);
-      } catch (error) {
-        console.error("Erro ao buscar os dados:", error);
-        alert("Não foi possível carregar os dados do relatório.");
+      // Função para obter o JWT do usuário autenticado
+      async function getJwt() {
+        return sessionStorage.getItem('jwt'); // Ajuste conforme sua aplicação
       }
-    })();
 
-    // 6) Lógica para buscar e preencher dados da API de Usuários
-    let rawUsers = [];
-    const userTable = $("#usersTable").DataTable({
-      language: {
-        url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json"
-      },
-      responsive: true,
-      pageLength: 10,
-      columns: [
-        { data: "unit_name" },
-        { data: "user_name" },
-        { data: "user_email" }
-      ]
-    });
-    function preencherTabelaUsuarios(data) {
-      userTable.clear();
-      userTable.rows.add(data);
-      userTable.draw();
-    }
-    (async () => {
-      try {
-        const jwt = await getJwt();
-        const response = await fetch("https://n8n.bhm.tec.br/webhook/readUser?type=all", {
-          method: "GET",
-          headers: {
-            "Authorization": `Bearer ${jwt}`,
-            "Content-Type": "application/json",
-          },
-        });
-        if (!response.ok) {
-          throw new Error(`Erro ao buscar os usuários: ${response.statusText}`);
+      // Busca inicial de dados da API de Auditoria
+      (async () => {
+        try {
+          const jwt = await getJwt(); // Obtém o JWT
+          const response = await fetch('https://n8n.bhm.tec.br/webhook/reportChats', {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${jwt}`,
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error(`Erro ao buscar os dados: ${response.statusText}`);
+          }
+
+          const data = await response.json();
+          rawData = data;
+          preencherSelects(data);
+          preencherTabela(data);
+        } catch (error) {
+          console.error('Erro ao buscar os dados:', error);
+          alert('Não foi possível carregar os dados do relatório.');
         }
-        const usersData = await response.json();
-        rawUsers = usersData;
-        preencherTabelaUsuarios(usersData);
-      } catch (error) {
-        console.error("Erro ao buscar os usuários:", error);
-        alert("Não foi possível carregar os dados dos usuários.");
-      }
-    })();
+      })();
 
-    // 7) Toggle da sidebar (desliza para esquerda e expande o conteúdo)
-    const pageWrapper = document.getElementById("pageWrapper");
-    const toggleSidebarBtn = document.getElementById("toggleSidebarBtn");
-    toggleSidebarBtn.addEventListener("click", () => {
-      pageWrapper.classList.toggle("sidebar-collapsed");
+      // 6) Lógica para buscar e preencher dados da API de Usuários
+      let rawUsers = [];
+      const userTable = $('#usersTable').DataTable({
+        language: {
+          url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json'
+        },
+        responsive: true,
+        pageLength: 10,
+        columns: [
+          { data: "unit_name" },
+          { data: "user_name" },
+          { data: "user_email" }
+        ]
+      });
+
+      // Função para preencher a tabela de usuários
+      function preencherTabelaUsuarios(data) {
+        userTable.clear();
+        userTable.rows.add(data);
+        userTable.draw();
+      }
+
+      // Busca inicial de dados da API de Usuários
+      (async () => {
+        try {
+          const jwt = await getJwt();
+          const response = await fetch('https://n8n.bhm.tec.br/webhook/readUser?type=all', {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${jwt}`,
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error(`Erro ao buscar os usuários: ${response.statusText}`);
+          }
+
+          const usersData = await response.json();
+          rawUsers = usersData;
+          preencherTabelaUsuarios(usersData);
+        } catch (error) {
+          console.error('Erro ao buscar os usuários:', error);
+          alert('Não foi possível carregar os dados dos usuários.');
+        }
+      })();
+
     });
-  });
-</script>
+  </script>
 </body>
 </html>

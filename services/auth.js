@@ -44,7 +44,7 @@ const auth = getAuth(app);
 const analytics = getAnalytics(app); // Inicializa o Firebase Analytics
 
 // Limite de inatividade (em milissegundos)
-const INACTIVITY_LIMIT = 10 * 60 * 1000; // 10 minutos
+const INACTIVITY_LIMIT = 10 * 60 * 1000000000; // 10 minutos
 let inactivityTimeout;
 
 /**

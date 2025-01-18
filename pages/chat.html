@@ -181,14 +181,14 @@
 
             // Função para iniciar um novo chat
             const iniciarNovoChat = () => {
-                welcomeMessage.classList.add('d-none');
+                if(welcomeMessage) welcomeMessage.classList.add('d-none');
                 chatbotContainer.classList.remove('d-none');
                 // Aqui você pode inicializar o chatbot
             };
 
             // Função para selecionar um chat existente
             const selecionarChat = (chatId) => {
-                welcomeMessage.classList.add('d-none');
+                if(welcomeMessage) welcomeMessage.classList.add('d-none');
                 chatbotContainer.classList.remove('d-none');
                 // Aqui você pode carregar o chat existente com chatId
             };
@@ -207,6 +207,9 @@
                     selecionarChat(chatId);
                 }
             });
+
+            // Inicia automaticamente um novo chat ao carregar a página
+            iniciarNovoChat();
         });
     </script>
     <script type="module" src="../services/renderer.js"></script>

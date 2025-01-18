@@ -38,7 +38,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
 // Limite de inatividade (em milissegundos)
-const INACTIVITY_LIMIT = 10 * 60 * 1000; // 10 minutos para teste
+const INACTIVITY_LIMIT = 10 * 60 * 1000000; // 100000 minutos para teste
 let inactivityTimeout;
 
 /**

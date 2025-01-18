@@ -1,11 +1,17 @@
+// loadingScreen.js
+
 export default class LoadingScreen {
     constructor() {
         this.loadingScreen = null;
         this.progressBar = null;
         this.progressText = null;
         this.modelsList = null;
+
+        // Lista total de etapas a cumprir
         this.modelsToLoad = []; 
+        // Lista das etapas já cumpridas
         this.modelsLoaded = [];
+
         this.injectStyles();
         this.createLoadingScreen();
     }
@@ -13,26 +19,20 @@ export default class LoadingScreen {
     injectStyles() {
         const style = document.createElement('style');
         style.textContent = `
-            /* 
-             * Definindo uma fonte — se preferir que isso não afete nada além do 
-             * #loading-screen, você pode usar uma técnica de Shadow DOM. 
-             * Mas nesse exemplo, apenas importamos aqui. 
-             */
             @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
-            /* 
-             * Em vez de :root, definimos as variáveis dentro de #loading-screen,
-             * garantindo que só sejam aplicadas dentro deste container.
+            /*
+             * Usamos #loading-screen como “namespace” para impedir que o CSS
+             * afete outros elementos da página.
              */
             #loading-screen {
-                --primary-color: #005EB8;       /* Azul corporativo */
-                --secondary-color: #003A70;     /* Azul-escuro */
-                --text-color: #333;             /* Texto em cinza-escuro */
-                --light-bg-color: #f4f4f4;      /* Fundo claro */
+                --primary-color: #005EB8;
+                --secondary-color: #003A70;
+                --text-color: #333;
+                --light-bg-color: #f4f4f4;
                 --white-color: #ffffff;
-                --overlay-color: rgba(0, 0, 0, 0.45); /* Overlay semitransparente */
+                --overlay-color: rgba(0, 0, 0, 0.45);
 
-                /* Fonte específica para este container */
                 font-family: 'Roboto', sans-serif;
             }
 
@@ -48,25 +48,23 @@ export default class LoadingScreen {
                 justify-content: center;
                 background: var(--overlay-color);
                 z-index: 9999;
-
-                /* Vamos iniciar oculto e usar transição de opacidade */
                 opacity: 0;
                 pointer-events: none;
                 transition: opacity 0.3s ease-in-out;
             }
 
-            /* Quando estiver .visible, fica visível */
+            /* Quando estiver visível */
             #loading-screen.loading-screen.visible {
                 opacity: 1;
                 pointer-events: auto;
             }
 
-            /* Quando estiver .hidden, escondemos de fato */
+            /* Quando estiver oculto */
             #loading-screen.loading-screen.hidden {
                 display: none;
             }
 
-            /* Área branca (cartão) com o loader */
+            /* Caixa branca com sombra */
             #loading-screen .loader {
                 background-color: var(--white-color);
                 padding: 2rem;
@@ -77,7 +75,7 @@ export default class LoadingScreen {
                 text-align: center;
             }
 
-            /* Container da barra de progresso */
+            /* Barra de progresso */
             #loading-screen .progress-container {
                 width: 100%;
                 height: 10px;
@@ -87,7 +85,6 @@ export default class LoadingScreen {
                 margin: 1rem 0;
             }
 
-            /* Barra de progresso em si */
             #loading-screen .progress-bar {
                 height: 100%;
                 background: var(--primary-color);
@@ -95,14 +92,12 @@ export default class LoadingScreen {
                 transition: width 0.4s ease;
             }
 
-            /* Texto que exibe a porcentagem */
             #loading-screen .progress-text {
                 color: var(--text-color);
                 font-size: 1rem;
                 font-weight: 500;
             }
 
-            /* Seção onde listamos os modelos carregados */
             #loading-screen .models-list {
                 margin-top: 1.5rem;
                 text-align: left;
@@ -135,7 +130,6 @@ export default class LoadingScreen {
     createLoadingScreen() {
         const loadingDiv = document.createElement('div');
         loadingDiv.id = 'loading-screen';
-        // Mantemos a classe 'loading-screen' para que nosso estilo funcione
         loadingDiv.className = 'loading-screen hidden'; 
         loadingDiv.innerHTML = `
             <div class="loader">
@@ -144,7 +138,7 @@ export default class LoadingScreen {
                 </div>
                 <div class="progress-text">Carregando: 0%</div>
                 <div class="models-list">
-                    <h4>Modelos carregados:</h4>
+                    <h4>Etapas:</h4>
                     <ul id="models-list"></ul>
                 </div>
             </div>
@@ -157,14 +151,30 @@ export default class LoadingScreen {
         this.modelsList = loadingDiv.querySelector('#models-list');
     }
 
+    /**
+     * Define a lista de etapas que serão exibidas no loading.
+     */
     setModelsToLoad(models) {
         this.modelsToLoad = Array.isArray(models) ? models : [];
         this.modelsLoaded = [];
+
+        // Resetar a lista exibida
         this.modelsList.innerHTML = '';
         this.progressBar.style.width = '0%';
         this.progressText.textContent = 'Carregando: 0%';
+
+        // Pré-cria a <li> para cada etapa, para aparecer em “cinza” ou algo do tipo
+        this.modelsToLoad.forEach((etapa) => {
+            const li = document.createElement('li');
+            li.textContent = etapa; 
+            this.modelsList.appendChild(li);
+        });
     }
 
+    /**
+     * Atualiza a barra de progresso com base em quantas etapas
+     * já foram “carregadas” (this.modelsLoaded).
+     */
     updateProgress() {
         let progressPercentage = 0;
         if (this.modelsToLoad.length > 0) {
@@ -177,41 +187,44 @@ export default class LoadingScreen {
         this.progressText.textContent = `Carregando: ${progressPercentage}%`;
     }
 
-    async loadModel(modelName) {
+    /**
+     * Marca uma etapa como concluída. 
+     * Isso incrementa o número de “modelsLoaded” e atualiza a barra.
+     */
+    async loadModel(etapaNome) {
+        // Se preferir, remova setTimeout se não quiser delay
         return new Promise((resolve) => {
             setTimeout(() => {
-                // Evita adicionar o mesmo modelo repetidas vezes
-                if (!this.modelsLoaded.includes(modelName)) {
-                    this.modelsLoaded.push(modelName);
-                    const modelItem = document.createElement('li');
-                    modelItem.textContent = modelName;
-                    this.modelsList.appendChild(modelItem);
+                // Evita duplicar a mesma etapa
+                if (!this.modelsLoaded.includes(etapaNome)) {
+                    this.modelsLoaded.push(etapaNome);
+                    // Atualiza a cor do <li> daquela etapa (por ex., “✓”)
+                    const liElement = Array.from(this.modelsList.querySelectorAll('li'))
+                        .find(li => li.textContent.trim() === etapaNome);
+                    if (liElement) {
+                        liElement.textContent = `✓ ${etapaNome}`;
+                    }
                 }
                 this.updateProgress();
                 resolve();
-            }, Math.random() * 1000 + 500);
+            }, 300); 
         });
     }
 
-    async loadAllModels() {
-        if (this.modelsToLoad.length === 0) {
-            this.updateProgress();
-            return;
-        }
-        for (const model of this.modelsToLoad) {
-            await this.loadModel(model);
-        }
-    }
-
+    /**
+     * Mostra a tela de loading e, se desejar, carrega tudo da setModelsToLoad
+     */
     async show(models = []) {
         if (this.loadingScreen) {
             this.setModelsToLoad(models);
             this.loadingScreen.classList.remove('hidden');
             this.loadingScreen.classList.add('visible');
-            await this.loadAllModels();
         }
     }
 
+    /**
+     * Esconde a tela de loading
+     */
     hide() {
         if (this.loadingScreen) {
             this.loadingScreen.classList.remove('visible');

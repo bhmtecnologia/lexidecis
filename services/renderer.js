@@ -13,7 +13,7 @@ function debugLog(...args) {
 
 // ... imports
 import GPTManager from './gptManager.js';
-import { showRenamePrompt, showAlert, showDeleteConfirmation } from './alertManager.js';
+import { showAlert } from './alertManager.js';
 import { showToast } from './notificationManager.js';
 import Chatbot from "./web.js";
 import ApiService from './apiService.js';
@@ -35,7 +35,7 @@ const uuid = sessionStorage.getItem("uuid");
 const email = sessionStorage.getItem("email");
 
 // Definição inicial das configurações da aplicação
-const CONFIG = {
+let CONFIG = {
     userId: uuid,
     companyName: tenant,
     userName: email,
@@ -47,16 +47,23 @@ const CONFIG = {
     apiCredentials: {}
 };
 
-/* ==========================
-   5. Inicialização da Aplicação
-========================== */
-
 document.addEventListener('DOMContentLoaded', async () => {
     const loadingScreen = new LoadingScreen();
     const statusCheck = new StatusCheck();
 
-    // Exibe a tela de loading
-    loadingScreen.show();
+    // Defina as etapas que deseja monitorar
+    const etapasDeCarregamento = [
+        'Autenticação',
+        'Carregar Endpoints',
+        'Verificar Status do Sistema',
+        'Pré-carregar GPTs',
+        'Carregar Lista de Chats',
+        'Selecionar GPT Padrão',
+        'Inicializar Chatbot'
+    ];
+
+    // Exibe a tela de loading com as etapas definidas
+    loadingScreen.show(etapasDeCarregamento);
 
     try {
         // Garante que o estado de autenticação do usuário seja verificado
@@ -69,19 +76,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                         displayName: user.displayName,
                     });
 
-                    // Atualiza o sessionStorage com dados do usuário, se necessário
                     sessionStorage.setItem("uuid", user.uid);
                     sessionStorage.setItem("email", user.email);
-                    sessionStorage.setItem("tenant", user.tenant || 'defaultTenant'); // Ajuste conforme a estrutura do usuário
-
+                    sessionStorage.setItem("tenant", user.tenant || 'defaultTenant');
                     resolve();
                 } else {
                     reject(new Error("Usuário não autenticado. Redirecionando para login."));
                 }
             });
         });
+        await loadingScreen.loadModel('Autenticação');
 
-        // Recuperar as variáveis do sessionStorage
+        // Recuperar variáveis do sessionStorage após autenticação
         const tenant = sessionStorage.getItem("tenant");
         const uuid = sessionStorage.getItem("uuid");
         const email = sessionStorage.getItem("email");
@@ -89,12 +95,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!tenant || !uuid || !email) {
             console.warn('Dados do usuário incompletos no sessionStorage.');
             showAlert('Dados do usuário incompletos. Por favor, faça login novamente.', 'error');
-            window.location.href = '../login.html'; // Ou a página apropriada
+            window.location.href = '../login.html';
             return;
         }
 
-        // Definição inicial das configurações da aplicação
-        const CONFIG = {
+        CONFIG = {
             userId: uuid,
             companyName: tenant,
             userName: email,
@@ -106,8 +111,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             apiCredentials: {}
         };
 
-        // Faz a chamada à API para obter os endpoints
-        const jwt = await getJwt(); // Obtém o JWT do usuário autenticado
+        // Carregar Endpoints
+        const jwt = await getJwt();
         const response = await fetch('https://n8n.bhm.tec.br/webhook/readEndpoints', {
             method: 'GET',
             headers: {
@@ -121,87 +126,77 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         const data = await response.json();
-
-        // Verifica e acessa corretamente os dados de endpoints
         const endpoints = data?.endpoints;
         if (!endpoints || !endpoints.flowise || !endpoints.apiCredentials) {
             throw new Error("Dados de endpoints inválidos ou não encontrados.");
         }
 
-        // Atualiza as configurações com os dados recebidos
         CONFIG.flowise = { ...endpoints.flowise };
         CONFIG.apiCredentials = { ...endpoints.apiCredentials };
-
         debugLog("[Endpoints] Configurações atualizadas com sucesso:", CONFIG);
 
-        // Verifica o status do sistema
-        const userAgreed = await statusCheck.checkStatus();
+        await loadingScreen.loadModel('Carregar Endpoints');
 
+        const userAgreed = await statusCheck.checkStatus();
         if (!userAgreed) {
             console.warn('Usuário escolheu sair. Encerrando aplicação...');
             loadingScreen.hide();
             window.location.href = '../index.html';
             return;
         }
-
         debugLog('Sistema ok ou status aprovado pelo usuário. Continuando inicialização...');
 
-        // Inicializa os serviços e gerenciadores
+        await loadingScreen.loadModel('Verificar Status do Sistema');
+
+        // Inicializa serviços e gerenciadores
         const apiService = new ApiService(CONFIG);
         const stateManager = new StateManager();
         const chatManager = new ChatManager(apiService, stateManager, CONFIG);
         const uiManager = new UIManager(apiService, stateManager, chatManager, CONFIG, auth);
-        const gptManager = new GPTManager(apiService, stateManager, uiManager, CONFIG); // Instância do GPTManager
+        const gptManager = new GPTManager(apiService, stateManager, uiManager, CONFIG);
 
-        // Associa o uiManager ao chatManager
         chatManager.uiManager = uiManager;
 
-        // Configura tooltips do Bootstrap
         const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         tooltipTriggerList.map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 
-// Carrega GPTs previamente
-await gptManager.preloadGPTs();
+        await gptManager.preloadGPTs();
+        await loadingScreen.loadModel('Pré-carregar GPTs');
 
-// Carrega a lista de chats
-await chatManager.loadChatList(chatManager.populateChatMenu.bind(chatManager));
-stateManager.loadSelectedChat();
+        await chatManager.loadChatList(chatManager.populateChatMenu.bind(chatManager));
+        stateManager.loadSelectedChat();
+        await loadingScreen.loadModel('Carregar Lista de Chats');
 
-// Verifique se há um chat selecionado
-if (!stateManager.selectedChat) {
-    // Se não houver, selecione o GPT padrão e crie um novo chat
-    const defaultGPTId = "6d71f8f4-b91d-45ed-80a9-803ae61a7c98";
-    const defaultGPT = gptManager.getGPTById(defaultGPTId); // Usa o método getGPTById
+        if (!stateManager.selectedChat) {
+            const defaultGPTId = "6d71f8f4-b91d-45ed-80a9-803ae61a7c98";
+            const defaultGPT = gptManager.getGPTById(defaultGPTId);
+            if (defaultGPT) {
+                await gptManager.selectGPTItem(defaultGPT);
+                stateManager.setSelectedGPT(defaultGPT);
+                debugLog(`[Renderer] GPT padrão selecionado: ${defaultGPT.name}`);
+                await uiManager.createNewChat();
+            } else {
+                showAlert('GPT padrão não encontrado. Consulte o suporte.', 'error');
+                throw new Error('GPT padrão não encontrado.');
+            }
+        }
+        await loadingScreen.loadModel('Selecionar GPT Padrão');
 
-    if (defaultGPT) {
-       await  gptManager.selectGPTItem(defaultGPT)
-       // Define o GPT selecionado no stateManager
-        stateManager.setSelectedGPT(defaultGPT);
-        debugLog(`[Renderer] GPT padrão selecionado: ${defaultGPT.name}`);
-
-        // Cria um novo chat com o GPT padrão
-        await uiManager.createNewChat();
-    } else {
-        showAlert('GPT padrão não encontrado. Consulte o suporte.', 'error');
-        throw new Error('GPT padrão não encontrado.');
-    }
-}
-
-        // Inicializa o chatbot após garantir que selectedGPT está definido
         await uiManager.initializeChatbot();
+        await loadingScreen.loadModel('Inicializar Chatbot');
 
         debugLog('Inicialização concluída. Sistema pronto para uso.');
         showAlert('LexiDecis: Estou pronto.', 'success');
+
+        // Oculta a tela de loading somente após todas as etapas estarem concluídas
+        loadingScreen.hide();
     } catch (error) {
         console.error('Erro ao inicializar a aplicação:', error);
         showAlert('Erro ao carregar o sistema. Consulte o console para mais detalhes.', 'error');
 
-        // Redireciona para a página de login se necessário
         if (error.message.includes("não autenticado")) {
             window.location.href = "../index.html";
         }
-    } finally {
-        // Oculta a tela de loading
-        loadingScreen.hide();
     }
+    // Removemos o bloco finally para controlar a ocultação da tela de loading manualmente.
 });

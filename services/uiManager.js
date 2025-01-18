@@ -14,21 +14,21 @@ class UIManager {
         this.chatManager = chatManager; // Referência ao ChatManager
         this.config = config; // Armazena o CONFIG na instância
         this.auth = auth; // Instância do Firebase Auth
-    
+
         // Inicializar o GPTManager com o CONFIG correto
         this.gptManager = new GPTManager(this.apiService, this.stateManager, this, this.config);
-    
+
         // Inicializar o ProfileManager
+        // Ajuste conforme a assinatura necessária do ProfileManager:
+        // Se a assinatura mudou para aceitar apenas UIManager, use `new ProfileManager(this)`.
+        // Caso contrário, mantenha conforme necessário.
         this.profileManager = new ProfileManager(this.auth, this);
-    
-        // Variável para controlar se o chatbot já foi inicializado
-        this.isChatbotInitialized = false;
-    
+
         const gptModalElement = document.getElementById('gpt-modal');
         if (gptModalElement) {
             this.modal = new bootstrap.Modal(gptModalElement);
         }
-    
+
         this.setupUIEvents();
     }
 
@@ -173,29 +173,22 @@ class UIManager {
     /* --- Funções de Inicialização do Chatbot --- */
     async initializeChatbot() {
         try {
-            // Verifica se o chatbot já foi inicializado
-            if (this.isChatbotInitialized) {
-                this.debugLog('Chatbot já inicializado. Ignorando nova inicialização.');
-                return;
-            }
-    
-            this.isChatbotInitialized = true; // Marca como inicializado
-    
+            // Adicione logs para depuração
             this.debugLog('Iniciando a inicialização do chatbot...');
             this.debugLog('selectedGPT:', this.stateManager.selectedGPT);
-    
+
             if (!this.stateManager.selectedGPT) {
                 throw new Error('Nenhum GPT selecionado.');
             }
-    
+
             if (!this.stateManager.selectedGPT.flowiseConfig || !this.stateManager.selectedGPT.flowiseConfig.flowise) {
                 throw new Error('flowiseConfig está indefinido ou incompleto para o GPT selecionado.');
             }
-    
+
             if (!this.stateManager.currentSessionId) {
                 const newSessionId = this.gptManager.generateSessionId();
                 this.stateManager.setSessionId(newSessionId);
-    
+
                 const defaultChatName = this.stateManager.selectedGPT.name || 'Novo chat';
                 const defaultChat = {
                     id: newSessionId,
@@ -206,13 +199,15 @@ class UIManager {
                 this.stateManager.addChat(defaultChat);
                 this.chatManager.populateChatMenu(this.stateManager.chats);
             }
-    
+
+            // Limpar histórico injetado
             const selectedFlowiseConfig = this.stateManager.selectedGPT.flowiseConfig.flowise;
             localStorage.removeItem(`${selectedFlowiseConfig.chatflowId}_historyInjected`);
             localStorage.removeItem(`${selectedFlowiseConfig.chatflowId}_EXTERNAL`);
-    
+
+            // Injetar histórico
             await HistoryManager.injectChatHistory(this.stateManager.currentSessionId, this.stateManager.selectedGPT.flowiseConfig);
-    
+
             const chatbotContainer = document.getElementById('chatbot-container');
             if (chatbotContainer) {
                 chatbotContainer.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
@@ -220,15 +215,15 @@ class UIManager {
                 console.error('Elemento chatbot-container não encontrado.');
                 return;
             }
-    
+
             const chatflowConfig = {
                 sessionId: this.stateManager.currentSessionId,
                 ...this.stateManager.selectedGPT.flowiseConfig,
                 ...this.stateManager.gptConfig,
             };
-    
+
             this.debugLog('Chatflow Config:', chatflowConfig);
-    
+
             Chatbot.initFull({
                 chatflowid: selectedFlowiseConfig.chatflowId,
                 apiHost: selectedFlowiseConfig.apiHost,
@@ -238,8 +233,87 @@ class UIManager {
                     observeMessages: (messages) => this.logMessages(messages),
                     observeLoading: (loading) => this.handleLoadingState(loading)
                 },
+                theme: {
+                    button: {
+                        backgroundColor: '#282828',
+                        right: 20,
+                        bottom: 20,
+                        size: 48,
+                        dragAndDrop: true,
+                        iconColor: 'white',
+                        customIconSrc: 'https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/google-messages.svg',
+                    },
+                    disclaimer: {
+                        title: 'Aviso',
+                        message: 'Ao utilizar esse serviço, está concordando com os termos de uso <a target="_blank" href="https://v1.lexidecis.com.br/terms.html">Termos & Condições</a>',
+                        textColor: 'black',
+                        buttonColor: '#282828',
+                        buttonText: 'Concordo, quero iniciar o LexiDecis',
+                        buttonTextColor: 'white',
+                        blurredBackgroundColor: 'rgba(0, 0, 0, 0.4)',
+                        backgroundColor: 'white',
+                    },
+                    customCSS: ``,
+                    chatWindow: {
+                        showTitle: true,
+                        showAgentMessages: true,
+                        title: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.name : 'Escolha um GPT',
+                        titleAvatarSrc: 'https://www.bhm.tec.br/images/152x152/10788698/favicon.png',
+                        welcomeMessage: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.description : 'Bem-vindo ao assistente',
+                        errorMessage: 'Ops, algo deu errado...',
+                        backgroundColor: '#f1f1f1',
+                        fontSize: 13,
+                        starterPrompts: (() => {
+                            const prompts = this.stateManager.selectedGPT?.starterPrompts;
+                            if (!prompts) return ['Quem é você?'];
+                            if (Array.isArray(prompts)) return prompts;
+                            return prompts.includes(',') 
+                                ? prompts.split(',').map(p => p.trim()) 
+                                : [prompts];
+                        })(),
+                        starterPromptFontSize: 14,
+                        clearChatOnReload: false,
+                        sourceDocsTitle: 'Sources:',
+                        renderHTML: true,
+                        botMessage: {
+                          backgroundColor: '#f1f1f1',
+                          textColor: '#000000',
+                          showAvatar: true,
+                        },
+                        userMessage: {
+                          backgroundColor: '#282828',
+                          textColor: '#ffffff',
+                          showAvatar: true,
+                          avatarSrc: 'https://raw.githubusercontent.com/zahidkhawaja/langchain-chat-nextjs/main/public/usericon.png',
+                        },
+                        textInput: {
+                          placeholder: 'Mensagem...',
+                          backgroundColor: '#282828',
+                          textColor: '#f1f1f1',
+                          sendButtonColor: '#f1f1f1',
+                          maxChars: 100000,
+                          maxCharsWarningMessage: 'Você excedeu o limite de caracteres. Insira menos de 100000 caracteres.',
+                          autoFocus: true,
+                          sendMessageSound: true,
+                          receiveMessageSound: true,
+                        },
+                        feedback: {
+                          color: '#282828',
+                        },
+                        dateTimeToggle: {
+                          date: true,
+                          time: true,
+                        },
+                        footer: {
+                            textColor: '#282828',
+                            text: 'O LexiDecis pode cometer erros. Por isso, é bom checar as respostas - ',
+                            company: 'LexiDecis',
+                            companyLink: 'https://lexidecis.com.br',
+                        },
+                    }
+                }
             });
-    
+
             setTimeout(() => {
                 const chatbotElement = document.getElementById('chatbot-container');
                 if (chatbotElement) {

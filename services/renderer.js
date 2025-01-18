@@ -220,15 +220,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         // ---------------------------------------------------------------
         // ETAPA 8: INICIALIZAR CHATBOT (UI e listeners)
         // ---------------------------------------------------------------
-// Controle para evitar inicialização múltipla
-if (!uiManager.isChatbotInitialized) {
-    console.log("[Renderer] Inicializando chatbot via uiManager.initializeChatbot()...");
-    await uiManager.initializeChatbot();
-    console.log("[Renderer] -> Chatbot inicializado.");
-    await loadingScreen.loadModel('Inicializar Chatbot');
-} else {
-    console.log("[Renderer] Chatbot já inicializado. Ignorando etapa de inicialização duplicada.");
-}
+        console.log("[Renderer] Inicializando chatbot via uiManager.initializeChatbot()...");
+        await uiManager.initializeChatbot();
+        console.log("[Renderer] -> Chatbot inicializado.");
+        await loadingScreen.loadModel('Inicializar Chatbot');
 
         // Finalizamos com sucesso
         console.log("[Renderer] Todas as etapas concluídas. Ocultando loading screen...");

@@ -1,3 +1,4 @@
+// Firebase Auth e Analytics Service
 const DEBUG_MODE = false; // Alterar para true para habilitar os logs de debug
 
 function debugLog(...args) {
@@ -21,6 +22,10 @@ import {
     EmailAuthProvider, 
     reauthenticateWithCredential 
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+import { 
+    getAnalytics, 
+    logEvent 
+} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-analytics.js";
 
 // Configuração do Firebase
 const firebaseConfig = {
@@ -36,13 +41,16 @@ const firebaseConfig = {
 // Inicialização do Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const analytics = getAnalytics(app); // Inicializa o Firebase Analytics
 
 // Limite de inatividade (em milissegundos)
-const INACTIVITY_LIMIT = 10 * 60 * 1000000; // 100000 minutos para teste
+const INACTIVITY_LIMIT = 10 * 60 * 1000; // 10 minutos
 let inactivityTimeout;
 
 /**
  * Realiza o login do usuário.
+ * @param {string} email - O email do usuário.
+ * @param {string} password - A senha do usuário.
  */
 export async function login(email, password) {
     try {
@@ -52,13 +60,15 @@ export async function login(email, password) {
             email: userCredential.user.email,
         });
 
+        // Loga o evento de login no Firebase Analytics
+        logEvent(analytics, 'login', { method: 'email_password' });
+
         // Configura monitoramento de inatividade após login
         monitorInactivity();
 
         return userCredential.user;
     } catch (error) {
         console.error("[Login] Erro ao realizar login:", error);
-        // Mostra alerta amigável ao usuário em caso de falha de login
         showAlert('Credenciais inválidas. Verifique seu email e senha.', 'error');
         throw new Error(error.message);
     }
@@ -66,6 +76,7 @@ export async function login(email, password) {
 
 /**
  * Obtém o JWT do usuário autenticado.
+ * @returns {Promise<string>} Retorna o token JWT.
  */
 export async function getJwt() {
     const user = auth.currentUser;
@@ -74,7 +85,7 @@ export async function getJwt() {
     }
 
     try {
-        const token = await user.getIdToken(/* forceRefresh */ true);
+        const token = await user.getIdToken(true);
         debugLog("[JWT] Token obtido com sucesso:", token);
         return token;
     } catch (error) {
@@ -91,6 +102,10 @@ export async function logout() {
         await signOut(auth);
         sessionStorage.clear();
         debugLog("[Logout] Usuário deslogado com sucesso.");
+
+        // Loga o evento de logout no Firebase Analytics
+        logEvent(analytics, 'logout');
+
         window.location.href = "../index.html"; // Garante o redirecionamento para a página de login
     } catch (error) {
         console.error("[Logout] Erro ao realizar logout:", error);
@@ -105,6 +120,9 @@ export async function resetPassword(email) {
     try {
         await sendPasswordResetEmail(auth, email);
         debugLog("[ResetPassword] E-mail de redefinição de senha enviado.");
+
+        // Loga o evento de redefinição de senha no Firebase Analytics
+        logEvent(analytics, 'password_reset', { email });
     } catch (error) {
         console.error("[ResetPassword] Erro ao enviar e-mail de redefinição:", error);
         throw new Error(error.message);
@@ -123,6 +141,9 @@ export async function updateUserProfile({ username, newPassword }) {
     if (username) {
         await updateProfile(user, { displayName: username });
         debugLog("[UpdateProfile] Nome de usuário atualizado para:", username);
+
+        // Loga o evento de atualização de perfil no Firebase Analytics
+        logEvent(analytics, 'update_profile', { displayName: username });
     }
 
     if (newPassword) {
@@ -131,6 +152,9 @@ export async function updateUserProfile({ username, newPassword }) {
         }
         await updatePassword(user, newPassword);
         debugLog("[UpdateProfile] Senha atualizada com sucesso.");
+
+        // Loga o evento de alteração de senha no Firebase Analytics
+        logEvent(analytics, 'password_change');
     }
 }
 
@@ -146,6 +170,9 @@ export async function reauthenticateUser(currentPassword) {
     const credential = EmailAuthProvider.credential(user.email, currentPassword);
     await reauthenticateWithCredential(user, credential);
     debugLog("[Reauthenticate] Usuário reautenticado com sucesso.");
+
+    // Loga o evento de reautenticação no Firebase Analytics
+    logEvent(analytics, 'reauthenticate');
 }
 
 /**
@@ -157,6 +184,7 @@ export function resetInactivityTimer() {
 
     inactivityTimeout = setTimeout(async () => {
         debugLog("[Inatividade] Limite de inatividade atingido. Desconectando o usuário...");
+        logEvent(analytics, 'session_timeout'); // Loga o evento de timeout
         await logout(); // Executa logout e redireciona
     }, INACTIVITY_LIMIT);
 }
@@ -197,11 +225,14 @@ export function verifyAuthState() {
                 displayName: user.displayName,
             });
 
+            logEvent(analytics, 'auth_state_change', { loggedIn: true }); // Loga o evento
+
             // Configura monitoramento de inatividade
             monitorInactivity();
         } else {
             alert("Sua sessão expirou. Por favor, faça login novamente.");
             sessionStorage.clear(); // Limpa dados locais
+            logEvent(analytics, 'auth_state_change', { loggedIn: false }); // Loga o evento
             window.location.href = "../index.html"; // Redireciona para login
         }
     });

@@ -136,13 +136,16 @@ export default class StateManager {
     }
 
     /**
-     * Define o GPT selecionado.
+     * Define o GPT selecionado e armazena no localStorage.
      * @param {Object} gpt - Objeto GPT a ser selecionado.
      */
     setSelectedGPT(gpt) {
         this.selectedGPT = gpt;
         this.selectedGPTId = gpt.id || null;
         debugLog(`GPT selecionado: ${gpt.id}`);
+        // Atualiza o localStorage com o GPT selecionado
+        localStorage.setItem('selectedGPT', JSON.stringify(gpt));
+        localStorage.setItem('selectedGPTId', gpt.id);
     }
 
     /**
@@ -154,12 +157,14 @@ export default class StateManager {
     }
 
     /**
-     * Define as configurações do GPT selecionado.
+     * Define as configurações do GPT selecionado e armazena no localStorage.
      * @param {Object} config - Configurações do GPT.
      */
     setGPTConfig(config) {
         this.gptConfig = config;
         debugLog('Configurações do GPT atualizadas:', this.gptConfig);
+        // Armazena a configuração do GPT no localStorage
+        localStorage.setItem('gptConfig', JSON.stringify(config));
     }
 
     /**
@@ -175,43 +180,68 @@ export default class StateManager {
      * @param {string} defaultGPTId - ID do GPT padrão a ser selecionado se nenhum estiver armazenado.
      * @param {ApiService} apiService - Instância do ApiService para realizar requisições à API.
      */
-    async loadSelectedGPT(defaultGPTId, apiService) {
-        const storedGPT = localStorage.getItem('selectedGPT');
-        const storedGPTId = localStorage.getItem('selectedGPTId');
-        const storedGPTConfig = localStorage.getItem('gptConfig');
+/**
+ * Carrega o GPT selecionado previamente ou seleciona o GPT padrão.
+ * @param {string} defaultGPTId - ID do GPT padrão a ser selecionado se nenhum estiver armazenado.
+ * @param {ApiService} apiService - Instância do ApiService para realizar requisições à API.
+ */
+async loadSelectedGPT(defaultGPTId, apiService) {
+    const storedGPT = localStorage.getItem('selectedGPT');
+    const storedGPTId = localStorage.getItem('selectedGPTId');
+    const storedGPTConfig = localStorage.getItem('gptConfig');
 
-        if (storedGPT && storedGPTId && storedGPTConfig) {
-            this.setSelectedGPT(JSON.parse(storedGPT));
-            this.selectedGPTId = storedGPTId;
-            this.setGPTConfig(JSON.parse(storedGPTConfig));
-            debugLog('GPT carregado do localStorage:', this.getSelectedGPT());
-        } else {
-            debugLog(`Selecionando GPT padrão com ID: ${defaultGPTId}`);
-            const params = {
-                company_name: sessionStorage.getItem("tenant"),
-                user_name: sessionStorage.getItem("email"),
-                user_id: sessionStorage.getItem("userId"),
-            };
-            try {
-                const gptData = await apiService.request('readGPT', params, 'GET');
-                if (gptData && Array.isArray(gptData) && gptData.length > 0) {
-                    const defaultGPT = gptData.find(gpt => gpt.id === defaultGPTId);
-                    if (defaultGPT) {
-                        this.setSelectedGPT(defaultGPT);
-                        localStorage.setItem('selectedGPT', JSON.stringify(defaultGPT));
-                        localStorage.setItem('selectedGPTId', defaultGPT.id);
-                        debugLog('GPT padrão selecionado:', defaultGPT);
-                    } else {
-                        console.warn('GPT padrão não encontrado na lista.');
+    if (storedGPT && storedGPTId && storedGPTConfig) {
+        this.setSelectedGPT(JSON.parse(storedGPT));
+        this.selectedGPTId = storedGPTId;
+        this.setGPTConfig(JSON.parse(storedGPTConfig));
+        debugLog('GPT carregado do localStorage:', this.getSelectedGPT());
+    } else {
+        debugLog(`Selecionando GPT padrão com ID: ${defaultGPTId}`);
+        const params = {
+            company_name: sessionStorage.getItem("tenant"),
+            user_name: sessionStorage.getItem("email"),
+            user_id: sessionStorage.getItem("userId"),
+        };
+        try {
+            const gptData = await apiService.request('readGPT', params, 'GET');
+            if (gptData && Array.isArray(gptData) && gptData.length > 0) {
+                const defaultGPT = gptData.find(gpt => gpt.id === defaultGPTId);
+                if (defaultGPT) {
+                    // Seleciona o GPT padrão e atualiza no localStorage
+                    this.setSelectedGPT(defaultGPT);
+                    localStorage.setItem('selectedGPT', JSON.stringify(defaultGPT));
+                    localStorage.setItem('selectedGPTId', defaultGPT.id);
+
+                    // Realiza fetch para obter a configuração do GPT baseado no ID
+                    try {
+                        // Ajuste a URL/endereço da API conforme necessário
+                        const configResponse = await apiService.request(
+                            'readGPTConfig', 
+                            { gptId: defaultGPT.id }, 
+                            'GET'
+                        );
+                        if (configResponse) {
+                            this.setGPTConfig(configResponse);
+                            // As configurações já foram armazenadas no localStorage dentro de setGPTConfig
+                        } else {
+                            console.warn('Nenhuma configuração encontrada para o GPT padrão.');
+                        }
+                    } catch (configError) {
+                        console.error('Erro ao buscar configuração do GPT:', configError);
                     }
+
+                    debugLog('GPT padrão selecionado:', defaultGPT);
                 } else {
-                    console.warn('Nenhum GPT disponível para seleção.');
+                    console.warn('GPT padrão não encontrado na lista.');
                 }
-            } catch (error) {
-                console.error('Erro ao carregar GPTs da API:', error);
+            } else {
+                console.warn('Nenhum GPT disponível para seleção.');
             }
+        } catch (error) {
+            console.error('Erro ao carregar GPTs da API:', error);
         }
     }
+}
 
     /* === Estado de Carregamento dos GPTs === */
 
@@ -266,6 +296,10 @@ export default class StateManager {
         this.isLoadingGPTs = false;
         this.isGPTSelectionLoading = false;
         debugLog('StateManager foi resetado.');
+        // Limpa dados do localStorage relacionados ao GPT
+        localStorage.removeItem('selectedGPT');
+        localStorage.removeItem('selectedGPTId');
+        localStorage.removeItem('gptConfig');
     }
 
     /**

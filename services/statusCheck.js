@@ -103,11 +103,24 @@ export default class StatusCheck {
             const status = data.status.description;
 
             debugLog(`Status recebido da OpenAI: ${status}`);
+            console.log(`Status recebido da API: ${status}`);
+
+            // Mapeia os status para mensagens amigáveis
+            const friendlyMessages = {
+                'All Systems Operational': 'Todos os sistemas da OpenAI estão funcionando normalmente.',
+                'Degraded Performance': 'Os serviços da OpenAI estão enfrentando lentidão. Algumas operações podem levar mais tempo para serem concluídas.',
+                'Partial System Outage': 'Algumas funcionalidades da OpenAI estão indisponíveis no momento. Você pode continuar com limitações.',
+                'Major System Outage': 'A OpenAI está enfrentando problemas significativos. As operações podem ser interrompidas.',
+                'Partially Degraded Service': 'Os serviços da OpenAI estão funcionando parcialmente. Algumas funcionalidades podem estar lentas ou indisponíveis.'
+            };
+
+            const friendlyMessage = friendlyMessages[status] || 
+                `Os serviços da OpenAI podem estar enfrentando problemas. Status reportado: "${status}". Deseja continuar?`;
 
             if (status !== 'All Systems Operational') {
                 return await this.showDecisionModal(
-                    'Instabilidade no Sistema',
-                    `LexiDecis detectou instabilidade na openAI. Status: ${status}. Deseja continuar?`
+                    'Atenção: Problema Detectado',
+                    friendlyMessage
                 );
             }
 
@@ -116,8 +129,8 @@ export default class StatusCheck {
         } catch (error) {
             console.error('Erro ao verificar o status da OpenAI:', error);
             return await this.showDecisionModal(
-                'Erro na Verificação',
-                'Não foi possível verificar o status da OpenAI. Deseja continuar?'
+                'Erro na Conexão',
+                'Não foi possível verificar o status da OpenAI devido a um problema de rede. Por favor, verifique sua conexão ou tente novamente mais tarde.'
             );
         }
     }

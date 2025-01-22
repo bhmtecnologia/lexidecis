@@ -14,7 +14,7 @@
 =========================== */
 
 :root {
-    /* Cor de fundo uniforme */
+    /* Cor de fundo uniforme (fundo da lista de chats) ele deve buscar a cor de fundo do sidebar*/
     --background-color: #363839;
 
     /* Cor do texto principal dos chats na lista*/
@@ -62,8 +62,8 @@
     /* Cor de fundo dos agrupadores de chat */
     --chat-group-header-bg: var(--background-color);
 
-    /* Cor de texto dos agrupadores de chat */
-    --chat-group-header-text: var(--text-color);
+    /* Cor de texto dos agrupadores de chat (hoje, ontem, anteontem)*/
+    --chat-group-header-text: rgb(186, 186, 186);
 
     /* Cor de fundo do menu dropdown */
     --dropdown-menu-bg: var(--background-color);
@@ -285,6 +285,7 @@ body.sidebar-active .content {
     background-color: var(--chat-group-header-bg) !important; /* Sobrescreve o fundo */
     color: var(--chat-group-header-text) !important; /* Sobrescreve a cor do texto */
     font-weight: bold; /* Garante que o texto esteja em negrito */
+    font-size: 0.85em; /* Ajuste o valor conforme necessário para diminuir o tamanho da fonte */
     border: none; /* Remove a borda */
     cursor: default; /* Indica que não é clicável */
 }
@@ -294,6 +295,7 @@ body.sidebar-active .content {
     background-color: var(--chat-group-header-bg) !important; /* Sobrescreve o fundo */
     color: var(--chat-group-header-text) !important; /* Sobrescreve a cor do texto */
     font-weight: bold; /* Garante que o texto esteja em negrito */
+    font-size: 0.85em; /* Ajuste o valor conforme necessário para diminuir o tamanho da fonte */
     border: none; /* Remove a borda */
     cursor: default; /* Indica que não é clicável */
 }
@@ -403,11 +405,14 @@ body.sidebar-active .content {
 
 /* Estiliza o nome do chat para ocupar todo o espaço disponível e truncar se necessário */
 #chat-list .chat-item > .chat-item .chat-name {
+    font-family: 'Roboto Condensed', Arial, sans-serif;
+    font-size: 15px; /* Diminui a fonte para caber mais caracteres */
     flex: 1; /* Permite que o nome ocupe todo o espaço disponível */
-    margin-right: 10px; /* Espaço entre o nome e o menu de opções */
-    white-space: nowrap; /* Evita quebra de linha */
+    margin-right: 5px; /* Espaço entre o nome e o menu de opções */
     overflow: hidden; /* Esconde o excesso de texto */
     text-overflow: ellipsis; /* Adiciona '...' ao final do texto truncado */
+    /* Exemplo: define uma largura mínima maior */
+    min-width: 160px; /* Ajuste conforme necessário */
 }
 
 /* Garante que o menu de opções não encolha */

@@ -1,5 +1,3 @@
-// gptManager.js
-
 const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
 
 const DEBUG_MODE = isLocalhost; // Define DEBUG_MODE com base no hostname
@@ -404,6 +402,10 @@ export default class GPTManager {
         }
     }
 
+    /**
+     * Busca e agrega a configuração de GPT com fallback para a chave `flowise`.
+     * @param {string} gptId - ID do GPT a ser buscado.
+     */
     async fetchGPTConfig(gptId) {
         const params = {
             gpt_id: gptId,
@@ -413,8 +415,24 @@ export default class GPTManager {
         };
 
         try {
+            // 'overrideConfig' deve retornar um array de objetos { value: { ... } }
+            // Exemplo: [ { value: { systemMessage: "...", flowise: {...}, ...} } ]
             const configData = await this.apiService.request('overrideConfig', params, 'GET');
-            const aggregatedConfig = configData.reduce((acc, current) => ({ ...acc, ...current.value }), {});
+
+            // Aqui agregamos todos os "value" num único objeto
+            // e garantimos que flowise ao menos seja um objeto vazio se não vier do servidor
+            const aggregatedConfig = configData.reduce((acc, current) => {
+                return {
+                    ...acc,
+                    ...current.value,
+                    flowise: {
+                        // Mantém flowise anterior OU pega o flowise atual OR define objeto vazio
+                        ...acc.flowise,
+                        ...current.value.flowise
+                    }
+                };
+            }, {});
+
             this.stateManager.setGPTConfig(aggregatedConfig);
             debugLog("flowiseConfig definido:", this.stateManager.getFlowiseConfig());
         } catch (error) {

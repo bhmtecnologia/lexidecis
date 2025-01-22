@@ -12,7 +12,7 @@ function debugLog(...args) {
  */
 
 import { showRenamePrompt, showAlert, showDeleteConfirmation } from './alertManager.js';
-import ApiService from './apiService.js'; // Importação corrigida
+import ApiService from './apiService.js';
 import StateManager from './stateManager.js';
 
 class ChatManager {
@@ -29,7 +29,9 @@ class ChatManager {
         this.uiManager = null; // Inicializa o uiManager como nulo para evitar quebras
     }
 
-    /* --- Funções de Carregamento e População de Menus --- */
+    /* ============================
+       1. Carregamento e Exibição
+       ============================ */
 
     /**
      * Carrega a lista de chats a partir da API e popula o menu de chats.
@@ -41,6 +43,7 @@ class ChatManager {
             user_name: this.config.userName,
             user_id: this.config.userId
         };
+
         try {
             // Faz a requisição à API para obter a lista de chats
             const chatData = await this.apiService.request('readChat', params, 'GET');
@@ -89,7 +92,7 @@ class ChatManager {
     populateChatMenu(chatsToDisplay) {
         const chatList = document.getElementById('chat-list');
         if (!chatList) {
-            console.error('Elemento chat-list não encontrado.');
+            console.error('Elemento #chat-list não encontrado.');
             return;
         }
         chatList.innerHTML = '';
@@ -102,23 +105,28 @@ class ChatManager {
             return;
         }
 
+        // Agrupa os chats por data, para exibição organizada
         const fragment = document.createDocumentFragment();
-
         const groupedChats = {};
         chatsToDisplay.forEach(chat => {
             const group = this.getDateGroup(chat.date);
-            if (!groupedChats[group]) groupedChats[group] = [];
+            if (!groupedChats[group]) {
+                groupedChats[group] = [];
+            }
             groupedChats[group].push(chat);
         });
 
+        // Define a ordem das seções de data
         const groupOrder = ["Hoje", "Ontem", "Anteontem", "Esta semana", "Semana passada", "Mês passado"];
         groupOrder.forEach(group => {
             if (groupedChats[group]) {
+                // Cria o cabeçalho do grupo
                 const groupHeader = document.createElement('li');
                 groupHeader.classList.add('list-group-item', 'fw-bold', 'bg-light', 'text-muted');
                 groupHeader.textContent = group;
                 fragment.appendChild(groupHeader);
 
+                // Cria os itens de chat para cada chat no grupo
                 groupedChats[group].forEach(chat => {
                     const chatItem = document.createElement('li');
                     chatItem.classList.add('list-group-item', 'chat-item', 'd-flex', 'justify-content-between', 'align-items-center');
@@ -126,17 +134,29 @@ class ChatManager {
                         <div class="chat-item d-flex align-items-center justify-content-between">
                             <span class="chat-name text-start">${this.highlightSearch(chat.name || 'Chat sem nome')}</span>
                             <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="chatOptions-${chat.id}" data-bs-toggle="dropdown" aria-expanded="false" title="Opções">
+                                <button 
+                                    class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                    type="button" 
+                                    id="chatOptions-${chat.id}" 
+                                    data-bs-toggle="dropdown" 
+                                    aria-expanded="false" 
+                                    title="Opções">
                                     <i class="bi bi-three-dots"></i>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="chatOptions-${chat.id}">
                                     <li>
-                                        <button class="dropdown-item rename-chat-button" data-chat-id="${chat.id}" title="Renomear Chat">
+                                        <button 
+                                            class="dropdown-item rename-chat-button" 
+                                            data-chat-id="${chat.id}" 
+                                            title="Renomear Chat">
                                             Renomear
                                         </button>
                                     </li>
                                     <li>
-                                        <button class="dropdown-item delete-chat-button" data-chat-id="${chat.id}" title="Excluir Chat">
+                                        <button 
+                                            class="dropdown-item delete-chat-button" 
+                                            data-chat-id="${chat.id}" 
+                                            title="Excluir Chat">
                                             Excluir
                                         </button>
                                     </li>
@@ -145,11 +165,12 @@ class ChatManager {
                         </div>
                     `;
 
+                    // Anexa informações importantes ao elemento
                     chatItem.dataset.chatId = chat.id;
                     chatItem.dataset.chatDate = chat.date;
-                    chatItem.dataset.fkGptId = chat.fk_gpt_id; // Adiciona fk_gpt_id
+                    chatItem.dataset.fkGptId = chat.fk_gpt_id; // fk_gpt_id
 
-                    // Adiciona event listeners para os botões de renomear e excluir
+                    // Event listeners para renomear e excluir
                     chatItem.querySelector('.rename-chat-button').addEventListener('click', (event) => {
                         event.stopPropagation();
                         this.handleRenameChat(chat.id, chat.name || 'Chat sem nome');
@@ -159,7 +180,7 @@ class ChatManager {
                         this.handleDeleteChat(chat.id, chat.name);
                     });
 
-                    // Adiciona event listener para o clique no item do chat
+                    // Clique no item de chat -> handleChatClick
                     chatItem.addEventListener('click', this.handleChatClick.bind(this));
                     fragment.appendChild(chatItem);
                 });
@@ -169,54 +190,80 @@ class ChatManager {
         chatList.appendChild(fragment);
     }
 
-    /* --- Funções de Manipulação de Chats --- */
+    /* ============================
+       2. Interações com Chats
+       ============================ */
 
     /**
      * Lida com o clique em um chat existente na lista.
      * @param {Event} event - Evento de clique.
      */
-    handleChatClick(event) {
-        event.preventDefault();
-        const chatId = event.currentTarget.dataset.chatId;
+    async handleChatClick(event) {
+        try {
+            event.preventDefault();
+            const chatId = event.currentTarget.dataset.chatId;
 
-        if (!chatId) {
-            console.warn('Chat sem ID válido:', event);
-            return;
-        }
+            if (!chatId) {
+                console.warn('Chat sem ID válido:', event);
+                return;
+            }
 
-        debugLog('Chat clicado:', chatId);
+            debugLog('Chat clicado:', chatId);
 
-        const selectedChat = this.stateManager.chats.find(chat => chat.id === chatId);
+            // Localiza o chat correspondente no StateManager
+            const selectedChat = this.stateManager.chats.find(chat => chat.id === chatId);
+            if (!selectedChat) {
+                console.error('Chat selecionado não encontrado:', chatId);
+                showAlert('Chat selecionado não encontrado.', 'error');
+                return;
+            }
 
-        if (!selectedChat) {
-            console.error('Chat selecionado não encontrado:', chatId);
-            showAlert('Chat selecionado não encontrado.', 'error');
-            return;
-        }
+            const gptId = selectedChat.fk_gpt_id;
+            if (!gptId) {
+                console.warn('Nenhum fk_gpt_id associado ao chat:', chatId);
+                showAlert('Este chat não está associado a nenhum GPT.', 'error');
+                return;
+            }
 
-        const gptId = selectedChat.fk_gpt_id;
+            // Obtém o GPT associado
+            const associatedGPT = this.stateManager.getGPTById(gptId);
+            if (!associatedGPT) {
+                console.error(`GPT com ID ${gptId} não encontrado para o chat ${chatId}.`);
+                showAlert('Configuração do GPT associada ao chat não encontrada.', 'error');
+                return;
+            }
 
-        if (!gptId) {
-            console.warn('Nenhum fk_gpt_id associado ao chat:', chatId);
-            showAlert('Este chat não está associado a nenhum GPT.', 'error');
-            return;
-        }
+            // (a) Reutiliza a lógica do GPTManager para selecionar o GPT
+            // e atualizar as configurações, gptConfig, etc.
+            if (this.uiManager && this.uiManager.gptManager) {
+                await this.uiManager.gptManager.selectGPTItem(associatedGPT);
+            } else {
+                console.error('Instância do GPTManager não está disponível no uiManager.');
+                showAlert('Erro interno: GPTManager não encontrado.', 'error');
+                return;
+            }
 
-        const associatedGPT = this.stateManager.getGPTById(gptId);
+            // Após selecionar o GPT, definimos a sessão atual para o chatId
+            // (caso o GPTManager ainda não tenha feito isso)
+            this.stateManager.setSessionId(chatId);
 
-        if (!associatedGPT) {
-            console.error(`GPT com ID ${gptId} não encontrado para o chat ${chatId}.`);
-            showAlert('Configuração do GPT associada ao chat não encontrada.', 'error');
-            return;
-        }
+            // (Opcional) Carregar histórico, se existir um `historyManager`
+            if (this.uiManager && this.uiManager.historyManager) {
+                debugLog('Carregando histórico do chat:', chatId);
+                await this.uiManager.historyManager.loadHistory(chatId);
+            }
 
-        this.stateManager.setSelectedGPT(associatedGPT);
-        this.stateManager.setSessionId(chatId);
+            // Destaca o chat selecionado na interface
+            this.selectChatItem(chatId);
 
-        this.selectChatItem(chatId);
+            // Inicializa o chatbot, caso não tenha sido feito no GPTManager
+            if (this.uiManager) {
+                await this.uiManager.initializeChatbot();
+            }
 
-        if (this.uiManager) {
-            this.uiManager.initializeChatbot();
+        } catch (error) {
+            console.error('Erro ao processar clique no chat:', error);
+            showAlert('Erro ao processar o clique no chat. Verifique o console.', 'error');
         }
     }
 
@@ -228,7 +275,6 @@ class ChatManager {
     async handleRenameChat(chatId, oldChatName) {
         try {
             const newChatName = await showRenamePrompt(oldChatName);
-
             if (!newChatName || newChatName === oldChatName) return;
 
             const params = {
@@ -288,10 +334,12 @@ class ChatManager {
                 this.stateManager.removeChat(chatId);
                 this.populateChatMenu(this.stateManager.chats);
 
+                // Se o chat excluído era o atual, limpamos o sessionId
                 if (this.stateManager.currentSessionId === chatId) {
                     this.stateManager.setSessionId("");
                 }
 
+                // Remove o chat selecionado do localStorage, se for o mesmo ID
                 const selectedChatId = localStorage.getItem('selectedChatId');
                 if (selectedChatId === chatId) {
                     localStorage.removeItem('selectedChatId');
@@ -305,7 +353,9 @@ class ChatManager {
         }
     }
 
-    /* --- Funções de Seleção de Chats --- */
+    /* ================================
+       3. Seleção / Destaque de Chats
+       ================================ */
 
     /**
      * Destaca o chat selecionado na interface do usuário.
@@ -333,7 +383,9 @@ class ChatManager {
         }
     }
 
-    /* --- Funções de Filtragem de Chats --- */
+    /* =======================
+       4. Filtragem de Chats
+       ======================= */
 
     filterChatList() {
         const searchInput = document.getElementById('search-input').value.toLowerCase();
@@ -363,6 +415,7 @@ class ChatManager {
     highlightSearch(text) {
         const searchQuery = document.getElementById('search-input').value.toLowerCase();
         if (!searchQuery) return text;
+
         const regex = new RegExp(`(${this.escapeRegExp(searchQuery)})`, 'gi');
         return text.replace(regex, '<span class="highlight">$1</span>');
     }
@@ -371,7 +424,9 @@ class ChatManager {
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
-    /* --- Funções Auxiliares --- */
+    /* =======================
+       5. Funções Auxiliares
+       ======================= */
 
     getDateGroup(date) {
         const today = new Date();
@@ -391,7 +446,9 @@ class ChatManager {
         return "Mês passado";
     }
 
-    /* --- Funções de Log e Erro --- */
+    /* =====================
+       6. Exibição de Erros
+       ===================== */
 
     showError(message) {
         const errorContainer = document.getElementById('error-container');
@@ -404,7 +461,7 @@ class ChatManager {
                 errorContainer.classList.add('d-none');
             }, 5000);
         } else {
-            alert(message); 
+            alert(message);
         }
     }
 

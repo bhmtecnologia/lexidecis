@@ -570,7 +570,7 @@
       (async () => {
         try {
           const jwt = await getJwt();
-          const response = await fetch('https://n8n.bhm.tec.br/webhook/readUser?type=all', {
+          const response = await fetch('https://n8n.bhm.tec.br/webhook/users?type=all', {
             method: 'GET',
             headers: {
               'Authorization': `Bearer ${jwt}`,

@@ -412,7 +412,7 @@ body.sidebar-active .content {
     overflow: hidden; /* Esconde o excesso de texto */
     text-overflow: ellipsis; /* Adiciona '...' ao final do texto truncado */
     /* Exemplo: define uma largura mínima maior */
-    min-width: 160px; /* Ajuste conforme necessário */
+    /*min-width: 160px;  Ajuste conforme necessário */
 }
 
 /* Garante que o menu de opções não encolha */

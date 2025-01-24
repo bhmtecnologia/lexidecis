@@ -1,5 +1,5 @@
-// Firebase Auth e Analytics Service
-const DEBUG_MODE = false; // Alterar para true para habilitar os logs de debug
+// Firebase Auth, Analytics e Firestore Service
+const DEBUG_MODE = true; // Defina como true para habilitar os logs de debug durante a depuração
 
 function debugLog(...args) {
     if (DEBUG_MODE) {
@@ -26,6 +26,13 @@ import {
     getAnalytics, 
     logEvent 
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-analytics.js";
+// **Importações para o Firestore**
+import { 
+    getFirestore, 
+    doc, 
+    setDoc, 
+    serverTimestamp 
+} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
 // Configuração do Firebase
 const firebaseConfig = {
@@ -42,9 +49,32 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const analytics = getAnalytics(app); // Inicializa o Firebase Analytics
+const db = getFirestore(app); // **Inicializa o Firestore**
+
+/**
+ * Salva os dados da sessão do usuário no Firestore.
+ * @param {object} user - Objeto do usuário autenticado.
+ */
+async function saveUserSession(user) {
+    if (!user) return;
+
+    const userDoc = doc(db, "userSessions", user.uid); // Referência ao documento no Firestore
+    try {
+        await setDoc(userDoc, {
+            email: user.email,
+            displayName: user.displayName || "Usuário Anônimo",
+            lastLogin: serverTimestamp(), // Marca a última vez que o usuário fez login
+        }, { merge: true }); // **merge: true** para atualizar sem sobrescrever outros campos
+
+        debugLog("[Firestore] Sessão salva com sucesso para o usuário:", user.uid);
+    } catch (error) {
+        console.error("[Firestore] Erro ao salvar a sessão:", error);
+        showAlert('Erro ao salvar dados da sessão. Tente novamente.', 'error'); // Notificação ao usuário
+    }
+}
 
 // Limite de inatividade (em milissegundos)
-const INACTIVITY_LIMIT = 10 * 60 * 100000; // 10 minutos
+const INACTIVITY_LIMIT = 10 * 60 * 1000; // **10 minutos (600.000 ms)**
 let inactivityTimeout;
 
 /**
@@ -63,13 +93,16 @@ export async function login(email, password) {
         // Loga o evento de login no Firebase Analytics
         logEvent(analytics, 'login', { method: 'email_password' });
 
+        // **Salva a sessão no Firestore após o login**
+        await saveUserSession(userCredential.user);
+
         // Configura monitoramento de inatividade após login
         monitorInactivity();
 
         return userCredential.user;
     } catch (error) {
         console.error("[Login] Erro ao realizar login:", error);
-        showAlert('Credenciais inválidas. Verifique seu email e senha.', 'error');
+        showAlert('Credenciais inválidas ou erro no servidor. Tente novamente.', 'error');
         throw new Error(error.message);
     }
 }
@@ -99,6 +132,7 @@ export async function getJwt() {
  */
 export async function logout() {
     try {
+        const user = auth.currentUser; // Salva a referência ao usuário antes de deslogar
         await signOut(auth);
         sessionStorage.clear();
         debugLog("[Logout] Usuário deslogado com sucesso.");
@@ -106,9 +140,19 @@ export async function logout() {
         // Loga o evento de logout no Firebase Analytics
         logEvent(analytics, 'logout');
 
+        // **Atualiza a sessão no Firestore antes de deslogar**
+        if (user) {
+            const userDoc = doc(db, "userSessions", user.uid);
+            await setDoc(userDoc, {
+                lastLogout: serverTimestamp(),
+            }, { merge: true });
+            debugLog("[Firestore] Sessão atualizada com logout para o usuário:", user.uid);
+        }
+
         window.location.href = "../index.html"; // Garante o redirecionamento para a página de login
     } catch (error) {
         console.error("[Logout] Erro ao realizar logout:", error);
+        showAlert('Erro ao deslogar. Tente novamente.', 'error'); // Notificação ao usuário
         throw new Error(error.message);
     }
 }
@@ -125,6 +169,7 @@ export async function resetPassword(email) {
         logEvent(analytics, 'password_reset', { email });
     } catch (error) {
         console.error("[ResetPassword] Erro ao enviar e-mail de redefinição:", error);
+        showAlert('Erro ao enviar e-mail de redefinição. Tente novamente.', 'error'); // Notificação ao usuário
         throw new Error(error.message);
     }
 }
@@ -138,23 +183,32 @@ export async function updateUserProfile({ username, newPassword }) {
         throw new Error("[UpdateProfile] Usuário não autenticado.");
     }
 
-    if (username) {
-        await updateProfile(user, { displayName: username });
-        debugLog("[UpdateProfile] Nome de usuário atualizado para:", username);
+    try {
+        if (username) {
+            await updateProfile(user, { displayName: username });
+            debugLog("[UpdateProfile] Nome de usuário atualizado para:", username);
 
-        // Loga o evento de atualização de perfil no Firebase Analytics
-        logEvent(analytics, 'update_profile', { displayName: username });
-    }
+            // Loga o evento de atualização de perfil no Firebase Analytics
+            logEvent(analytics, 'update_profile', { displayName: username });
 
-    if (newPassword) {
-        if (newPassword.length < 6) {
-            throw new Error("[UpdateProfile] A nova senha deve ter pelo menos 6 caracteres.");
+            // **Atualiza a sessão no Firestore com o novo displayName**
+            await saveUserSession(user);
         }
-        await updatePassword(user, newPassword);
-        debugLog("[UpdateProfile] Senha atualizada com sucesso.");
 
-        // Loga o evento de alteração de senha no Firebase Analytics
-        logEvent(analytics, 'password_change');
+        if (newPassword) {
+            if (newPassword.length < 6) {
+                throw new Error("[UpdateProfile] A nova senha deve ter pelo menos 6 caracteres.");
+            }
+            await updatePassword(user, newPassword);
+            debugLog("[UpdateProfile] Senha atualizada com sucesso.");
+
+            // Loga o evento de alteração de senha no Firebase Analytics
+            logEvent(analytics, 'password_change');
+        }
+    } catch (error) {
+        console.error("[UpdateProfile] Erro ao atualizar o perfil:", error);
+        showAlert('Erro ao atualizar o perfil. Tente novamente.', 'error'); // Notificação ao usuário
+        throw new Error(error.message);
     }
 }
 
@@ -167,12 +221,18 @@ export async function reauthenticateUser(currentPassword) {
         throw new Error("[Reauthenticate] Usuário não autenticado.");
     }
 
-    const credential = EmailAuthProvider.credential(user.email, currentPassword);
-    await reauthenticateWithCredential(user, credential);
-    debugLog("[Reauthenticate] Usuário reautenticado com sucesso.");
+    try {
+        const credential = EmailAuthProvider.credential(user.email, currentPassword);
+        await reauthenticateWithCredential(user, credential);
+        debugLog("[Reauthenticate] Usuário reautenticado com sucesso.");
 
-    // Loga o evento de reautenticação no Firebase Analytics
-    logEvent(analytics, 'reauthenticate');
+        // Loga o evento de reautenticação no Firebase Analytics
+        logEvent(analytics, 'reauthenticate');
+    } catch (error) {
+        console.error("[Reauthenticate] Erro ao reautenticar:", error);
+        showAlert('Erro ao reautenticar. Verifique sua senha e tente novamente.', 'error'); // Notificação ao usuário
+        throw new Error(error.message);
+    }
 }
 
 /**
@@ -226,6 +286,9 @@ export function verifyAuthState() {
             });
 
             logEvent(analytics, 'auth_state_change', { loggedIn: true }); // Loga o evento
+
+            // **Salva ou atualiza a sessão no Firestore quando o estado de autenticação muda**
+            saveUserSession(user);
 
             // Configura monitoramento de inatividade
             monitorInactivity();

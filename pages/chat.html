@@ -73,9 +73,6 @@
     <nav id="sidebarMenu" class="sidebar d-flex flex-column p-3 bg-dark">
         <!-- Barra de Ícones como Botões -->
         <div class="d-flex justify-content-around mb-3">
-        <!--     <button id="config-button" class="btn btn-link text-white" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Configurações"> -->
-        <!--         <i class="bi bi-gear" style="font-size: 1.5rem;"></i> -->
-        <!--     </button> -->
             <button id="profile-icon" class="btn btn-link text-white" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Perfil">
                 <i class="bi bi-person-circle" style="font-size: 1.5rem;"></i> 
             </button>
@@ -96,8 +93,6 @@
 
         <!-- Lista de chats -->
         <ul id="chat-list" class="list-group chat-list overflow-auto custom-chat-list-height">
-            <!-- <li class="list-group-item" data-chat-id="1">Chat 1</li> -->
-            <!-- <li class="list-group-item" data-chat-id="2">Chat 2</li> -->
             <!-- Lista será populada dinamicamente -->
         </ul>
 
@@ -134,29 +129,26 @@
         <!-- Mensagem de erro -->
     </div>
 
-    <!-- Modal de Configurações será criado dinamicamente pelo UIManager -->
-
     <!-- Scripts -->
     <!-- Scripts de Autenticação e Renderização -->
     <script type="module">
-        import { verifyAuthState } from "../services/auth.js";
+        import { verifyAuthState, logout } from "../services/auth.js";
     
         document.addEventListener("DOMContentLoaded", () => {
             // Verificar o estado de autenticação
             verifyAuthState();
 
-            // Função de logout
-            const logout = () => {
-                sessionStorage.clear();
-                window.location.href = '../index.html';
-            };
-
             // Associar o evento ao botão de logout
             const logoutButton = document.getElementById("logout-button");
             if (logoutButton) {
-                logoutButton.addEventListener("click", (event) => {
+                logoutButton.addEventListener("click", async (event) => {
                     event.preventDefault();
-                    logout();
+                    try {
+                        await logout();
+                    } catch (error) {
+                        console.error("Erro ao realizar logout:", error);
+                        // Opcional: Mostrar uma mensagem de erro ao usuário
+                    }
                 });
             }
 
@@ -195,21 +187,25 @@
 
             // Associar eventos aos botões
             const newChatButton = document.getElementById('new-chat-button');
-            newChatButton.addEventListener('click', () => {
-                iniciarNovoChat();
-            });
+            if (newChatButton) {
+                newChatButton.addEventListener('click', () => {
+                    iniciarNovoChat();
+                });
+            }
 
             const chatList = document.getElementById('chat-list');
-            chatList.addEventListener('click', (event) => {
-                const chatItem = event.target.closest('li');
-                if (chatItem) {
-                    const chatId = chatItem.getAttribute('data-chat-id');
-                    selecionarChat(chatId);
-                }
-            });
+            if (chatList) {
+                chatList.addEventListener('click', (event) => {
+                    const chatItem = event.target.closest('li');
+                    if (chatItem) {
+                        const chatId = chatItem.getAttribute('data-chat-id');
+                        selecionarChat(chatId);
+                    }
+                });
+            }
 
-            // Inicia automaticamente um novo chat ao carregar a página
-            iniciarNovoChat();
+            // **Remover a chamada automática de iniciarNovoChat()**
+             iniciarNovoChat(); // Remova ou comente esta linha
         });
     </script>
     <script type="module" src="../services/renderer.js"></script>

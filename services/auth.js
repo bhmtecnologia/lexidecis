@@ -150,7 +150,7 @@ export async function logout() {
             debugLog("[Firestore] Sessão atualizada com logout para o usuário:", user.uid);
         }
 
-        window.location.href = "index.html"; // Garante o redirecionamento para a página de login
+        window.location.href = "../index.html"; // Garante o redirecionamento para a página de login
     } catch (error) {
         console.error("[Logout] Erro ao realizar logout:", error);
         showAlert('Erro ao deslogar. Tente novamente.', 'error'); // Notificação ao usuário
@@ -299,7 +299,7 @@ export function verifyAuthState() {
                 alert("Sua sessão expirou. Por favor, faça login novamente.");
                 sessionStorage.clear(); // Limpa dados locais
                 logEvent(analytics, 'auth_state_change', { loggedIn: false }); // Loga o evento
-                window.location.href = "index.html"; // Redireciona para login
+                window.location.href = "../index.html"; // Redireciona para login
             } else {
                 debugLog("[AuthState] Página pública acessada. Usuário não autenticado.");
             }

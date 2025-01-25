@@ -1,3 +1,4 @@
+//auth.js
 // Firebase Auth, Analytics e Firestore Service
 const DEBUG_MODE = true; // Defina como true para habilitar os logs de debug durante a depuração
 
@@ -73,8 +74,8 @@ async function saveUserSession(user) {
     }
 }
 
-// Limite de inatividade (em milissegundos)
-const INACTIVITY_LIMIT = 4 * 60 * 60; // ** 4  horas **
+// Limite de inatividade (em segundos)
+const INACTIVITY_LIMIT = 4 * 60 * 60 * 1000; // **4 horas**
 let inactivityTimeout;
 
 /**
@@ -149,7 +150,7 @@ export async function logout() {
             debugLog("[Firestore] Sessão atualizada com logout para o usuário:", user.uid);
         }
 
-        window.location.href = "../index.html"; // Garante o redirecionamento para a página de login
+        window.location.href = "index.html"; // Garante o redirecionamento para a página de login
     } catch (error) {
         console.error("[Logout] Erro ao realizar logout:", error);
         showAlert('Erro ao deslogar. Tente novamente.', 'error'); // Notificação ao usuário
@@ -272,11 +273,6 @@ export function verifyAuthState() {
     // Lista de páginas públicas que não exigem autenticação
     const publicPages = ["index.html", "login.html"];
 
-    if (publicPages.includes(currentPage)) {
-        debugLog("[AuthState] Página pública acessada. Verificação de autenticação ignorada.");
-        return;
-    }
-
     onAuthStateChanged(auth, (user) => {
         if (user) {
             debugLog("[AuthState] Usuário autenticado:", {
@@ -292,11 +288,21 @@ export function verifyAuthState() {
 
             // Configura monitoramento de inatividade
             monitorInactivity();
+
+            if (publicPages.includes(currentPage)) {
+                // Se o usuário está na página de login ou index e já está autenticado, redireciona para chat.html
+                window.location.href = "chat.html"; // Redireciona para a página de chat
+                debugLog("[AuthState] Usuário já está autenticado. Redirecionando para chat.html.");
+            }
         } else {
-            alert("Sua sessão expirou. Por favor, faça login novamente.");
-            sessionStorage.clear(); // Limpa dados locais
-            logEvent(analytics, 'auth_state_change', { loggedIn: false }); // Loga o evento
-            window.location.href = "../index.html"; // Redireciona para login
+            if (!publicPages.includes(currentPage)) {
+                alert("Sua sessão expirou. Por favor, faça login novamente.");
+                sessionStorage.clear(); // Limpa dados locais
+                logEvent(analytics, 'auth_state_change', { loggedIn: false }); // Loga o evento
+                window.location.href = "index.html"; // Redireciona para login
+            } else {
+                debugLog("[AuthState] Página pública acessada. Usuário não autenticado.");
+            }
         }
     });
 }

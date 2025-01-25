@@ -1,3 +1,5 @@
+//login.js
+
 import { login, resetPassword, verifyAuthState, getJwt } from './auth.js'; // Importa funções do auth.js
 import { showAlert } from './alertManager.js'; // Importa a função showAlert
 
@@ -39,7 +41,7 @@ document.getElementById('login-form').addEventListener('submit', async (event) =
 
         // Redireciona para a página protegida após curto delay, se desejar
         setTimeout(() => {
-            window.location.href = "../pages/chat.html"; // URL da página protegida pós-login
+            window.location.href = "chat.html"; // URL da página protegida pós-login
         }, 0);
     } catch (error) {
         console.error("Erro ao realizar login:", error);

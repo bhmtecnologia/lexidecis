@@ -74,7 +74,7 @@ async function saveUserSession(user) {
 }
 
 // Limite de inatividade (em milissegundos)
-const INACTIVITY_LIMIT = 10 * 60 * 1000; // **10 minutos (600.000 ms)**
+const INACTIVITY_LIMIT = 4 * 60 * 60; // ** 4  horas **
 let inactivityTimeout;
 
 /**

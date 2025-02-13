@@ -1,513 +1,287 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="light-theme">
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Página de Configurações</title>
-
-  <!-- Bootstrap 5 CSS -->
-  <link 
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-  />
-
-  <!-- DataTables CSS (Bootstrap 5) -->
-  <link 
-    rel="stylesheet"
-    href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css"
-  />
-
-  <!-- Ícones do Bootstrap -->
-  <link 
-    rel="stylesheet" 
-    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
-  />
-
-  <style>
-    /* =======================
-       Variáveis de cores
-    ======================== */
-    :root {
-      --bg-light: #f7f7f7;
-      --text-light: #333;
-      --bg-dark: #212529;
-      --text-dark: #f1f1f1;
-      --primary-color: #0d6efd;
-      --secondary-color: #6c757d;
-      --transition-speed: 0.3s;
-    }
-
-    /* =======================
-       Temas (claro x escuro)
-    ======================== */
-    body.light-theme {
-      background: var(--bg-light);
-      color: var(--text-light);
-    }
-    body.dark-theme {
-      background: var(--bg-dark);
-      color: var(--text-dark);
-    }
-    html, body {
-      height: 100%;
-      margin: 0;
-      transition: background var(--transition-speed) ease,
-                  color var(--transition-speed) ease;
-    }
-
-    .page-wrapper {
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    /* =======================
-       Menu lateral (sidebar)
-    ======================== */
-    .sidebar {
-      width: 250px;
-      background-color: #f8f9fa;
-      flex-shrink: 0;
-      padding: 20px;
-      border-right: 1px solid #ccc;
-    }
-    body.dark-theme .sidebar {
-      background-color: #2a2e34;
-      border-right: 1px solid #444;
-    }
-    .sidebar .nav-link {
-      margin-bottom: 8px;
-    }
-    body.dark-theme .sidebar .nav-link {
-      color: var(--text-dark);
-    }
-
-    /* =======================
-       Conteúdo principal
-    ======================== */
-    .content {
-      flex: 1;
-      padding: 20px;
-      overflow-y: auto;
-    }
-    .section-title {
-      margin-top: 0;
-      margin-bottom: 1.2rem;
-      font-size: 1.5rem;
-      font-weight: 600;
-    }
-
-    /* =====================
-       Modo Claro/Escuro
-    ====================== */
-    .theme-toggle-label {
-      display: flex;
-      align-items: center;
-      cursor: pointer;
-      user-select: none;
-      font-weight: 500;
-      gap: 0.5rem;
-    }
-    .theme-toggle-label input {
-      accent-color: var(--primary-color);
-      cursor: pointer;
-    }
-
-    /* ====================
-       Animações e Transições
-    ===================== */
-    .fade-in {
-      animation: fadeIn var(--transition-speed) ease;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    /* ====================
-       Relatório (DataTables)
-    ===================== */
-    body.dark-theme .table {
-      color: var(--text-dark);
-      background-color: #343a40; 
-    }
-    body.dark-theme .table thead th {
-      background-color: #495057;
-      color: var(--text-dark);
-    }
-    body.dark-theme .dataTables_wrapper .dataTables_filter input {
-      background-color: #495057;
-      color: var(--text-dark);
-      border: 1px solid #6c757d;
-    }
-
-    /* ======================
-       Filtros Auditoria
-    ======================= */
-    .filter-group {
-      margin-bottom: 20px;
-      background-color: rgba(0,0,0,0.03);
-      border-radius: 0.5rem;
-      padding: 1rem;
-    }
-    body.dark-theme .filter-group {
-      background-color: #2a2e34;
-    }
-
-    /* ====================
-       Seções de Config
-    ===================== */
-    .config-section {
-      display: none;
-    }
-    .config-section.active {
-      display: block;
-    }
-  </style>
-</head>
-<body class="light-theme">
-  <div class="page-wrapper">
-
-    <!-- MENU LATERAL -->
-    <div class="sidebar d-flex flex-column justify-content-between">
-      <div>
-        <h4>Configurações</h4>
-        <nav class="nav flex-column">
-          <a href="#" class="nav-link" data-target="#section-usuarios">
-            <i class="bi bi-people-fill"></i> Gerenciamento de Usuários
-          </a>
-          <a href="#" class="nav-link" data-target="#section-auditoria">
-            <i class="bi bi-search"></i> Auditoria
-          </a>
-          <a href="#" class="nav-link" data-target="#section-outros">
-            <i class="bi bi-gear"></i> Outras Configurações
-          </a>
-        </nav>
-      </div>
-      <!-- Toggle Tema Escuro -->
-      <div class="mt-auto">
-        <label for="themeToggle" class="theme-toggle-label">
-          <span>Modo Escuro</span>
-          <input type="checkbox" id="themeToggle" />
-        </label>
-        <hr class="bg-white d-none d-md-block">
-        <!-- Botão de Logout -->
-        <a href="#" id="logout-button" class="btn btn-sm btn-outline-light mt-2">
-          <i class="bi bi-box-arrow-right"></i> Sair
-        </a>
-      </div>
-    </div>
-
-    <!-- CONTEÚDO PRINCIPAL -->
-    <div class="content">
-
-      <!-- GERENCIAMENTO DE USUÁRIOS -->
-      <section id="section-usuarios" class="config-section active fade-in">
-        <h2 class="section-title">Gerenciamento de Usuários</h2>
-        <p>Aqui você pode gerenciar os usuários do sistema, criar novos, editar permissões, 
-        e remover aqueles que não precisam mais de acesso.</p>
-        <!-- Conteúdo ilustrativo -->
-        <div class="alert alert-info">
-          <strong>Exemplo:</strong> Tabela de usuários, formulários de criação, etc.
-        </div>
-      </section>
-
-      <!-- AUDITORIA (RELATÓRIO DE CHATS) -->
-      <section id="section-auditoria" class="config-section fade-in">
-        <h2 class="section-title">Auditoria de Chats</h2>
-        <p>Relatório dos chats realizados no sistema. Utilize os filtros abaixo para 
-        refinar sua busca e clique nos cabeçalhos de coluna para reordenar se desejar.</p>
-
-        <!-- Seção de filtros personalizados -->
-        <div class="filter-group row g-3 align-items-end">
-          <div class="col-md-3">
-            <label for="filterUnit" class="form-label">Unidade</label>
-            <select id="filterUnit" class="form-select">
-              <option value="">Todas</option>
-              <!-- Opções serão preenchidas dinamicamente -->
-            </select>
-          </div>
-          <div class="col-md-3">
-            <label for="filterUserEmail" class="form-label">Email do Usuário</label>
-            <select id="filterUserEmail" class="form-select">
-              <option value="">Todos</option>
-              <!-- Opções serão preenchidas dinamicamente -->
-            </select>
-          </div>
-          <div class="col-md-3">
-            <label for="filterChatName" class="form-label">Nome do Chat</label>
-            <select id="filterChatName" class="form-select">
-              <option value="">Todos</option>
-              <!-- Opções serão preenchidas dinamicamente -->
-            </select>
-          </div>
-          <div class="col-md-3">
-            <label for="filterDateStart" class="form-label">Data Início</label>
-            <input type="date" id="filterDateStart" class="form-control">
-          </div>
-          <div class="col-md-3">
-            <label for="filterDateEnd" class="form-label">Data Fim</label>
-            <input type="date" id="filterDateEnd" class="form-control">
-          </div>
-          <div class="col-md-3">
-            <button id="clearFilters" class="btn btn-secondary">Limpar Filtros</button>
-          </div>
-        </div>
-
-        <div class="table-responsive">
-          <table 
-            id="chatsTable"
-            class="table table-striped table-bordered"
-            style="width:100%"
-          >
-            <thead>
-              <tr>
-                <th>Unidade</th>
-                <th>ID Usuário</th>
-                <th>Email Usuário</th>
-                <th>ID Chat</th>
-                <th>Nome Chat</th>
-                <th>Criado Em</th>
-                <th>Última Modificação</th>
-                <th>Custo Total</th>
-                <th>Total Mensagens</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- Linhas serão preenchidas via JavaScript -->
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- OUTRAS CONFIGURAÇÕES -->
-      <section id="section-outros" class="config-section fade-in">
-        <h2 class="section-title">Outras Configurações</h2>
-        <p>Aqui você pode acessar outros parâmetros do sistema, como integração com APIs, 
-        configurações de backup, logs de atividades, etc.</p>
-        <!-- Conteúdo ilustrativo -->
-        <div class="alert alert-warning">
-          <strong>Exemplo:</strong> Campos de configuração geral, switches de funcionalidade, etc.
-        </div>
-      </section>
-    </div>
-  </div>
-
-  <!-- jQuery -->
-  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-  <!-- Bootstrap 5 JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- DataTables JS + Bootstrap 5 Integration -->
-  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
-
-  <!-- SCRIPT de autenticação e lógica da página -->
-  <script type="module">
-    /* ==========================
-       Importa verificação de Auth
-    ========================== */
-    import { verifyAuthState } from "../services/auth.js";
-
-    document.addEventListener("DOMContentLoaded", () => {
-      // 1) Verificar o estado de autenticação (redireciona se não estiver logado)
-      verifyAuthState();
-
-      // 2) Lógica de logout
-      const logout = () => {
-        sessionStorage.clear();
-        window.location.href = '../index.html'; // Ajuste conforme sua rota de login
-      };
-
-      const logoutButton = document.getElementById("logout-button");
-      if (logoutButton) {
-        logoutButton.addEventListener("click", (event) => {
-          event.preventDefault();
-          logout();
-        });
-      }
-
-      // 3) Modo Claro/Escuro
-      const body = document.body;
-      const themeToggleInput = document.getElementById('themeToggle');
-      const savedTheme = localStorage.getItem('preferredTheme');
-      if (savedTheme === 'dark') {
-        body.classList.remove('light-theme');
-        body.classList.add('dark-theme');
-        themeToggleInput.checked = true;
-      } else {
-        body.classList.remove('dark-theme');
-        body.classList.add('light-theme');
-        themeToggleInput.checked = false;
-      }
-      themeToggleInput.addEventListener('change', () => {
-        if (themeToggleInput.checked) {
-          body.classList.remove('light-theme');
-          body.classList.add('dark-theme');
-          localStorage.setItem('preferredTheme', 'dark');
-        } else {
-          body.classList.remove('dark-theme');
-          body.classList.add('light-theme');
-          localStorage.setItem('preferredTheme', 'light');
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jornal de Licitações - VTCLog</title>
+    <style>
+        /* Reset básico */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-      });
 
-      // 4) Navegação entre abas (seções)
-      const navLinks = document.querySelectorAll('.nav-link');
-      const configSections = document.querySelectorAll('.config-section');
-      navLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-          e.preventDefault();
-          const targetSelector = link.getAttribute('data-target');
-          configSections.forEach(section => {
-            if (section.id === targetSelector.replace('#', '')) {
-              section.classList.add('active');
-            } else {
-              section.classList.remove('active');
+        /* Fonte e cores */
+        body {
+            font-family: 'Georgia', serif;
+            background-color: #fff;
+            color: #000;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        /* Container principal */
+        .newspaper {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Cabeçalho do jornal */
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 3em;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+        }
+
+        /* Artigo */
+        .article {
+            margin-bottom: 40px;
+            border-bottom: 1px solid #000;
+            padding-bottom: 20px;
+        }
+
+        .article:last-child {
+            border-bottom: none;
+        }
+
+        .article-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .article-header div {
+            margin-bottom: 5px;
+        }
+
+        .article-header .portal {
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .article-header .orgao {
+            font-style: italic;
+        }
+
+        .article-header .estado {
+            text-transform: uppercase;
+        }
+
+        .article-body {
+            margin-bottom: 10px;
+        }
+
+        .article-body em,
+        .article-body mark {
+            background-color: #ddd;
+            padding: 0 2px;
+        }
+
+        .article-footer {
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        /* Mensagens de status */
+        .status {
+            text-align: center;
+            font-size: 1.2em;
+            margin-top: 50px;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .article-header {
+                flex-direction: column;
             }
-          });
-        });
-      });
 
-      // 5) Lógica do relatório de Auditoria (DataTables)
-      let rawData = [];
-      const table = $('#chatsTable').DataTable({
-        language: {
-          url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json'
-        },
-        responsive: true,
-        pageLength: 10,
-        columns: [
-          { data: "unit_name" },
-          { data: "user_id" },
-          { data: "user_email" },
-          { data: "chat_id" },
-          { data: "chat_name" },
-          {
-            data: "chat_created_at",
-            render: {
-              _: function(data) {
-                return new Date(data).toLocaleString();
-              },
-              sort: function(data) {
-                return data;
-              }
+            .article-header div {
+                margin-bottom: 5px;
             }
-          },
-          {
-            data: "chat_last_modified",
-            render: {
-              _: function(data) {
-                return new Date(data).toLocaleString();
-              },
-              sort: function(data) {
-                return data;
-              }
+        }
+    </style>
+</head>
+<body>
+    <div class="newspaper">
+        <header>
+            <h1>Jornal de Licitações</h1>
+            <p>VTCLog - Atualizado em <span id="data-atual"></span></p>
+        </header>
+
+        <div id="articles">
+            <!-- Os artigos serão inseridos aqui pelo JavaScript -->
+        </div>
+
+        <div id="status" class="status" style="display: none;">
+            <!-- Mensagens de carregamento ou erro -->
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Formata a data para o formato "DD de Mês de AAAA"
+         * @param {string} dataISO - Data no formato ISO
+         * @returns {string} Data formatada
+         */
+        function formatarData(dataISO) {
+            const meses = [
+                "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+                "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+            ];
+            const data = new Date(dataISO);
+            const dia = data.getDate();
+            const mes = meses[data.getMonth()];
+            const ano = data.getFullYear();
+            return `${dia} de ${mes} de ${ano}`;
+        }
+
+        /**
+         * Cria o elemento de um artigo baseado nos dados da licitação
+         * @param {Object} licitacao - Objeto com os dados da licitação
+         * @returns {HTMLElement} Elemento do artigo
+         */
+        function criarArtigo(licitacao) {
+            const article = document.createElement('div');
+            article.classList.add('article');
+
+            // Cabeçalho do artigo
+            const header = document.createElement('div');
+            header.classList.add('article-header');
+
+            const portal = document.createElement('div');
+            portal.classList.add('portal');
+            portal.innerText = licitacao.portal;
+
+            const orgao = document.createElement('div');
+            orgao.classList.add('orgao');
+            orgao.innerText = licitacao.orgao;
+
+            const estado = document.createElement('div');
+            estado.classList.add('estado');
+            estado.innerText = licitacao.estado;
+
+            header.appendChild(portal);
+            header.appendChild(orgao);
+            header.appendChild(estado);
+
+            // Corpo do artigo
+            const body = document.createElement('div');
+            body.classList.add('article-body');
+            body.innerHTML = licitacao.objeto;
+
+            // Rodapé do artigo
+            const footer = document.createElement('div');
+            footer.classList.add('article-footer');
+            footer.innerHTML = `
+                <p><strong>Modalidade:</strong> ${licitacao.modalidade}</p>
+                <p><strong>Publicação:</strong> ${formatarData(licitacao.data_publicacao)}</p>
+                <p><strong>Data Final da Proposta:</strong> ${formatarData(licitacao.data_final_proposta)}</p>
+                <p><strong>Empresa Responsável:</strong> ${licitacao.empresa}</p>
+            `;
+
+            // Monta o artigo
+            article.appendChild(header);
+            article.appendChild(body);
+            article.appendChild(footer);
+
+            return article;
+        }
+
+        /**
+         * Exibe a data atual no cabeçalho
+         */
+        function exibirDataAtual() {
+            const dataAtualSpan = document.getElementById('data-atual');
+            const hoje = new Date();
+            const meses = [
+                "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+                "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+            ];
+            const dia = hoje.getDate();
+            const mes = meses[hoje.getMonth()];
+            const ano = hoje.getFullYear();
+            dataAtualSpan.innerText = `${dia} de ${mes} de ${ano}`;
+        }
+
+        /**
+         * Exibe uma mensagem de status (carregando, erro, etc.)
+         * @param {string} mensagem - Mensagem a ser exibida
+         */
+        function exibirStatus(mensagem) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerText = mensagem;
+            statusDiv.style.display = 'block';
+        }
+
+        /**
+         * Esconde a mensagem de status
+         */
+        function esconderStatus() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.style.display = 'none';
+        }
+
+        /**
+         * Renderiza todos os artigos na página
+         * @param {Array} licitacoes - Array de objetos de licitação
+         */
+        function renderizarArtigos(licitacoes) {
+            const container = document.getElementById('articles');
+            container.innerHTML = ''; // Limpa conteúdos anteriores, se houver
+
+            if (licitacoes.length === 0) {
+                exibirStatus('Nenhuma licitação encontrada.');
+                return;
             }
-          },
-          { 
-            data: "chat_total_cost",
-            render: function(data) {
-              return parseFloat(data).toFixed(8);
+
+            licitacoes.forEach(licitacao => {
+                const artigo = criarArtigo(licitacao);
+                container.appendChild(artigo);
+            });
+        }
+
+        /**
+         * Busca os dados da API e renderiza os artigos
+         */
+        async function buscarERenderizarLicitacoes() {
+            const apiUrl = 'https://n8n.bhm.tec.br/webhook/api/voetur/comercial/avisos';
+            const statusDiv = document.getElementById('status');
+
+            try {
+                exibirStatus('Carregando licitações...');
+                const resposta = await fetch(apiUrl);
+
+                if (!resposta.ok) {
+                    throw new Error(`Erro na requisição: ${resposta.status} ${resposta.statusText}`);
+                }
+
+                const dados = await resposta.json();
+
+                // Verifica se os dados são um array
+                if (!Array.isArray(dados)) {
+                    throw new Error('Formato de dados inválido recebido da API.');
+                }
+
+                esconderStatus();
+                renderizarArtigos(dados);
+            } catch (erro) {
+                exibirStatus(`Falha ao carregar licitações: ${erro.message}`);
+                console.error(erro);
             }
-          },
-          { data: "chat_total_messages" }
-        ]
-      });
+        }
 
-      // Função para preencher selects com opções únicas
-      function preencherSelects(data) {
-        const unidades = new Set();
-        const emails = new Set();
-        const nomesChats = new Set();
+        // Executa a exibição da data atual
+        exibirDataAtual();
 
-        data.forEach(item => {
-          unidades.add(item.unit_name);
-          emails.add(item.user_email);
-          nomesChats.add(item.chat_name);
-        });
-
-        const unitSelect = $('#filterUnit');
-        unidades.forEach(unit => {
-          unitSelect.append(new Option(unit, unit));
-        });
-
-        const emailSelect = $('#filterUserEmail');
-        emails.forEach(email => {
-          emailSelect.append(new Option(email, email));
-        });
-
-        const chatNameSelect = $('#filterChatName');
-        nomesChats.forEach(nome => {
-          chatNameSelect.append(new Option(nome, nome));
-        });
-      }
-
-      // Função para preencher a tabela
-      function preencherTabela(data) {
-        table.clear();
-        table.rows.add(data);
-        table.draw();
-      }
-
-      // Função de filtragem
-      function aplicarFiltros() {
-        const unitFilter = $('#filterUnit').val().toLowerCase();
-        const emailFilter = $('#filterUserEmail').val().toLowerCase();
-        const chatNameFilter = $('#filterChatName').val().toLowerCase();
-        const dateStart = $('#filterDateStart').val();
-        const dateEnd = $('#filterDateEnd').val();
-
-        let filteredData = rawData.filter(item => {
-          const createdDate = new Date(item.chat_created_at);
-          const unitMatch = !unitFilter || item.unit_name.toLowerCase() === unitFilter;
-          const emailMatch = !emailFilter || item.user_email.toLowerCase() === emailFilter;
-          const chatNameMatch = !chatNameFilter || item.chat_name.toLowerCase() === chatNameFilter;
-
-          let dateMatch = true;
-          if(dateStart) {
-            dateMatch = dateMatch && (createdDate >= new Date(dateStart));
-          }
-          if(dateEnd) {
-            let endDate = new Date(dateEnd);
-            endDate.setHours(23,59,59,999);
-            dateMatch = dateMatch && (createdDate <= endDate);
-          }
-
-          return unitMatch && emailMatch && chatNameMatch && dateMatch;
-        });
-
-        preencherTabela(filteredData);
-      }
-
-      // Eventos de filtro
-      $('#filterUnit, #filterUserEmail, #filterChatName, #filterDateStart, #filterDateEnd')
-        .on('change input', () => {
-          aplicarFiltros();
-        });
-
-      // Botão de limpar filtros
-      $('#clearFilters').click(() => {
-        $('#filterUnit').val('');
-        $('#filterUserEmail').val('');
-        $('#filterChatName').val('');
-        $('#filterDateStart').val('');
-        $('#filterDateEnd').val('');
-        aplicarFiltros();
-      });
-
-      // Busca inicial de dados da API
-      fetch('https://n8n.bhm.tec.br/webhook/reportChats')
-        .then(response => response.json())
-        .then(data => {
-          rawData = data;
-          preencherSelects(data);
-          preencherTabela(data);
-        })
-        .catch(error => {
-          console.error('Erro ao buscar os dados:', error);
-          alert('Não foi possível carregar os dados do relatório.');
-        });
-    });
-  </script>
+        // Executa a busca e renderização das licitações após o carregamento da página
+        document.addEventListener('DOMContentLoaded', buscarERenderizarLicitacoes);
+    </script>
 </body>
 </html>

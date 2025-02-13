@@ -260,7 +260,7 @@ class UIManager {
                         title: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.name : 'Escolha um GPT',
                         titleAvatarSrc: 'https://www.bhm.tec.br/images/152x152/10788698/favicon.png',
                         welcomeMessage: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.description : 'Bem-vindo ao assistente',
-                        errorMessage: 'Ops, algo deu errado...',
+                        errorMessage: 'Ops, reduza sua pergunta e tente novamente.',
                         backgroundColor: '#f1f1f1',
                         fontSize: 13,
                         starterPrompts: (() => {

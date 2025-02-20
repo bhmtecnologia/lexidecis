@@ -147,9 +147,9 @@
 
     function getStatusIcon(status) {
     switch (status) {
-      case "VERDE": return "<span style='font-size: 20px;'>🟢</span>";
-      case "AMARELO": return "<span style='font-size: 20px;'>🟡</span>";
-      case "VERMELHO": return "<span style='font-size: 20px;'>🔴</span>";
+      case "VERDE": return "<span style='font-size: 25px;'>🟢</span>";
+      case "AMARELO": return "<span style='font-size: 25px;'>🟡</span>";
+      case "VERMELHO": return "<span style='font-size: 25px;'>🔴</span>";
       default: return "-";
     }
   }
@@ -161,7 +161,7 @@
     data.forEach(item => {
       tableBody.append(`
         <tr>
-          <td>${getStatusIcon(item.SEMAFORO)}</td>
+          <td align="center">${getStatusIcon(item.SEMAFORO)}</td>
           <td>${item.FILIAL || '-'}</td>
           <td>${item.DOC || '-'}</td>
           <td>${item.FORNECEDOR || '-'}</td>

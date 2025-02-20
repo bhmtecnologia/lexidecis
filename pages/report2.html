@@ -15,21 +15,6 @@
       font-family: Arial, sans-serif;
       margin: 20px;
     }
-    .loading-container {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(255, 255, 255, 0.9);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      font-weight: bold;
-      display: none;
-      z-index: 9999;
-    }
     .table-container {
       width: 100%;
       overflow-x: auto;
@@ -64,8 +49,7 @@
 
   <button id="logout-button">Sair</button>
   <h1>Liberações de Pagamentos</h1>
-  <div id="loading" class="loading-container">Carregando dados...</div>
-
+  
   <div class="table-container">
     <table id="data-table" class="display" style="width:100%">
       <thead>
@@ -88,13 +72,11 @@
     </table>
   </div>
 
-  <!-- Importação do auth.js e configuração da verificação de autenticação -->
+  <!-- Importação do auth.js -->
   <script type="module">
     import { verifyAuthState, logout } from "../services/auth.js";
-    
     document.addEventListener("DOMContentLoaded", () => {
       verifyAuthState();
-
       document.getElementById("logout-button").addEventListener("click", async (event) => {
         event.preventDefault();
         try {
@@ -111,15 +93,21 @@
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/dataTables.jqueryui.min.js"></script>
-  
-  <!-- Script para manipulação da DataTable -->
-  <script>
+
+  <!-- Importa o módulo do LoadingScreen -->
+  <script type="module">
+    import LoadingScreen from "../services/loadingScreen_report1.js"; // ajuste o caminho conforme sua estrutura
+
+    // Cria uma instância global para utilização
+    const lexidecisLoading = new LoadingScreen();
+
     $(document).ready(() => {
       fetchData();
     });
-
+    
     async function fetchData() {
-      $("#loading").fadeIn();
+      // Exibe o loading com as etapas desejadas
+      lexidecisLoading.show(["Buscando dados", "Processando informações"]);
       try {
         const response = await fetch('https://n8n.prod.bhm.tec.br/webhook/lugordinho');
         const jsonData = await response.json();
@@ -129,34 +117,38 @@
           return;
         }
         
+        // Atualiza a etapa "Buscando dados"
+        await lexidecisLoading.loadModel("Buscando dados");
         updateTable(jsonData[0].data);
+        // Atualiza a etapa "Processando informações"
+        await lexidecisLoading.loadModel("Processando informações");
       } catch (error) {
         console.error("Erro ao buscar dados:", error);
       } finally {
-        $("#loading").fadeOut();
+        lexidecisLoading.hide();
       }
     }
-
+    
     function formatCurrency(value) {
       return value ? parseFloat(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'R$ 0,00';
     }
-
+    
     function formatDate(dateString) {
       if (!dateString) return '';
       const date = new Date(dateString);
       return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
     }
-
+    
     function getStatusIcon(status) {
-    switch (status) {
-      case "VERDE": return "<span style='font-size: 25px;'>🟢</span>";
-      case "AMARELO": return "<span style='font-size: 25px;'>🟡</span>";
-      case "VERMELHO": return "<span style='font-size: 25px;'>🔴</span>";
-      default: return "-";
+      switch (status) {
+        case "VERDE": return "<span style='font-size: 25px;'>🟢</span>";
+        case "AMARELO": return "<span style='font-size: 25px;'>🟡</span>";
+        case "VERMELHO": return "<span style='font-size: 25px;'>🔴</span>";
+        default: return "-";
+      }
     }
-  }
-
-  function sendPostRequest(id) {
+    
+    function sendPostRequest(id) {
       fetch(`https://n8n.prod.bhm.tec.br/webhook/LiberacaoAp/ConfirmarAcaoParcelas?id=${id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -166,40 +158,43 @@
       .then(data => alert("Ação realizada com sucesso!"))
       .catch(error => console.error("Erro ao enviar solicitação:", error));
     }
-
-  function updateTable(data) {
-    const tableBody = $("#data-table tbody");
-    tableBody.empty();
-
-    data.forEach(item => {
-      tableBody.append(`
-        <tr>
-          <td align="center">${getStatusIcon(item.SEMAFORO)}</td>
-          <td><button onclick="sendPostRequest('${item.HANDLE}')">✅ Liberar</button> <button onclick="sendPostRequest('${item.HANDLE}')">🚫 Rejeitar</button></td>
-          <td>${item.HANDLE || '-'}</td>
-          <td>${item.FILIAL || '-'}</td>
-          <td>${item.DOC || '-'}</td>
-          <td>${item.FORNECEDOR || '-'}</td>
-          <td data-order="${item.VALORNOMINAL || 0}">
-            ${formatCurrency(item.VALORNOMINAL)}
-          </td>
-          <td>${item.TIPO || '-'}</td>
-          <td>${formatDate(item.DATAPREVISTA)}</td>
-          <td>${formatDate(item.VENCIMENTO)}</td>
-          <td>${item.APELIDO_USUARIO || '-'}</td>
-          <td>${formatDate(item.DATAINCLUSAO)}</td>
-        </tr>
-      `);
-    });
-
-    initializeDataTable();
-  }
-
+    
+    function updateTable(data) {
+      const tableBody = $("#data-table tbody");
+      tableBody.empty();
+    
+      data.forEach(item => {
+        tableBody.append(`
+          <tr>
+            <td align="center">${getStatusIcon(item.SEMAFORO)}</td>
+            <td>
+              <button onclick="sendPostRequest('${item.HANDLE}')">✅ Liberar</button> 
+              <button onclick="sendPostRequest('${item.HANDLE}')">🚫 Rejeitar</button>
+            </td>
+            <td>${item.HANDLE || '-'}</td>
+            <td>${item.FILIAL || '-'}</td>
+            <td>${item.DOC || '-'}</td>
+            <td>${item.FORNECEDOR || '-'}</td>
+            <td data-order="${item.VALORNOMINAL || 0}">
+              ${formatCurrency(item.VALORNOMINAL)}
+            </td>
+            <td>${item.TIPO || '-'}</td>
+            <td>${formatDate(item.DATAPREVISTA)}</td>
+            <td>${formatDate(item.VENCIMENTO)}</td>
+            <td>${item.APELIDO_USUARIO || '-'}</td>
+            <td>${formatDate(item.DATAINCLUSAO)}</td>
+          </tr>
+        `);
+      });
+    
+      initializeDataTable();
+    }
+    
     function initializeDataTable() {
       if ($.fn.DataTable.isDataTable("#data-table")) {
         $("#data-table").DataTable().clear().destroy();
       }
-
+    
       $("#data-table").DataTable({
         responsive: true,
         autoWidth: false,

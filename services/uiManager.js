@@ -1,17 +1,15 @@
-// uiManager.js
-
 const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
 const DEBUG_MODE = isLocalhost; // Define DEBUG_MODE com base no hostname
 
 import GPTManager from './gptManager.js';
-import HistoryManager from './historyManager.js'; // Importação do HistoryManager
-import ProfileManager from './profileManager.js'; // Importação do ProfileManager
+// Removemos a importação do HistoryManager, pois suas funções foram migradas para o ChatManager
+import ProfileManager from './profileManager.js';
 
 class UIManager {
     constructor(apiService, stateManager, chatManager, config, auth) {
         this.apiService = apiService;
         this.stateManager = stateManager;
-        this.chatManager = chatManager; // Referência ao ChatManager
+        this.chatManager = chatManager; // Referência ao ChatManager (agora com funcionalidades de histórico integradas)
         this.config = config; // Armazena o CONFIG na instância
         this.auth = auth; // Instância do Firebase Auth
 
@@ -205,8 +203,8 @@ class UIManager {
             localStorage.removeItem(`${selectedFlowiseConfig.chatflowId}_historyInjected`);
             localStorage.removeItem(`${selectedFlowiseConfig.chatflowId}_EXTERNAL`);
 
-            // Injetar histórico
-            await HistoryManager.injectChatHistory(this.stateManager.currentSessionId, this.stateManager.selectedGPT.flowiseConfig);
+            // Agora, em vez de usar HistoryManager, delegamos a injeção do histórico ao ChatManager
+            await this.chatManager.injectChatHistory(this.stateManager.currentSessionId, this.stateManager.selectedGPT.flowiseConfig);
 
             const chatbotContainer = document.getElementById('chatbot-container');
             if (chatbotContainer) {
@@ -231,7 +229,8 @@ class UIManager {
                 observersConfig: {
                     observeUserInput: (userInput) => this.logUserInput(userInput),
                     observeMessages: (messages) => this.logMessages(messages),
-                    observeLoading: (loading) => this.handleLoadingState(loading)
+                    // Delegamos a função de loading para o ChatManager
+                    observeLoading: (loading) => this.chatManager.handleLoadingState(loading)
                 },
                 theme: {
                     button: {
@@ -349,36 +348,6 @@ class UIManager {
 
     logMessages(messages) {
         this.debugLog({ messages });
-    }
-
-    async handleLoadingState(loading) {
-        this.debugLog({ loading });
-
-        if (loading) {
-            this.debugLog('O chatbot está carregando...');
-            try {
-                const params = {
-                    gpt_id: this.stateManager.selectedGPT.id,
-                    user_name: this.config.userName,
-                    user_id: this.config.userId,
-                    sessionid: this.stateManager.currentSessionId
-                };
-                const response = await this.apiService.request('updateChat', params, 'POST', null, { includeParamsInQuery: true });
-                this.debugLog('Resposta da API:', response);
-
-                if (response.status === "success") {
-                    this.debugLog('Resposta da API bem-sucedida:', response.message);
-                    await this.chatManager.loadChatList(this.chatManager.populateChatMenu.bind(this.chatManager));
-                } else {
-                    throw new Error(response.message || 'Erro desconhecido.');
-                }
-            } catch (error) {
-                console.error('Erro ao fazer a requisição POST:', error);
-                this.showError('Erro ao atualizar o chat. Verifique o console para mais detalhes.');
-            }
-        } else {
-            this.debugLog('O chatbot terminou de carregar.');
-        }
     }
 
     hideHeader() {

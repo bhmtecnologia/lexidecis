@@ -8,7 +8,7 @@ function debugLog(...args) {
 
 /**
  * @file chatManager.js
- * @description Gerencia a lista de chats, interações do usuário e comunicação com a API.
+ * @description Gerencia a lista de chats, interações do usuário, histórico e comunicação com a API.
  */
 
 import { showRenamePrompt, showAlert, showDeleteConfirmation } from './alertManager.js';
@@ -54,13 +54,10 @@ class ChatManager {
             // Verifica se a resposta da API é um objeto com a propriedade 'data'
             if (chatData && typeof chatData === 'object') {
                 if (Array.isArray(chatData)) {
-                    // Se a resposta for um array diretamente
                     dataArray = chatData;
                 } else if (Array.isArray(chatData.data)) {
-                    // Se a resposta tiver uma propriedade 'data' que é um array
                     dataArray = chatData.data;
                 } else if (chatData.data && Array.isArray(chatData.data.chats)) {
-                    // Se a resposta tiver uma propriedade 'data.chats' que é um array
                     dataArray = chatData.data.chats;
                 } else {
                     throw new Error('Estrutura inesperada da resposta da API.');
@@ -120,6 +117,9 @@ class ChatManager {
         const groupOrder = ["Hoje", "Ontem", "Anteontem", "Esta semana", "Semana passada", "Mês passado"];
         groupOrder.forEach(group => {
             if (groupedChats[group]) {
+                // Ordena os chats do grupo: os mais novos primeiro
+                groupedChats[group].sort((a, b) => new Date(b.date) - new Date(a.date));
+
                 // Cria o cabeçalho do grupo
                 const groupHeader = document.createElement('li');
                 groupHeader.classList.add('list-group-item', 'fw-bold', 'bg-light', 'text-muted');
@@ -134,15 +134,15 @@ class ChatManager {
                         <div class="chat-item d-flex align-items-center justify-content-between">
                             <span class="chat-name text-start">${this.highlightSearch(chat.name || 'Chat sem nome')}</span>
                             <div class="dropdown">
-                                <button 
-                                    class="btn btn-sm btn-outline-secondary dropdown-toggle" 
-                                    type="button" 
-                                    id="chatOptions-${chat.id}" 
-                                    data-bs-toggle="dropdown" 
-                                    aria-expanded="false" 
-                                    title="Opções">
-                                    <i class="bi bi-three-dots"></i>
-                                </button>
+<button 
+    class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+    type="button" 
+    id="chatOptions-{{chat.id}}" 
+    data-bs-toggle="dropdown" 
+    aria-expanded="false" 
+    title="Opções">
+    <i class="bi bi-three-dots-vertical"></i>
+</button>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="chatOptions-${chat.id}">
                                     <li>
                                         <button 
@@ -233,8 +233,7 @@ class ChatManager {
                 return;
             }
 
-            // (a) Reutiliza a lógica do GPTManager para selecionar o GPT
-            // e atualizar as configurações, gptConfig, etc.
+            // Reutiliza a lógica do GPTManager para selecionar o GPT
             if (this.uiManager && this.uiManager.gptManager) {
                 await this.uiManager.gptManager.selectGPTItem(associatedGPT);
             } else {
@@ -243,11 +242,10 @@ class ChatManager {
                 return;
             }
 
-            // Após selecionar o GPT, definimos a sessão atual para o chatId
-            // (caso o GPTManager ainda não tenha feito isso)
+            // Define a sessão atual para o chatId
             this.stateManager.setSessionId(chatId);
 
-            // (Opcional) Carregar histórico, se existir um `historyManager`
+            // Carrega histórico, se existir um historyManager integrado via UIManager
             if (this.uiManager && this.uiManager.historyManager) {
                 debugLog('Carregando histórico do chat:', chatId);
                 await this.uiManager.historyManager.loadHistory(chatId);
@@ -424,16 +422,16 @@ class ChatManager {
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
-    /* =======================
-       5. Funções Auxiliares
-       ======================= */
+    /* ===================================
+       5. Funções Auxiliares e Atualização
+       =================================== */
 
     getDateGroup(date) {
         const today = new Date();
         const chatDate = new Date(date);
 
-        today.setHours(0,0,0,0);
-        chatDate.setHours(0,0,0,0);
+        today.setHours(0, 0, 0, 0);
+        chatDate.setHours(0, 0, 0, 0);
 
         const diffTime = today - chatDate;
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
@@ -446,8 +444,119 @@ class ChatManager {
         return "Mês passado";
     }
 
+    /**
+     * Atualiza a lista de chats quando há alteração no estado de carregamento do chatbot.
+     * @param {boolean} loading - Indica se o chatbot está carregando.
+     */
+    async handleLoadingState(loading) {
+        debugLog('handleLoadingState chamado com loading:', loading);
+
+        if (loading) {
+            debugLog('O chatbot está carregando...');
+            try {
+                const params = {
+                    gpt_id: this.stateManager.selectedGPT.id,
+                    user_name: this.config.userName,
+                    user_id: this.config.userId,
+                    sessionid: this.stateManager.currentSessionId
+                };
+                const response = await this.apiService.request('updateChat', params, 'POST', null, { includeParamsInQuery: true });
+                debugLog('Resposta da API:', response);
+
+                if (response.status === "success") {
+                    debugLog('Resposta da API bem-sucedida:', response.message);
+                    // Atualiza a lista de chats após a atualização via API
+                    await this.loadChatList(this.populateChatMenu.bind(this));
+                } else {
+                    throw new Error(response.message || 'Erro desconhecido.');
+                }
+            } catch (error) {
+                console.error('Erro ao fazer a requisição POST:', error);
+                this.showAlert('Erro ao atualizar o chat. Verifique o console para mais detalhes.', 'error');
+            }
+        } else {
+            debugLog('O chatbot terminou de carregar.');
+        }
+    }
+
+    /* ===================================
+       6. Funcionalidades de Histórico Integradas
+       =================================== */
+
+    /**
+     * Função auxiliar para buscar e formatar o histórico de mensagens.
+     * @param {string} sessionId - ID da sessão atual.
+     * @param {Object} config - Configurações da aplicação.
+     * @returns {Promise<Array>} - Histórico de mensagens formatado.
+     */
+    async _fetchAndFormatHistory(sessionId, config) {
+        const apiURL = `${config.flowise.apiHost}/api/v1/chatmessage/${config.flowise.chatflowId}?sessionId=${sessionId}`;
+        console.log('Tentando buscar histórico em:', apiURL);
+        
+        try {
+            const response = await fetch(apiURL, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${config.flowise.token}`
+                }
+            });
+
+            console.log('Status da resposta:', response.status);
+            const responseBody = await response.text();
+            console.log('Corpo da resposta:', responseBody);
+
+            if (!response.ok) throw new Error('Erro ao buscar histórico de mensagens da API.');
+
+            const apiHistory = JSON.parse(responseBody);
+
+            return apiHistory.map((msg) => ({
+                message: msg.content,
+                type: msg.role === 'userMessage' ? 'userMessage' : 'apiMessage',
+                dateTime: msg.createdDate || new Date().toISOString(),
+                messageId: msg.id || Math.random().toString(36).substring(2),
+                fileUploads: msg.fileUploads || []
+            }));
+        } catch (error) {
+            console.error('Erro ao buscar histórico:', error);
+            throw new Error('Erro ao buscar histórico de mensagens da API.');
+        }
+    }
+
+    /**
+     * Injeta o histórico de chat previamente salvo no localStorage.
+     * @param {string} sessionId - ID da sessão atual.
+     * @param {Object} config - Configurações da aplicação.
+     * @returns {Promise<void>}
+     */
+    async injectChatHistory(sessionId, config) {
+        try {
+            const formattedHistory = await this._fetchAndFormatHistory(sessionId, config);
+            const chatData = {
+                chatHistory: formattedHistory,
+                chatId: sessionId
+            };
+
+            const historyKey = `${config.flowise.chatflowId}_EXTERNAL`;
+            localStorage.setItem(historyKey, JSON.stringify(chatData));
+            localStorage.setItem(`${config.flowise.chatflowId}_historyInjected`, 'true');
+        } catch (error) {
+            console.error('Erro ao injetar histórico no localStorage:', error);
+            throw new Error('Erro ao buscar histórico de mensagens da API.');
+        }
+    }
+
+    /**
+     * Busca apenas o histórico de chat de uma sessão.
+     * @param {string} sessionId - ID da sessão atual.
+     * @param {Object} config - Configurações da aplicação.
+     * @returns {Promise<Array>} - Retorna o histórico de mensagens.
+     */
+    async fetchChatHistory(sessionId, config) {
+        return await this._fetchAndFormatHistory(sessionId, config);
+    }
+
     /* =====================
-       6. Exibição de Erros
+       7. Exibição de Erros
        ===================== */
 
     showError(message) {

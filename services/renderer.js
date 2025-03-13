@@ -7,7 +7,7 @@ import { showToast } from './notificationManager.js';
 import Chatbot from "./web.js";
 import ApiService from './apiService.js';
 import StateManager from './stateManager.js';
-import HistoryManager from './historyManager.js';
+//import HistoryManager from './historyManager.js';
 import ChatManager from './chatManager.js';
 import UIManager from './uiManager.js';
 import StatusCheck from './statusCheck.js';

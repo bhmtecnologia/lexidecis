@@ -285,7 +285,7 @@ body.sidebar-active .content {
     background-color: var(--chat-group-header-bg) !important; /* Sobrescreve o fundo */
     color: var(--chat-group-header-text) !important; /* Sobrescreve a cor do texto */
     font-weight: bold; /* Garante que o texto esteja em negrito */
-    font-size: 0.85em; /* Ajuste o valor conforme necessário para diminuir o tamanho da fonte */
+    font-size: 0.70em; /* Ajuste o valor conforme necessário para diminuir o tamanho da fonte */
     border: none; /* Remove a borda */
     cursor: default; /* Indica que não é clicável */
 }
@@ -295,7 +295,7 @@ body.sidebar-active .content {
     background-color: var(--chat-group-header-bg) !important; /* Sobrescreve o fundo */
     color: var(--chat-group-header-text) !important; /* Sobrescreve a cor do texto */
     font-weight: bold; /* Garante que o texto esteja em negrito */
-    font-size: 0.85em; /* Ajuste o valor conforme necessário para diminuir o tamanho da fonte */
+    font-size: 0.70em; /* Ajuste o valor conforme necessário para diminuir o tamanho da fonte */
     border: none; /* Remove a borda */
     cursor: default; /* Indica que não é clicável */
 }
@@ -305,7 +305,7 @@ body.sidebar-active .content {
 =========================== */
 
 .custom-chat-list-height {
-    height: 60vh; /* Define altura relativa à viewport */
+    height: 70vh; /* Define altura relativa à viewport */
     /* background-color: blue; /* Ajusta a cor de fundo do chats-list, se necessário */
 }
 
@@ -406,7 +406,7 @@ body.sidebar-active .content {
 /* Estiliza o nome do chat para ocupar todo o espaço disponível e truncar se necessário */
 #chat-list .chat-item > .chat-item .chat-name {
     font-family: 'Roboto Condensed', Arial, sans-serif;
-    font-size: 15px; /* Diminui a fonte para caber mais caracteres */
+    font-size: 14.5px; /* Diminui a fonte para caber mais caracteres */
     flex: 1; /* Permite que o nome ocupe todo o espaço disponível */
     margin-right: 5px; /* Espaço entre o nome e o menu de opções */
     overflow: hidden; /* Esconde o excesso de texto */

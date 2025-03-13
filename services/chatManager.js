@@ -134,15 +134,15 @@ class ChatManager {
                         <div class="chat-item d-flex align-items-center justify-content-between">
                             <span class="chat-name text-start">${this.highlightSearch(chat.name || 'Chat sem nome')}</span>
                             <div class="dropdown">
-<button 
-    class="btn btn-sm btn-outline-secondary dropdown-toggle" 
-    type="button" 
-    id="chatOptions-{{chat.id}}" 
-    data-bs-toggle="dropdown" 
-    aria-expanded="false" 
-    title="Opções">
-    <i class="bi bi-three-dots-vertical"></i>
-</button>
+                                        <button 
+                                            class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                            type="button" 
+                                            id="chatOptions-{{chat.id}}" 
+                                            data-bs-toggle="dropdown" 
+                                            aria-expanded="false" 
+                                            title="Opções">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="chatOptions-${chat.id}">
                                     <li>
                                         <button 

@@ -112,7 +112,8 @@ export default class StatusCheck {
                 'Partial System Outage': 'Algumas funcionalidades da OpenAI estão indisponíveis no momento. Você pode continuar com limitações.',
                 'Major System Outage': 'A OpenAI está enfrentando problemas significativos. As operações podem ser interrompidas.',
                 'Partially Degraded Service': 'Os serviços da OpenAI estão funcionando parcialmente. Algumas funcionalidades podem estar lentas ou indisponíveis.',
-                'Minor Service Outage': 'Pequenos problemas foram detectados nos serviços da OpenAI. Algumas funcionalidades podem estar temporariamente indisponíveis.'
+                'Minor Service Outage': 'Pequenos problemas foram detectados nos serviços da OpenAI. Algumas funcionalidades podem estar temporariamente indisponíveis.',
+                'Partial System Degradation': 'Os sistemas da OpenAI estão sofrendo uma degradação parcial. Algumas operações podem ter desempenho reduzido.'
             };
 
             const friendlyMessage = friendlyMessages[status] || 

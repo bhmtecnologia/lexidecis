@@ -1,3 +1,4 @@
+
 /* ===========================
    1. Reset Global
 =========================== */
@@ -9,6 +10,10 @@
     box-sizing: border-box;
 }
 
+/* === Ocultar botão Reset Chat === */
+[title="Reset Chat"] {
+    display: none !important;
+}
 /* ===========================
    2. Variáveis de Cores
 =========================== */

@@ -275,7 +275,7 @@ body.sidebar-active .content {
 #chat-list .list-group-item {
     /* Remover flex layout do Bootstrap */
     display: block; /* Define como bloco */
-    padding: 0.5rem 1rem; /* Espaçamento interno */
+    padding: 0.4rem 1rem; /* Espaçamento interno */
     background-color: var(--background-color); /* Fundo consistente */
     color: var(--text-color); /* Cor do texto */
     border: none; /* Remove a borda */
@@ -310,7 +310,7 @@ body.sidebar-active .content {
 =========================== */
 
 .custom-chat-list-height {
-    height: 70vh; /* Define altura relativa à viewport */
+    height: 60vh; /* Define altura relativa à viewport */
     /* background-color: blue; /* Ajusta a cor de fundo do chats-list, se necessário */
 }
 

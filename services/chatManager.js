@@ -134,15 +134,15 @@ class ChatManager {
                         <div class="chat-item d-flex align-items-center justify-content-between">
                             <span class="chat-name text-start">${this.highlightSearch(chat.name || 'Chat sem nome')}</span>
                             <div class="dropdown">
-                                        <button 
-                                            class="btn btn-sm btn-outline-secondary dropdown-toggle" 
-                                            type="button" 
-                                            id="chatOptions-{{chat.id}}" 
-                                            data-bs-toggle="dropdown" 
-                                            aria-expanded="false" 
-                                            title="Opções">
-                                            <i class="bi bi-three-dots-vertical"></i>
-                                        </button>
+                                <button 
+                                    class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                    type="button" 
+                                    id="chatOptions-${chat.id}" 
+                                    data-bs-toggle="dropdown" 
+                                    aria-expanded="false" 
+                                    title="Opções">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="chatOptions-${chat.id}">
                                     <li>
                                         <button 
@@ -168,7 +168,7 @@ class ChatManager {
                     // Anexa informações importantes ao elemento
                     chatItem.dataset.chatId = chat.id;
                     chatItem.dataset.chatDate = chat.date;
-                    chatItem.dataset.fkGptId = chat.fk_gpt_id; // fk_gpt_id
+                    chatItem.dataset.fkGptId = chat.fk_gpt_id;
 
                     // Event listeners para renomear e excluir
                     chatItem.querySelector('.rename-chat-button').addEventListener('click', (event) => {
@@ -204,7 +204,7 @@ class ChatManager {
             const chatId = event.currentTarget.dataset.chatId;
 
             if (!chatId) {
-                console.warn('Chat sem ID válido:', event);
+                debugLog('Chat sem ID válido:', event);
                 return;
             }
 
@@ -220,7 +220,7 @@ class ChatManager {
 
             const gptId = selectedChat.fk_gpt_id;
             if (!gptId) {
-                console.warn('Nenhum fk_gpt_id associado ao chat:', chatId);
+                debugLog('Nenhum fk_gpt_id associado ao chat:', chatId);
                 showAlert('Este chat não está associado a nenhum GPT.', 'error');
                 return;
             }
@@ -377,7 +377,7 @@ class ChatManager {
         });
 
         if (chatItems.length === 0) {
-            console.warn('Nenhum chat válido encontrado na lista.');
+            debugLog('Nenhum chat válido encontrado na lista.');
         }
     }
 
@@ -472,7 +472,7 @@ class ChatManager {
                 }
             } catch (error) {
                 console.error('Erro ao fazer a requisição POST:', error);
-                this.showAlert('Erro ao atualizar o chat. Verifique o console para mais detalhes.', 'error');
+                showAlert('Erro ao atualizar o chat. Verifique o console para mais detalhes.', 'error');
             }
         } else {
             debugLog('O chatbot terminou de carregar.');
@@ -491,7 +491,7 @@ class ChatManager {
      */
     async _fetchAndFormatHistory(sessionId, config) {
         const apiURL = `${config.flowise.apiHost}/api/v1/chatmessage/${config.flowise.chatflowId}?sessionId=${sessionId}`;
-        console.log('Tentando buscar histórico em:', apiURL);
+        debugLog('Tentando buscar histórico em:', apiURL);
         
         try {
             const response = await fetch(apiURL, {
@@ -501,9 +501,9 @@ class ChatManager {
                 }
             });
 
-            console.log('Status da resposta:', response.status);
+            debugLog('Status da resposta:', response.status);
             const responseBody = await response.text();
-            console.log('Corpo da resposta:', responseBody);
+            debugLog('Corpo da resposta:', responseBody);
 
             if (!response.ok) throw new Error('Erro ao buscar histórico de mensagens da API.');
 

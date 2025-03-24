@@ -1,6 +1,6 @@
 //auth.js
 // Firebase Auth, Analytics e Firestore Service
-const DEBUG_MODE = true; // Defina como true para habilitar os logs de debug durante a depuração
+const DEBUG_MODE = false; // Defina como true para habilitar os logs de debug durante a depuração
 
 function debugLog(...args) {
     if (DEBUG_MODE) {

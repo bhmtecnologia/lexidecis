@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // ---------------------------------------------------------------
         debugLog("[Renderer] Buscando endpoints via n8n.power.tec.br/webhook/lexidecis/endpoints...");
         const jwt = await getJwt();
-        const response = await fetch('https://n8n.power.tec.br/webhook/lexidecis/endpoints', {
+        const response = await fetch('https://webhook.power.tec.br/webhook/lexidecis/endpoints', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${jwt}`,

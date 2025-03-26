@@ -270,20 +270,20 @@ class UIManager {
                                 ? prompts.split(',').map(p => p.trim()) 
                                 : [prompts];
                         })(),
-                        starterPromptFontSize: 14,
+                        starterPromptFontSize: 12,
                         clearChatOnReload: false,
                         sourceDocsTitle: 'Sources:',
                         renderHTML: true,
                         botMessage: {
                           backgroundColor: '#f1f1f1',
                           textColor: '#000000',
-                          showAvatar: true,
+                          showAvatar: false,
                         },
                         userMessage: {
                           backgroundColor: '#282828',
                           textColor: '#ffffff',
-                          showAvatar: true,
-                          avatarSrc: 'https://raw.githubusercontent.com/zahidkhawaja/langchain-chat-nextjs/main/public/usericon.png',
+                          showAvatar: false,
+                          //avatarSrc: 'https://raw.githubusercontent.com/zahidkhawaja/langchain-chat-nextjs/main/public/usericon.png',
                         },
                         textInput: {
                           placeholder: 'Mensagem...',
@@ -305,7 +305,7 @@ class UIManager {
                         },
                         footer: {
                             textColor: '#282828',
-                            text: 'O LexiDecis pode cometer erros. Por isso, é bom checar as respostas - ',
+                            text: 'O LexiDecis pode cometer erros. Sempre verifique as respostas - ',
                             company: 'LexiDecis',
                             companyLink: 'https://lexidecis.com.br',
                         },

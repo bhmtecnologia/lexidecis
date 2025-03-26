@@ -40,6 +40,9 @@ let CONFIG = {
     apiCredentials: {}
 };
 
+// Flag para abortar o carregamento caso o usuário escolha sair no status
+let abortLoading = false;
+
 document.addEventListener('DOMContentLoaded', async () => {
     debugLog("[Renderer] DOMContentLoaded disparado. Iniciando aplicação...");
 
@@ -47,29 +50,44 @@ document.addEventListener('DOMContentLoaded', async () => {
     const loadingScreen = new LoadingScreen();
     debugLog("[Renderer] LoadingScreen criado.");
 
-    // 2) Checagem de status (caso precise)
+    // 2) Instancia StatusCheck para verificar o status do sistema
     const statusCheck = new StatusCheck();
     debugLog("[Renderer] StatusCheck instanciado.");
 
-    // 3) Definimos as etapas (exibidas no loading)
+    // 3) Definimos as etapas (exibidas no loading) com a lista de chats sendo a última etapa
     const etapasDeCarregamento = [
+        'Verificar Status do Sistema',
         'Autenticação',
         'Carregar Endpoints',
-        'Verificar Status do Sistema',
         'Pré-carregar GPTs',
-        'Carregar Lista de Chats',
         'Selecionar GPT Padrão',
-        'Inicializar Chatbot'
+        'Inicializar Chatbot',
+        'Carregar Lista de Chats'
     ];
 
     // 4) Exibir a tela de loading
     loadingScreen.show(etapasDeCarregamento);
     debugLog("[Renderer] LoadingScreen exibido com etapas:", etapasDeCarregamento);
 
+    // Inicia a verificação do status de forma assíncrona
+    statusCheck.checkStatus().then(userAgreed => {
+        if (!userAgreed) {
+            debugLog("[Renderer] checkStatus() retornou falso. Abortando carregamento...");
+            abortLoading = true;
+            showToast('Status do sistema não ideal. Saindo...', 'warning');
+            loadingScreen.hide();
+            window.location.href = '../index.html';
+        } else {
+            debugLog("[Renderer] Status do sistema OK.");
+        }
+    });
+
     try {
-        // ---------------------------------------------------------------
-        // ETAPA 1: AUTENTICAÇÃO
-        // ---------------------------------------------------------------
+        // ETAPA 1: Verificar Status do Sistema (marca etapa concluída sem aguardar a verificação)
+        await loadingScreen.loadModel('Verificar Status do Sistema');
+        if (abortLoading) return;
+
+        // ETAPA 2: Autenticação
         debugLog("[Renderer] Verificando autenticação do usuário via Firebase...");
         const auth = getAuth();
         await new Promise((resolve, reject) => {
@@ -91,8 +109,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
         debugLog("[Renderer] -> Autenticação OK (Firebase).");
         await loadingScreen.loadModel('Autenticação');
+        if (abortLoading) return;
 
-        // Recarregamos as variáveis do sessionStorage agora que temos certeza de que o user está auth
+        // Recarrega variáveis do sessionStorage após autenticação
         tenant = sessionStorage.getItem("tenant");
         uuid = sessionStorage.getItem("uuid");
         email = sessionStorage.getItem("email");
@@ -117,9 +136,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
         debugLog("[Renderer] CONFIG atualizado após autenticação:", CONFIG);
 
-        // ---------------------------------------------------------------
-        // ETAPA 2: CARREGAR ENDPOINTS (via n8n)
-        // ---------------------------------------------------------------
+        // ETAPA 3: Carregar Endpoints (via n8n)
         debugLog("[Renderer] Buscando endpoints via n8n.power.tec.br/webhook/lexidecis/endpoints...");
         const jwt = await getJwt();
         const response = await fetch('https://webhook.power.tec.br/webhook/lexidecis/endpoints', {
@@ -137,31 +154,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!endpoints || !endpoints.flowise || !endpoints.apiCredentials) {
             throw new Error("Dados de endpoints inválidos ou não encontrados.");
         }
-        // Atualiza CONFIG com os endpoints obtidos
         CONFIG.flowise = { ...endpoints.flowise };
         CONFIG.apiCredentials = { ...endpoints.apiCredentials };
         debugLog("[Renderer] Endpoints carregados e CONFIG atualizado:", CONFIG);
 
         await loadingScreen.loadModel('Carregar Endpoints');
+        if (abortLoading) return;
 
-        // ---------------------------------------------------------------
-        // ETAPA 3: VERIFICAR STATUS DO SISTEMA (StatusCheck)
-        // ---------------------------------------------------------------
-        debugLog("[Renderer] Verificando status do sistema...");
-        const userAgreed = await statusCheck.checkStatus();
-        if (!userAgreed) {
-            debugLog("[Renderer] checkStatus() retornou falso. Encerrando aplicação por escolha do usuário...");
-            loadingScreen.hide();
-            window.location.href = '../index.html';
-            return; 
-        }
-        debugLog("[Renderer] Sistema OK ou usuário confirmou. Prosseguindo...");
-        await loadingScreen.loadModel('Verificar Status do Sistema');
-
-        // ---------------------------------------------------------------
-        // ETAPA 4: INICIALIZAR SERVIÇOS E GERENCIADORES
-        // ---------------------------------------------------------------
-        debugLog("[Renderer] Inicializando serviços (ApiService, StateManager, etc.)...");
+        // ETAPA 4: Pré-carregar GPTs e Inicializar Serviços
+        debugLog("[Renderer] Inicializando serviços e pré-carregando GPTs...");
         const apiService = new ApiService(CONFIG);
         const stateManager = new StateManager();
         const chatManager = new ChatManager(apiService, stateManager, CONFIG);
@@ -171,31 +172,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Ajusta referências cruzadas
         chatManager.uiManager = uiManager;
 
-        // (Opcional) inicializar tooltips de Bootstrap, se existir no HTML
+        // Inicializa tooltips de Bootstrap, se presentes
         const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         tooltipTriggerList.map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
         debugLog("[Renderer] Serviços e gerenciadores inicializados.");
 
-        // ---------------------------------------------------------------
-        // ETAPA 5: PRÉ-CARREGAR GPTs
-        // ---------------------------------------------------------------
         debugLog("[Renderer] Chamando gptManager.preloadGPTs()...");
         await gptManager.preloadGPTs();
         debugLog("[Renderer] -> Pré-carregamento de GPTs finalizado.");
         await loadingScreen.loadModel('Pré-carregar GPTs');
+        if (abortLoading) return;
 
-        // ---------------------------------------------------------------
-        // ETAPA 6: CARREGAR LISTA DE CHATS
-        // ---------------------------------------------------------------
-        debugLog("[Renderer] Carregando lista de chats via chatManager.loadChatList()...");
-        await chatManager.loadChatList(chatManager.populateChatMenu.bind(chatManager));
-        stateManager.loadSelectedChat();
-        debugLog("[Renderer] -> Lista de chats carregada e chat selecionado (se houver).");
-        await loadingScreen.loadModel('Carregar Lista de Chats');
-
-        // ---------------------------------------------------------------
-        // ETAPA 7: SELECIONAR GPT PADRÃO (se não houver chat selecionado)
-        // ---------------------------------------------------------------
+        // ETAPA 5: Selecionar GPT Padrão (caso nenhum chat esteja selecionado)
         if (!stateManager.selectedChat) {
             debugLog("[Renderer] Nenhum chat selecionado; procurando GPT padrão...");
             const defaultGPTId = "6d71f8f4-b91d-45ed-80a9-803ae61a7c98"; // Exemplo
@@ -214,16 +202,24 @@ document.addEventListener('DOMContentLoaded', async () => {
             debugLog("[Renderer] Já existe um chat selecionado. Pulando GPT padrão...");
         }
         await loadingScreen.loadModel('Selecionar GPT Padrão');
+        if (abortLoading) return;
 
-        // ---------------------------------------------------------------
-        // ETAPA 8: INICIALIZAR CHATBOT (UI e listeners)
-        // ---------------------------------------------------------------
+        // ETAPA 6: Inicializar Chatbot (UI e listeners)
         debugLog("[Renderer] Inicializando chatbot via uiManager.initializeChatbot()...");
         await uiManager.initializeChatbot();
         debugLog("[Renderer] -> Chatbot inicializado.");
         await loadingScreen.loadModel('Inicializar Chatbot');
+        if (abortLoading) return;
 
-        // Finalizamos com sucesso
+        // ETAPA 7: Carregar Lista de Chats (realizada ao final)
+        debugLog("[Renderer] Carregando lista de chats via chatManager.loadChatList()...");
+        await chatManager.loadChatList(chatManager.populateChatMenu.bind(chatManager));
+        stateManager.loadSelectedChat();
+        debugLog("[Renderer] -> Lista de chats carregada e chat selecionado (se houver).");
+        await loadingScreen.loadModel('Carregar Lista de Chats');
+        if (abortLoading) return;
+
+        // Finaliza com sucesso
         debugLog("[Renderer] Todas as etapas concluídas. Ocultando loading screen...");
         loadingScreen.hide();
         showAlert('LexiDecis: Estou pronto.', 'success');

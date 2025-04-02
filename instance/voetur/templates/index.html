@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LexiDecis - Business</title>
+    <!-- Favicon -->
+    <link rel="icon" href="../assets/images/favicon.png" type="image/x-icon" />
+    <link rel="shortcut icon" href="../assets/images/favicon.png" type="image/x-icon" />
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,200;6..12,300;6..12,400;6..12,500;6..12,600;6..12,700;6..12,800;6..12,900;6..12,1000&amp;display=swap"
+      rel="stylesheet"
+    />
+
+    <!--JSGrid css-->
+    <link rel="stylesheet" type="text/css" href="../assets/css/datatables.css" />
+   
+    <!-- Vendors CSS -->
+    <link rel="stylesheet" href="../assets/css/vendors/flag-icon.css" />
+    <link rel="stylesheet" href="../assets/css/iconly-icon.css" />
+    <link rel="stylesheet" href="../assets/css/bulk-style.css" />
+    <link rel="stylesheet" href="../assets/css/themify.css" />
+    <link rel="stylesheet" href="../assets/css/fontawesome-min.css" />
+    <link rel="stylesheet" href="../assets/css/vendors/weather-icons/weather-icons.min.css" />
+    <link rel="stylesheet" href="../assets/css/vendors/scrollbar.css" />
+    <link rel="stylesheet" href="../assets/css/vendors/slick.css" />
+    <link rel="stylesheet" href="../assets/css/vendors/slick-theme.css" />
+    <!-- CSS Principal -->
+    <link rel="stylesheet" href="../assets/css/style.css" />
+    <link id="color" rel="stylesheet" href="../assets/css/color-1.css" media="screen" />
+
+    <style>
+      /* Estilos para o modal de chat */
+      #chatModal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1050;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+      }
+      #chatModal .modal-content {
+        position: relative;
+        margin: 5% auto;
+        width: 80%;
+        height: 80%;
+        background: #fff;
+        border-radius: 5px;
+        overflow: hidden;
+      }
+      #chatModal .modal-content iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+      }
+      #chatModal .close-btn {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        background: transparent;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+      }
+      /* Botão de chat no header */
+      #openChatBtn {
+        margin-right: 10px;
+        background-color: #007bff;
+        border: none;
+        color: #fff;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Script de autenticação: utiliza AuthService para monitorar o estado -->
+    <script type="module">
+      import AuthService from "../assets/js/auth.js";
+
+      // Monitorar mudanças de autenticação e atualizar a interface
+      AuthService.onAuthChange((user) => {
+        const pageWrapper = document.getElementById('pageWrapper');
+        const userEmailDropdown = document.getElementById('user-email-dropdown');
+
+        if (!user) {
+          // Redireciona para a página de login se o usuário não estiver autenticado
+          window.location.href = 'login.html';
+        } else {
+          // Exibe o conteúdo principal e atualiza o email do usuário no header
+          if (pageWrapper) pageWrapper.style.display = 'block';
+          if (userEmailDropdown) userEmailDropdown.textContent = user.email;
+        }
+      });
+
+      // Configura o botão de logout para utilizar AuthService.logout()
+      document.addEventListener("DOMContentLoaded", () => {
+        const logoutButton = document.getElementById('nav-signout');
+        if (logoutButton) {
+          logoutButton.addEventListener('click', async (event) => {
+            event.preventDefault();
+            const result = await AuthService.logout();
+            if (result.success) {
+              window.location.href = "login.html";
+            } else {
+              alert("Erro ao fazer logout: " + result.error);
+            }
+          });
+        }
+
+        // Configura o botão de abrir chat
+        const openChatBtn = document.getElementById('openChatBtn');
+        const chatModal = document.getElementById('chatModal');
+        const closeChatBtn = document.getElementById('closeChatBtn');
+
+        if (openChatBtn && chatModal && closeChatBtn) {
+          openChatBtn.addEventListener('click', () => {
+            chatModal.style.display = 'block';
+          });
+          closeChatBtn.addEventListener('click', () => {
+            chatModal.style.display = 'none';
+          });
+        }
+      });
+    </script>
+
+    <!-- Loader e Tap-to-top -->
+    <div class="loader-wrapper">
+      <div class="loader">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+    </div>
+    <div class="tap-top" style="display: none;">
+      <i class="iconly-Arrow-Up icli"></i>
+    </div>
+
+    <!-- Conteúdo principal: inicia oculto até a autenticação ser confirmada -->
+    <div class="page-wrapper compact-wrapper" id="pageWrapper" style="display: none;">
+      <!-- Header -->
+      <header class="page-header row">
+        <div class="logo-wrapper d-flex align-items-center col-auto">
+          <a href="index.html">
+            <img class="light-logo img-fluid" src="../assets/images/logo/logo-l.png" alt="logo" />
+            <img class="dark-logo img-fluid" src="../assets/images/logo/logo-d.png" alt="logo" />
+          </a>
+          <a class="close-btn toggle-sidebar" href="javascript:void(0)">
+            <svg class="svg-color">
+              <use href="../assets/svg/iconly-sprite.svg#Category"></use>
+            </svg>
+          </a>
+        </div>
+        <div class="page-main-header col">
+          <div class="header-left">
+            <!-- Campo de busca simplificado -->
+            <form class="form-inline search-full col" action="#" method="get">
+              <div class="form-group w-100">
+                <input class="form-control-plaintext w-100" type="text" placeholder="Search..." name="q" />
+              </div>
+            </form>
+          </div>
+          <div class="nav-right">
+            <ul class="header-right">
+              <!-- Botão de Chat -->
+              <li>
+                <button id="openChatBtn" type="button">Chat LexiDecis</button>
+              </li>
+              <!-- Dropdown de idioma -->
+              <li class="custom-dropdown">
+                <div class="translate_wrapper">
+                  <div class="current_lang">
+                    <a class="lang" href="javascript:void(0)">
+                      <i class="flag-icon flag-icon-us"></i>
+                      <h6 class="lang-txt f-w-700">ENG</h6>
+                    </a>
+                  </div>
+                  <ul class="custom-menu profile-menu language-menu py-0 more_lang">
+                    <li class="d-block">
+                      <a class="lang" href="#" data-value="English">
+                        <i class="flag-icon flag-icon-us"></i>
+                        <div class="lang-txt">English</div>
+                      </a>
+                    </li>
+                    <li class="d-block">
+                      <a class="lang" href="#" data-value="fr">
+                        <i class="flag-icon flag-icon-fr"></i>
+                        <div class="lang-txt">Français</div>
+                      </a>
+                    </li>
+                    <li class="d-block">
+                      <a class="lang" href="#" data-value="es">
+                        <i class="flag-icon flag-icon-es"></i>
+                        <div class="lang-txt">Español</div>
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </li>
+              <!-- Ícone de busca para telas pequenas -->
+              <li class="search d-lg-none d-flex">
+                <a href="javascript:void(0)">
+                  <svg>
+                    <use href="../assets/svg/iconly-sprite.svg#Search"></use>
+                  </svg>
+                </a>
+              </li>
+              <!-- Modo escuro -->
+              <li>
+                <a class="dark-mode" href="javascript:void(0)">
+                  <svg>
+                    <use href="../assets/svg/iconly-sprite.svg#moondark"></use>
+                  </svg>
+                </a>
+              </li>
+              <!-- Dropdown do Carrinho -->
+              <li class="custom-dropdown">
+                <a href="javascript:void(0)">
+                  <svg>
+                    <use href="../assets/svg/iconly-sprite.svg#cart-icon"></use>
+                  </svg>
+                </a>
+                <span class="badge rounded-pill badge-primary">2</span>
+                <div class="custom-menu cart-dropdown py-0 overflow-hidden">
+                  <!-- Conteúdo do dropdown do carrinho -->
+                </div>
+              </li>
+              <!-- Dropdown de Notificações -->
+              <li class="custom-dropdown">
+                <a href="javascript:void(0)">
+                  <svg>
+                    <use href="../assets/svg/iconly-sprite.svg#notification"></use>
+                  </svg>
+                </a>
+                <span class="badge rounded-pill badge-primary">4</span>
+                <div class="custom-menu notification-dropdown py-0 overflow-hidden">
+                  <h3 class="title bg-primary-light dropdown-title">
+                    Notification <span class="font-primary">View all</span>
+                  </h3>
+                  <ul class="activity-timeline">
+                    <li class="d-flex align-items-start">
+                      <div class="activity-line"></div>
+                      <div class="activity-dot-primary"></div>
+                      <div class="flex-grow-1">
+                        <h6 class="f-w-600 font-primary">
+                          30-04-2024 <span>Today</span>
+                          <span class="circle-dot-primary float-end">
+                            <svg class="circle-color">
+                              <use href="../assets/svg/iconly-sprite.svg#circle"></use>
+                            </svg>
+                          </span>
+                        </h6>
+                        <h5>Alice Goodwin</h5>
+                        <p class="mb-0">
+                          Fashion should be fun. It shouldn't be labelled intellectual.
+                        </p>
+                      </div>
+                    </li>
+                    <!-- Outros itens de notificação -->
+                  </ul>
+                </div>
+              </li>
+              <!-- Botão de Full Screen -->
+              <li>
+                <a class="full-screen" href="javascript:void(0)">
+                  <svg>
+                    <use href="../assets/svg/iconly-sprite.svg#scanfull"></use>
+                  </svg>
+                </a>
+              </li>
+              <!-- Dropdown de Perfil/Account -->
+              <li class="profile-nav custom-dropdown">
+                <div class="user-wrap">
+                  <div class="user-img">
+                    <img src="../assets/images/profile.png" alt="user" />
+                  </div>
+                  <div class="user-content">
+                    <h6 id="user-email-dropdown"></h6>
+                    <p class="mb-0">
+                      Admin <i class="fa-solid fa-chevron-down"></i>
+                    </p>
+                  </div>
+                </div>
+                <div class="custom-menu overflow-hidden">
+                  <ul class="profile-body">
+                    <li class="d-flex">
+                      <svg class="svg-color">
+                        <use href="../assets/svg/iconly-sprite.svg#Profile"></use>
+                      </svg>
+                      <a class="ms-2" href="user-profile.html">Account</a>
+                    </li>
+                    <li class="d-flex">
+                      <svg class="svg-color">
+                        <use href="../assets/svg/iconly-sprite.svg#Message"></use>
+                      </svg>
+                      <a class="ms-2" href="letter-box.html">Inbox</a>
+                    </li>
+                    <li class="d-flex">
+                      <svg class="svg-color">
+                        <use href="../assets/svg/iconly-sprite.svg#Document"></use>
+                      </svg>
+                      <a class="ms-2" href="to-do.html">Task</a>
+                    </li>
+                    <li class="d-flex">
+                      <svg class="svg-color">
+                        <use href="../assets/svg/iconly-sprite.svg#Login"></use>
+                      </svg>
+                      <a class="ms-2" href="#" id="nav-signout">Log Out</a>
+                    </li>
+                  </ul>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </header>
+
+      <!-- Page Body Wrapper -->
+      <div class="page-body-wrapper">
+        <!-- Sidebar Simplificado -->
+        <aside class="page-sidebar">
+          <div class="pin-title" style="display:none;">Pins</div>
+          <div class="left-arrow" id="left-arrow"><i data-feather="arrow-left"></i></div>
+          <div class="main-sidebar" id="main-sidebar">
+            <ul class="sidebar-menu" id="simple-bar">
+              <li class="sidebar-main-title">
+                <div>
+                  <h5 class="sidebar-title f-w-700">Menu</h5>
+                </div>
+              </li>
+              <!-- Dashboard -->
+              <li class="sidebar-list">
+                <a class="sidebar-link" href="#dashboard">
+                  <svg class="stroke-icon">
+                    <use href="../assets/svg/iconly-sprite.svg#Home-dashboard"></use>
+                  </svg>
+                  <h6>Dashboard</h6>
+                  <i class="iconly-Arrow-Right-2 icli"></i>
+                </a>
+                <ul class="sidebar-submenu">
+                  <li><a href="#financeiro-lancamentos">Lançar pagamento</a></li>
+                  <li><a href="#financeiro-lancamentos-list">Meus lançamentos</a></li>
+                  <li><a href="#reports">Reports</a></li>
+                </ul>
+              </li>
+              <!-- Notícias -->
+              <li class="sidebar-list">
+                <a class="sidebar-link" href="#noticias">
+                  <svg class="stroke-icon">
+                    <use href="../assets/svg/iconly-sprite.svg#News"></use>
+                  </svg>
+                  <h6>Notícias</h6>
+                  <i class="iconly-Arrow-Right-2 icli"></i>
+                </a>
+                <ul class="sidebar-submenu">
+                  <li><a href="#local">Local</a></li>
+                  <li><a href="#internacional">Internacional</a></li>
+                  <li><a href="#politica">Política</a></li>
+                </ul>
+              </li>
+              <!-- Aprovações -->
+              <li class="sidebar-list">
+                <a class="sidebar-link">
+                  <svg class="stroke-icon">
+                    <use href="../assets/svg/iconly-sprite.svg#Profile"></use>
+                  </svg>
+                  <h6>Aprovações</h6>
+                  <i class="iconly-Arrow-Right-2 icli"></i>
+                </a>
+                <ul class="sidebar-submenu">
+                  <li><a href="#aprovacoes-contas-a-pagar">Contas a Pagar</a></li>
+                  <li><a href="#aprovacoes-contratos">Contratos</a></li>
+                  <li><a href="#aprovacoes-apontamento-de-contrato">Apontamento de Contratos</a></li>
+                  <li><a href="#aprovacoes-ordens-de-compra">Ordens de Compra</a></li>
+                  <li><a href="#aprovacoes-requisicoes-de-materiais">Requisição de Material</a></li>
+                </ul>
+              </li>
+              <!-- Seções "User" e "Conformidade" foram removidas -->
+            </ul>
+          </div>
+          <div class="right-arrow" id="right-arrow"><i data-feather="arrow-right"></i></div>
+        </aside>
+
+        <!-- Área Principal -->
+        <div class="page-body">
+          <div class="container-fluid">
+            <!-- Conteúdo renderizado pelo roteamento -->
+            <div id="content"></div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+          <div class="container-fluid">
+            <div class="row">
+              <div class="col-md-6 footer-copyright">
+                <p class="mb-0">LexiDecis</p>
+              </div>
+              <div class="col-md-6">
+                <p class="float-end mb-0">
+                  BHM Tecnologia &amp; feito com
+                  <svg class="svg-color footer-icon">
+                    <use href="../assets/svg/iconly-sprite.svg#heart"></use>
+                  </svg>
+                </p>
+              </div>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </div>
+
+    <!-- Modal de Chat -->
+    <div id="chatModal">
+      <div class="modal-content">
+        <button id="closeChatBtn" class="close-btn">&times;</button>
+        <iframe src="../../../pages/chat.html"></iframe>
+      </div>
+    </div>
+
+    <!-- Importação de scripts externos -->
+    <script src="../assets/js/vendors/jquery/jquery.min.js"></script>
+    <script src="../assets/js/vendors/bootstrap/dist/js/bootstrap.bundle.min.js" defer></script>
+    <script src="../assets/js/vendors/bootstrap/dist/js/popper.min.js" defer></script>
+    <script src="../assets/js/vendors/font-awesome/fontawesome-min.js"></script>
+    <script src="../assets/js/sidebar.js"></script>
+    <script src="../assets/js/scrollbar/simplebar.js"></script>
+    <script src="../assets/js/scrollbar/custom.js"></script>
+    <script src="../assets/js/slick/slick.min.js"></script>
+    <script src="../assets/js/slick/slick.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+    <script src="../assets/js/js-datatables/datatables/jquery.dataTables.min.js"></script>
+    <!--<script src="../assets/js/js-datatables/datatables/datatable.custom.js"></script>-->
+    <script src="../assets/js/datatable/datatables/datatable.custom.js"></script>
+    <script src="../assets/js/script.js"></script>
+    
+    <!-- Roteamento: importa o router e os arquivos de rotas -->
+    <script type="module" src="../assets/js/dashboard.js"></script>
+    <script type="module" src="../assets/js/report1.js"></script>
+    <script type="module" src="../assets/js/consutaCNPJ.js"></script>
+    <script type="module" src="../assets/js/consulta-cpf.js"></script>
+    <script type="module" src="../assets/js/consulta-celular.js"></script>
+    <script type="module" src="../assets/js/financeiro-lancamentos-list.js"></script>
+    <script type="module" src="../assets/js/aprovacoes-contas-a-pagar.js"></script>
+    <script type="module" src="../assets/js/aprovacoes-ordens-de-compra.js"></script>
+    <script type="module" src="../assets/js/financeiro-lancamentos.js"></script>
+    <script type="module" src="../assets/js/chat.js"></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+
+    <!-- Feather icons (se necessário) -->
+    <script>
+      if (typeof feather !== "undefined") {
+        feather.replace();
+      }
+    </script>
+  </body>
+</html>

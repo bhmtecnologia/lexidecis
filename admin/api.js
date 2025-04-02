@@ -1,7 +1,7 @@
 /**
  * Módulo de API para a aplicação Lexidecis.
  * 
- * Contém funções para interagir com as APIs de usuários, companies e units,
+ * Contém funções para interagir com as APIs de usuários, companies, units, GPTs e configurações dos GPTs,
  * utilizando cache para reduzir chamadas desnecessárias.
  *
  * @module api
@@ -21,7 +21,6 @@ export let cachedCompanies = null;
 
 /**
  * Recupera a lista de units a partir da API.
- * Utiliza cache para evitar requisições redundantes.
  *
  * @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
  * @returns {Promise<Object|Array>} - Uma promise que resolve com os dados das units.
@@ -33,7 +32,6 @@ export async function getUnits(AuthService) {
   if (!user) throw new Error("Usuário não autenticado");
   const token = await user.getIdToken();
   
-  // Realiza a requisição para obter as units
   const response = await fetch('https://webhook.power.tec.br/webhook/v1/units', {
     method: "GET",
     headers: { 
@@ -57,7 +55,6 @@ export async function getUnits(AuthService) {
 
 /**
  * Recupera a lista de companies a partir da API.
- * Utiliza cache para evitar requisições redundantes.
  *
  * @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
  * @returns {Promise<Object|Array>} - Uma promise que resolve com os dados das companies.
@@ -69,7 +66,6 @@ export async function getCompanies(AuthService) {
   if (!user) throw new Error("Usuário não autenticado");
   const token = await user.getIdToken();
   
-  // Realiza a requisição para obter as companies
   const response = await fetch('https://webhook.power.tec.br/webhook/v1/companies', {
     method: "GET",
     headers: {
@@ -103,7 +99,6 @@ export async function fetchUsers(AuthService) {
   if (!user) throw new Error("Usuário não autenticado");
   const token = await user.getIdToken();
   
-  // Realiza a requisição para obter os usuários
   const response = await fetch('https://webhook.power.tec.br/webhook/v1/users', {
     method: "GET",
     headers: { 
@@ -122,7 +117,6 @@ export async function fetchUsers(AuthService) {
     throw new Error("Resposta da API inválida");
   }
   
-  // Garante que o resultado seja um array
   if (!Array.isArray(data)) data = [data];
   return data;
 }
@@ -140,7 +134,6 @@ export async function createUser(AuthService, payload) {
   if (!user) throw new Error("Usuário não autenticado");
   const token = await user.getIdToken();
   
-  // Envia a requisição para criar o usuário
   const response = await fetch('https://webhook.power.tec.br/webhook/lexidecis/users/create', {
     method: "POST",
     headers: { 
@@ -171,7 +164,6 @@ export async function updateUser(AuthService, payload) {
   if (!user) throw new Error("Usuário não autenticado");
   const token = await user.getIdToken();
   
-  // Envia a requisição para atualizar o usuário
   const response = await fetch('https://webhook.power.tec.br/webhook/lexidecis/users/update', {
     method: "POST",
     headers: { 
@@ -202,7 +194,6 @@ export async function deleteUser(AuthService, userId) {
   if (!user) throw new Error("Usuário não autenticado");
   const token = await user.getIdToken();
   
-  // Envia a requisição para remover o usuário
   const response = await fetch('https://webhook.power.tec.br/webhook/lexidecis/users', {
     method: "DELETE",
     headers: { 
@@ -218,4 +209,76 @@ export async function deleteUser(AuthService, userId) {
   }
   
   return await response.json();
+}
+
+/**
+ * Recupera a lista de GPTs a partir da API para uma unit específica.
+ * 
+ * Envia o unit_id como parâmetro na query e utiliza o mesmo método de autenticação via JWT.
+ *
+ * @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
+ * @param {string} unitId - ID da unit para a qual os GPTs devem ser buscados.
+ * @returns {Promise<Array>} - Uma promise que resolve com os dados dos GPTs.
+ * @throws {Error} Se o usuário não estiver autenticado ou se a resposta da API for inválida.
+ */
+export async function getGPTs(AuthService, unitId) {
+  const user = AuthService.user;
+  if (!user) throw new Error("Usuário não autenticado");
+  const token = await user.getIdToken();
+  const url = `https://webhook.power.tec.br/webhook/lexidecis/gpt/list?unit_id=${encodeURIComponent(unitId)}`;
+  
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  
+  const dataText = await response.text();
+  let gpts;
+  try {
+    gpts = JSON.parse(dataText);
+  } catch (e) {
+    console.error("Erro ao converter resposta da API de GPTs:", e);
+    throw new Error("Resposta da API de GPTs inválida");
+  }
+  
+  return gpts;
+}
+
+/**
+ * Recupera as configurações de um GPT a partir da API.
+ * 
+ * Envia o gpt_id como parâmetro de query e utiliza JWT para autenticação.
+ *
+ * @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
+ * @param {string} gptId - ID do GPT cujas configurações devem ser buscadas.
+ * @returns {Promise<Array>} - Uma promise que resolve com os dados de configuração do GPT.
+ * @throws {Error} Se o usuário não estiver autenticado ou se a resposta da API for inválida.
+ */
+export async function getGPTConfigs(AuthService, gptId) {
+  const user = AuthService.user;
+  if (!user) throw new Error("Usuário não autenticado");
+  const token = await user.getIdToken();
+  const url = `https://webhook.power.tec.br/webhook/lexidecis/gpt/configs?gpt_id=${encodeURIComponent(gptId)}`;
+  
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  
+  const dataText = await response.text();
+  let configs;
+  try {
+    configs = JSON.parse(dataText);
+  } catch (e) {
+    console.error("Erro ao converter resposta da API de GPT configs:", e);
+    throw new Error("Resposta da API de GPT configs inválida");
+  }
+  
+  return configs;
 }

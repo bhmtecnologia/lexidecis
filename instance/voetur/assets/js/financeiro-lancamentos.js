@@ -184,7 +184,7 @@ export async function renderFinanceiroLancamentos() {
         const responseData = JSON.parse(uploadData);
         const filename = responseData.filename;
         // Monta a URL completa com base no nome do arquivo retornado
-        const url = `https://minio.seu-dominio.com/bucket/${filename}`;
+        const url = `${filename}`;
         payload.anexo = {
           url: url,
           categoria: "comprovante"

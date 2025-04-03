@@ -38,7 +38,7 @@ export async function createLancamento(AuthService, payload) {
     if (!user) throw new Error("Usuário não autenticado");
     const token = await user.getIdToken();
   
-    const response = await fetch('https://n8n.power.tec.br/webhook-test/voetur/v1/lancamentos', {
+    const response = await fetch('https://n8n.power.tec.br/webhook/voetur/v1/lancamentos', {
       method: "POST",
       headers: { 
         "Content-Type": "application/json",
@@ -159,7 +159,7 @@ export async function createLancamento(AuthService, payload) {
     const formData = new FormData();
     formData.append('file', file);
   
-    const response = await fetch('https://n8n.power.tec.br/webhook-test/voetur/v1/upload', {
+    const response = await fetch('https://n8n.power.tec.br/webhook/voetur/v1/upload', {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${token}`

@@ -97,13 +97,20 @@ export async function renderFinanceiroLancamentosList() {
   }
 
   /**
-   * Gera uma lista de links de anexos a partir do array de anexos.
-   * @param {Array} anexos - Array de objetos de anexo.
+   * Gera um link de anexo a partir do objeto de anexo.
+   * Caso o anexo seja um array (modo antigo), gera uma lista de links.
+   * Caso seja um objeto, gera um único link.
+   * @param {Object|Array} anexos - Objeto ou array de anexos.
    * @returns {string} HTML com os links dos anexos.
    */
   function formatAnexos(anexos) {
-    if (!anexos || !Array.isArray(anexos) || anexos.length === 0) return '-';
-    return anexos.map(anexo => `<a href="${anexo.url}" target="_blank">${anexo.categoria}</a>`).join(', ');
+    if (!anexos) return '-';
+    if (Array.isArray(anexos) && anexos.length > 0) {
+      return anexos.map(anexo => `<a href="${anexo.url}" target="_blank">${anexo.categoria}</a>`).join(', ');
+    } else if (typeof anexos === 'object') {
+      return `<a href="${anexos.url}" target="_blank">${anexos.categoria}</a>`;
+    }
+    return '-';
   }
 
   /**

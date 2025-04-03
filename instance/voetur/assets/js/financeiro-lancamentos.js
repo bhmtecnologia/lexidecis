@@ -4,11 +4,13 @@
  * permitindo a criação de novos lançamentos via formulário e enviando os dados para a API.
  * Os campos Categoria, Departamento, Centro de Custo e Projeto são apresentados como combo boxes
  * com valores fictícios (que futuramente virão de uma API).
+ *
+ * API de lançamento utilizada: https://n8n.power.tec.br/webhook-test/voetur/v1/lancamentos
  */
 
 import { registerRoute } from "./router.js";
 import AuthService, { auth, db, analytics } from "./auth.js";
-import { createLancamento } from "./api.js"; // Função para criar um lançamento na API
+import { createLancamento, uploadArquivo } from "./api.js"; // Importa as funções de criação e upload
 
 /**
  * Renderiza a tela de "Financeiro - Lançamentos".
@@ -106,7 +108,7 @@ export async function renderFinanceiroLancamentos() {
   `;
 
   /**
-   * Função para converter data para o formato ISO.
+   * Converte a data do input para o formato ISO.
    * @param {string} dateStr - Valor do input datetime-local.
    * @returns {string} Data no formato ISO.
    */
@@ -137,7 +139,7 @@ export async function renderFinanceiroLancamentos() {
       return;
     }
 
-    // Preparação do objeto payload para a API
+    // Preparação do objeto payload para a API de lançamento
     let payload = {
       dados: {
         uid: AuthService.user.uid, // assume que o uid vem do objeto do usuário autenticado
@@ -152,25 +154,41 @@ export async function renderFinanceiroLancamentos() {
           centro_custo: centroCusto,
           projeto: projeto
         }
-      },
-      anexos: [] // Será preenchido se houver upload
+      }
     };
 
-    // Se houver arquivo, processa o upload
+    // Se houver arquivo, processa o upload real do anexo
     if (arquivoInput.files.length > 0) {
       try {
         const file = arquivoInput.files[0];
-        // Aqui você deve chamar sua função real de upload, por exemplo:
-        // const uploadResponse = await uploadArquivo(AuthService, file);
-        // payload.anexos.push({
-        //   url: uploadResponse.url,
-        //   categoria: "comprovante"
-        // });
-        // Para este exemplo, vamos assumir uma URL fixa:
-        payload.anexos.push({
-          url: "https://minio.seu-dominio.com/bucket/comprovante-exemplo.jpg",
+        let uploadResponse = await uploadArquivo(AuthService, file);
+
+        // Se o retorno for uma string, converte para objeto
+        if (typeof uploadResponse === 'string') {
+          uploadResponse = JSON.parse(uploadResponse);
+        }
+
+        // Tenta obter os dados de upload, seja em formato array ou objeto
+        let uploadData;
+        if (Array.isArray(uploadResponse) && uploadResponse.length > 0 && uploadResponse[0].data) {
+          uploadData = uploadResponse[0].data;
+        } else if (uploadResponse.data) {
+          uploadData = uploadResponse.data;
+        }
+
+        if (!uploadData) {
+          throw new Error("Resposta de upload inválida");
+        }
+
+        // Converte a string do campo data para objeto e extrai o filename
+        const responseData = JSON.parse(uploadData);
+        const filename = responseData.filename;
+        // Monta a URL completa com base no nome do arquivo retornado
+        const url = `https://minio.seu-dominio.com/bucket/${filename}`;
+        payload.anexo = {
+          url: url,
           categoria: "comprovante"
-        });
+        };
       } catch (uploadError) {
         formError.textContent = "Erro ao fazer upload do arquivo: " + uploadError.message;
         return;

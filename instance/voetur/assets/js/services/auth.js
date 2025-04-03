@@ -291,7 +291,7 @@ export function verifyAuthState() {
 
             if (publicPages.includes(currentPage)) {
                 // Se o usuário está na página de login ou index e já está autenticado, redireciona para chat.html
-                window.location.href = "chat.html"; // Redireciona para a página de chat
+                window.location.href = "http://localhost:5500/instance/voetur/templates/index.html#chat"; // Redireciona para a página de chat
                 debugLog("[AuthState] Usuário já está autenticado. Redirecionando para chat.html.");
             }
         } else {

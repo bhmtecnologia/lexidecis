@@ -265,7 +265,11 @@ export async function renderFinanceiroLancamentos() {
 
     try {
       const result = await createLancamento(AuthService, payload);
-      alert("Lançamento criado com sucesso! ID: " + result.id);
+      // Validação de integridade da resposta da API
+      if (!result || !result.id) {
+        throw new Error("A resposta da API não contém os dados esperados.");
+      }
+      alert("Lançamento criado com sucesso!");
       lancamentoForm.reset();
     } catch (error) {
       console.error("Erro ao criar lançamento:", error);

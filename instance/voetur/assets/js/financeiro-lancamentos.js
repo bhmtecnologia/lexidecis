@@ -145,7 +145,7 @@ export async function renderFinanceiroLancamentos() {
               </div>
               <button type="submit" class="btn btn-primary">Criar Lançamento</button>
             </form>
-            <div id="formError" class="text-danger mt-2"></div>
+            <div id="formError" class="mt-2"></div>
           </div>
         </div>
       </div>
@@ -157,7 +157,7 @@ export async function renderFinanceiroLancamentos() {
   lancamentoForm.addEventListener('submit', async function (e) {
     e.preventDefault();
     const formError = document.getElementById('formError');
-    formError.textContent = '';
+    formError.innerHTML = '';
 
     // Coleta dos valores do formulário
     const filial = document.getElementById('filial').value.trim();
@@ -172,7 +172,7 @@ export async function renderFinanceiroLancamentos() {
     const observacao = document.getElementById('observacao').value.trim();
     const arquivoInput = document.getElementById('arquivo');
 
-    // Validação de campos obrigatórios
+    // Validação de campos obrigatórios com mensagens amigáveis
     let errors = [];
     if (!filial) errors.push("Filial");
     if (!fornecedor) errors.push("Fornecedor");
@@ -185,7 +185,7 @@ export async function renderFinanceiroLancamentos() {
     if (!projeto) errors.push("Projeto");
 
     if (errors.length > 0) {
-      formError.textContent = "Preencha os campos obrigatórios: " + errors.join(", ") + ".";
+      formError.innerHTML = `<div class="alert alert-danger"><strong>Por favor, corrija os seguintes campos:</strong><ul>${errors.map(err => `<li>${err} é obrigatório.</li>`).join('')}</ul></div>`;
       return;
     }
 
@@ -237,7 +237,7 @@ export async function renderFinanceiroLancamentos() {
           categoria: "comprovante"
         };
       } catch (uploadError) {
-        formError.textContent = "Erro ao fazer upload do arquivo: " + uploadError.message;
+        formError.innerHTML = `<div class="alert alert-danger">Erro ao fazer upload do arquivo: ${uploadError.message}</div>`;
         return;
       }
     }
@@ -248,7 +248,7 @@ export async function renderFinanceiroLancamentos() {
       lancamentoForm.reset();
     } catch (error) {
       console.error("Erro ao criar lançamento:", error);
-      formError.textContent = "Erro ao criar lançamento: " + error.message;
+      formError.innerHTML = `<div class="alert alert-danger">Erro ao criar lançamento: ${error.message}</div>`;
     }
   });
 

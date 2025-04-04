@@ -116,6 +116,36 @@ export async function renderFinanceiroLancamentosList() {
   }
 
   /**
+   * Inicializa o plugin DataTables na tabela de lançamentos.
+   */
+  function initializeDataTable() {
+    if (window.jQuery && $.fn.DataTable) {
+      // Se já houver DataTable, destrói antes de reinicializar
+      if ($.fn.DataTable.isDataTable("#lancamentosTable")) {
+        $("#lancamentosTable").DataTable().destroy();
+      }
+      $("#lancamentosTable").DataTable({
+        responsive: true,
+        autoWidth: false,
+        ordering: true,
+        paging: true,
+        dom: 'lBfrtip',
+        buttons: [
+          'copy', 'excel', 'csv', 'pdf'
+        ],
+        language: {
+          url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json"
+        },
+        columnDefs: [
+          { type: 'num', targets: 5 } // Ordenação numérica na coluna de Valor
+        ]
+      });
+    } else {
+      console.error("DataTables não está carregado.");
+    }
+  }
+
+  /**
    * Atualiza a tabela com os lançamentos obtidos via API.
    */
   async function updateTable() {
@@ -148,6 +178,9 @@ export async function renderFinanceiroLancamentosList() {
         `;
         tbody.appendChild(tr);
       });
+
+      // Inicializa ou reinicializa o DataTable
+      initializeDataTable();
     } catch (error) {
       console.error("Erro ao listar lançamentos:", error);
       alert("Erro ao listar lançamentos: " + error.message);

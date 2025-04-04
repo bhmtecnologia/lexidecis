@@ -152,12 +152,18 @@ export async function renderFinanceiroLancamentos() {
     </div>
   `;
 
-  // Evento de submissão do formulário
+  // Evento de submissão do formulário com feedback visual (loading)
   const lancamentoForm = document.getElementById('lancamentoForm');
   lancamentoForm.addEventListener('submit', async function (e) {
     e.preventDefault();
     const formError = document.getElementById('formError');
     formError.innerHTML = '';
+
+    // Desabilita o botão de submit e exibe um indicador de loading
+    const submitBtn = lancamentoForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    const originalBtnText = submitBtn.innerHTML;
+    submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processando...`;
 
     // Coleta dos valores do formulário
     const filial = document.getElementById('filial').value.trim();
@@ -197,6 +203,8 @@ export async function renderFinanceiroLancamentos() {
 
     if (errors.length > 0) {
       formError.innerHTML = `<div class="alert alert-danger"><strong>Por favor, corrija os seguintes campos:</strong><ul>${errors.map(err => `<li>${err}</li>`).join('')}</ul></div>`;
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalBtnText;
       return;
     }
 
@@ -210,7 +218,7 @@ export async function renderFinanceiroLancamentos() {
         numeroDocumento: numeroDocumento,
         tipoDocumento: tipoDocumento,
         dataEmissao: dataEmissao,
-        valor: parseFloat(valor),  // Converter para número
+        valor: parseFloat(valor),
         vencimento: vencimento,
         centro_custo: centroCusto,
         projeto: projeto,
@@ -249,6 +257,8 @@ export async function renderFinanceiroLancamentos() {
         };
       } catch (uploadError) {
         formError.innerHTML = `<div class="alert alert-danger">Erro ao fazer upload do arquivo: ${uploadError.message}</div>`;
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
         return;
       }
     }
@@ -260,6 +270,9 @@ export async function renderFinanceiroLancamentos() {
     } catch (error) {
       console.error("Erro ao criar lançamento:", error);
       formError.innerHTML = `<div class="alert alert-danger">Erro ao criar lançamento: ${error.message}</div>`;
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalBtnText;
     }
   });
 

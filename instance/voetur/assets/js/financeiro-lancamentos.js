@@ -2,7 +2,7 @@
  * @file financeiro-lancamentos.js
  * @description Responsável por renderizar a página de "Financeiro - Lançamentos" no módulo financeiro,
  * permitindo a criação de novos lançamentos via formulário e enviando os dados para a API.
- * Os campos Filial, Fornecedor, N° Documento, Data de Emissão, Valor, Vencimento, Centro de Custo, Projeto,
+ * Os campos Filial, Fornecedor, N° Documento, Tipo de Documento, Data de Emissão, Valor, Vencimento, Centro de Custo, Projeto,
  * Observação e Inserir Anexo são apresentados e serão enviados para o JSONB de dados.
  *
  * API de lançamento utilizada: https://n8n.power.tec.br/webhook-test/voetur/v1/lancamentos
@@ -65,22 +65,34 @@ export async function renderFinanceiroLancamentos() {
                 <label for="numeroDocumento" class="form-label">N° Documento</label>
                 <input type="text" class="form-control" id="numeroDocumento" placeholder="Digite o número do documento" required>
               </div>
-              <!-- 4. Data de Emissão (Seleção de Data) -->
+              <!-- 4. Tipo de Documento (Lista Suspensa) -->
+              <div class="mb-3">
+                <label for="tipoDocumento" class="form-label">Tipo de Documento</label>
+                <select class="form-select" id="tipoDocumento" required>
+                  <option value="">Selecione</option>
+                  <option value="Nota Fiscal">Nota Fiscal</option>
+                  <option value="Fatura">Fatura</option>
+                  <option value="Boleto">Boleto</option>
+                  <option value="Reembolso">Reembolso</option>
+                  <option value="Outros">Outros</option>
+                </select>
+              </div>
+              <!-- 5. Data de Emissão (Seleção de Data) -->
               <div class="mb-3">
                 <label for="dataEmissao" class="form-label">Data de Emissão</label>
                 <input type="date" class="form-control" id="dataEmissao" required>
               </div>
-              <!-- 5. Valor (Número com máscara financeira) -->
+              <!-- 6. Valor (Número com máscara financeira) -->
               <div class="mb-3">
                 <label for="valor" class="form-label">Valor</label>
                 <input type="text" class="form-control" id="valor" placeholder="0.00" required>
               </div>
-              <!-- 6. Vencimento (Seleção de Data) -->
+              <!-- 7. Vencimento (Seleção de Data) -->
               <div class="mb-3">
                 <label for="vencimento" class="form-label">Vencimento</label>
                 <input type="date" class="form-control" id="vencimento" required>
               </div>
-              <!-- 7. Centro de Custo (Lista Suspensa) -->
+              <!-- 8. Centro de Custo (Lista Suspensa) -->
               <div class="mb-3">
                 <label for="centroCusto" class="form-label">Centro de Custo</label>
                 <select class="form-select" id="centroCusto" required>
@@ -111,7 +123,7 @@ export async function renderFinanceiroLancamentos() {
                   <option value="Facilities">Facilities</option>
                 </select>
               </div>
-              <!-- 8. Projeto (Lista Suspensa) -->
+              <!-- 9. Projeto (Lista Suspensa) -->
               <div class="mb-3">
                 <label for="projeto" class="form-label">Projeto</label>
                 <select class="form-select" id="projeto" required>
@@ -121,12 +133,12 @@ export async function renderFinanceiroLancamentos() {
                   <option value="Projeto C">Projeto C</option>
                 </select>
               </div>
-              <!-- 9. Observação (Campo Aberto com 3 linhas) -->
+              <!-- 10. Observação (Campo Aberto com 3 linhas) -->
               <div class="mb-3">
                 <label for="observacao" class="form-label">Observação</label>
                 <textarea class="form-control" id="observacao" rows="3"></textarea>
               </div>
-              <!-- 10. Inserir Anexo (Upload) -->
+              <!-- 11. Inserir Anexo (Upload) -->
               <div class="mb-3">
                 <label for="arquivo" class="form-label">Inserir Anexo</label>
                 <input type="file" class="form-control" id="arquivo" accept="image/*" capture="environment">
@@ -148,20 +160,32 @@ export async function renderFinanceiroLancamentos() {
     formError.textContent = '';
 
     // Coleta dos valores do formulário
-    const filial = document.getElementById('filial').value;
-    const fornecedor = document.getElementById('fornecedor').value;
-    const numeroDocumento = document.getElementById('numeroDocumento').value;
+    const filial = document.getElementById('filial').value.trim();
+    const fornecedor = document.getElementById('fornecedor').value.trim();
+    const numeroDocumento = document.getElementById('numeroDocumento').value.trim();
+    const tipoDocumento = document.getElementById('tipoDocumento').value;
     const dataEmissao = document.getElementById('dataEmissao').value;
-    const valor = document.getElementById('valor').value;
+    const valor = document.getElementById('valor').value.trim();
     const vencimento = document.getElementById('vencimento').value;
     const centroCusto = document.getElementById('centroCusto').value;
     const projeto = document.getElementById('projeto').value;
     const observacao = document.getElementById('observacao').value.trim();
     const arquivoInput = document.getElementById('arquivo');
 
-    // Validações básicas
-    if (!filial || !fornecedor || !numeroDocumento || !dataEmissao || !valor || !vencimento || !centroCusto || !projeto) {
-      formError.textContent = "Preencha os campos obrigatórios.";
+    // Validação de campos obrigatórios
+    let errors = [];
+    if (!filial) errors.push("Filial");
+    if (!fornecedor) errors.push("Fornecedor");
+    if (!numeroDocumento) errors.push("N° Documento");
+    if (!tipoDocumento) errors.push("Tipo de Documento");
+    if (!dataEmissao) errors.push("Data de Emissão");
+    if (!valor) errors.push("Valor");
+    if (!vencimento) errors.push("Vencimento");
+    if (!centroCusto) errors.push("Centro de Custo");
+    if (!projeto) errors.push("Projeto");
+
+    if (errors.length > 0) {
+      formError.textContent = "Preencha os campos obrigatórios: " + errors.join(", ") + ".";
       return;
     }
 
@@ -173,6 +197,7 @@ export async function renderFinanceiroLancamentos() {
         filial: filial,
         fornecedor: fornecedor,
         numeroDocumento: numeroDocumento,
+        tipoDocumento: tipoDocumento,
         dataEmissao: dataEmissao,
         valor: valor,
         vencimento: vencimento,

@@ -2,20 +2,16 @@
  * @file financeiro-lancamentos.js
  * @description Responsável por renderizar a página de "Financeiro - Lançamentos" no módulo financeiro,
  * permitindo a criação de novos lançamentos via formulário e enviando os dados para a API.
- * Os campos Categoria, Departamento, Centro de Custo e Projeto são apresentados como combo boxes
- * com valores fictícios (que futuramente virão de uma API).
+ * Os campos Filial, Fornecedor, N° Documento, Data de Emissão, Valor, Vencimento, Centro de Custo, Projeto,
+ * Observação e Inserir Anexo são apresentados e serão enviados para o JSONB de dados.
  *
  * API de lançamento utilizada: https://n8n.power.tec.br/webhook-test/voetur/v1/lancamentos
  */
 
 import { registerRoute } from "./router.js";
 import AuthService, { auth, db, analytics } from "./auth.js";
-import { createLancamento, uploadArquivo } from "./api.js"; // Importa as funções de criação e upload
+import { createLancamento, uploadArquivo } from "./api.js";
 
-/**
- * Renderiza a tela de "Financeiro - Lançamentos".
- * Define a estrutura HTML da página, configura o formulário de criação e monitora a autenticação.
- */
 export async function renderFinanceiroLancamentos() {
   const content = document.getElementById('content');
   content.innerHTML = `
@@ -46,56 +42,97 @@ export async function renderFinanceiroLancamentos() {
         <div class="card">
           <div class="card-body">
             <form id="lancamentoForm">
+              <!-- 1. Filial (Lista Suspensa) -->
               <div class="mb-3">
-                <label for="descricao" class="form-label">Descrição</label>
-                <input type="text" class="form-control" id="descricao" required>
+                <label for="filial" class="form-label">Filial</label>
+                <select class="form-select" id="filial" required>
+                  <option value="">Selecione</option>
+                  <option value="Filial 1">Filial 1</option>
+                  <option value="Filial 2">Filial 2</option>
+                </select>
               </div>
+              <!-- 2. Fornecedor (Lista Suspensa) -->
+              <div class="mb-3">
+                <label for="fornecedor" class="form-label">Fornecedor</label>
+                <select class="form-select" id="fornecedor" required>
+                  <option value="">Selecione</option>
+                  <option value="Fornecedor 1">Fornecedor 1</option>
+                  <option value="Fornecedor 2">Fornecedor 2</option>
+                </select>
+              </div>
+              <!-- 3. N° Documento (Lista Suspensa) -->
+              <div class="mb-3">
+                <label for="numeroDocumento" class="form-label">N° Documento</label>
+                <select class="form-select" id="numeroDocumento" required>
+                  <option value="">Selecione</option>
+                  <option value="Documento 1">Documento 1</option>
+                  <option value="Documento 2">Documento 2</option>
+                </select>
+              </div>
+              <!-- 4. Data de Emissão (Seleção de Data) -->
+              <div class="mb-3">
+                <label for="dataEmissao" class="form-label">Data de Emissão</label>
+                <input type="date" class="form-control" id="dataEmissao" required>
+              </div>
+              <!-- 5. Valor (Número com máscara financeira) -->
               <div class="mb-3">
                 <label for="valor" class="form-label">Valor</label>
-                <input type="number" step="0.01" class="form-control" id="valor" required>
+                <input type="text" class="form-control" id="valor" placeholder="0.00" required>
               </div>
+              <!-- 6. Vencimento (Seleção de Data) -->
               <div class="mb-3">
-                <label for="dataLancamento" class="form-label">Data do Lançamento</label>
-                <input type="datetime-local" class="form-control" id="dataLancamento" required>
+                <label for="vencimento" class="form-label">Vencimento</label>
+                <input type="date" class="form-control" id="vencimento" required>
               </div>
-              <div class="mb-3">
-                <label for="categoria" class="form-label">Categoria</label>
-                <select class="form-select" id="categoria" required>
-                  <option value="">Selecione</option>
-                  <option value="Material">Material</option>
-                  <option value="Serviço">Serviço</option>
-                  <option value="Despesa Geral">Despesa Geral</option>
-                </select>
-              </div>
-              <div class="mb-3">
-                <label for="departamento" class="form-label">Departamento</label>
-                <select class="form-select" id="departamento">
-                  <option value="">Selecione</option>
-                  <option value="Financeiro">Financeiro</option>
-                  <option value="RH">RH</option>
-                  <option value="TI">TI</option>
-                </select>
-              </div>
+              <!-- 7. Centro de Custo (Lista Suspensa) -->
               <div class="mb-3">
                 <label for="centroCusto" class="form-label">Centro de Custo</label>
-                <select class="form-select" id="centroCusto">
+                <select class="form-select" id="centroCusto" required>
                   <option value="">Selecione</option>
-                  <option value="CC-001">CC-001</option>
-                  <option value="CC-002">CC-002</option>
+                  <option value="DIRETORIA_BR">DIRETORIA_BR</option>
+                  <option value="Diretoria Jurídica">Diretoria Jurídica</option>
+                  <option value="Jurídico Geral">Jurídico Geral</option>
+                  <option value="SGI">SGI</option>
+                  <option value="Compliance">Compliance</option>
+                  <option value="Diretoria Financeira">Diretoria Financeira</option>
+                  <option value="Contábil">Contábil</option>
+                  <option value="Contas a Pagar">Contas a Pagar</option>
+                  <option value="Contas a Receber / Cobrança">Contas a Receber / Cobrança</option>
+                  <option value="Suprimentos">Suprimentos</option>
+                  <option value="RH">RH</option>
+                  <option value="DP">DP</option>
+                  <option value="SESMT">SESMT</option>
+                  <option value="Infraestrutura">Infraestrutura</option>
+                  <option value="Publicidade e Comunicação">Publicidade e Comunicação</option>
+                  <option value="Licitações">Licitações</option>
+                  <option value="Comercial">Comercial</option>
+                  <option value="Faturamento Público">Faturamento Público</option>
+                  <option value="Garantia da Qualidade">Garantia da Qualidade</option>
+                  <option value="Monitoramento">Monitoramento</option>
+                  <option value="Refrigerado">Refrigerado</option>
+                  <option value="Climatizado">Climatizado</option>
+                  <option value="Terrestre">Terrestre</option>
+                  <option value="Facilities">Facilities</option>
                 </select>
               </div>
+              <!-- 8. Projeto (Lista Suspensa) -->
               <div class="mb-3">
                 <label for="projeto" class="form-label">Projeto</label>
-                <select class="form-select" id="projeto">
+                <select class="form-select" id="projeto" required>
                   <option value="">Selecione</option>
                   <option value="Projeto A">Projeto A</option>
                   <option value="Projeto B">Projeto B</option>
                   <option value="Projeto C">Projeto C</option>
                 </select>
               </div>
-              <!-- Upload de Anexo -->
+              <!-- 9. Observação (Campo Aberto com 3 linhas) -->
               <div class="mb-3">
-                <label for="arquivo" class="form-label">Anexo (Imagem)</label>
+                <label for="observacao" class="form-label">Observação</label>
+                <textarea class="form-control" id="observacao" rows="3"></textarea>
+              </div>
+              <!-- 10. Inserir Anexo (Upload) -->
+              <div class="mb-3">
+                <label for="arquivo" class="form-label">Inserir Anexo</label>
                 <input type="file" class="form-control" id="arquivo" accept="image/*" capture="environment">
               </div>
               <button type="submit" class="btn btn-primary">Criar Lançamento</button>
@@ -107,15 +144,6 @@ export async function renderFinanceiroLancamentos() {
     </div>
   `;
 
-  /**
-   * Converte a data do input para o formato ISO.
-   * @param {string} dateStr - Valor do input datetime-local.
-   * @returns {string} Data no formato ISO.
-   */
-  function formatInputDate(dateStr) {
-    return new Date(dateStr).toISOString();
-  }
-
   // Evento de submissão do formulário
   const lancamentoForm = document.getElementById('lancamentoForm');
   lancamentoForm.addEventListener('submit', async function (e) {
@@ -124,17 +152,19 @@ export async function renderFinanceiroLancamentos() {
     formError.textContent = '';
 
     // Coleta dos valores do formulário
-    const descricao = document.getElementById('descricao').value.trim();
-    const valor = parseFloat(document.getElementById('valor').value);
-    const dataLancamentoInput = document.getElementById('dataLancamento').value;
-    const categoria = document.getElementById('categoria').value;
-    const departamento = document.getElementById('departamento').value;
+    const filial = document.getElementById('filial').value;
+    const fornecedor = document.getElementById('fornecedor').value;
+    const numeroDocumento = document.getElementById('numeroDocumento').value;
+    const dataEmissao = document.getElementById('dataEmissao').value;
+    const valor = document.getElementById('valor').value;
+    const vencimento = document.getElementById('vencimento').value;
     const centroCusto = document.getElementById('centroCusto').value;
     const projeto = document.getElementById('projeto').value;
+    const observacao = document.getElementById('observacao').value.trim();
     const arquivoInput = document.getElementById('arquivo');
 
     // Validações básicas
-    if (!descricao || isNaN(valor) || !dataLancamentoInput || !categoria) {
+    if (!filial || !fornecedor || !numeroDocumento || !dataEmissao || !valor || !vencimento || !centroCusto || !projeto) {
       formError.textContent = "Preencha os campos obrigatórios.";
       return;
     }
@@ -142,18 +172,18 @@ export async function renderFinanceiroLancamentos() {
     // Preparação do objeto payload para a API de lançamento
     let payload = {
       dados: {
-        uid: AuthService.user.uid, // assume que o uid vem do objeto do usuário autenticado
-        app_id: "empresaXYZ",       // definir o app_id conforme o contexto
-        descricao: descricao,
+        uid: AuthService.user.uid,
+        app_id: "empresaXYZ",
+        filial: filial,
+        fornecedor: fornecedor,
+        numeroDocumento: numeroDocumento,
+        dataEmissao: dataEmissao,
         valor: valor,
-        data_lancamento: formatInputDate(dataLancamentoInput),
-        categoria: categoria,
-        status: "pendente",
-        classificacoes: {
-          departamento: departamento,
-          centro_custo: centroCusto,
-          projeto: projeto
-        }
+        vencimento: vencimento,
+        centro_custo: centroCusto,
+        projeto: projeto,
+        observacao: observacao,
+        status: "pendente"
       }
     };
 
@@ -163,12 +193,10 @@ export async function renderFinanceiroLancamentos() {
         const file = arquivoInput.files[0];
         let uploadResponse = await uploadArquivo(AuthService, file);
 
-        // Se o retorno for uma string, converte para objeto
         if (typeof uploadResponse === 'string') {
           uploadResponse = JSON.parse(uploadResponse);
         }
 
-        // Tenta obter os dados de upload, seja em formato array ou objeto
         let uploadData;
         if (Array.isArray(uploadResponse) && uploadResponse.length > 0 && uploadResponse[0].data) {
           uploadData = uploadResponse[0].data;
@@ -180,10 +208,8 @@ export async function renderFinanceiroLancamentos() {
           throw new Error("Resposta de upload inválida");
         }
 
-        // Converte a string do campo data para objeto e extrai o filename
         const responseData = JSON.parse(uploadData);
         const filename = responseData.filename;
-        // Monta a URL completa com base no nome do arquivo retornado
         const url = `${filename}`;
         payload.anexo = {
           url: url,
@@ -195,7 +221,6 @@ export async function renderFinanceiroLancamentos() {
       }
     }
 
-    // Envia o payload para criar o lançamento via API
     try {
       const result = await createLancamento(AuthService, payload);
       alert("Lançamento criado com sucesso! ID: " + result.id);
@@ -206,7 +231,6 @@ export async function renderFinanceiroLancamentos() {
     }
   });
 
-  // Monitora a autenticação para exibir o formulário somente se o usuário estiver logado
   AuthService.onAuthChange((user) => {
     if (user) {
       document.getElementById('form-section').classList.remove('d-none');
@@ -222,5 +246,4 @@ export async function renderFinanceiroLancamentos() {
   });
 }
 
-// Registra a rota para a página de "Financeiro - Lançamentos"
 registerRoute('#financeiro-lancamentos', renderFinanceiroLancamentos);

@@ -184,8 +184,19 @@ export async function renderFinanceiroLancamentos() {
     if (!centroCusto) errors.push("Centro de Custo");
     if (!projeto) errors.push("Projeto");
 
+    // Validação de formato para campos de data e valor
+    if (dataEmissao && isNaN(Date.parse(dataEmissao))) {
+      errors.push("Data de Emissão inválida");
+    }
+    if (vencimento && isNaN(Date.parse(vencimento))) {
+      errors.push("Vencimento inválido");
+    }
+    if (valor && isNaN(parseFloat(valor))) {
+      errors.push("Valor deve ser numérico");
+    }
+
     if (errors.length > 0) {
-      formError.innerHTML = `<div class="alert alert-danger"><strong>Por favor, corrija os seguintes campos:</strong><ul>${errors.map(err => `<li>${err} é obrigatório.</li>`).join('')}</ul></div>`;
+      formError.innerHTML = `<div class="alert alert-danger"><strong>Por favor, corrija os seguintes campos:</strong><ul>${errors.map(err => `<li>${err}</li>`).join('')}</ul></div>`;
       return;
     }
 
@@ -199,7 +210,7 @@ export async function renderFinanceiroLancamentos() {
         numeroDocumento: numeroDocumento,
         tipoDocumento: tipoDocumento,
         dataEmissao: dataEmissao,
-        valor: valor,
+        valor: parseFloat(valor),  // Converter para número
         vencimento: vencimento,
         centro_custo: centroCusto,
         projeto: projeto,

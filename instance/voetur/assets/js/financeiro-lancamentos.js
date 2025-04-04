@@ -60,14 +60,10 @@ export async function renderFinanceiroLancamentos() {
                   <option value="Fornecedor 2">Fornecedor 2</option>
                 </select>
               </div>
-              <!-- 3. N° Documento (Lista Suspensa) -->
+              <!-- 3. N° Documento (Campo de Texto) -->
               <div class="mb-3">
                 <label for="numeroDocumento" class="form-label">N° Documento</label>
-                <select class="form-select" id="numeroDocumento" required>
-                  <option value="">Selecione</option>
-                  <option value="Documento 1">Documento 1</option>
-                  <option value="Documento 2">Documento 2</option>
-                </select>
+                <input type="text" class="form-control" id="numeroDocumento" placeholder="Digite o número do documento" required>
               </div>
               <!-- 4. Data de Emissão (Seleção de Data) -->
               <div class="mb-3">

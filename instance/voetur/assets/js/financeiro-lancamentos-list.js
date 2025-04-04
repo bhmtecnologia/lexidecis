@@ -46,15 +46,17 @@ export async function renderFinanceiroLancamentosList() {
                 <thead>
                   <tr>
                     <th>ID</th>
-                    <th>Descrição</th>
+                    <th>Filial</th>
+                    <th>Fornecedor</th>
+                    <th>N° Documento</th>
+                    <th>Data de Emissão</th>
                     <th>Valor</th>
-                    <th>Data do Lançamento</th>
-                    <th>Categoria</th>
-                    <th>Status</th>
-                    <th>Departamento</th>
+                    <th>Vencimento</th>
                     <th>Centro de Custo</th>
                     <th>Projeto</th>
+                    <th>Observação</th>
                     <th>Anexos</th>
+                    <th>Status</th>
                     <th>Criado Em</th>
                     <th>Atualizado Em</th>
                   </tr>
@@ -123,23 +125,24 @@ export async function renderFinanceiroLancamentosList() {
     try {
       const lancamentos = await listLancamentos(AuthService);
       const tbody = document.querySelector('#lancamentosTable tbody');
-      tbody.innerHTML = ''; // Limpa o conteúdo atual
+      tbody.innerHTML = '';
 
       lancamentos.forEach(lanc => {
         const dados = lanc.dados || {};
-        const classificacoes = dados.classificacoes || {};
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${lanc.id || '-'}</td>
-          <td>${dados.descricao || '-'}</td>
+          <td>${dados.filial || '-'}</td>
+          <td>${dados.fornecedor || '-'}</td>
+          <td>${dados.numeroDocumento || '-'}</td>
+          <td>${dados.dataEmissao ? formatDate(dados.dataEmissao) : '-'}</td>
           <td>${dados.valor ? formatCurrency(dados.valor) : '-'}</td>
-          <td>${dados.data_lancamento ? formatDate(dados.data_lancamento) : '-'}</td>
-          <td>${dados.categoria || '-'}</td>
-          <td>${dados.status || '-'}</td>
-          <td>${classificacoes.departamento || '-'}</td>
-          <td>${classificacoes.centro_custo || '-'}</td>
-          <td>${classificacoes.projeto || '-'}</td>
+          <td>${dados.vencimento ? formatDate(dados.vencimento) : '-'}</td>
+          <td>${dados.centro_custo || '-'}</td>
+          <td>${dados.projeto || '-'}</td>
+          <td>${dados.observacao || '-'}</td>
           <td>${formatAnexos(lanc.anexos)}</td>
+          <td>${dados.status || '-'}</td>
           <td>${lanc.created_at ? formatDate(lanc.created_at) : '-'}</td>
           <td>${lanc.updated_at ? formatDate(lanc.updated_at) : '-'}</td>
         `;

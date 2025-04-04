@@ -269,7 +269,7 @@ export async function renderFinanceiroLancamentos() {
       if (!result || !result.id) {
         throw new Error("A resposta da API não contém os dados esperados.");
       }
-      alert("Lançamento criado com sucesso!");
+      alert("Lançamento criado com sucesso! ID: " + result.id);
       lancamentoForm.reset();
     } catch (error) {
       console.error("Erro ao criar lançamento:", error);

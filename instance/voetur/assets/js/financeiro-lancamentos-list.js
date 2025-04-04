@@ -49,6 +49,7 @@ export async function renderFinanceiroLancamentosList() {
                     <th>Filial</th>
                     <th>Fornecedor</th>
                     <th>N° Documento</th>
+                    <th>Tipo de Documento</th>
                     <th>Data de Emissão</th>
                     <th>Valor</th>
                     <th>Vencimento</th>
@@ -165,6 +166,7 @@ export async function renderFinanceiroLancamentosList() {
           <td>${dados.filial || '-'}</td>
           <td>${dados.fornecedor || '-'}</td>
           <td>${dados.numeroDocumento || '-'}</td>
+          <td>${dados.tipoDocumento || '-'}</td>
           <td>${dados.dataEmissao ? formatDate(dados.dataEmissao) : '-'}</td>
           <td>${dados.valor ? formatCurrency(dados.valor) : '-'}</td>
           <td>${dados.vencimento ? formatDate(dados.vencimento) : '-'}</td>

@@ -70,6 +70,7 @@ export async function renderFinanceiroAnaliseDashboard() {
           <table id="analiseTable" class="table table-striped table-bordered">
             <thead>
               <tr>
+                <th>Ações</th>
                 <th>ID</th>
                 <th>UID</th>
                 <th>Filial</th>
@@ -80,7 +81,6 @@ export async function renderFinanceiroAnaliseDashboard() {
                 <th>Valor</th>
                 <th>Status</th>
                 <th>Anexos</th>
-                <th>Ações</th>
               </tr>
             </thead>
             <tbody id="analise-tabela">
@@ -89,12 +89,13 @@ export async function renderFinanceiroAnaliseDashboard() {
         </div>
       </div>
       
-      <!-- Modal de Edição/Aprovação -->
+      <!-- Modal de Edição (para aprovação com alterações) -->
       <div class="modal fade" id="analiseModal" tabindex="-1" aria-labelledby="analiseModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
-          <div class="modal-content">
+          <!-- A classe "modal-custom" deve existir no CSS da aplicação -->
+          <div class="modal-content modal-custom">
             <div class="modal-header">
-              <h5 class="modal-title" id="analiseModalLabel">Editar e Aprovar Lançamento</h5>
+              <h5 class="modal-title" id="analiseModalLabel">Editar Lançamento</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body">
@@ -166,9 +167,12 @@ export async function renderFinanceiroAnaliseDashboard() {
               </form>
             </div>
             <div class="modal-footer">
-              <button id="btnRejeitar" type="button" class="btn btn-danger">Rejeitar</button>
-              <button id="btnAprovar" type="button" class="btn btn-success">Aprovar</button>
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+              <button id="btnAprovarAlteracoes" type="button" class="btn btn-success" title="Aprovar com Alterações" style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724;">
+                <i class="bi bi-check-lg"></i>
+              </button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" title="Cancelar" style="background-color: #f8f9fa; border: 1px solid #dee2e6; color: #6c757d;">
+                <i class="bi bi-x-lg"></i>
+              </button>
             </div>
           </div>
         </div>
@@ -176,33 +180,20 @@ export async function renderFinanceiroAnaliseDashboard() {
     </div>
   `;
 
-  /**
-   * Formata uma data (string ISO) para o padrão 'pt-BR'.
-   * @param {string} dateStr - Data no formato ISO.
-   * @returns {string} Data formatada.
-   */
+  // Função para formatar datas
   function formatDate(dateStr) {
     if (!dateStr) return '-';
     const date = new Date(dateStr);
     return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
   }
 
-  /**
-   * Formata um valor numérico para o formato de moeda BRL.
-   * @param {number|string} value - Valor a ser formatado.
-   * @returns {string} Valor formatado como moeda.
-   */
+  // Função para formatar valores numéricos
   function formatCurrency(value) {
     if (isNaN(value)) return '-';
     return parseFloat(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   }
 
-  /**
-   * Gera os links dos anexos.
-   * Trata tanto o formato antigo (array direto) quanto o novo (objeto com propriedade "anexos").
-   * @param {Object|Array} anexos - Objeto ou array de anexos.
-   * @returns {string} HTML com os links dos anexos.
-   */
+  // Função para gerar links dos anexos
   function formatAnexos(anexos) {
     if (!anexos) return '-';
     let lista = [];
@@ -215,15 +206,13 @@ export async function renderFinanceiroAnaliseDashboard() {
     } else {
       return '-';
     }
-    return lista.map(anexo => `<a href="${anexo.url}" target="_blank">${anexo.categoria || 'Anexo'}</a>`).join('<br>');
+    return lista.map(anexo => `<a href="${anexo.url}" target="_blank">${anexos.categoria || 'Anexo'}</a>`).join('<br>');
   }
 
-  // Carrega os dados dos lançamentos e atualiza o dashboard
+  // Carrega os dados e atualiza o dashboard
   async function loadDashboardData() {
     try {
       const dados = await listLancamentos(AuthService);
-      
-      // Ajusta a comparação de status para lowercase
       const pendentes = dados.filter(l => l.dados.status && l.dados.status.toLowerCase() === 'pendente');
       const aprovados = dados.filter(l => l.dados.status && l.dados.status.toLowerCase() === 'aprovado');
       const rejeitados = dados.filter(l => l.dados.status && l.dados.status.toLowerCase() === 'rejeitado');
@@ -234,13 +223,25 @@ export async function renderFinanceiroAnaliseDashboard() {
 
       const tbody = document.getElementById('analise-tabela');
       tbody.innerHTML = '';
-      
-      // Se houver pendentes, insere os registros na tabela
+
       if (pendentes.length > 0) {
         pendentes.forEach(lanc => {
           const dadosLanc = lanc.dados || {};
           const tr = document.createElement('tr');
           tr.innerHTML = `
+            <td>
+              <div style="display: inline-flex; gap: 4px;">
+                <button class="btn btn-sm btn-aprovar" data-id="${lanc.id}" title="Aprovar" style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724;">
+                  <i class="bi bi-check-lg"></i>
+                </button>
+                <button class="btn btn-sm btn-rejeitar" data-id="${lanc.id}" title="Rejeitar" style="background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24;">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+                <button class="btn btn-sm btn-editar" data-id="${lanc.id}" title="Editar" style="background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404;">
+                  <i class="bi bi-pencil-square"></i>
+                </button>
+              </div>
+            </td>
             <td>${lanc.id || '-'}</td>
             <td>${dadosLanc.uid || '-'}</td>
             <td>${dadosLanc.filial || '-'}</td>
@@ -251,9 +252,6 @@ export async function renderFinanceiroAnaliseDashboard() {
             <td>${dadosLanc.valor ? formatCurrency(dadosLanc.valor) : '-'}</td>
             <td>${dadosLanc.status || '-'}</td>
             <td>${formatAnexos(lanc.anexos)}</td>
-            <td>
-              <button class="btn btn-sm btn-primary btn-editar" data-id="${lanc.id}">Editar/Analisar</button>
-            </td>
           `;
           tbody.appendChild(tr);
         });
@@ -266,9 +264,7 @@ export async function renderFinanceiroAnaliseDashboard() {
     }
   }
 
-  /**
-   * Inicializa o plugin DataTables na tabela de análise.
-   */
+  // Inicializa o DataTables
   function initializeDataTable() {
     if (window.jQuery && $.fn.DataTable) {
       if ($.fn.DataTable.isDataTable("#analiseTable")) {
@@ -293,7 +289,28 @@ export async function renderFinanceiroAnaliseDashboard() {
     }
   }
 
-  // Abre o modal de edição para o lançamento selecionado e popula os campos do JSONB "dados"
+  // Processa decisão imediata (sem edição)
+  async function processImmediateDecision(decision, lancamento) {
+    if (!AuthService.user) {
+      alert("Usuário não autenticado. Por favor, faça login novamente.");
+      return;
+    }
+    const dadosLanc = lancamento.dados || {};
+    const atualizacoes = {
+      ...dadosLanc,
+      status: decision === 'aprovar' ? 'Aprovado' : 'Rejeitado',
+      data_analise: new Date().toISOString()
+    };
+    try {
+      await updateLancamento(AuthService, lancamento.id, atualizacoes);
+      loadDashboardData();
+    } catch (error) {
+      console.error("Erro ao processar a decisão imediata:", error);
+      alert("Erro ao processar a decisão: " + error.message);
+    }
+  }
+
+  // Abre o modal de edição para aprovação com alterações
   function openModal(lancamento) {
     const modal = new bootstrap.Modal(document.getElementById('analiseModal'));
     document.getElementById('lancamentoId').value = lancamento.id;
@@ -306,30 +323,24 @@ export async function renderFinanceiroAnaliseDashboard() {
     document.getElementById('fornecedor').value = dados.fornecedor || '';
     document.getElementById('numeroDocumento').value = dados.numeroDocumento || '';
     document.getElementById('tipoDocumento').value = dados.tipoDocumento || '';
-    // Se os campos de data estiverem em formato ISO, converta para formato yyyy-MM-dd para input type date
     document.getElementById('dataEmissao').value = dados.dataEmissao ? new Date(dados.dataEmissao).toISOString().split('T')[0] : '';
     document.getElementById('vencimento').value = dados.vencimento ? new Date(dados.vencimento).toISOString().split('T')[0] : '';
     document.getElementById('centro_custo').value = dados.centro_custo || '';
     document.getElementById('projeto').value = dados.projeto || '';
     document.getElementById('status').value = dados.status || '';
     document.getElementById('observacao').value = dados.observacao || '';
-    // Exibe os anexos
     document.getElementById('anexos').innerHTML = formatAnexos(lancamento.anexos);
-    // Limpa o comentário do analista
     document.getElementById('comentarioAnalista').value = '';
     modal.show();
   }
 
-  // Processa a decisão do analista (aprovar ou rejeitar) e monta o objeto com todos os campos editados
-  async function processarDecisao(decisao) {
-    // Verifica se o usuário está autenticado
+  // Processa a decisão a partir do modal (aprovar com alterações)
+  async function processModalDecision() {
     if (!AuthService.user) {
       alert("Usuário não autenticado. Por favor, faça login novamente.");
       return;
     }
     const lancamentoId = document.getElementById('lancamentoId').value;
-    
-    // Monta o objeto atualizado com todos os campos do JSONB "dados"
     const atualizacoes = {
       uid: document.getElementById('uid').value,
       app_id: document.getElementById('app_id').value,
@@ -342,7 +353,7 @@ export async function renderFinanceiroAnaliseDashboard() {
       vencimento: document.getElementById('vencimento').value,
       centro_custo: document.getElementById('centro_custo').value,
       projeto: document.getElementById('projeto').value,
-      status: decisao === 'aprovar' ? 'Aprovado' : 'Rejeitado',
+      status: 'Aprovado',
       observacao: document.getElementById('observacao').value,
       comentario_analista: document.getElementById('comentarioAnalista').value,
       data_analise: new Date().toISOString()
@@ -350,36 +361,37 @@ export async function renderFinanceiroAnaliseDashboard() {
 
     try {
       await updateLancamento(AuthService, lancamentoId, atualizacoes);
-      // Fecha o modal
       const modal = bootstrap.Modal.getInstance(document.getElementById('analiseModal'));
       modal.hide();
-      // Recarrega os dados do dashboard
       loadDashboardData();
     } catch (error) {
-      console.error("Erro ao processar a decisão:", error);
+      console.error("Erro ao processar a decisão no modal:", error);
       alert("Erro ao processar a decisão: " + error.message);
     }
   }
 
-  // Eventos do modal para aprovação e rejeição
-  document.getElementById('btnAprovar').addEventListener('click', () => processarDecisao('aprovar'));
-  document.getElementById('btnRejeitar').addEventListener('click', () => processarDecisao('rejeitar'));
-
-  // Delegação de eventos para os botões "Editar/Analisar" na tabela
+  // Delegação de eventos para os botões na tabela usando closest para capturar o botão
   document.getElementById('analise-tabela').addEventListener('click', (e) => {
-    if (e.target && e.target.classList.contains('btn-editar')) {
-      const lancamentoId = e.target.getAttribute('data-id');
-      // Busca o lançamento completo para abrir no modal
-      listLancamentos(AuthService).then(dados => {
-        const lancamento = dados.find(l => l.id === lancamentoId);
-        if (lancamento) {
-          openModal(lancamento);
-        }
-      });
-    }
+    const button = e.target.closest('button');
+    if (!button) return;
+    const lancamentoId = button.getAttribute('data-id');
+    listLancamentos(AuthService).then(dados => {
+      const lancamento = dados.find(l => l.id === lancamentoId);
+      if (!lancamento) return;
+      if (button.classList.contains('btn-aprovar')) {
+        processImmediateDecision('aprovar', lancamento);
+      } else if (button.classList.contains('btn-rejeitar')) {
+        processImmediateDecision('rejeitar', lancamento);
+      } else if (button.classList.contains('btn-editar')) {
+        openModal(lancamento);
+      }
+    });
   });
 
-  // Monitora a autenticação para exibir a página somente se o usuário estiver logado
+  // Evento do modal para aprovação com alterações
+  document.getElementById('btnAprovarAlteracoes').addEventListener('click', processModalDecision);
+
+  // Monitorar autenticação
   AuthService.onAuthChange((user) => {
     if (user) {
       loadDashboardData();

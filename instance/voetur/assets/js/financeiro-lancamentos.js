@@ -141,7 +141,7 @@ export async function renderFinanceiroLancamentos() {
               <!-- 11. Inserir Anexo (Upload) - Permite múltiplos anexos -->
               <div class="mb-3">
                 <label for="arquivo" class="form-label">Inserir Anexo</label>
-                <input type="file" class="form-control" id="arquivo" accept="image/*" capture="environment" multiple>
+                <input type="file" class="form-control" id="arquivo" accept="image/*" multiple>
               </div>
               <button type="submit" class="btn btn-primary">Criar Lançamento</button>
             </form>
@@ -235,7 +235,6 @@ export async function renderFinanceiroLancamentos() {
     // Processa o upload de múltiplos anexos
     try {
       const files = Array.from(arquivoInput.files);
-      // Verifica novamente se há pelo menos um arquivo
       if (files.length === 0) {
         throw new Error("É necessário enviar pelo menos um anexo.");
       }
@@ -269,7 +268,6 @@ export async function renderFinanceiroLancamentos() {
 
     try {
       const result = await createLancamento(AuthService, payload);
-      // Validação de integridade da resposta da API
       if (!result || !result.id) {
         throw new Error("A resposta da API não contém os dados esperados.");
       }

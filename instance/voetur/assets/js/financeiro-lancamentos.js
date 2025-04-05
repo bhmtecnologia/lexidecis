@@ -10,7 +10,7 @@
 
 import { registerRoute } from "./router.js";
 import AuthService, { auth, db, analytics } from "./auth.js";
-import { createLancamento, uploadArquivo, listCentrosCustos } from "./api.js";
+import { createLancamento, uploadArquivo, listCentrosCustos, listProjetos, listFiliais, listFornecedores } from "./api.js";
 
 export async function renderFinanceiroLancamentos() {
   const content = document.getElementById('content');
@@ -42,23 +42,21 @@ export async function renderFinanceiroLancamentos() {
         <div class="card">
           <div class="card-body">
             <form id="lancamentoForm">
-              <!-- 1. Filial (Lista Suspensa) -->
+              <!-- 1. Filial (Input com Datalist) -->
               <div class="mb-3">
-                <label for="filial" class="form-label">Filial</label>
-                <select class="form-select" id="filial" required>
+                <label for="filialInput" class="form-label">Filial</label>
+                <input class="form-control" id="filialInput" list="filialOptions" placeholder="Digite ou escolha uma filial" required>
+                <datalist id="filialOptions">
                   <option value="">Selecione</option>
-                  <option value="Filial 1">Filial 1</option>
-                  <option value="Filial 2">Filial 2</option>
-                </select>
+                </datalist>
               </div>
-              <!-- 2. Fornecedor (Lista Suspensa) -->
+              <!-- 2. Fornecedor (Input com Datalist) -->
               <div class="mb-3">
-                <label for="fornecedor" class="form-label">Fornecedor</label>
-                <select class="form-select" id="fornecedor" required>
+                <label for="fornecedorInput" class="form-label">Fornecedor</label>
+                <input class="form-control" id="fornecedorInput" list="fornecedorOptions" placeholder="Digite ou escolha um fornecedor" required>
+                <datalist id="fornecedorOptions">
                   <option value="">Selecione</option>
-                  <option value="Fornecedor 1">Fornecedor 1</option>
-                  <option value="Fornecedor 2">Fornecedor 2</option>
-                </select>
+                </datalist>
               </div>
               <!-- 3. N° Documento (Campo de Texto) -->
               <div class="mb-3">
@@ -100,15 +98,13 @@ export async function renderFinanceiroLancamentos() {
                   <option value="">Selecione</option>
                 </datalist>
               </div>
-              <!-- 9. Projeto (Lista Suspensa) -->
+              <!-- 9. Projeto (Input com Datalist) -->
               <div class="mb-3">
-                <label for="projeto" class="form-label">Projeto</label>
-                <select class="form-select" id="projeto" required>
+                <label for="projetoInput" class="form-label">Projeto</label>
+                <input class="form-control" id="projetoInput" list="projetoOptions" placeholder="Digite ou escolha um projeto" required>
+                <datalist id="projetoOptions">
                   <option value="">Selecione</option>
-                  <option value="Projeto A">Projeto A</option>
-                  <option value="Projeto B">Projeto B</option>
-                  <option value="Projeto C">Projeto C</option>
-                </select>
+                </datalist>
               </div>
               <!-- 10. Observação (Campo Aberto com 3 linhas) -->
               <div class="mb-3">
@@ -143,17 +139,42 @@ export async function renderFinanceiroLancamentos() {
     submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processando...`;
 
     // Coleta dos valores do formulário
-    const filial = document.getElementById('filial').value.trim();
-    const fornecedor = document.getElementById('fornecedor').value.trim();
+    const filialInputValue = document.getElementById('filialInput').value.trim();
+    let filial = '';
+    if (window.filiaisData && window.filiaisData.length > 0) {
+      const filialSelecionada = window.filiaisData.find(fil => fil.nome.toLowerCase() === filialInputValue.toLowerCase());
+      if (filialSelecionada) {
+        filial = filialSelecionada.uuid;
+      } else {
+        errors.push('Filial inválida ou não encontrada');
+      }
+    } else {
+      errors.push('Filiais não carregadas');
+    }
+    const fornecedorInputValue = document.getElementById('fornecedorInput').value.trim();
+    let fornecedor = '';
+    if (window.fornecedoresData && window.fornecedoresData.length > 0) {
+      const fornecedorSelecionado = window.fornecedoresData.find(forn => 
+        forn.nome.toLowerCase() === fornecedorInputValue.toLowerCase() ||
+        forn.cnpj.replace(/[\.\-\/\s]/g, "").toLowerCase() === fornecedorInputValue.replace(/[\.\-\/\s]/g, "").toLowerCase()
+      );
+      if (fornecedorSelecionado) {
+        fornecedor = fornecedorSelecionado.uuid;
+      } else {
+        errors.push('Fornecedor inválido ou não encontrado');
+      }
+    } else {
+      errors.push('Fornecedores não carregados');
+    }
     const numeroDocumento = document.getElementById('numeroDocumento').value.trim();
     const tipoDocumento = document.getElementById('tipoDocumento').value;
     const dataEmissao = document.getElementById('dataEmissao').value;
     const valor = document.getElementById('valor').value.trim();
     const vencimento = document.getElementById('vencimento').value;
-    const centroCustoInput = document.getElementById('centroCustoInput').value.trim();
+    const centroCustoInputValue = document.getElementById('centroCustoInput').value.trim();
     let centroCusto = '';
     if (window.centrosData && window.centrosData.length > 0) {
-      const centroSelecionado = window.centrosData.find(centro => centro.nome.toLowerCase() === centroCustoInput.toLowerCase());
+      const centroSelecionado = window.centrosData.find(centro => centro.nome.toLowerCase() === centroCustoInputValue.toLowerCase());
       if (centroSelecionado) {
         centroCusto = centroSelecionado.uuid;
       } else {
@@ -162,21 +183,32 @@ export async function renderFinanceiroLancamentos() {
     } else {
       errors.push('Centros de Custo não carregados');
     }
-    const projeto = document.getElementById('projeto').value;
+    const projetoInputValue = document.getElementById('projetoInput').value.trim();
+    let projeto = '';
+    if (window.projetosData && window.projetosData.length > 0) {
+      const projetoSelecionado = window.projetosData.find(proj => proj.nome.toLowerCase() === projetoInputValue.toLowerCase());
+      if (projetoSelecionado) {
+        projeto = projetoSelecionado.uuid;
+      } else {
+        errors.push('Projeto inválido ou não encontrado');
+      }
+    } else {
+      errors.push('Projetos não carregados');
+    }
     const observacao = document.getElementById('observacao').value.trim();
     const arquivoInput = document.getElementById('arquivo');
 
     // Validação de campos obrigatórios com mensagens amigáveis
     let errors = [];
-    if (!filial) errors.push("Filial");
-    if (!fornecedor) errors.push("Fornecedor");
+    if (!filialInputValue) errors.push("Filial");
+    if (!fornecedorInputValue) errors.push("Fornecedor");
     if (!numeroDocumento) errors.push("N° Documento");
     if (!tipoDocumento) errors.push("Tipo de Documento");
     if (!dataEmissao) errors.push("Data de Emissão");
     if (!valor) errors.push("Valor");
-    if (!centroCustoInput) errors.push("Centro de Custo");
     if (!vencimento) errors.push("Vencimento");
-    if (!projeto) errors.push("Projeto");
+    if (!centroCustoInputValue) errors.push("Centro de Custo");
+    if (!projetoInputValue) errors.push("Projeto");
 
     // O formulário deve ter pelo menos um anexo
     if (arquivoInput.files.length === 0) {
@@ -278,13 +310,28 @@ export async function renderFinanceiroLancamentos() {
   AuthService.onAuthChange((user) => {
     if (user) {
       document.getElementById('form-section').classList.remove('d-none');
+      
+      // Popula o datalist de Filiais com dados da API
+      (async () => {
+        try {
+          const datalistFilial = document.getElementById('filialOptions');
+          datalistFilial.innerHTML = '<option value="">Selecione</option>';
+          window.filiaisData = await listFiliais(AuthService);
+          window.filiaisData.forEach(fil => {
+            const option = document.createElement('option');
+            option.value = fil.nome;
+            datalistFilial.appendChild(option);
+          });
+        } catch (error) {
+          console.error('Erro ao carregar filiais:', error);
+        }
+      })();
+      
       // Popula o datalist de Centro de Custo com dados da API
       (async () => {
         try {
           const datalist = document.getElementById('centroCustoOptions');
-          // Limpa as opções existentes, mantendo apenas a opção padrão
           datalist.innerHTML = '<option value="">Selecione</option>';
-          // Obtenha os centros e armazene em uma variável global local para uso posterior
           window.centrosData = await listCentrosCustos(AuthService);
           window.centrosData.forEach(centro => {
             const option = document.createElement('option');
@@ -293,6 +340,38 @@ export async function renderFinanceiroLancamentos() {
           });
         } catch (error) {
           console.error('Erro ao carregar centros de custo:', error);
+        }
+      })();
+      
+      // Popula o datalist de Projetos com dados da API
+      (async () => {
+        try {
+          const datalistProj = document.getElementById('projetoOptions');
+          datalistProj.innerHTML = '<option value="">Selecione</option>';
+          window.projetosData = await listProjetos(AuthService);
+          window.projetosData.forEach(proj => {
+            const option = document.createElement('option');
+            option.value = proj.nome;
+            datalistProj.appendChild(option);
+          });
+        } catch (error) {
+          console.error('Erro ao carregar projetos:', error);
+        }
+      })();
+      
+      // Popula o datalist de Fornecedores com dados da API
+      (async () => {
+        try {
+          const datalistFornecedores = document.getElementById('fornecedorOptions');
+          datalistFornecedores.innerHTML = '<option value="">Selecione</option>';
+          window.fornecedoresData = await listFornecedores(AuthService);
+          window.fornecedoresData.forEach(forn => {
+            const option = document.createElement('option');
+            option.value = forn.nome;
+            datalistFornecedores.appendChild(option);
+          });
+        } catch (error) {
+          console.error('Erro ao carregar fornecedores:', error);
         }
       })();
     } else {

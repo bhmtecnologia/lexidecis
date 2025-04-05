@@ -203,3 +203,88 @@ export async function listCentrosCustos(AuthService) {
 
   return await response.json();
 }
+
+/**
+ * Lista os projetos.
+ *
+ * @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
+ * @returns {Promise<Array>} - Array com os projetos.
+ * @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro na API.
+ */
+export async function listProjetos(AuthService) {
+  const user = AuthService.user;
+  if (!user) throw new Error("Usuário não autenticado");
+  const token = await user.getIdToken();
+
+  const response = await fetch('https://webhook.power.tec.br/webhook/voetur/v1/projetos', {
+    method: "GET",
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error("Erro ao listar projetos: " + errorText);
+  }
+
+  return await response.json();
+}
+
+
+/**
+ * Lista as filiais.
+ *
+ * @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
+ * @returns {Promise<Array>} - Array com as filiais.
+ * @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro na API.
+ */
+export async function listFiliais(AuthService) {
+  const user = AuthService.user;
+  if (!user) throw new Error("Usuário não autenticado");
+  const token = await user.getIdToken();
+
+  const response = await fetch('https://webhook.power.tec.br/webhook/voetur/v1/filiais', {
+    method: "GET",
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error("Erro ao listar filiais: " + errorText);
+  }
+
+  return await response.json();
+}
+
+/**
+ * Lista os fornecedores.
+ *
+ * @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
+ * @returns {Promise<Array>} - Array com os fornecedores.
+ * @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro na API.
+ */
+export async function listFornecedores(AuthService) {
+  const user = AuthService.user;
+  if (!user) throw new Error("Usuário não autenticado");
+  const token = await user.getIdToken();
+
+  const response = await fetch('https://webhook.power.tec.br/webhook/voetur/v1/fornecedores', {
+    method: "GET",
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error("Erro ao listar fornecedores: " + errorText);
+  }
+
+  return await response.json();
+}

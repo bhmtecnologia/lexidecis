@@ -34,144 +34,172 @@
  * @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro na API.
  */
 export async function createLancamento(AuthService, payload) {
-    const user = AuthService.user;
-    if (!user) throw new Error("Usuário não autenticado");
-    const token = await user.getIdToken();
-  
-    const response = await fetch('https://n8n.power.tec.br/webhook/voetur/v1/lancamentos', {
-      method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      },
-      body: JSON.stringify(payload)
-    });
-  
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error("Erro ao criar lançamento: " + errorText);
-    }
-  
-    return await response.json();
+  const user = AuthService.user;
+  if (!user) throw new Error("Usuário não autenticado");
+  const token = await user.getIdToken();
+
+  const response = await fetch('https://n8n.power.tec.br/webhook/voetur/v1/lancamentos', {
+    method: "POST",
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error("Erro ao criar lançamento: " + errorText);
   }
-  
-  /**
-   * Lista todos os lançamentos.
-   *
-   * @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
-   * @returns {Promise<Array>} - Array com os lançamentos.
-   * @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro na API.
-   */
-  export async function listLancamentos(AuthService) {
-    const user = AuthService.user;
-    if (!user) throw new Error("Usuário não autenticado");
-    const token = await user.getIdToken();
-  
-    const response = await fetch('https://n8n.power.tec.br/webhook/voetur/v1/lancamentos', {
-      method: "GET",
-      headers: { 
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      }
-    });
-  
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error("Erro ao listar lançamentos: " + errorText);
+
+  return await response.json();
+}
+
+/**
+* Lista todos os lançamentos.
+*
+* @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
+* @returns {Promise<Array>} - Array com os lançamentos.
+* @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro na API.
+*/
+export async function listLancamentos(AuthService) {
+  const user = AuthService.user;
+  if (!user) throw new Error("Usuário não autenticado");
+  const token = await user.getIdToken();
+
+  const response = await fetch('https://n8n.power.tec.br/webhook/voetur/v1/lancamentos', {
+    method: "GET",
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
     }
-  
-    return await response.json();
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error("Erro ao listar lançamentos: " + errorText);
   }
-  
-  /**
-   * Atualiza um lançamento existente.
-   *
-   * @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
-   * @param {string} id - Identificador do lançamento a ser atualizado.
-   * @param {Object} payload - Objeto com os dados atualizados do lançamento.
-   * @returns {Promise<Object>} - Objeto JSON do lançamento atualizado.
-   * @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro na API.
-   */
-  export async function updateLancamento(AuthService, id, payload) {
-    const user = AuthService.user;
-    if (!user) throw new Error("Usuário não autenticado");
-    const token = await user.getIdToken();
-  
-    const response = await fetch(`https://n8n.power.tec.br/webhook-test/voetur/v1/lancamentos/${id}`, {
-      method: "PUT",
-      headers: { 
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      },
-      body: JSON.stringify(payload)
-    });
-  
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error("Erro ao atualizar lançamento: " + errorText);
+
+  return await response.json();
+}
+
+/**
+* Atualiza um lançamento existente.
+*
+* @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
+* @param {string} id - Identificador do lançamento a ser atualizado.
+* @param {Object} payload - Objeto com os dados atualizados do lançamento.
+* @returns {Promise<Object>} - Objeto JSON do lançamento atualizado.
+* @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro na API.
+*/
+export async function updateLancamento(AuthService, id, payload) {
+  const user = AuthService.user;
+  if (!user) throw new Error("Usuário não autenticado");
+  const token = await user.getIdToken();
+
+  const response = await fetch(`https://n8n.power.tec.br/webhook-test/voetur/v1/lancamentos/${id}`, {
+    method: "PUT",
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error("Erro ao atualizar lançamento: " + errorText);
+  }
+
+  return await response.json();
+}
+
+/**
+* Exclui um lançamento.
+*
+* @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
+* @param {string} id - Identificador do lançamento a ser excluído.
+* @returns {Promise<Object>} - Objeto JSON com a resposta da API.
+* @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro na API.
+*/
+export async function deleteLancamento(AuthService, id) {
+  const user = AuthService.user;
+  if (!user) throw new Error("Usuário não autenticado");
+  const token = await user.getIdToken();
+
+  const response = await fetch(`https://n8n.power.tec.br/webhook-test/voetur/v1/lancamentos/${id}`, {
+    method: "DELETE",
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
     }
-  
-    return await response.json();
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error("Erro ao excluir lançamento: " + errorText);
   }
-  
-  /**
-   * Exclui um lançamento.
-   *
-   * @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
-   * @param {string} id - Identificador do lançamento a ser excluído.
-   * @returns {Promise<Object>} - Objeto JSON com a resposta da API.
-   * @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro na API.
-   */
-  export async function deleteLancamento(AuthService, id) {
-    const user = AuthService.user;
-    if (!user) throw new Error("Usuário não autenticado");
-    const token = await user.getIdToken();
-  
-    const response = await fetch(`https://n8n.power.tec.br/webhook-test/voetur/v1/lancamentos/${id}`, {
-      method: "DELETE",
-      headers: { 
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      }
-    });
-  
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error("Erro ao excluir lançamento: " + errorText);
+
+  return await response.json();
+}
+
+/**
+* Faz o upload de um arquivo e retorna a URL gerada.
+*
+* @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
+* @param {File} file - Arquivo a ser enviado.
+* @returns {Promise<Object>} - Objeto JSON contendo a URL do arquivo.
+* @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro no upload.
+*/
+export async function uploadArquivo(AuthService, file) {
+  const user = AuthService.user;
+  if (!user) throw new Error("Usuário não autenticado");
+  const token = await user.getIdToken();
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch('https://n8n.power.tec.br/webhook/voetur/v1/upload', {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`
+      // Não defina o Content-Type; o navegador faz isso automaticamente ao usar FormData.
+    },
+    body: formData
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error("Erro no upload do arquivo: " + errorText);
+  }
+
+  return await response.json();
+}
+
+/**
+* Lista os centros de custos.
+*
+* @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
+* @returns {Promise<Array>} - Array com os centros de custos.
+* @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro na API.
+*/
+export async function listCentrosCustos(AuthService) {
+  const user = AuthService.user;
+  if (!user) throw new Error("Usuário não autenticado");
+  const token = await user.getIdToken();
+
+  const response = await fetch('https://webhook.power.tec.br/webhook/voetur/v1/centros-de-custos', {
+    method: "GET",
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
     }
-  
-    return await response.json();
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error("Erro ao listar centros de custos: " + errorText);
   }
-  
-  /**
-   * Faz o upload de um arquivo e retorna a URL gerada.
-   *
-   * @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
-   * @param {File} file - Arquivo a ser enviado.
-   * @returns {Promise<Object>} - Objeto JSON contendo a URL do arquivo.
-   * @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro no upload.
-   */
-  export async function uploadArquivo(AuthService, file) {
-    const user = AuthService.user;
-    if (!user) throw new Error("Usuário não autenticado");
-    const token = await user.getIdToken();
-  
-    const formData = new FormData();
-    formData.append('file', file);
-  
-    const response = await fetch('https://n8n.power.tec.br/webhook/voetur/v1/upload', {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${token}`
-        // Não defina o Content-Type; o navegador faz isso automaticamente ao usar FormData.
-      },
-      body: formData
-    });
-  
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error("Erro no upload do arquivo: " + errorText);
-    }
-  
-    return await response.json();
-  }
+
+  return await response.json();
+}

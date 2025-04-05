@@ -10,7 +10,7 @@
 
 import { registerRoute } from "./router.js";
 import AuthService, { auth, db, analytics } from "./auth.js";
-import { createLancamento, uploadArquivo } from "./api.js";
+import { createLancamento, uploadArquivo, listCentrosCustos } from "./api.js";
 
 export async function renderFinanceiroLancamentos() {
   const content = document.getElementById('content');
@@ -92,36 +92,13 @@ export async function renderFinanceiroLancamentos() {
                 <label for="vencimento" class="form-label">Vencimento</label>
                 <input type="date" class="form-control" id="vencimento" required>
               </div>
-              <!-- 8. Centro de Custo (Lista Suspensa) -->
+              <!-- 8. Centro de Custo (Input com Datalist) -->
               <div class="mb-3">
-                <label for="centroCusto" class="form-label">Centro de Custo</label>
-                <select class="form-select" id="centroCusto" required>
+                <label for="centroCustoInput" class="form-label">Centro de Custo</label>
+                <input class="form-control" id="centroCustoInput" list="centroCustoOptions" placeholder="Digite ou escolha um centro de custo" required>
+                <datalist id="centroCustoOptions">
                   <option value="">Selecione</option>
-                  <option value="DIRETORIA_BR">DIRETORIA_BR</option>
-                  <option value="Diretoria Jurídica">Diretoria Jurídica</option>
-                  <option value="Jurídico Geral">Jurídico Geral</option>
-                  <option value="SGI">SGI</option>
-                  <option value="Compliance">Compliance</option>
-                  <option value="Diretoria Financeira">Diretoria Financeira</option>
-                  <option value="Contábil">Contábil</option>
-                  <option value="Contas a Pagar">Contas a Pagar</option>
-                  <option value="Contas a Receber / Cobrança">Contas a Receber / Cobrança</option>
-                  <option value="Suprimentos">Suprimentos</option>
-                  <option value="RH">RH</option>
-                  <option value="DP">DP</option>
-                  <option value="SESMT">SESMT</option>
-                  <option value="Infraestrutura">Infraestrutura</option>
-                  <option value="Publicidade e Comunicação">Publicidade e Comunicação</option>
-                  <option value="Licitações">Licitações</option>
-                  <option value="Comercial">Comercial</option>
-                  <option value="Faturamento Público">Faturamento Público</option>
-                  <option value="Garantia da Qualidade">Garantia da Qualidade</option>
-                  <option value="Monitoramento">Monitoramento</option>
-                  <option value="Refrigerado">Refrigerado</option>
-                  <option value="Climatizado">Climatizado</option>
-                  <option value="Terrestre">Terrestre</option>
-                  <option value="Facilities">Facilities</option>
-                </select>
+                </datalist>
               </div>
               <!-- 9. Projeto (Lista Suspensa) -->
               <div class="mb-3">
@@ -173,7 +150,18 @@ export async function renderFinanceiroLancamentos() {
     const dataEmissao = document.getElementById('dataEmissao').value;
     const valor = document.getElementById('valor').value.trim();
     const vencimento = document.getElementById('vencimento').value;
-    const centroCusto = document.getElementById('centroCusto').value;
+    const centroCustoInput = document.getElementById('centroCustoInput').value.trim();
+    let centroCusto = '';
+    if (window.centrosData && window.centrosData.length > 0) {
+      const centroSelecionado = window.centrosData.find(centro => centro.nome.toLowerCase() === centroCustoInput.toLowerCase());
+      if (centroSelecionado) {
+        centroCusto = centroSelecionado.uuid;
+      } else {
+        errors.push('Centro de Custo inválido ou não encontrado');
+      }
+    } else {
+      errors.push('Centros de Custo não carregados');
+    }
     const projeto = document.getElementById('projeto').value;
     const observacao = document.getElementById('observacao').value.trim();
     const arquivoInput = document.getElementById('arquivo');
@@ -186,8 +174,8 @@ export async function renderFinanceiroLancamentos() {
     if (!tipoDocumento) errors.push("Tipo de Documento");
     if (!dataEmissao) errors.push("Data de Emissão");
     if (!valor) errors.push("Valor");
+    if (!centroCustoInput) errors.push("Centro de Custo");
     if (!vencimento) errors.push("Vencimento");
-    if (!centroCusto) errors.push("Centro de Custo");
     if (!projeto) errors.push("Projeto");
 
     // O formulário deve ter pelo menos um anexo
@@ -290,6 +278,23 @@ export async function renderFinanceiroLancamentos() {
   AuthService.onAuthChange((user) => {
     if (user) {
       document.getElementById('form-section').classList.remove('d-none');
+      // Popula o datalist de Centro de Custo com dados da API
+      (async () => {
+        try {
+          const datalist = document.getElementById('centroCustoOptions');
+          // Limpa as opções existentes, mantendo apenas a opção padrão
+          datalist.innerHTML = '<option value="">Selecione</option>';
+          // Obtenha os centros e armazene em uma variável global local para uso posterior
+          window.centrosData = await listCentrosCustos(AuthService);
+          window.centrosData.forEach(centro => {
+            const option = document.createElement('option');
+            option.value = centro.nome;
+            datalist.appendChild(option);
+          });
+        } catch (error) {
+          console.error('Erro ao carregar centros de custo:', error);
+        }
+      })();
     } else {
       content.innerHTML = `
         <div class="container-fluid">

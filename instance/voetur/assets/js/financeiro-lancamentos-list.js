@@ -100,20 +100,25 @@ export async function renderFinanceiroLancamentosList() {
   }
 
   /**
-   * Gera um link de anexo a partir do objeto de anexo.
-   * Caso o anexo seja um array (modo antigo), gera uma lista de links.
-   * Caso seja um objeto, gera um único link.
+   * Gera os links dos anexos.
+   * Trata tanto o formato antigo (array direto) quanto o novo (objeto com propriedade "anexos").
    * @param {Object|Array} anexos - Objeto ou array de anexos.
    * @returns {string} HTML com os links dos anexos.
    */
   function formatAnexos(anexos) {
     if (!anexos) return '-';
-    if (Array.isArray(anexos) && anexos.length > 0) {
-      return anexos.map(anexo => `<a href="${anexo.url}" target="_blank">${anexo.categoria}</a>`).join(', ');
-    } else if (typeof anexos === 'object') {
+    let lista = [];
+    // Se o anexo estiver dentro de um objeto com a propriedade "anexos"
+    if (anexos.anexos && Array.isArray(anexos.anexos)) {
+      lista = anexos.anexos;
+    } else if (Array.isArray(anexos)) {
+      lista = anexos;
+    } else if (typeof anexos === 'object' && anexos.url) {
       return `<a href="${anexos.url}" target="_blank">${anexos.categoria}</a>`;
+    } else {
+      return '-';
     }
-    return '-';
+    return lista.map(anexo => `<a href="${anexo.url}" target="_blank">${anexo.categoria}</a>`).join('<br>');
   }
 
   /**

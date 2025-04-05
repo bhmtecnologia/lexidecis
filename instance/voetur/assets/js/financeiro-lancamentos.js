@@ -138,10 +138,10 @@ export async function renderFinanceiroLancamentos() {
                 <label for="observacao" class="form-label">Observação</label>
                 <textarea class="form-control" id="observacao" rows="3"></textarea>
               </div>
-              <!-- 11. Inserir Anexo (Upload) -->
+              <!-- 11. Inserir Anexo (Upload) - Permite múltiplos anexos -->
               <div class="mb-3">
                 <label for="arquivo" class="form-label">Inserir Anexo</label>
-                <input type="file" class="form-control" id="arquivo" accept="image/*" capture="environment">
+                <input type="file" class="form-control" id="arquivo" accept="image/*" capture="environment" multiple>
               </div>
               <button type="submit" class="btn btn-primary">Criar Lançamento</button>
             </form>
@@ -190,6 +190,11 @@ export async function renderFinanceiroLancamentos() {
     if (!centroCusto) errors.push("Centro de Custo");
     if (!projeto) errors.push("Projeto");
 
+    // O formulário deve ter pelo menos um anexo
+    if (arquivoInput.files.length === 0) {
+      errors.push("Pelo menos um anexo é obrigatório");
+    }
+
     // Validação de formato para campos de data e valor
     if (dataEmissao && isNaN(Date.parse(dataEmissao))) {
       errors.push("Data de Emissão inválida");
@@ -227,40 +232,39 @@ export async function renderFinanceiroLancamentos() {
       }
     };
 
-    // Se houver arquivo, processa o upload real do anexo
-    if (arquivoInput.files.length > 0) {
-      try {
-        const file = arquivoInput.files[0];
-        let uploadResponse = await uploadArquivo(AuthService, file);
-
-        if (typeof uploadResponse === 'string') {
-          uploadResponse = JSON.parse(uploadResponse);
-        }
-
+    // Processa o upload de múltiplos anexos
+    try {
+      const files = Array.from(arquivoInput.files);
+      // Verifica novamente se há pelo menos um arquivo
+      if (files.length === 0) {
+        throw new Error("É necessário enviar pelo menos um anexo.");
+      }
+      const uploadResponses = await Promise.all(files.map(file => uploadArquivo(AuthService, file)));
+      let anexosArray = [];
+      for (const uploadResponse of uploadResponses) {
+        let parsedResponse = typeof uploadResponse === 'string' ? JSON.parse(uploadResponse) : uploadResponse;
         let uploadData;
-        if (Array.isArray(uploadResponse) && uploadResponse.length > 0 && uploadResponse[0].data) {
-          uploadData = uploadResponse[0].data;
-        } else if (uploadResponse.data) {
-          uploadData = uploadResponse.data;
+        if (Array.isArray(parsedResponse) && parsedResponse.length > 0 && parsedResponse[0].data) {
+          uploadData = parsedResponse[0].data;
+        } else if (parsedResponse.data) {
+          uploadData = parsedResponse.data;
         }
-
         if (!uploadData) {
           throw new Error("Resposta de upload inválida");
         }
-
         const responseData = JSON.parse(uploadData);
         const filename = responseData.filename;
-        const url = `${filename}`;
-        payload.anexo = {
-          url: url,
+        anexosArray.push({
+          url: filename,
           categoria: "comprovante"
-        };
-      } catch (uploadError) {
-        formError.innerHTML = `<div class="alert alert-danger">Erro ao fazer upload do arquivo: ${uploadError.message}</div>`;
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalBtnText;
-        return;
+        });
       }
+      payload.anexo = anexosArray;
+    } catch (uploadError) {
+      formError.innerHTML = `<div class="alert alert-danger">Erro ao fazer upload dos anexos: ${uploadError.message}</div>`;
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalBtnText;
+      return;
     }
 
     try {

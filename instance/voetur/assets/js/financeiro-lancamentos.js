@@ -8,6 +8,12 @@
  * API de lançamento utilizada: https://n8n.power.tec.br/webhook-test/voetur/v1/lancamentos
  */
 
+// Função centralizada para tratamento de erros
+function handleError(error, context = 'Erro') {
+  console.error(`[${context}]`, error);
+  return error.message || 'Ocorreu um erro inesperado';
+}
+
 import { registerRoute } from "./router.js";
 import AuthService, { auth, db, analytics } from "./auth.js";
 import { createLancamento, uploadArquivo, listCentrosCustos, listProjetos, listFiliais, listFornecedores } from "./api.js";
@@ -45,7 +51,7 @@ export async function renderFinanceiroLancamentos() {
               <!-- 1. Filial (Input com Datalist) -->
               <div class="mb-3">
                 <label for="filialInput" class="form-label">Filial</label>
-                <input class="form-control" id="filialInput" list="filialOptions" placeholder="Digite ou escolha uma filial" required>
+                <input class="form-control" id="filialInput" list="filialOptions" placeholder="Digite ou escolha uma filial" required aria-required="true">
                 <datalist id="filialOptions">
                   <option value="">Selecione</option>
                 </datalist>
@@ -53,7 +59,7 @@ export async function renderFinanceiroLancamentos() {
               <!-- 2. Fornecedor (Input com Datalist) -->
               <div class="mb-3">
                 <label for="fornecedorInput" class="form-label">Fornecedor</label>
-                <input class="form-control" id="fornecedorInput" list="fornecedorOptions" placeholder="Digite ou escolha um fornecedor" required>
+                <input class="form-control" id="fornecedorInput" list="fornecedorOptions" placeholder="Digite ou escolha um fornecedor" required aria-required="true">
                 <datalist id="fornecedorOptions">
                   <option value="">Selecione</option>
                 </datalist>
@@ -61,12 +67,12 @@ export async function renderFinanceiroLancamentos() {
               <!-- 3. N° Documento (Campo de Texto) -->
               <div class="mb-3">
                 <label for="numeroDocumento" class="form-label">N° Documento</label>
-                <input type="text" class="form-control" id="numeroDocumento" placeholder="Digite o número do documento" required>
+                <input type="text" class="form-control" id="numeroDocumento" placeholder="Digite o número do documento" required aria-required="true">
               </div>
               <!-- 4. Tipo de Documento (Lista Suspensa) -->
               <div class="mb-3">
                 <label for="tipoDocumento" class="form-label">Tipo de Documento</label>
-                <select class="form-select" id="tipoDocumento" required>
+                <select class="form-select" id="tipoDocumento" required aria-required="true">
                   <option value="">Selecione</option>
                   <option value="Nota Fiscal">Nota Fiscal</option>
                   <option value="Fatura">Fatura</option>
@@ -78,22 +84,22 @@ export async function renderFinanceiroLancamentos() {
               <!-- 5. Data de Emissão (Seleção de Data) -->
               <div class="mb-3">
                 <label for="dataEmissao" class="form-label">Data de Emissão</label>
-                <input type="date" class="form-control" id="dataEmissao" required>
+                <input type="date" class="form-control" id="dataEmissao" required aria-required="true">
               </div>
               <!-- 6. Valor (Número com máscara financeira) -->
               <div class="mb-3">
                 <label for="valor" class="form-label">Valor</label>
-                <input type="number" step="0.01" class="form-control" id="valor" placeholder="0.00" required>
+                <input type="number" step="0.01" class="form-control" id="valor" placeholder="0.00" required aria-required="true">
               </div>
               <!-- 7. Vencimento (Seleção de Data) -->
               <div class="mb-3">
                 <label for="vencimento" class="form-label">Vencimento</label>
-                <input type="date" class="form-control" id="vencimento" required>
+                <input type="date" class="form-control" id="vencimento" required aria-required="true">
               </div>
               <!-- 8. Centro de Custo (Input com Datalist) -->
               <div class="mb-3">
                 <label for="centroCustoInput" class="form-label">Centro de Custo</label>
-                <input class="form-control" id="centroCustoInput" list="centroCustoOptions" placeholder="Digite ou escolha um centro de custo" required>
+                <input class="form-control" id="centroCustoInput" list="centroCustoOptions" placeholder="Digite ou escolha um centro de custo" required aria-required="true">
                 <datalist id="centroCustoOptions">
                   <option value="">Selecione</option>
                 </datalist>
@@ -101,7 +107,7 @@ export async function renderFinanceiroLancamentos() {
               <!-- 9. Projeto (Input com Datalist) -->
               <div class="mb-3">
                 <label for="projetoInput" class="form-label">Projeto</label>
-                <input class="form-control" id="projetoInput" list="projetoOptions" placeholder="Digite ou escolha um projeto" required>
+                <input class="form-control" id="projetoInput" list="projetoOptions" placeholder="Digite ou escolha um projeto" required aria-required="true">
                 <datalist id="projetoOptions">
                   <option value="">Selecione</option>
                 </datalist>
@@ -118,7 +124,7 @@ export async function renderFinanceiroLancamentos() {
               </div>
               <button type="submit" class="btn btn-primary">Criar Lançamento</button>
             </form>
-            <div id="formError" class="mt-2"></div>
+            <div id="formError" class="mt-2" role="alert" aria-live="assertive"></div>
           </div>
         </div>
       </div>
@@ -137,6 +143,9 @@ export async function renderFinanceiroLancamentos() {
     submitBtn.disabled = true;
     const originalBtnText = submitBtn.innerHTML;
     submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processando...`;
+
+    // Cria um array para armazenar erros
+    let errors = [];
 
     // Coleta dos valores do formulário
     const filialInputValue = document.getElementById('filialInput').value.trim();
@@ -199,7 +208,6 @@ export async function renderFinanceiroLancamentos() {
     const arquivoInput = document.getElementById('arquivo');
 
     // Validação de campos obrigatórios com mensagens amigáveis
-    let errors = [];
     if (!filialInputValue) errors.push("Filial");
     if (!fornecedorInputValue) errors.push("Fornecedor");
     if (!numeroDocumento) errors.push("N° Documento");
@@ -233,6 +241,15 @@ export async function renderFinanceiroLancamentos() {
 
     if (errors.length > 0) {
       formError.innerHTML = `<div class="alert alert-danger"><strong>Por favor, corrija os seguintes campos:</strong><ul>${errors.map(err => `<li>${err}</li>`).join('')}</ul></div>`;
+      // Foca no primeiro campo vazio
+      const fields = ["filialInput", "fornecedorInput", "numeroDocumento", "tipoDocumento", "dataEmissao", "valor", "vencimento", "centroCustoInput", "projetoInput"];
+      for (let fieldId of fields) {
+        const field = document.getElementById(fieldId);
+        if (field && !field.value.trim()) {
+          field.focus();
+          break;
+        }
+      }
       submitBtn.disabled = false;
       submitBtn.innerHTML = originalBtnText;
       return;
@@ -285,7 +302,7 @@ export async function renderFinanceiroLancamentos() {
       }
       payload.anexo = anexosArray;
     } catch (uploadError) {
-      formError.innerHTML = `<div class="alert alert-danger">Erro ao fazer upload dos anexos: ${uploadError.message}</div>`;
+      formError.innerHTML = `<div class="alert alert-danger">Erro ao fazer upload dos anexos: ${handleError(uploadError, "Upload")}</div>`;
       submitBtn.disabled = false;
       submitBtn.innerHTML = originalBtnText;
       return;
@@ -299,8 +316,7 @@ export async function renderFinanceiroLancamentos() {
       alert("Lançamento criado com sucesso! ID: " + result.id);
       lancamentoForm.reset();
     } catch (error) {
-      console.error("Erro ao criar lançamento:", error);
-      formError.innerHTML = `<div class="alert alert-danger">Erro ao criar lançamento: ${error.message}</div>`;
+      formError.innerHTML = `<div class="alert alert-danger">Erro ao criar lançamento: ${handleError(error, "CreateLancamento")}</div>`;
     } finally {
       submitBtn.disabled = false;
       submitBtn.innerHTML = originalBtnText;
@@ -323,7 +339,7 @@ export async function renderFinanceiroLancamentos() {
             datalistFilial.appendChild(option);
           });
         } catch (error) {
-          console.error('Erro ao carregar filiais:', error);
+          console.error('Erro ao carregar filiais:', handleError(error, "Filiais"));
         }
       })();
       
@@ -339,7 +355,7 @@ export async function renderFinanceiroLancamentos() {
             datalist.appendChild(option);
           });
         } catch (error) {
-          console.error('Erro ao carregar centros de custo:', error);
+          console.error('Erro ao carregar centros de custo:', handleError(error, "Centros de Custo"));
         }
       })();
       
@@ -355,7 +371,7 @@ export async function renderFinanceiroLancamentos() {
             datalistProj.appendChild(option);
           });
         } catch (error) {
-          console.error('Erro ao carregar projetos:', error);
+          console.error('Erro ao carregar projetos:', handleError(error, "Projetos"));
         }
       })();
       
@@ -371,7 +387,7 @@ export async function renderFinanceiroLancamentos() {
             datalistFornecedores.appendChild(option);
           });
         } catch (error) {
-          console.error('Erro ao carregar fornecedores:', error);
+          console.error('Erro ao carregar fornecedores:', handleError(error, "Fornecedores"));
         }
       })();
     } else {

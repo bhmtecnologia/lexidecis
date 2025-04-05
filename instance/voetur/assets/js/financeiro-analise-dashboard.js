@@ -6,7 +6,34 @@
 
 import { registerRoute } from "./router.js";
 import AuthService, { auth, db, analytics } from "./auth.js";
-import { listLancamentos, updateLancamento } from "./api.js"; // updateLancamento deve tratar a atualização do lançamento no backend
+import { listLancamentos, updateLancamento, listFiliais, listFornecedores, listProjetos, listCentrosCustos } from "./api.js";
+
+// Funções utilitárias para formatação
+function formatDate(dateStr) {
+  if (!dateStr) return '-';
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+}
+
+function formatCurrency(value) {
+  if (isNaN(value)) return '-';
+  return parseFloat(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function formatAnexos(anexos) {
+  if (!anexos) return '-';
+  let lista = [];
+  if (anexos.anexos && Array.isArray(anexos.anexos)) {
+    lista = anexos.anexos;
+  } else if (Array.isArray(anexos)) {
+    lista = anexos;
+  } else if (typeof anexos === 'object' && anexos.url) {
+    return `<a href="${anexos.url}" target="_blank">${anexos.categoria || 'Anexo'}</a>`;
+  } else {
+    return '-';
+  }
+  return lista.map(anexo => `<a href="${anexo.url}" target="_blank">${anexo.categoria || 'Anexo'}</a>`).join('<br>');
+}
 
 export async function renderFinanceiroAnaliseDashboard() {
   const content = document.getElementById('content');
@@ -92,7 +119,6 @@ export async function renderFinanceiroAnaliseDashboard() {
       <!-- Modal de Edição (para aprovação com alterações) -->
       <div class="modal fade" id="analiseModal" tabindex="-1" aria-labelledby="analiseModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
-          <!-- A classe "modal-custom" deve existir no CSS da aplicação -->
           <div class="modal-content modal-custom">
             <div class="modal-header">
               <h5 class="modal-title" id="analiseModalLabel">Editar Lançamento</h5>
@@ -118,9 +144,13 @@ export async function renderFinanceiroAnaliseDashboard() {
                   <label for="filial" class="form-label">Filial</label>
                   <input type="text" class="form-control" id="filial">
                 </div>
+                <!-- Atualizado: Fornecedor com input e datalist para edição -->
                 <div class="mb-3">
-                  <label for="fornecedor" class="form-label">Fornecedor</label>
-                  <input type="text" class="form-control" id="fornecedor">
+                  <label for="fornecedorEdit" class="form-label">Fornecedor</label>
+                  <input type="text" class="form-control" id="fornecedorEdit" list="fornecedorOptionsEdit" placeholder="Digite ou escolha um fornecedor" required>
+                  <datalist id="fornecedorOptionsEdit">
+                    <option value="">Selecione</option>
+                  </datalist>
                 </div>
                 <div class="mb-3">
                   <label for="numeroDocumento" class="form-label">N° Documento</label>
@@ -180,91 +210,7 @@ export async function renderFinanceiroAnaliseDashboard() {
     </div>
   `;
 
-  // Função para formatar datas
-  function formatDate(dateStr) {
-    if (!dateStr) return '-';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
-  }
-
-  // Função para formatar valores numéricos
-  function formatCurrency(value) {
-    if (isNaN(value)) return '-';
-    return parseFloat(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  }
-
-  // Função para gerar links dos anexos
-  function formatAnexos(anexos) {
-    if (!anexos) return '-';
-    let lista = [];
-    if (anexos.anexos && Array.isArray(anexos.anexos)) {
-      lista = anexos.anexos;
-    } else if (Array.isArray(anexos)) {
-      lista = anexos;
-    } else if (typeof anexos === 'object' && anexos.url) {
-      return `<a href="${anexos.url}" target="_blank">${anexos.categoria || 'Anexo'}</a>`;
-    } else {
-      return '-';
-    }
-    return lista.map(anexo => `<a href="${anexo.url}" target="_blank">${anexos.categoria || 'Anexo'}</a>`).join('<br>');
-  }
-
-  // Carrega os dados e atualiza o dashboard
-  async function loadDashboardData() {
-    try {
-      const dados = await listLancamentos(AuthService);
-      const pendentes = dados.filter(l => l.dados.status && l.dados.status.toLowerCase() === 'pendente');
-      const aprovados = dados.filter(l => l.dados.status && l.dados.status.toLowerCase() === 'aprovado');
-      const rejeitados = dados.filter(l => l.dados.status && l.dados.status.toLowerCase() === 'rejeitado');
-
-      document.getElementById('total-pendentes').textContent = pendentes.length;
-      document.getElementById('total-aprovado').textContent = 'R$ ' + aprovados.reduce((acc, cur) => acc + (parseFloat(cur.dados.valor) || 0), 0).toFixed(2);
-      document.getElementById('total-rejeitado').textContent = 'R$ ' + rejeitados.reduce((acc, cur) => acc + (parseFloat(cur.dados.valor) || 0), 0).toFixed(2);
-
-      const tbody = document.getElementById('analise-tabela');
-      tbody.innerHTML = '';
-
-      if (pendentes.length > 0) {
-        pendentes.forEach(lanc => {
-          const dadosLanc = lanc.dados || {};
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>
-              <div style="display: inline-flex; gap: 4px;">
-                <button class="btn btn-sm btn-aprovar" data-id="${lanc.id}" title="Aprovar" style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724;">
-                  <i class="bi bi-check-lg"></i>
-                </button>
-                <button class="btn btn-sm btn-rejeitar" data-id="${lanc.id}" title="Rejeitar" style="background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24;">
-                  <i class="bi bi-x-lg"></i>
-                </button>
-                <button class="btn btn-sm btn-editar" data-id="${lanc.id}" title="Editar" style="background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404;">
-                  <i class="bi bi-pencil-square"></i>
-                </button>
-              </div>
-            </td>
-            <td>${lanc.id || '-'}</td>
-            <td>${dadosLanc.uid || '-'}</td>
-            <td>${dadosLanc.filial || '-'}</td>
-            <td>${dadosLanc.fornecedor || '-'}</td>
-            <td>${dadosLanc.numeroDocumento || '-'}</td>
-            <td>${dadosLanc.tipoDocumento || '-'}</td>
-            <td>${dadosLanc.dataEmissao ? formatDate(dadosLanc.dataEmissao) : '-'}</td>
-            <td>${dadosLanc.valor ? formatCurrency(dadosLanc.valor) : '-'}</td>
-            <td>${dadosLanc.status || '-'}</td>
-            <td>${formatAnexos(lanc.anexos)}</td>
-          `;
-          tbody.appendChild(tr);
-        });
-      }
-      initializeDataTable();
-    } catch (error) {
-      console.error("Erro ao carregar dados para análise:", error);
-      const tbody = document.getElementById('analise-tabela');
-      tbody.innerHTML = '<tr><td colspan="11">Erro ao carregar os dados.</td></tr>';
-    }
-  }
-
-  // Inicializa o DataTables
+  // Função para inicializar o DataTable
   function initializeDataTable() {
     if (window.jQuery && $.fn.DataTable) {
       if ($.fn.DataTable.isDataTable("#analiseTable")) {
@@ -276,9 +222,7 @@ export async function renderFinanceiroAnaliseDashboard() {
         ordering: true,
         paging: true,
         dom: 'lBfrtip',
-        buttons: [
-          'copy', 'excel', 'csv', 'pdf'
-        ],
+        buttons: ['copy', 'excel', 'csv', 'pdf'],
         language: {
           url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json",
           emptyTable: "Nenhum lançamento pendente para análise."
@@ -289,7 +233,141 @@ export async function renderFinanceiroAnaliseDashboard() {
     }
   }
 
-  // Processa decisão imediata (sem edição)
+  // Função que carrega os dados de mapeamento e atualiza a tabela
+  async function loadDashboardData() {
+    try {
+      // Carrega os dados de mapeamento
+      const [filiais, fornecedores, projetos, centros] = await Promise.all([
+        listFiliais(AuthService),
+        listFornecedores(AuthService),
+        listProjetos(AuthService),
+        listCentrosCustos(AuthService)
+      ]);
+      window.filiaisData = filiais;
+      window.fornecedoresData = fornecedores;
+      window.projetosData = projetos;
+      window.centrosData = centros;
+
+      // Popula o datalist de Fornecedores do modal com os mesmos dados
+      const datalistFornecedoresEdit = document.getElementById('fornecedorOptionsEdit');
+      if (datalistFornecedoresEdit) {
+        datalistFornecedoresEdit.innerHTML = '<option value="">Selecione</option>';
+        window.fornecedoresData.forEach(forn => {
+          const option = document.createElement('option');
+          option.value = forn.nome;
+          datalistFornecedoresEdit.appendChild(option);
+        });
+      }
+
+      const dados = await listLancamentos(AuthService);
+      const pendentes = dados.filter(l => l.dados && l.dados.status && l.dados.status.toLowerCase() === 'pendente');
+
+      // Atualiza os cards resumo
+      const totalPendentes = pendentes.length;
+      const totalAprovado = dados.filter(l => l.dados && l.dados.status && l.dados.status.toLowerCase() === 'aprovado')
+        .reduce((acc, cur) => acc + (parseFloat(cur.dados.valor) || 0), 0);
+      const totalRejeitado = dados.filter(l => l.dados && l.dados.status && l.dados.status.toLowerCase() === 'rejeitado')
+        .reduce((acc, cur) => acc + (parseFloat(cur.dados.valor) || 0), 0);
+
+      document.getElementById('total-pendentes').textContent = totalPendentes;
+      document.getElementById('total-aprovado').textContent = 'R$ ' + totalAprovado.toFixed(2);
+      document.getElementById('total-rejeitado').textContent = 'R$ ' + totalRejeitado.toFixed(2);
+
+      const tbody = document.getElementById('analise-tabela');
+      tbody.innerHTML = '';
+
+      pendentes.forEach(lanc => {
+        const dadosLanc = lanc.dados || {};
+
+        // Mapeia os IDs para nomes
+        const filialObj = window.filiaisData.find(f => f.uuid === dadosLanc.filial);
+        const filialName = filialObj ? filialObj.nome : dadosLanc.filial || '-';
+
+        const fornecedorObj = window.fornecedoresData.find(f => f.uuid === dadosLanc.fornecedor);
+        const fornecedorName = fornecedorObj ? fornecedorObj.nome : dadosLanc.fornecedor || '-';
+
+        const centroObj = window.centrosData.find(c => c.uuid === dadosLanc.centro_custo);
+        const centroName = centroObj ? centroObj.nome : dadosLanc.centro_custo || '-';
+
+        const projetoObj = window.projetosData.find(p => p.uuid === dadosLanc.projeto);
+        const projetoName = projetoObj ? projetoObj.nome : dadosLanc.projeto || '-';
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>
+            <div style="display: inline-flex; gap: 4px;">
+              <button class="btn btn-sm btn-aprovar" data-id="${lanc.id}" title="Aprovar" style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724;">
+                <i class="bi bi-check-lg"></i>
+              </button>
+              <button class="btn btn-sm btn-rejeitar" data-id="${lanc.id}" title="Rejeitar" style="background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24;">
+                <i class="bi bi-x-lg"></i>
+              </button>
+              <button class="btn btn-sm btn-editar" data-id="${lanc.id}" title="Editar" style="background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404;">
+                <i class="bi bi-pencil-square"></i>
+              </button>
+            </div>
+          </td>
+          <td>${lanc.id || '-'}</td>
+          <td>${dadosLanc.uid || '-'}</td>
+          <td>${filialName}</td>
+          <td>${fornecedorName}</td>
+          <td>${dadosLanc.numeroDocumento || '-'}</td>
+          <td>${dadosLanc.tipoDocumento || '-'}</td>
+          <td>${dadosLanc.dataEmissao ? formatDate(dadosLanc.dataEmissao) : '-'}</td>
+          <td>${dadosLanc.valor ? formatCurrency(dadosLanc.valor) : '-'}</td>
+          <td>${dadosLanc.status || '-'}</td>
+          <td>${formatAnexos(lanc.anexos)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      initializeDataTable();
+    } catch (error) {
+      console.error("Erro ao carregar dados para análise:", error);
+      const tbody = document.getElementById('analise-tabela');
+      tbody.innerHTML = '<tr><td colspan="11">Erro ao carregar os dados.</td></tr>';
+    }
+  }
+
+  // Função para abrir o modal de edição
+  function openModal(lancamento) {
+    const modal = new bootstrap.Modal(document.getElementById('analiseModal'));
+    document.getElementById('lancamentoId').value = lancamento.id;
+    const dados = lancamento.dados || {};
+
+    // Mapeia os IDs para nomes para exibição
+    const filialObj = window.filiaisData.find(f => f.uuid === dados.filial);
+    const filialName = filialObj ? filialObj.nome : dados.filial || '';
+
+    const fornecedorObj = window.fornecedoresData.find(f => f.uuid === dados.fornecedor);
+    const fornecedorName = fornecedorObj ? fornecedorObj.nome : dados.fornecedor || '';
+
+    const centroObj = window.centrosData.find(c => c.uuid === dados.centro_custo);
+    const centroName = centroObj ? centroObj.nome : dados.centro_custo || '';
+
+    const projetoObj = window.projetosData.find(p => p.uuid === dados.projeto);
+    const projetoName = projetoObj ? projetoObj.nome : dados.projeto || '';
+
+    document.getElementById('uid').value = dados.uid || '';
+    document.getElementById('app_id').value = dados.app_id || '';
+    document.getElementById('valor').value = dados.valor || '';
+    document.getElementById('filial').value = filialName;
+    // Atualizado: utiliza o novo campo fornecedorEdit
+    document.getElementById('fornecedorEdit').value = fornecedorName;
+    document.getElementById('numeroDocumento').value = dados.numeroDocumento || '';
+    document.getElementById('tipoDocumento').value = dados.tipoDocumento || '';
+    document.getElementById('dataEmissao').value = dados.dataEmissao ? new Date(dados.dataEmissao).toISOString().split('T')[0] : '';
+    document.getElementById('vencimento').value = dados.vencimento ? new Date(dados.vencimento).toISOString().split('T')[0] : '';
+    document.getElementById('centro_custo').value = centroName;
+    document.getElementById('projeto').value = projetoName;
+    document.getElementById('status').value = dados.status || '';
+    document.getElementById('observacao').value = dados.observacao || '';
+    document.getElementById('anexos').innerHTML = formatAnexos(lancamento.anexos);
+    document.getElementById('comentarioAnalista').value = '';
+    modal.show();
+  }
+
+  // Processa decisão imediata (aprovar ou rejeitar sem edição)
   async function processImmediateDecision(decision, lancamento) {
     if (!AuthService.user) {
       alert("Usuário não autenticado. Por favor, faça login novamente.");
@@ -310,30 +388,6 @@ export async function renderFinanceiroAnaliseDashboard() {
     }
   }
 
-  // Abre o modal de edição para aprovação com alterações
-  function openModal(lancamento) {
-    const modal = new bootstrap.Modal(document.getElementById('analiseModal'));
-    document.getElementById('lancamentoId').value = lancamento.id;
-    const dados = lancamento.dados || {};
-
-    document.getElementById('uid').value = dados.uid || '';
-    document.getElementById('app_id').value = dados.app_id || '';
-    document.getElementById('valor').value = dados.valor || '';
-    document.getElementById('filial').value = dados.filial || '';
-    document.getElementById('fornecedor').value = dados.fornecedor || '';
-    document.getElementById('numeroDocumento').value = dados.numeroDocumento || '';
-    document.getElementById('tipoDocumento').value = dados.tipoDocumento || '';
-    document.getElementById('dataEmissao').value = dados.dataEmissao ? new Date(dados.dataEmissao).toISOString().split('T')[0] : '';
-    document.getElementById('vencimento').value = dados.vencimento ? new Date(dados.vencimento).toISOString().split('T')[0] : '';
-    document.getElementById('centro_custo').value = dados.centro_custo || '';
-    document.getElementById('projeto').value = dados.projeto || '';
-    document.getElementById('status').value = dados.status || '';
-    document.getElementById('observacao').value = dados.observacao || '';
-    document.getElementById('anexos').innerHTML = formatAnexos(lancamento.anexos);
-    document.getElementById('comentarioAnalista').value = '';
-    modal.show();
-  }
-
   // Processa a decisão a partir do modal (aprovar com alterações)
   async function processModalDecision() {
     if (!AuthService.user) {
@@ -346,7 +400,8 @@ export async function renderFinanceiroAnaliseDashboard() {
       app_id: document.getElementById('app_id').value,
       valor: document.getElementById('valor').value,
       filial: document.getElementById('filial').value,
-      fornecedor: document.getElementById('fornecedor').value,
+      // Atualizado: utiliza o campo fornecedorEdit para atualizar o fornecedor
+      fornecedor: document.getElementById('fornecedorEdit').value,
       numeroDocumento: document.getElementById('numeroDocumento').value,
       tipoDocumento: document.getElementById('tipoDocumento').value,
       dataEmissao: document.getElementById('dataEmissao').value,
@@ -370,7 +425,7 @@ export async function renderFinanceiroAnaliseDashboard() {
     }
   }
 
-  // Delegação de eventos para os botões na tabela usando closest para capturar o botão
+  // Delegação de eventos para botões na tabela
   document.getElementById('analise-tabela').addEventListener('click', (e) => {
     const button = e.target.closest('button');
     if (!button) return;
@@ -391,7 +446,7 @@ export async function renderFinanceiroAnaliseDashboard() {
   // Evento do modal para aprovação com alterações
   document.getElementById('btnAprovarAlteracoes').addEventListener('click', processModalDecision);
 
-  // Monitorar autenticação
+  // Monitora a autenticação
   AuthService.onAuthChange((user) => {
     if (user) {
       loadDashboardData();

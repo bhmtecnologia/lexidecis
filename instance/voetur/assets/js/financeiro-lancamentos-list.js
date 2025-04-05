@@ -6,7 +6,7 @@
 
 import { registerRoute } from "./router.js";
 import AuthService, { auth, db, analytics } from "./auth.js";
-import { listLancamentos } from "./api.js"; // Função para listar os lançamentos via API
+import { listLancamentos, listFiliais, listFornecedores, listProjetos, listCentrosCustos } from "./api.js";
 
 /**
  * Renderiza a tela de "Financeiro - Listagem de Lançamentos".
@@ -108,7 +108,6 @@ export async function renderFinanceiroLancamentosList() {
   function formatAnexos(anexos) {
     if (!anexos) return '-';
     let lista = [];
-    // Se o anexo estiver dentro de um objeto com a propriedade "anexos"
     if (anexos.anexos && Array.isArray(anexos.anexos)) {
       lista = anexos.anexos;
     } else if (Array.isArray(anexos)) {
@@ -126,7 +125,6 @@ export async function renderFinanceiroLancamentosList() {
    */
   function initializeDataTable() {
     if (window.jQuery && $.fn.DataTable) {
-      // Se já houver DataTable, destrói antes de reinicializar
       if ($.fn.DataTable.isDataTable("#lancamentosTable")) {
         $("#lancamentosTable").DataTable().destroy();
       }
@@ -136,14 +134,12 @@ export async function renderFinanceiroLancamentosList() {
         ordering: true,
         paging: true,
         dom: 'lBfrtip',
-        buttons: [
-          'copy', 'excel', 'csv', 'pdf'
-        ],
+        buttons: ['copy', 'excel', 'csv', 'pdf'],
         language: {
           url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json"
         },
         columnDefs: [
-          { type: 'num', targets: 5 } // Ordenação numérica na coluna de Valor
+          { type: 'num', targets: 5 }
         ]
       });
     } else {
@@ -152,31 +148,57 @@ export async function renderFinanceiroLancamentosList() {
   }
 
   /**
-   * Atualiza a tabela com os lançamentos obtidos via API.
+   * Atualiza a tabela com os lançamentos obtidos via API, substituindo os IDs pelos nomes dos campos gerenciais.
    */
   async function updateTable() {
     const overlay = document.getElementById('tableOverlay');
     overlay.classList.remove('d-none');
 
     try {
+      // Carrega os dados de mapeamento para filiais, fornecedores, projetos e centros de custo
+      const [filiais, fornecedores, projetos, centros] = await Promise.all([
+        listFiliais(AuthService),
+        listFornecedores(AuthService),
+        listProjetos(AuthService),
+        listCentrosCustos(AuthService)
+      ]);
+      window.filiaisData = filiais;
+      window.fornecedoresData = fornecedores;
+      window.projetosData = projetos;
+      window.centrosData = centros;
+
       const lancamentos = await listLancamentos(AuthService);
       const tbody = document.querySelector('#lancamentosTable tbody');
       tbody.innerHTML = '';
 
       lancamentos.forEach(lanc => {
         const dados = lanc.dados || {};
+
+        // Mapeia os IDs para os nomes correspondentes
+        const filialObj = window.filiaisData.find(f => f.uuid === dados.filial);
+        const filialName = filialObj ? filialObj.nome : dados.filial || '-';
+
+        const fornecedorObj = window.fornecedoresData.find(f => f.uuid === dados.fornecedor);
+        const fornecedorName = fornecedorObj ? fornecedorObj.nome : dados.fornecedor || '-';
+
+        const centroObj = window.centrosData.find(c => c.uuid === dados.centro_custo);
+        const centroName = centroObj ? centroObj.nome : dados.centro_custo || '-';
+
+        const projetoObj = window.projetosData.find(p => p.uuid === dados.projeto);
+        const projetoName = projetoObj ? projetoObj.nome : dados.projeto || '-';
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${lanc.id || '-'}</td>
-          <td>${dados.filial || '-'}</td>
-          <td>${dados.fornecedor || '-'}</td>
+          <td>${filialName}</td>
+          <td>${fornecedorName}</td>
           <td>${dados.numeroDocumento || '-'}</td>
           <td>${dados.tipoDocumento || '-'}</td>
           <td>${dados.dataEmissao ? formatDate(dados.dataEmissao) : '-'}</td>
           <td>${dados.valor ? formatCurrency(dados.valor) : '-'}</td>
           <td>${dados.vencimento ? formatDate(dados.vencimento) : '-'}</td>
-          <td>${dados.centro_custo || '-'}</td>
-          <td>${dados.projeto || '-'}</td>
+          <td>${centroName}</td>
+          <td>${projetoName}</td>
           <td>${dados.observacao || '-'}</td>
           <td>${formatAnexos(lanc.anexos)}</td>
           <td>${dados.status || '-'}</td>
@@ -186,7 +208,6 @@ export async function renderFinanceiroLancamentosList() {
         tbody.appendChild(tr);
       });
 
-      // Inicializa ou reinicializa o DataTable
       initializeDataTable();
     } catch (error) {
       console.error("Erro ao listar lançamentos:", error);

@@ -85,7 +85,7 @@ export async function renderFinanceiroLancamentos() {
               <!-- 6. Valor (Número com máscara financeira) -->
               <div class="mb-3">
                 <label for="valor" class="form-label">Valor</label>
-                <input type="text" class="form-control" id="valor" placeholder="0.00" required>
+                <input type="number" step="0.01" class="form-control" id="valor" placeholder="0.00" required>
               </div>
               <!-- 7. Vencimento (Seleção de Data) -->
               <div class="mb-3">
@@ -204,6 +204,11 @@ export async function renderFinanceiroLancamentos() {
     }
     if (valor && isNaN(parseFloat(valor))) {
       errors.push("Valor deve ser numérico");
+    }
+
+    // Validação para que a data de emissão não seja superior à data atual
+    if (dataEmissao && new Date(dataEmissao) > new Date()) {
+      errors.push("Data de Emissão não pode ser superior à data atual");
     }
 
     if (errors.length > 0) {

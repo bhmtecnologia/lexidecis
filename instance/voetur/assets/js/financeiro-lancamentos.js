@@ -259,7 +259,7 @@ export async function renderFinanceiroLancamentos() {
     let payload = {
       dados: {
         uid: AuthService.user.uid,
-        app_id: "empresaXYZ",
+        app_id: "empresaVTCLog",
         filial: filial,
         fornecedor: fornecedor,
         numeroDocumento: numeroDocumento,

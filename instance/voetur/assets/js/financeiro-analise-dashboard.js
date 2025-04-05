@@ -140,11 +140,15 @@ export async function renderFinanceiroAnaliseDashboard() {
                   <label for="valor" class="form-label">Valor</label>
                   <input type="number" class="form-control" id="valor">
                 </div>
+                <!-- Filial com input e datalist -->
                 <div class="mb-3">
-                  <label for="filial" class="form-label">Filial</label>
-                  <input type="text" class="form-control" id="filial">
+                  <label for="filialEdit" class="form-label">Filial</label>
+                  <input type="text" class="form-control" id="filialEdit" list="filialOptionsEdit" placeholder="Digite ou escolha uma filial" required>
+                  <datalist id="filialOptionsEdit">
+                    <option value="">Selecione</option>
+                  </datalist>
                 </div>
-                <!-- Atualizado: Fornecedor com input e datalist para edição -->
+                <!-- Fornecedor com input e datalist -->
                 <div class="mb-3">
                   <label for="fornecedorEdit" class="form-label">Fornecedor</label>
                   <input type="text" class="form-control" id="fornecedorEdit" list="fornecedorOptionsEdit" placeholder="Digite ou escolha um fornecedor" required>
@@ -168,13 +172,21 @@ export async function renderFinanceiroAnaliseDashboard() {
                   <label for="vencimento" class="form-label">Vencimento</label>
                   <input type="date" class="form-control" id="vencimento">
                 </div>
+                <!-- Centro de Custo com input e datalist -->
                 <div class="mb-3">
-                  <label for="centro_custo" class="form-label">Centro de Custo</label>
-                  <input type="text" class="form-control" id="centro_custo">
+                  <label for="centroCustoEdit" class="form-label">Centro de Custo</label>
+                  <input type="text" class="form-control" id="centroCustoEdit" list="centroCustoOptionsEdit" placeholder="Digite ou escolha um centro de custo" required>
+                  <datalist id="centroCustoOptionsEdit">
+                    <option value="">Selecione</option>
+                  </datalist>
                 </div>
+                <!-- Projeto com input e datalist -->
                 <div class="mb-3">
-                  <label for="projeto" class="form-label">Projeto</label>
-                  <input type="text" class="form-control" id="projeto">
+                  <label for="projetoEdit" class="form-label">Projeto</label>
+                  <input type="text" class="form-control" id="projetoEdit" list="projetoOptionsEdit" placeholder="Digite ou escolha um projeto" required>
+                  <datalist id="projetoOptionsEdit">
+                    <option value="">Selecione</option>
+                  </datalist>
                 </div>
                 <div class="mb-3">
                   <label for="status" class="form-label">Status</label>
@@ -248,14 +260,32 @@ export async function renderFinanceiroAnaliseDashboard() {
       window.projetosData = projetos;
       window.centrosData = centros;
 
-      // Popula o datalist de Fornecedores do modal com os mesmos dados
-      const datalistFornecedoresEdit = document.getElementById('fornecedorOptionsEdit');
-      if (datalistFornecedoresEdit) {
-        datalistFornecedoresEdit.innerHTML = '<option value="">Selecione</option>';
-        window.fornecedoresData.forEach(forn => {
+      // Popula os datalists do modal para edição
+      const datalistFilialEdit = document.getElementById('filialOptionsEdit');
+      if (datalistFilialEdit) {
+        datalistFilialEdit.innerHTML = '<option value="">Selecione</option>';
+        window.filiaisData.forEach(fil => {
           const option = document.createElement('option');
-          option.value = forn.nome;
-          datalistFornecedoresEdit.appendChild(option);
+          option.value = fil.nome;
+          datalistFilialEdit.appendChild(option);
+        });
+      }
+      const datalistCentroEdit = document.getElementById('centroCustoOptionsEdit');
+      if (datalistCentroEdit) {
+        datalistCentroEdit.innerHTML = '<option value="">Selecione</option>';
+        window.centrosData.forEach(centro => {
+          const option = document.createElement('option');
+          option.value = centro.nome;
+          datalistCentroEdit.appendChild(option);
+        });
+      }
+      const datalistProjetoEdit = document.getElementById('projetoOptionsEdit');
+      if (datalistProjetoEdit) {
+        datalistProjetoEdit.innerHTML = '<option value="">Selecione</option>';
+        window.projetosData.forEach(proj => {
+          const option = document.createElement('option');
+          option.value = proj.nome;
+          datalistProjetoEdit.appendChild(option);
         });
       }
 
@@ -340,7 +370,7 @@ export async function renderFinanceiroAnaliseDashboard() {
     const filialName = filialObj ? filialObj.nome : dados.filial || '';
 
     const fornecedorObj = window.fornecedoresData.find(f => f.uuid === dados.fornecedor);
-    const fornecedorName = fornecedorObj ? fornecedorObj.nome : dados.fornecedor || '';
+    const fornecedorName = fornecedorObj ? fornecedorObj.nome : dados.fornecedores || '';
 
     const centroObj = window.centrosData.find(c => c.uuid === dados.centro_custo);
     const centroName = centroObj ? centroObj.nome : dados.centro_custo || '';
@@ -351,15 +381,15 @@ export async function renderFinanceiroAnaliseDashboard() {
     document.getElementById('uid').value = dados.uid || '';
     document.getElementById('app_id').value = dados.app_id || '';
     document.getElementById('valor').value = dados.valor || '';
-    document.getElementById('filial').value = filialName;
-    // Atualizado: utiliza o novo campo fornecedorEdit
+    // Utiliza os novos campos com datalist para edição
+    document.getElementById('filialEdit').value = filialName;
     document.getElementById('fornecedorEdit').value = fornecedorName;
     document.getElementById('numeroDocumento').value = dados.numeroDocumento || '';
     document.getElementById('tipoDocumento').value = dados.tipoDocumento || '';
     document.getElementById('dataEmissao').value = dados.dataEmissao ? new Date(dados.dataEmissao).toISOString().split('T')[0] : '';
     document.getElementById('vencimento').value = dados.vencimento ? new Date(dados.vencimento).toISOString().split('T')[0] : '';
-    document.getElementById('centro_custo').value = centroName;
-    document.getElementById('projeto').value = projetoName;
+    document.getElementById('centroCustoEdit').value = centroName;
+    document.getElementById('projetoEdit').value = projetoName;
     document.getElementById('status').value = dados.status || '';
     document.getElementById('observacao').value = dados.observacao || '';
     document.getElementById('anexos').innerHTML = formatAnexos(lancamento.anexos);
@@ -395,24 +425,86 @@ export async function renderFinanceiroAnaliseDashboard() {
       return;
     }
     const lancamentoId = document.getElementById('lancamentoId').value;
+    // Mapeia os valores dos campos de edição para seus respectivos UUIDs
+    let errors = [];
+    // Filial
+    const filialEditValue = document.getElementById('filialEdit').value.trim();
+    let filial = '';
+    if (window.filiaisData && window.filiaisData.length > 0) {
+      const filialSelected = window.filiaisData.find(f => f.nome.toLowerCase() === filialEditValue.toLowerCase());
+      if (filialSelected) {
+        filial = filialSelected.uuid;
+      } else {
+        errors.push('Filial inválida ou não encontrada');
+      }
+    } else {
+      errors.push('Filiais não carregadas');
+    }
+    // Fornecedor
+    const fornecedorEditValue = document.getElementById('fornecedorEdit').value.trim();
+    let fornecedor = '';
+    if (window.fornecedoresData && window.fornecedoresData.length > 0) {
+      const fornecedorSelected = window.fornecedoresData.find(f => 
+        f.nome.toLowerCase() === fornecedorEditValue.toLowerCase() ||
+        f.cnpj.replace(/[\.\-\/\s]/g, "").toLowerCase() === fornecedorEditValue.replace(/[\.\-\/\s]/g, "").toLowerCase()
+      );
+      if (fornecedorSelected) {
+        fornecedor = fornecedorSelected.uuid;
+      } else {
+        errors.push('Fornecedor inválido ou não encontrado');
+      }
+    } else {
+      errors.push('Fornecedores não carregados');
+    }
+    // Centro de Custo
+    const centroCustoEditValue = document.getElementById('centroCustoEdit').value.trim();
+    let centroCusto = '';
+    if (window.centrosData && window.centrosData.length > 0) {
+      const centroSelected = window.centrosData.find(c => c.nome.toLowerCase() === centroCustoEditValue.toLowerCase());
+      if (centroSelected) {
+        centroCusto = centroSelected.uuid;
+      } else {
+        errors.push('Centro de Custo inválido ou não encontrado');
+      }
+    } else {
+      errors.push('Centros de Custo não carregados');
+    }
+    // Projeto
+    const projetoEditValue = document.getElementById('projetoEdit').value.trim();
+    let projeto = '';
+    if (window.projetosData && window.projetosData.length > 0) {
+      const projetoSelected = window.projetosData.find(p => p.nome.toLowerCase() === projetoEditValue.toLowerCase());
+      if (projetoSelected) {
+        projeto = projetoSelected.uuid;
+      } else {
+        errors.push('Projeto inválido ou não encontrado');
+      }
+    } else {
+      errors.push('Projetos não carregados');
+    }
+
     const atualizacoes = {
       uid: document.getElementById('uid').value,
       app_id: document.getElementById('app_id').value,
       valor: document.getElementById('valor').value,
-      filial: document.getElementById('filial').value,
-      // Atualizado: utiliza o campo fornecedorEdit para atualizar o fornecedor
-      fornecedor: document.getElementById('fornecedorEdit').value,
+      filial: filial,
+      fornecedor: fornecedor,
       numeroDocumento: document.getElementById('numeroDocumento').value,
       tipoDocumento: document.getElementById('tipoDocumento').value,
       dataEmissao: document.getElementById('dataEmissao').value,
       vencimento: document.getElementById('vencimento').value,
-      centro_custo: document.getElementById('centro_custo').value,
-      projeto: document.getElementById('projeto').value,
+      centro_custo: centroCusto,
+      projeto: projeto,
       status: 'Aprovado',
       observacao: document.getElementById('observacao').value,
       comentario_analista: document.getElementById('comentarioAnalista').value,
       data_analise: new Date().toISOString()
     };
+
+    if (errors.length > 0) {
+      alert("Por favor, corrija os seguintes erros: " + errors.join(", "));
+      return;
+    }
 
     try {
       await updateLancamento(AuthService, lancamentoId, atualizacoes);

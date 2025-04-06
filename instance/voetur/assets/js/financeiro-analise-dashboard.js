@@ -35,6 +35,26 @@ function formatAnexos(anexos) {
   return lista.map(anexo => `<a href="${anexo.url}" target="_blank">${anexo.categoria || 'Anexo'}</a>`).join('<br>');
 }
 
+// Função auxiliar para carregar lançamentos sem cache
+async function loadLancamentosNoCache() {
+  const user = AuthService.user;
+  if (!user) throw new Error("Usuário não autenticado");
+  const token = await user.getIdToken();
+  const response = await fetch('https://n8n.power.tec.br/webhook/voetur/v1/lancamentos?ts=' + Date.now(), {
+    method: "GET",
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    cache: "no-store"
+  });
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error("Erro ao listar lançamentos: " + errorText);
+  }
+  return await response.json();
+}
+
 export async function renderFinanceiroAnaliseDashboard() {
   const content = document.getElementById('content');
   content.innerHTML = `
@@ -221,7 +241,7 @@ export async function renderFinanceiroAnaliseDashboard() {
     </div>
   `;
 
-  // Inicializa o DataTable
+  // Função para inicializar o DataTable
   function initializeDataTable() {
     if (window.jQuery && $.fn.DataTable) {
       if ($.fn.DataTable.isDataTable("#analiseTable")) {
@@ -258,7 +278,7 @@ export async function renderFinanceiroAnaliseDashboard() {
       window.projetosData = projetos;
       window.centrosData = centros;
 
-      // Popula os datalists do modal para edição
+      // Atualiza os datalists do modal para edição
       const datalistFilialEdit = document.getElementById('filialOptionsEdit');
       if (datalistFilialEdit) {
         datalistFilialEdit.innerHTML = '<option value="">Selecione</option>';
@@ -287,7 +307,12 @@ export async function renderFinanceiroAnaliseDashboard() {
         });
       }
 
-      const dados = await listLancamentos(AuthService);
+      // Limpa o tbody da tabela
+      const tbody = document.getElementById('analise-tabela');
+      tbody.innerHTML = '';
+
+      // Carrega os lançamentos sem cache
+      const dados = await loadLancamentosNoCache();
       const pendentes = dados.filter(l => l.dados && l.dados.status && l.dados.status.toLowerCase() === 'pendente');
 
       // Atualiza os cards resumo
@@ -300,9 +325,6 @@ export async function renderFinanceiroAnaliseDashboard() {
       document.getElementById('total-pendentes').textContent = totalPendentes;
       document.getElementById('total-aprovado').textContent = 'R$ ' + totalAprovado.toFixed(2);
       document.getElementById('total-rejeitado').textContent = 'R$ ' + totalRejeitado.toFixed(2);
-
-      const tbody = document.getElementById('analise-tabela');
-      tbody.innerHTML = '';
 
       pendentes.forEach(lanc => {
         const dadosLanc = lanc.dados || {};
@@ -359,7 +381,7 @@ export async function renderFinanceiroAnaliseDashboard() {
     const filialObj = window.filiaisData.find(f => f.uuid === dados.filial);
     const filialName = filialObj ? filialObj.nome : dados.filial || '';
     const fornecedorObj = window.fornecedoresData.find(f => f.uuid === dados.fornecedor);
-    const fornecedorName = fornecedorObj ? fornecedorObj.nome : dados.fornecedor || '';
+    const fornecedorName = fornecedorObj ? fornecedorObj.nome : dados.fornecedores || '';
     const centroObj = window.centrosData.find(c => c.uuid === dados.centro_custo);
     const centroName = centroObj ? centroObj.nome : dados.centro_custo || '';
     const projetoObj = window.projetosData.find(p => p.uuid === dados.projeto);
@@ -397,15 +419,15 @@ export async function renderFinanceiroAnaliseDashboard() {
     };
     try {
       await updateLancamento(AuthService, lancamento.id, atualizacoes);
-      // Após receber o retorno da API, atualiza imediatamente a dashboard
-      await loadDashboardData();
+      // Após a atualização, recarrega a página para atualizar os dados
+      window.location.reload();
     } catch (error) {
       console.error("Erro ao processar a decisão imediata:", error);
       alert("Erro ao processar a decisão: " + error.message);
     }
   }
 
-  // Processa a decisão a partir do modal (aprovar com alterações)
+  // Processa decisão a partir do modal (aprovar com alterações)
   async function processModalDecision() {
     if (!AuthService.user) {
       alert("Usuário não autenticado. Por favor, faça login novamente.");
@@ -496,8 +518,8 @@ export async function renderFinanceiroAnaliseDashboard() {
       await updateLancamento(AuthService, lancamentoId, atualizacoes);
       const modal = bootstrap.Modal.getInstance(document.getElementById('analiseModal'));
       modal.hide();
-      // Atualiza a dashboard após a atualização da API
-      await loadDashboardData();
+      // Após a atualização, recarrega a página para garantir que a tabela seja atualizada
+      window.location.reload();
     } catch (error) {
       console.error("Erro ao processar a decisão no modal:", error);
       alert("Erro ao processar a decisão: " + error.message);

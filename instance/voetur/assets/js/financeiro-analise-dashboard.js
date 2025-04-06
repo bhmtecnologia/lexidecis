@@ -55,10 +55,44 @@ async function loadLancamentosNoCache() {
   return await response.json();
 }
 
+// Funções para exibir e esconder o overlay de carregamento
+function showLoading() {
+  let overlay = document.getElementById("loadingOverlay");
+  if (!overlay) {
+    overlay = document.createElement("div");
+    overlay.id = "loadingOverlay";
+    overlay.style.position = "fixed";
+    overlay.style.top = "0";
+    overlay.style.left = "0";
+    overlay.style.width = "100%";
+    overlay.style.height = "100%";
+    overlay.style.backgroundColor = "rgba(255, 255, 255, 0.8)";
+    overlay.style.display = "flex";
+    overlay.style.alignItems = "center";
+    overlay.style.justifyContent = "center";
+    overlay.style.zIndex = "10000";
+    overlay.innerHTML = `<div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Carregando...</span>
+    </div>`;
+    document.body.appendChild(overlay);
+  } else {
+    overlay.style.display = "flex";
+  }
+}
+
+function hideLoading() {
+  const overlay = document.getElementById("loadingOverlay");
+  if (overlay) {
+    overlay.style.display = "none";
+  }
+}
+
 export async function renderFinanceiroAnaliseDashboard() {
   const content = document.getElementById('content');
   content.innerHTML = `
     <div class="container-fluid">
+      <!-- Overlay de Carregamento -->
+      <div id="loadingOverlay" style="display: none;"></div>
       <!-- Título e Breadcrumb -->
       <div class="page-title">
         <div class="row">
@@ -108,7 +142,7 @@ export async function renderFinanceiroAnaliseDashboard() {
         </div>
       </div>
       
-      <!-- Tabela de Lançamentos para Análise -->
+      <!-- Tabela de Lançamentos para Análise (sem a coluna Status) -->
       <div class="card">
         <div class="card-header">
           <h5>Lançamentos Pendentes para Análise</h5>
@@ -126,7 +160,6 @@ export async function renderFinanceiroAnaliseDashboard() {
                 <th>Tipo de Documento</th>
                 <th>Data de Emissão</th>
                 <th>Valor</th>
-                <th>Status</th>
                 <th>Anexos</th>
               </tr>
             </thead>
@@ -208,10 +241,6 @@ export async function renderFinanceiroAnaliseDashboard() {
                   </datalist>
                 </div>
                 <div class="mb-3">
-                  <label for="status" class="form-label">Status</label>
-                  <input type="text" class="form-control" id="status">
-                </div>
-                <div class="mb-3">
                   <label for="observacao" class="form-label">Observação</label>
                   <textarea class="form-control" id="observacao" rows="3"></textarea>
                 </div>
@@ -267,6 +296,7 @@ export async function renderFinanceiroAnaliseDashboard() {
   // Função que carrega os dados e atualiza a tabela
   async function loadDashboardData() {
     try {
+      showLoading();
       const [filiais, fornecedores, projetos, centros] = await Promise.all([
         listFiliais(AuthService),
         listFornecedores(AuthService),
@@ -311,7 +341,6 @@ export async function renderFinanceiroAnaliseDashboard() {
       const tbody = document.getElementById('analise-tabela');
       tbody.innerHTML = '';
 
-      // Carrega os lançamentos sem cache
       const dados = await loadLancamentosNoCache();
       const pendentes = dados.filter(l => l.dados && l.dados.status && l.dados.status.toLowerCase() === 'pendente');
 
@@ -360,16 +389,17 @@ export async function renderFinanceiroAnaliseDashboard() {
           <td>${dadosLanc.tipoDocumento || '-'}</td>
           <td>${dadosLanc.dataEmissao ? formatDate(dadosLanc.dataEmissao) : '-'}</td>
           <td>${dadosLanc.valor ? formatCurrency(dadosLanc.valor) : '-'}</td>
-          <td>${dadosLanc.status || '-'}</td>
           <td>${formatAnexos(lanc.anexos)}</td>
         `;
         tbody.appendChild(tr);
       });
 
       initializeDataTable();
+      hideLoading();
     } catch (error) {
       console.error("Erro ao carregar dados para análise:", error);
-      document.getElementById('analise-tabela').innerHTML = '<tr><td colspan="11">Erro ao carregar os dados.</td></tr>';
+      document.getElementById('analise-tabela').innerHTML = '<tr><td colspan="10">Erro ao carregar os dados.</td></tr>';
+      hideLoading();
     }
   }
 
@@ -398,7 +428,6 @@ export async function renderFinanceiroAnaliseDashboard() {
     document.getElementById('vencimento').value = dados.vencimento ? new Date(dados.vencimento).toISOString().split('T')[0] : '';
     document.getElementById('centroCustoEdit').value = centroName;
     document.getElementById('projetoEdit').value = projetoName;
-    document.getElementById('status').value = dados.status || '';
     document.getElementById('observacao').value = dados.observacao || '';
     document.getElementById('anexos').innerHTML = formatAnexos(lancamento.anexos);
     document.getElementById('comentarioAnalista').value = '';
@@ -411,6 +440,7 @@ export async function renderFinanceiroAnaliseDashboard() {
       alert("Usuário não autenticado. Por favor, faça login novamente.");
       return;
     }
+    showLoading();
     const dadosLanc = lancamento.dados || {};
     const atualizacoes = {
       ...dadosLanc,
@@ -419,11 +449,11 @@ export async function renderFinanceiroAnaliseDashboard() {
     };
     try {
       await updateLancamento(AuthService, lancamento.id, atualizacoes);
-      // Após a atualização, recarrega a página para atualizar os dados
-      window.location.reload();
+      await loadDashboardData();
     } catch (error) {
       console.error("Erro ao processar a decisão imediata:", error);
       alert("Erro ao processar a decisão: " + error.message);
+      hideLoading();
     }
   }
 
@@ -433,6 +463,7 @@ export async function renderFinanceiroAnaliseDashboard() {
       alert("Usuário não autenticado. Por favor, faça login novamente.");
       return;
     }
+    showLoading();
     const lancamentoId = document.getElementById('lancamentoId').value;
     let errors = [];
     // Filial
@@ -511,6 +542,7 @@ export async function renderFinanceiroAnaliseDashboard() {
 
     if (errors.length > 0) {
       alert("Por favor, corrija os seguintes erros: " + errors.join(", "));
+      hideLoading();
       return;
     }
 
@@ -518,11 +550,11 @@ export async function renderFinanceiroAnaliseDashboard() {
       await updateLancamento(AuthService, lancamentoId, atualizacoes);
       const modal = bootstrap.Modal.getInstance(document.getElementById('analiseModal'));
       modal.hide();
-      // Após a atualização, recarrega a página para garantir que a tabela seja atualizada
-      window.location.reload();
+      await loadDashboardData();
     } catch (error) {
       console.error("Erro ao processar a decisão no modal:", error);
       alert("Erro ao processar a decisão: " + error.message);
+      hideLoading();
     }
   }
 

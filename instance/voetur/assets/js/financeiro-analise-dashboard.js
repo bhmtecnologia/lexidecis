@@ -110,8 +110,7 @@ export async function renderFinanceiroAnaliseDashboard() {
                 <th>Anexos</th>
               </tr>
             </thead>
-            <tbody id="analise-tabela">
-            </tbody>
+            <tbody id="analise-tabela"></tbody>
           </table>
         </div>
       </div>
@@ -222,7 +221,7 @@ export async function renderFinanceiroAnaliseDashboard() {
     </div>
   `;
 
-  // Função para inicializar o DataTable
+  // Inicializa o DataTable
   function initializeDataTable() {
     if (window.jQuery && $.fn.DataTable) {
       if ($.fn.DataTable.isDataTable("#analiseTable")) {
@@ -245,10 +244,9 @@ export async function renderFinanceiroAnaliseDashboard() {
     }
   }
 
-  // Função que carrega os dados de mapeamento e atualiza a tabela
+  // Função que carrega os dados e atualiza a tabela
   async function loadDashboardData() {
     try {
-      // Carrega os dados de mapeamento
       const [filiais, fornecedores, projetos, centros] = await Promise.all([
         listFiliais(AuthService),
         listFornecedores(AuthService),
@@ -308,17 +306,12 @@ export async function renderFinanceiroAnaliseDashboard() {
 
       pendentes.forEach(lanc => {
         const dadosLanc = lanc.dados || {};
-
-        // Mapeia os IDs para nomes
         const filialObj = window.filiaisData.find(f => f.uuid === dadosLanc.filial);
         const filialName = filialObj ? filialObj.nome : dadosLanc.filial || '-';
-
         const fornecedorObj = window.fornecedoresData.find(f => f.uuid === dadosLanc.fornecedor);
-        const fornecedorName = fornecedorObj ? fornecedorObj.nome : dadosLanc.fornecedor || '-';
-
+        const fornecedorName = fornecedorObj ? fornecedorObj.nome : dadosLanc.fornecedores || '-';
         const centroObj = window.centrosData.find(c => c.uuid === dadosLanc.centro_custo);
         const centroName = centroObj ? centroObj.nome : dadosLanc.centro_custo || '-';
-
         const projetoObj = window.projetosData.find(p => p.uuid === dadosLanc.projeto);
         const projetoName = projetoObj ? projetoObj.nome : dadosLanc.projeto || '-';
 
@@ -354,8 +347,7 @@ export async function renderFinanceiroAnaliseDashboard() {
       initializeDataTable();
     } catch (error) {
       console.error("Erro ao carregar dados para análise:", error);
-      const tbody = document.getElementById('analise-tabela');
-      tbody.innerHTML = '<tr><td colspan="11">Erro ao carregar os dados.</td></tr>';
+      document.getElementById('analise-tabela').innerHTML = '<tr><td colspan="11">Erro ao carregar os dados.</td></tr>';
     }
   }
 
@@ -364,24 +356,18 @@ export async function renderFinanceiroAnaliseDashboard() {
     const modal = new bootstrap.Modal(document.getElementById('analiseModal'));
     document.getElementById('lancamentoId').value = lancamento.id;
     const dados = lancamento.dados || {};
-
-    // Mapeia os IDs para nomes para exibição
     const filialObj = window.filiaisData.find(f => f.uuid === dados.filial);
     const filialName = filialObj ? filialObj.nome : dados.filial || '';
-
     const fornecedorObj = window.fornecedoresData.find(f => f.uuid === dados.fornecedor);
-    const fornecedorName = fornecedorObj ? fornecedorObj.nome : dados.fornecedores || '';
-
+    const fornecedorName = fornecedorObj ? fornecedorObj.nome : dados.fornecedor || '';
     const centroObj = window.centrosData.find(c => c.uuid === dados.centro_custo);
     const centroName = centroObj ? centroObj.nome : dados.centro_custo || '';
-
     const projetoObj = window.projetosData.find(p => p.uuid === dados.projeto);
     const projetoName = projetoObj ? projetoObj.nome : dados.projeto || '';
 
     document.getElementById('uid').value = dados.uid || '';
     document.getElementById('app_id').value = dados.app_id || '';
     document.getElementById('valor').value = dados.valor || '';
-    // Utiliza os novos campos com datalist para edição
     document.getElementById('filialEdit').value = filialName;
     document.getElementById('fornecedorEdit').value = fornecedorName;
     document.getElementById('numeroDocumento').value = dados.numeroDocumento || '';
@@ -411,7 +397,8 @@ export async function renderFinanceiroAnaliseDashboard() {
     };
     try {
       await updateLancamento(AuthService, lancamento.id, atualizacoes);
-      loadDashboardData();
+      // Após receber o retorno da API, atualiza imediatamente a dashboard
+      await loadDashboardData();
     } catch (error) {
       console.error("Erro ao processar a decisão imediata:", error);
       alert("Erro ao processar a decisão: " + error.message);
@@ -425,7 +412,6 @@ export async function renderFinanceiroAnaliseDashboard() {
       return;
     }
     const lancamentoId = document.getElementById('lancamentoId').value;
-    // Mapeia os valores dos campos de edição para seus respectivos UUIDs
     let errors = [];
     // Filial
     const filialEditValue = document.getElementById('filialEdit').value.trim();
@@ -510,7 +496,8 @@ export async function renderFinanceiroAnaliseDashboard() {
       await updateLancamento(AuthService, lancamentoId, atualizacoes);
       const modal = bootstrap.Modal.getInstance(document.getElementById('analiseModal'));
       modal.hide();
-      loadDashboardData();
+      // Atualiza a dashboard após a atualização da API
+      await loadDashboardData();
     } catch (error) {
       console.error("Erro ao processar a decisão no modal:", error);
       alert("Erro ao processar a decisão: " + error.message);

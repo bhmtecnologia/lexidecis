@@ -56,12 +56,12 @@ export async function createLancamento(AuthService, payload) {
 }
 
 /**
-* Lista todos os lançamentos.
-*
-* @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
-* @returns {Promise<Array>} - Array com os lançamentos.
-* @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro na API.
-*/
+ * Lista todos os lançamentos.
+ *
+ * @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
+ * @returns {Promise<Array>} - Array com os lançamentos.
+ * @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro na API.
+ */
 export async function listLancamentos(AuthService) {
   const user = AuthService.user;
   if (!user) throw new Error("Usuário não autenticado");
@@ -84,26 +84,29 @@ export async function listLancamentos(AuthService) {
 }
 
 /**
-* Atualiza um lançamento existente.
-*
-* @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
-* @param {string} id - Identificador do lançamento a ser atualizado.
-* @param {Object} payload - Objeto com os dados atualizados do lançamento.
-* @returns {Promise<Object>} - Objeto JSON do lançamento atualizado.
-* @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro na API.
-*/
+ * Atualiza um lançamento existente.
+ *
+ * @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
+ * @param {string} id - Identificador do lançamento a ser atualizado.
+ * @param {Object} payload - Objeto com os dados atualizados do lançamento.
+ * @returns {Promise<Object>} - Objeto JSON do lançamento atualizado.
+ * @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro na API.
+ */
 export async function updateLancamento(AuthService, id, payload) {
   const user = AuthService.user;
   if (!user) throw new Error("Usuário não autenticado");
   const token = await user.getIdToken();
 
-  const response = await fetch(`https://n8n.power.tec.br/webhook-test/voetur/v1/lancamentos/${id}`, {
+  // O endpoint correto para atualização é:
+  // https://n8n.power.tec.br/webhook-test/voetur/v1/lancamento/update
+  // Enviamos o id junto com o payload
+  const response = await fetch('https://n8n.power.tec.br/webhook/voetur/v1/lancamento/update', {
     method: "PUT",
     headers: { 
       "Content-Type": "application/json",
       "Authorization": `Bearer ${token}`
     },
-    body: JSON.stringify(payload)
+    body: JSON.stringify({ id, ...payload })
   });
 
   if (!response.ok) {
@@ -115,13 +118,13 @@ export async function updateLancamento(AuthService, id, payload) {
 }
 
 /**
-* Exclui um lançamento.
-*
-* @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
-* @param {string} id - Identificador do lançamento a ser excluído.
-* @returns {Promise<Object>} - Objeto JSON com a resposta da API.
-* @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro na API.
-*/
+ * Exclui um lançamento.
+ *
+ * @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
+ * @param {string} id - Identificador do lançamento a ser excluído.
+ * @returns {Promise<Object>} - Objeto JSON com a resposta da API.
+ * @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro na API.
+ */
 export async function deleteLancamento(AuthService, id) {
   const user = AuthService.user;
   if (!user) throw new Error("Usuário não autenticado");
@@ -144,13 +147,13 @@ export async function deleteLancamento(AuthService, id) {
 }
 
 /**
-* Faz o upload de um arquivo e retorna a URL gerada.
-*
-* @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
-* @param {File} file - Arquivo a ser enviado.
-* @returns {Promise<Object>} - Objeto JSON contendo a URL do arquivo.
-* @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro no upload.
-*/
+ * Faz o upload de um arquivo e retorna a URL gerada.
+ *
+ * @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
+ * @param {File} file - Arquivo a ser enviado.
+ * @returns {Promise<Object>} - Objeto JSON contendo a URL do arquivo.
+ * @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro no upload.
+ */
 export async function uploadArquivo(AuthService, file) {
   const user = AuthService.user;
   if (!user) throw new Error("Usuário não autenticado");
@@ -177,12 +180,12 @@ export async function uploadArquivo(AuthService, file) {
 }
 
 /**
-* Lista os centros de custos.
-*
-* @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
-* @returns {Promise<Array>} - Array com os centros de custos.
-* @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro na API.
-*/
+ * Lista os centros de custos.
+ *
+ * @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
+ * @returns {Promise<Array>} - Array com os centros de custos.
+ * @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro na API.
+ */
 export async function listCentrosCustos(AuthService) {
   const user = AuthService.user;
   if (!user) throw new Error("Usuário não autenticado");
@@ -231,7 +234,6 @@ export async function listProjetos(AuthService) {
 
   return await response.json();
 }
-
 
 /**
  * Lista as filiais.

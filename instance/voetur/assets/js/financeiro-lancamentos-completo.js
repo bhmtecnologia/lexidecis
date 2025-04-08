@@ -137,7 +137,7 @@ export async function renderFinanceiroLancamentosCompleto() {
                 <th>Filial</th>
                 <th>Projeto</th>
                 <th>Fornecedor</th>
-                <th>Observação</th>
+                <th>Justificativa</th>
                 <th>Vencimento</th>
                 <th>Data de Emissão</th>
                 <th>Centro de Custo</th>
@@ -159,7 +159,7 @@ export async function renderFinanceiroLancamentosCompleto() {
     </div>
   `;
 
-  // Função para inicializar o DataTable
+  // Função para inicializar o DataTable (janela única: todos os registros exibidos)
   function initializeDataTable() {
     if (window.jQuery && $.fn.DataTable) {
       if ($.fn.DataTable.isDataTable("#lancamentosTable")) {
@@ -169,7 +169,7 @@ export async function renderFinanceiroLancamentosCompleto() {
         responsive: true,
         autoWidth: false,
         ordering: true,
-        paging: true,
+        paging: false,  // Exibe todos os registros em uma única página
         dom: 'lBfrtip',
         buttons: ['copy', 'excel', 'csv', 'pdf'],
         language: {
@@ -185,7 +185,7 @@ export async function renderFinanceiroLancamentosCompleto() {
   async function loadLancamentosCompleto() {
     try {
       showLoading();
-      // Carrega os dados de mapeamento
+      // Carrega os dados de mapeamento para filiais, fornecedores, projetos e centros de custo
       const [filiais, fornecedores, projetos, centros] = await Promise.all([
         listFiliais(AuthService),
         listFornecedores(AuthService),
@@ -230,7 +230,7 @@ export async function renderFinanceiroLancamentosCompleto() {
           <td>${filialName}</td>
           <td>${projetoName}</td>
           <td>${fornecedorName}</td>
-          <td>${dadosLanc.observacao || '-'}</td>
+          <td>${dadosLanc.justificativa || '-'}</td>
           <td>${dadosLanc.vencimento ? formatDate(dadosLanc.vencimento) : '-'}</td>
           <td>${dadosLanc.dataEmissao ? formatDate(dadosLanc.dataEmissao) : '-'}</td>
           <td>${centroName}</td>
@@ -251,14 +251,26 @@ export async function renderFinanceiroLancamentosCompleto() {
       hideLoading();
     } catch (error) {
       console.error("Erro ao carregar lançamentos completos:", error);
-      document.getElementById('lancamentos-tbody').innerHTML = '<tr><td colspan="21">Erro ao carregar os dados.</td></tr>';
+      document.getElementById('lancamentos-tbody').innerHTML = '<tr><td colspan="22">Erro ao carregar os dados.</td></tr>';
       hideLoading();
     }
   }
 
-  // Chamada inicial para carregar os dados
-  loadLancamentosCompleto();
+  // Aguarda a autenticação do usuário para carregar os dados
+  AuthService.onAuthChange((user) => {
+    if (user) {
+      loadLancamentosCompleto();
+    } else {
+      content.innerHTML = `
+        <div class="container-fluid">
+          <div class="alert alert-warning text-center mt-4">
+            Usuário não autenticado. Por favor, faça login.
+          </div>
+        </div>
+      `;
+    }
+  });
 }
 
-// Registra a rota para a nova página
+// Registra a rota para a página de "Relatório - Lançamentos Completo"
 registerRoute('#lancamentos-completo', renderFinanceiroLancamentosCompleto);

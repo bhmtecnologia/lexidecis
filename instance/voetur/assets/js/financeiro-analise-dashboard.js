@@ -35,12 +35,12 @@ function formatAnexos(anexos) {
   return lista.map(anexo => `<a href="${anexo.url}" target="_blank">${anexo.categoria || 'Anexo'}</a>`).join('<br>');
 }
 
-// Função auxiliar para carregar lançamentos sem cache
+// Função auxiliar para carregar lançamentos sem cache com all=true
 async function loadLancamentosNoCache() {
   const user = AuthService.user;
   if (!user) throw new Error("Usuário não autenticado");
   const token = await user.getIdToken();
-  const response = await fetch('https://n8n.power.tec.br/webhook/voetur/v1/lancamentos?ts=' + Date.now(), {
+  const response = await fetch('https://n8n.power.tec.br/webhook/voetur/v1/lancamentos?all=true&ts=' + Date.now(), {
     method: "GET",
     headers: { 
       "Content-Type": "application/json",
@@ -142,7 +142,7 @@ export async function renderFinanceiroAnaliseDashboard() {
         </div>
       </div>
       
-      <!-- Tabela de Lançamentos para Análise (sem a coluna Status) -->
+      <!-- Tabela de Lançamentos para Análise -->
       <div class="card">
         <div class="card-header">
           <h5>Lançamentos Pendentes para Análise</h5>

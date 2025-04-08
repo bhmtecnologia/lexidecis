@@ -2,8 +2,9 @@
  * @file financeiro-lancamentos.js
  * @description Responsável por renderizar a página de "Financeiro - Lançamentos" no módulo financeiro,
  * permitindo a criação de novos lançamentos via formulário e enviando os dados para a API.
- * Os campos Filial, Fornecedor, N° Documento, Tipo de Documento, Data de Emissão, Valor, Vencimento, Centro de Custo, Projeto,
- * Observação e Inserir Anexo são apresentados e serão enviados para o JSONB de dados.
+ * Os campos Filial, Fornecedor, N° Documento, Tipo de Documento, Data de Emissão, Valor Bruto, 
+ * Forma de Pagamento, Vencimento, Centro de Custo, Projeto, Justificativa e Inserir Anexo são apresentados
+ * e serão enviados para o JSONB de dados.
  *
  * API de lançamento utilizada: https://n8n.power.tec.br/webhook-test/voetur/v1/lancamentos
  */
@@ -17,6 +18,18 @@ function handleError(error, context = 'Erro') {
 import { registerRoute } from "./router.js";
 import AuthService, { auth, db, analytics } from "./auth.js";
 import { createLancamento, uploadArquivo, listCentrosCustos, listProjetos, listFiliais, listFornecedores } from "./api.js";
+
+// Função auxiliar para formatar a data no padrão ISO 8601 "yyyy-mm-dd hh:mm:ss"
+function formatDateISO(dateObj) {
+  const pad = (num) => num.toString().padStart(2, '0');
+  const year = dateObj.getFullYear();
+  const month = pad(dateObj.getMonth() + 1);
+  const day = pad(dateObj.getDate());
+  const hours = pad(dateObj.getHours());
+  const minutes = pad(dateObj.getMinutes());
+  const seconds = pad(dateObj.getSeconds());
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
 
 export async function renderFinanceiroLancamentos() {
   const content = document.getElementById('content');
@@ -86,17 +99,27 @@ export async function renderFinanceiroLancamentos() {
                 <label for="dataEmissao" class="form-label">Data de Emissão</label>
                 <input type="date" class="form-control" id="dataEmissao" required aria-required="true">
               </div>
-              <!-- 6. Valor (Número com máscara financeira) -->
+              <!-- 6. Valor Bruto (Número com máscara financeira) -->
               <div class="mb-3">
-                <label for="valor" class="form-label">Valor</label>
+                <label for="valor" class="form-label">Valor Bruto</label>
                 <input type="number" step="0.01" class="form-control" id="valor" placeholder="0.00" required aria-required="true">
               </div>
-              <!-- 7. Vencimento (Seleção de Data) -->
+              <!-- 7. Forma de Pagamento (Lista Suspensa) - reposicionado logo após Valor Bruto -->
+              <div class="mb-3">
+                <label for="formaPagamento" class="form-label">Forma de Pagamento</label>
+                <select class="form-select" id="formaPagamento" required aria-required="true">
+                  <option value="">Selecione</option>
+                  <option value="Boleto">Boleto</option>
+                  <option value="Pix">Pix</option>
+                  <option value="Depósito">Depósito</option>
+                </select>
+              </div>
+              <!-- 8. Vencimento (Seleção de Data) -->
               <div class="mb-3">
                 <label for="vencimento" class="form-label">Vencimento</label>
                 <input type="date" class="form-control" id="vencimento" required aria-required="true">
               </div>
-              <!-- 8. Centro de Custo (Input com Datalist) -->
+              <!-- 9. Centro de Custo (Input com Datalist) -->
               <div class="mb-3">
                 <label for="centroCustoInput" class="form-label">Centro de Custo</label>
                 <input class="form-control" id="centroCustoInput" list="centroCustoOptions" placeholder="Digite ou escolha um centro de custo" required aria-required="true">
@@ -104,20 +127,20 @@ export async function renderFinanceiroLancamentos() {
                   <option value="">Selecione</option>
                 </datalist>
               </div>
-              <!-- 9. Projeto (Input com Datalist) -->
+              <!-- 10. Projeto (Input com Datalist) - não obrigatório -->
               <div class="mb-3">
                 <label for="projetoInput" class="form-label">Projeto</label>
-                <input class="form-control" id="projetoInput" list="projetoOptions" placeholder="Digite ou escolha um projeto" required aria-required="true">
+                <input class="form-control" id="projetoInput" list="projetoOptions" placeholder="Digite ou escolha um projeto">
                 <datalist id="projetoOptions">
                   <option value="">Selecione</option>
                 </datalist>
               </div>
-              <!-- 10. Observação (Campo Aberto com 3 linhas) -->
+              <!-- 11. Justificativa (Campo Aberto com 3 linhas) -->
               <div class="mb-3">
-                <label for="observacao" class="form-label">Observação</label>
-                <textarea class="form-control" id="observacao" rows="3"></textarea>
+                <label for="justificativa" class="form-label">Justificativa</label>
+                <textarea class="form-control" id="justificativa" rows="3" placeholder="Exemplo com uma justificativa"></textarea>
               </div>
-              <!-- 11. Inserir Anexo (Upload) - Permite múltiplos anexos -->
+              <!-- 12. Inserir Anexo (Upload) - Permite múltiplos anexos -->
               <div class="mb-3">
                 <label for="arquivo" class="form-label">Inserir Anexo</label>
                 <input type="file" class="form-control" id="arquivo" accept="image/*" multiple>
@@ -162,11 +185,12 @@ export async function renderFinanceiroLancamentos() {
     }
     const fornecedorInputValue = document.getElementById('fornecedorInput').value.trim();
     let fornecedor = '';
+    // Alteração na pesquisa: compara com a formatação "Nome - CNPJ"
     if (window.fornecedoresData && window.fornecedoresData.length > 0) {
-      const fornecedorSelecionado = window.fornecedoresData.find(forn => 
-        forn.nome.toLowerCase() === fornecedorInputValue.toLowerCase() ||
-        forn.cnpj.replace(/[\.\-\/\s]/g, "").toLowerCase() === fornecedorInputValue.replace(/[\.\-\/\s]/g, "").toLowerCase()
-      );
+      const fornecedorSelecionado = window.fornecedoresData.find(forn => {
+        const formattedFornec = `${forn.nome} - ${forn.cnpj}`;
+        return formattedFornec.toLowerCase() === fornecedorInputValue.toLowerCase();
+      });
       if (fornecedorSelecionado) {
         fornecedor = fornecedorSelecionado.uuid;
       } else {
@@ -179,6 +203,7 @@ export async function renderFinanceiroLancamentos() {
     const tipoDocumento = document.getElementById('tipoDocumento').value;
     const dataEmissao = document.getElementById('dataEmissao').value;
     const valor = document.getElementById('valor').value.trim();
+    const formaPagamentoValue = document.getElementById('formaPagamento').value;
     const vencimento = document.getElementById('vencimento').value;
     const centroCustoInputValue = document.getElementById('centroCustoInput').value.trim();
     let centroCusto = '';
@@ -193,18 +218,21 @@ export async function renderFinanceiroLancamentos() {
       errors.push('Centros de Custo não carregados');
     }
     const projetoInputValue = document.getElementById('projetoInput').value.trim();
-    let projeto = '';
-    if (window.projetosData && window.projetosData.length > 0) {
-      const projetoSelecionado = window.projetosData.find(proj => proj.nome.toLowerCase() === projetoInputValue.toLowerCase());
-      if (projetoSelecionado) {
-        projeto = projetoSelecionado.uuid;
+    // O campo Projeto não é obrigatório; se preenchido, valida; caso contrário, mantém vazio.
+    let projeto = "";
+    if (projetoInputValue) {
+      if (window.projetosData && window.projetosData.length > 0) {
+        const projetoSelecionado = window.projetosData.find(proj => proj.nome.toLowerCase() === projetoInputValue.toLowerCase());
+        if (projetoSelecionado) {
+          projeto = projetoSelecionado.uuid;
+        } else {
+          errors.push('Projeto inválido ou não encontrado');
+        }
       } else {
-        errors.push('Projeto inválido ou não encontrado');
+        errors.push('Projetos não carregados');
       }
-    } else {
-      errors.push('Projetos não carregados');
     }
-    const observacao = document.getElementById('observacao').value.trim();
+    const justificativa = document.getElementById('justificativa').value.trim();
     const arquivoInput = document.getElementById('arquivo');
 
     // Validação de campos obrigatórios com mensagens amigáveis
@@ -213,10 +241,11 @@ export async function renderFinanceiroLancamentos() {
     if (!numeroDocumento) errors.push("N° Documento");
     if (!tipoDocumento) errors.push("Tipo de Documento");
     if (!dataEmissao) errors.push("Data de Emissão");
-    if (!valor) errors.push("Valor");
+    if (!valor) errors.push("Valor Bruto");
+    if (!formaPagamentoValue) errors.push("Forma de Pagamento");
     if (!vencimento) errors.push("Vencimento");
     if (!centroCustoInputValue) errors.push("Centro de Custo");
-    if (!projetoInputValue) errors.push("Projeto");
+    // Campo Projeto não é obrigatório
 
     // O formulário deve ter pelo menos um anexo
     if (arquivoInput.files.length === 0) {
@@ -242,7 +271,7 @@ export async function renderFinanceiroLancamentos() {
     if (errors.length > 0) {
       formError.innerHTML = `<div class="alert alert-danger"><strong>Por favor, corrija os seguintes campos:</strong><ul>${errors.map(err => `<li>${err}</li>`).join('')}</ul></div>`;
       // Foca no primeiro campo vazio
-      const fields = ["filialInput", "fornecedorInput", "numeroDocumento", "tipoDocumento", "dataEmissao", "valor", "vencimento", "centroCustoInput", "projetoInput"];
+      const fields = ["filialInput", "fornecedorInput", "numeroDocumento", "tipoDocumento", "dataEmissao", "valor", "formaPagamento", "vencimento", "centroCustoInput"];
       for (let fieldId of fields) {
         const field = document.getElementById(fieldId);
         if (field && !field.value.trim()) {
@@ -255,7 +284,10 @@ export async function renderFinanceiroLancamentos() {
       return;
     }
 
-    // Preparação do objeto payload para a API de lançamento
+    // Prepara a data de inclusão no formato ISO 8601 "yyyy-mm-dd hh:mm:ss"
+    const dataInclusao = formatDateISO(new Date());
+
+    // Preparação do objeto payload para a API de lançamento, utilizando o email do usuário vindo do Firebase
     let payload = {
       dados: {
         uid: AuthService.user.uid,
@@ -266,11 +298,14 @@ export async function renderFinanceiroLancamentos() {
         tipoDocumento: tipoDocumento,
         dataEmissao: dataEmissao,
         valor: parseFloat(valor),
+        forma_pagamento: formaPagamentoValue,
         vencimento: vencimento,
         centro_custo: centroCusto,
         projeto: projeto,
-        observacao: observacao,
-        status: "pendente"
+        email: AuthService.user.email,
+        justificativa: justificativa,
+        status: "pendente",
+        data_inclusao: dataInclusao
       }
     };
 
@@ -383,7 +418,8 @@ export async function renderFinanceiroLancamentos() {
           window.fornecedoresData = await listFornecedores(AuthService);
           window.fornecedoresData.forEach(forn => {
             const option = document.createElement('option');
-            option.value = forn.nome;
+            // Exibe no datalist "Nome - CNPJ"
+            option.value = `${forn.nome} - ${forn.cnpj}`;
             datalistFornecedores.appendChild(option);
           });
         } catch (error) {

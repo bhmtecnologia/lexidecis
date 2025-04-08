@@ -52,14 +52,18 @@ export async function renderFinanceiroLancamentosList() {
                     <th>Tipo de Documento</th>
                     <th>Data de Emissão</th>
                     <th>Valor</th>
+                    <th>Forma de Pagamento</th>
                     <th>Vencimento</th>
                     <th>Centro de Custo</th>
                     <th>Projeto</th>
-                    <th>Observação</th>
+                    <th>Justificativa</th>
+                    <th>Email</th>
                     <th>Anexos</th>
                     <th>Status</th>
+                    <th>Data Inclusão</th>
                     <th>Criado Em</th>
                     <th>Atualizado Em</th>
+                    <th>Updated By</th>
                   </tr>
                 </thead>
                 <tbody></tbody>
@@ -148,7 +152,7 @@ export async function renderFinanceiroLancamentosList() {
   }
 
   /**
-   * Atualiza a tabela com os lançamentos obtidos via API, substituindo os IDs pelos nomes dos campos gerenciais.
+   * Atualiza a tabela com os lançamentos obtidos via API, mapeando os IDs para os nomes dos campos gerenciais.
    */
   async function updateTable() {
     const overlay = document.getElementById('tableOverlay');
@@ -196,14 +200,18 @@ export async function renderFinanceiroLancamentosList() {
           <td>${dados.tipoDocumento || '-'}</td>
           <td>${dados.dataEmissao ? formatDate(dados.dataEmissao) : '-'}</td>
           <td>${dados.valor ? formatCurrency(dados.valor) : '-'}</td>
+          <td>${dados.forma_pagamento || '-'}</td>
           <td>${dados.vencimento ? formatDate(dados.vencimento) : '-'}</td>
           <td>${centroName}</td>
           <td>${projetoName}</td>
-          <td>${dados.observacao || '-'}</td>
+          <td>${dados.justificativa || '-'}</td>
+          <td>${dados.email || '-'}</td>
           <td>${formatAnexos(lanc.anexos)}</td>
           <td>${dados.status || '-'}</td>
+          <td>${dados.data_inclusao ? formatDate(dados.data_inclusao) : '-'}</td>
           <td>${lanc.created_at ? formatDate(lanc.created_at) : '-'}</td>
           <td>${lanc.updated_at ? formatDate(lanc.updated_at) : '-'}</td>
+          <td>${lanc.updated_by ? lanc.updated_by : '-'}</td>
         `;
         tbody.appendChild(tr);
       });

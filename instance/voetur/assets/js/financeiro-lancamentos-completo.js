@@ -1,4 +1,4 @@
-/**
+/****
  * @file financeiro-lancamentos-completo.js
  * @description Página que exibe todos os lançamentos com todas as colunas disponíveis conforme retorno da API.
  */
@@ -129,27 +129,25 @@ export async function renderFinanceiroLancamentosCompleto() {
           <table id="lancamentosTable" class="table table-striped table-bordered">
             <thead>
               <tr>
-                <th>Status</th>
-                <th>ID</th>
-                <th>UID</th>
-                <th>Valor</th>
-                <th>App ID</th>
+                <th>Anexo(s)</th>
                 <th>Filial</th>
-                <th>Projeto</th>
-                <th>Fornecedor</th>
-                <th>Justificativa</th>
-                <th>Vencimento</th>
+                <th>Data de Inclusão</th>
                 <th>Data de Emissão</th>
-                <th>Centro de Custo</th>
-                <th>Data de Análise</th>
+                <th>Data de Vencimento</th>
+                <th>Fornecedor</th>
+                <th>N do documento</th>
+                <th>Valor</th>
+                <th>Status</th>
+                <th>Justificativa</th>
                 <th>Tipo de Documento</th>
-                <th>N° Documento</th>
-                <th>Comentário do Analista</th>
-                <th>Anexos</th>
-                <th>Created At</th>
-                <th>Updated At</th>
-                <th>Created By</th>
-                <th>Updated By</th>
+                <th>Forma de Pagamento</th>
+                <th>Centro de Custo</th>
+                <th>Projeto</th>
+                <th>Email</th>
+                <th>Data criação</th>
+                <th>id usuário criação</th>
+                <th>Data alteração</th>
+                <th>id usuário alteração</th>
               </tr>
             </thead>
             <tbody id="lancamentos-tbody"></tbody>
@@ -169,6 +167,7 @@ export async function renderFinanceiroLancamentosCompleto() {
         responsive: true,
         autoWidth: false,
         ordering: true,
+        colReorder: true,
         paging: false,  // Exibe todos os registros em uma única página
         dom: 'lBfrtip',
         buttons: ['copy', 'excel', 'csv', 'pdf'],
@@ -222,26 +221,24 @@ export async function renderFinanceiroLancamentosCompleto() {
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td>${dadosLanc.status || '-'}</td>
-          <td>${lanc.id || '-'}</td>
-          <td>${dadosLanc.uid || '-'}</td>
-          <td>${dadosLanc.valor ? formatCurrency(dadosLanc.valor) : '-'}</td>
-          <td>${dadosLanc.app_id || '-'}</td>
-          <td>${filialName}</td>
-          <td>${projetoName}</td>
-          <td>${fornecedorName}</td>
-          <td>${dadosLanc.justificativa || '-'}</td>
-          <td>${dadosLanc.vencimento ? formatDate(dadosLanc.vencimento) : '-'}</td>
-          <td>${dadosLanc.dataEmissao ? formatDate(dadosLanc.dataEmissao) : '-'}</td>
-          <td>${centroName}</td>
-          <td>${dadosLanc.data_analise ? formatDateTime(dadosLanc.data_analise) : '-'}</td>
-          <td>${dadosLanc.tipoDocumento || '-'}</td>
-          <td>${dadosLanc.numeroDocumento || '-'}</td>
-          <td>${dadosLanc.comentario_analista || '-'}</td>
           <td>${formatAnexos(lanc.anexos)}</td>
+          <td>${filialName}</td>
           <td>${lanc.created_at ? formatDateTime(lanc.created_at) : '-'}</td>
-          <td>${lanc.updated_at ? formatDateTime(lanc.updated_at) : '-'}</td>
+          <td>${dadosLanc.dataEmissao ? formatDate(dadosLanc.dataEmissao) : '-'}</td>
+          <td>${dadosLanc.vencimento ? formatDate(dadosLanc.vencimento) : '-'}</td>
+          <td>${fornecedorName}</td>
+          <td>${dadosLanc.numeroDocumento || '-'}</td>
+          <td>${dadosLanc.valor ? formatCurrency(dadosLanc.valor) : '-'}</td>
+          <td>${dadosLanc.status || '-'}</td>
+          <td>${dadosLanc.justificativa || '-'}</td>
+          <td>${dadosLanc.tipoDocumento || '-'}</td>
+          <td>${dadosLanc.formaPagamento || dadosLanc.forma_pagamento || '-'}</td>
+          <td>${centroName}</td>
+          <td>${projetoName}</td>
+          <td>${dadosLanc.email || '-'}</td>
+          <td>${lanc.created_at ? formatDateTime(lanc.created_at) : '-'}</td>
           <td>${lanc.created_by || '-'}</td>
+          <td>${lanc.updated_at ? formatDateTime(lanc.updated_at) : '-'}</td>
           <td>${lanc.updated_by || '-'}</td>
         `;
         tbody.appendChild(tr);

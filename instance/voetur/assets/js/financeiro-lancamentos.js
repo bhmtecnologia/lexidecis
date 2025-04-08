@@ -304,7 +304,7 @@ export async function renderFinanceiroLancamentos() {
         projeto: projeto,
         email: AuthService.user.email,
         justificativa: justificativa,
-        status: "pendente",
+        status: "Pendente",
         data_inclusao: dataInclusao
       }
     };

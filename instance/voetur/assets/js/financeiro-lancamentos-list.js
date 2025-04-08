@@ -45,6 +45,8 @@ export async function renderFinanceiroLancamentosList() {
               <table id="lancamentosTable" class="display table table-bordered table-striped">
                 <thead>
                   <tr>
+                    <th>Status</th>
+                    <th>Comentário Analista</th>
                     <th>ID</th>
                     <th>Filial</th>
                     <th>Fornecedor</th>
@@ -59,7 +61,6 @@ export async function renderFinanceiroLancamentosList() {
                     <th>Justificativa</th>
                     <th>Email</th>
                     <th>Anexos</th>
-                    <th>Status</th>
                     <th>Data Inclusão</th>
                     <th>Criado Em</th>
                     <th>Atualizado Em</th>
@@ -193,6 +194,8 @@ export async function renderFinanceiroLancamentosList() {
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
+          <td>${dados.status || '-'}</td>
+          <td>${dados.comentario_analista || '-'}</td>
           <td>${lanc.id || '-'}</td>
           <td>${filialName}</td>
           <td>${fornecedorName}</td>
@@ -200,14 +203,13 @@ export async function renderFinanceiroLancamentosList() {
           <td>${dados.tipoDocumento || '-'}</td>
           <td>${dados.dataEmissao ? formatDate(dados.dataEmissao) : '-'}</td>
           <td>${dados.valor ? formatCurrency(dados.valor) : '-'}</td>
-          <td>${dados.forma_pagamento || '-'}</td>
+          <td>${dados.formaPagamento || dados.forma_pagamento || '-'}</td>
           <td>${dados.vencimento ? formatDate(dados.vencimento) : '-'}</td>
           <td>${centroName}</td>
           <td>${projetoName}</td>
           <td>${dados.justificativa || '-'}</td>
           <td>${dados.email || '-'}</td>
           <td>${formatAnexos(lanc.anexos)}</td>
-          <td>${dados.status || '-'}</td>
           <td>${dados.data_inclusao ? formatDate(dados.data_inclusao) : '-'}</td>
           <td>${lanc.created_at ? formatDate(lanc.created_at) : '-'}</td>
           <td>${lanc.updated_at ? formatDate(lanc.updated_at) : '-'}</td>

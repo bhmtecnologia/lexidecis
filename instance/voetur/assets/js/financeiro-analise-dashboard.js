@@ -12,6 +12,7 @@ import { listLancamentos, updateLancamento, listFiliais, listFornecedores, listP
 function formatDate(dateStr) {
   if (!dateStr) return '-';
   const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr;
   return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 }
 
@@ -35,14 +36,13 @@ function formatAnexos(anexos) {
   return lista.map(anexo => `<a href="${anexo.url}" target="_blank">${anexo.categoria || 'Anexo'}</a>`).join('<br>');
 }
 
-// Função auxiliar para carregar lançamentos sem cache com all=true
 async function loadLancamentosNoCache() {
   const user = AuthService.user;
   if (!user) throw new Error("Usuário não autenticado");
   const token = await user.getIdToken();
   const response = await fetch('https://n8n.power.tec.br/webhook/voetur/v1/lancamentos?all=true&ts=' + Date.now(), {
     method: "GET",
-    headers: { 
+    headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${token}`
     },
@@ -55,7 +55,6 @@ async function loadLancamentosNoCache() {
   return await response.json();
 }
 
-// Funções para exibir e esconder o overlay de carregamento
 function showLoading() {
   let overlay = document.getElementById("loadingOverlay");
   if (!overlay) {
@@ -152,15 +151,25 @@ export async function renderFinanceiroAnaliseDashboard() {
             <thead>
               <tr>
                 <th>Ações</th>
-                <th>ID</th>
-                <th>UID</th>
+                <th>Anexo(s)</th>
                 <th>Filial</th>
-                <th>Fornecedor</th>
-                <th>N° Documento</th>
-                <th>Tipo de Documento</th>
+                <th>Data de Inclusão</th>
                 <th>Data de Emissão</th>
+                <th>Data de Vencimento</th>
+                <th>Fornecedor</th>
+                <th>N do documento</th>
                 <th>Valor</th>
-                <th>Anexos</th>
+                <th>Status</th>
+                <th>Justificativa</th>
+                <th>Tipo de Documento</th>
+                <th>Forma de Pagamento</th>
+                <th>Centro de Custo</th>
+                <th>Projeto</th>
+                <th>Email</th>
+                <th>Data criação</th>
+                <th>id usuário criação</th>
+                <th>Data alteração</th>
+                <th>id usuário alteração</th>
               </tr>
             </thead>
             <tbody id="analise-tabela"></tbody>
@@ -168,7 +177,7 @@ export async function renderFinanceiroAnaliseDashboard() {
         </div>
       </div>
       
-      <!-- Modal de Edição (para aprovação com alterações) -->
+      <!-- Modal de Edição -->
       <div class="modal fade" id="analiseModal" tabindex="-1" aria-labelledby="analiseModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
           <div class="modal-content modal-custom">
@@ -179,20 +188,25 @@ export async function renderFinanceiroAnaliseDashboard() {
             <div class="modal-body">
               <form id="analiseForm">
                 <input type="hidden" id="lancamentoId">
-                <!-- Campos do JSONB "dados" -->
+                <!-- Os campos abaixo serão exibidos como somente leitura -->
                 <div class="mb-3">
-                  <label for="uid" class="form-label">UID</label>
-                  <input type="text" class="form-control" id="uid">
+                  <label for="uid" class="form-label">UUID</label>
+                  <input type="text" class="form-control" id="uid" readonly>
                 </div>
                 <div class="mb-3">
                   <label for="app_id" class="form-label">App ID</label>
-                  <input type="text" class="form-control" id="app_id">
+                  <input type="text" class="form-control" id="app_id" readonly>
                 </div>
+                <div class="mb-3">
+                  <label for="email" class="form-label">Email</label>
+                  <input type="email" class="form-control" id="email" readonly>
+                </div>
+                <!-- Campos editáveis -->
                 <div class="mb-3">
                   <label for="valor" class="form-label">Valor</label>
                   <input type="number" class="form-control" id="valor">
                 </div>
-                <!-- Filial com input e datalist -->
+                <!-- Filial -->
                 <div class="mb-3">
                   <label for="filialEdit" class="form-label">Filial</label>
                   <input type="text" class="form-control" id="filialEdit" list="filialOptionsEdit" placeholder="Digite ou escolha uma filial" required>
@@ -200,7 +214,7 @@ export async function renderFinanceiroAnaliseDashboard() {
                     <option value="">Selecione</option>
                   </datalist>
                 </div>
-                <!-- Fornecedor com input e datalist -->
+                <!-- Fornecedor -->
                 <div class="mb-3">
                   <label for="fornecedorEdit" class="form-label">Fornecedor</label>
                   <input type="text" class="form-control" id="fornecedorEdit" list="fornecedorOptionsEdit" placeholder="Digite ou escolha um fornecedor" required>
@@ -221,10 +235,23 @@ export async function renderFinanceiroAnaliseDashboard() {
                   <input type="date" class="form-control" id="dataEmissao">
                 </div>
                 <div class="mb-3">
-                  <label for="vencimento" class="form-label">Vencimento</label>
+                  <label for="vencimento" class="form-label">Data de Vencimento</label>
                   <input type="date" class="form-control" id="vencimento">
                 </div>
-                <!-- Centro de Custo com input e datalist -->
+                <div class="mb-3">
+                  <label for="dataInclusao" class="form-label">Data de Inclusão</label>
+                  <input type="text" class="form-control" id="dataInclusao" readonly>
+                </div>
+                <!-- Justificativa será exibida como somente leitura -->
+                <div class="mb-3">
+                  <label for="justificativa" class="form-label">Justificativa</label>
+                  <textarea class="form-control" id="justificativa" rows="3" readonly></textarea>
+                </div>
+                <div class="mb-3">
+                  <label for="forma_pagamento" class="form-label">Forma de Pagamento</label>
+                  <input type="text" class="form-control" id="forma_pagamento">
+                </div>
+                <!-- Centro de Custo -->
                 <div class="mb-3">
                   <label for="centroCustoEdit" class="form-label">Centro de Custo</label>
                   <input type="text" class="form-control" id="centroCustoEdit" list="centroCustoOptionsEdit" placeholder="Digite ou escolha um centro de custo" required>
@@ -232,7 +259,7 @@ export async function renderFinanceiroAnaliseDashboard() {
                     <option value="">Selecione</option>
                   </datalist>
                 </div>
-                <!-- Projeto com input e datalist -->
+                <!-- Projeto -->
                 <div class="mb-3">
                   <label for="projetoEdit" class="form-label">Projeto</label>
                   <input type="text" class="form-control" id="projetoEdit" list="projetoOptionsEdit" placeholder="Digite ou escolha um projeto" required>
@@ -240,28 +267,47 @@ export async function renderFinanceiroAnaliseDashboard() {
                     <option value="">Selecione</option>
                   </datalist>
                 </div>
+                <!-- Metadata (somente leitura) -->
                 <div class="mb-3">
-                  <label for="observacao" class="form-label">Observação</label>
-                  <textarea class="form-control" id="observacao" rows="3"></textarea>
+                  <label for="created_at" class="form-label">Data criação</label>
+                  <input type="text" class="form-control" id="created_at" readonly>
                 </div>
-                <!-- Campo para comentário do analista -->
                 <div class="mb-3">
-                  <label for="comentarioAnalista" class="form-label">Comentário do Analista</label>
-                  <textarea class="form-control" id="comentarioAnalista" rows="2"></textarea>
+                  <label for="created_by" class="form-label">id usuário criação</label>
+                  <input type="text" class="form-control" id="created_by" readonly>
                 </div>
-                <!-- Campo para exibição dos anexos -->
+                <div class="mb-3">
+                  <label for="updated_at" class="form-label">Data alteração</label>
+                  <input type="text" class="form-control" id="updated_at" readonly>
+                </div>
+                <div class="mb-3">
+                  <label for="updated_by" class="form-label">id usuário alteração</label>
+                  <input type="text" class="form-control" id="updated_by" readonly>
+                </div>
+                <!-- Anexos -->
                 <div class="mb-3">
                   <label for="anexos" class="form-label">Anexos</label>
                   <div id="anexos" class="border p-2" style="min-height: 50px;"></div>
                 </div>
+                <!-- Comentário do Analista -->
+                <div class="mb-3">
+                  <label for="comentarioAnalista" class="form-label">Comentário do Analista</label>
+                  <textarea class="form-control" id="comentarioAnalista" rows="2"></textarea>
+                </div>
               </form>
             </div>
             <div class="modal-footer">
-              <button id="btnAprovarAlteracoes" type="button" class="btn btn-success" title="Aprovar com Alterações" style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724;">
-                <i class="bi bi-check-lg"></i>
+              <button id="btnAprovarModal" type="button" class="btn btn-success" title="Aprovar">
+                Aprovar
               </button>
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" title="Cancelar" style="background-color: #f8f9fa; border: 1px solid #dee2e6; color: #6c757d;">
-                <i class="bi bi-x-lg"></i>
+              <button id="btnRejeitarModal" type="button" class="btn btn-danger" title="Rejeitar">
+                Rejeitar
+              </button>
+              <button id="btnSalvarModal" type="button" class="btn btn-primary" title="Salvar Alterações">
+                Salvar
+              </button>
+              <button id="btnCancelarModal" type="button" class="btn btn-secondary" data-bs-dismiss="modal" title="Cancelar">
+                Cancelar
               </button>
             </div>
           </div>
@@ -270,7 +316,6 @@ export async function renderFinanceiroAnaliseDashboard() {
     </div>
   `;
 
-  // Função para inicializar o DataTable
   function initializeDataTable() {
     if (window.jQuery && $.fn.DataTable) {
       if ($.fn.DataTable.isDataTable("#analiseTable")) {
@@ -293,7 +338,6 @@ export async function renderFinanceiroAnaliseDashboard() {
     }
   }
 
-  // Função que carrega os dados e atualiza a tabela
   async function loadDashboardData() {
     try {
       showLoading();
@@ -308,7 +352,6 @@ export async function renderFinanceiroAnaliseDashboard() {
       window.projetosData = projetos;
       window.centrosData = centros;
 
-      // Atualiza os datalists do modal para edição
       const datalistFilialEdit = document.getElementById('filialOptionsEdit');
       if (datalistFilialEdit) {
         datalistFilialEdit.innerHTML = '<option value="">Selecione</option>';
@@ -337,14 +380,12 @@ export async function renderFinanceiroAnaliseDashboard() {
         });
       }
 
-      // Limpa o tbody da tabela
       const tbody = document.getElementById('analise-tabela');
       tbody.innerHTML = '';
 
       const dados = await loadLancamentosNoCache();
       const pendentes = dados.filter(l => l.dados && l.dados.status && l.dados.status.toLowerCase() === 'pendente');
 
-      // Atualiza os cards resumo
       const totalPendentes = pendentes.length;
       const totalAprovado = dados.filter(l => l.dados && l.dados.status && l.dados.status.toLowerCase() === 'aprovado')
         .reduce((acc, cur) => acc + (parseFloat(cur.dados.valor) || 0), 0);
@@ -355,8 +396,8 @@ export async function renderFinanceiroAnaliseDashboard() {
       document.getElementById('total-aprovado').textContent = 'R$ ' + totalAprovado.toFixed(2);
       document.getElementById('total-rejeitado').textContent = 'R$ ' + totalRejeitado.toFixed(2);
 
-      pendentes.forEach(lanc => {
-        const dadosLanc = lanc.dados || {};
+      pendentes.forEach(lancamento => {
+        const dadosLanc = lancamento.dados || {};
         const filialObj = window.filiaisData.find(f => f.uuid === dadosLanc.filial);
         const filialName = filialObj ? filialObj.nome : dadosLanc.filial || '-';
         const fornecedorObj = window.fornecedoresData.find(f => f.uuid === dadosLanc.fornecedor);
@@ -370,26 +411,36 @@ export async function renderFinanceiroAnaliseDashboard() {
         tr.innerHTML = `
           <td>
             <div style="display: inline-flex; gap: 4px;">
-              <button class="btn btn-sm btn-aprovar" data-id="${lanc.id}" title="Aprovar" style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724;">
+              <button class="btn btn-sm btn-aprovar" data-id="${lancamento.id}" title="Aprovar" style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724;">
                 <i class="bi bi-check-lg"></i>
               </button>
-              <button class="btn btn-sm btn-rejeitar" data-id="${lanc.id}" title="Rejeitar" style="background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24;">
+              <button class="btn btn-sm btn-rejeitar" data-id="${lancamento.id}" title="Rejeitar" style="background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24;">
                 <i class="bi bi-x-lg"></i>
               </button>
-              <button class="btn btn-sm btn-editar" data-id="${lanc.id}" title="Editar" style="background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404;">
+              <button class="btn btn-sm btn-editar" data-id="${lancamento.id}" title="Editar" style="background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404;">
                 <i class="bi bi-pencil-square"></i>
               </button>
             </div>
           </td>
-          <td>${lanc.id || '-'}</td>
-          <td>${dadosLanc.uid || '-'}</td>
+          <td>${formatAnexos(lancamento.anexos)}</td>
           <td>${filialName}</td>
+          <td>${dadosLanc.data_inclusao ? formatDate(dadosLanc.data_inclusao) : '-'}</td>
+          <td>${dadosLanc.dataEmissao ? formatDate(dadosLanc.dataEmissao) : '-'}</td>
+          <td>${dadosLanc.vencimento ? formatDate(dadosLanc.vencimento) : '-'}</td>
           <td>${fornecedorName}</td>
           <td>${dadosLanc.numeroDocumento || '-'}</td>
-          <td>${dadosLanc.tipoDocumento || '-'}</td>
-          <td>${dadosLanc.dataEmissao ? formatDate(dadosLanc.dataEmissao) : '-'}</td>
           <td>${dadosLanc.valor ? formatCurrency(dadosLanc.valor) : '-'}</td>
-          <td>${formatAnexos(lanc.anexos)}</td>
+          <td>${dadosLanc.status || '-'}</td>
+          <td>${dadosLanc.justificativa || '-'}</td>
+          <td>${dadosLanc.tipoDocumento || '-'}</td>
+          <td>${dadosLanc.forma_pagamento || '-'}</td>
+          <td>${centroName}</td>
+          <td>${projetoName}</td>
+          <td>${dadosLanc.email || '-'}</td>
+          <td>${lancamento.created_at ? formatDate(lancamento.created_at) : '-'}</td>
+          <td>${lancamento.created_by || '-'}</td>
+          <td>${lancamento.updated_at ? formatDate(lancamento.updated_at) : '-'}</td>
+          <td>${lancamento.updated_by || '-'}</td>
         `;
         tbody.appendChild(tr);
       });
@@ -398,12 +449,123 @@ export async function renderFinanceiroAnaliseDashboard() {
       hideLoading();
     } catch (error) {
       console.error("Erro ao carregar dados para análise:", error);
-      document.getElementById('analise-tabela').innerHTML = '<tr><td colspan="10">Erro ao carregar os dados.</td></tr>';
+      document.getElementById('analise-tabela').innerHTML = '<tr><td colspan="20">Erro ao carregar os dados.</td></tr>';
       hideLoading();
     }
   }
 
-  // Função para abrir o modal de edição
+  function extrairDadosFormulario() {
+    let errors = [];
+    const filialEditValue = document.getElementById('filialEdit').value.trim();
+    let filial = '';
+    if (window.filiaisData && window.filiaisData.length > 0) {
+      const filialSelected = window.filiaisData.find(f => f.nome.toLowerCase() === filialEditValue.toLowerCase());
+      if (filialSelected) {
+        filial = filialSelected.uuid;
+      } else {
+        errors.push('Filial inválida ou não encontrada');
+      }
+    } else {
+      errors.push('Filiais não carregadas');
+    }
+    const fornecedorEditValue = document.getElementById('fornecedorEdit').value.trim();
+    let fornecedor = '';
+    if (window.fornecedoresData && window.fornecedoresData.length > 0) {
+      const fornecedorSelected = window.fornecedoresData.find(f => 
+        f.nome.toLowerCase() === fornecedorEditValue.toLowerCase() ||
+        f.cnpj.replace(/[\.\-\/\s]/g, "").toLowerCase() === fornecedorEditValue.replace(/[\.\-\/\s]/g, "").toLowerCase()
+      );
+      if (fornecedorSelected) {
+        fornecedor = fornecedorSelected.uuid;
+      } else {
+        errors.push('Fornecedor inválido ou não encontrado');
+      }
+    } else {
+      errors.push('Fornecedores não carregados');
+    }
+    const centroCustoEditValue = document.getElementById('centroCustoEdit').value.trim();
+    let centroCusto = '';
+    if (window.centrosData && window.centrosData.length > 0) {
+      const centroSelected = window.centrosData.find(c => c.nome.toLowerCase() === centroCustoEditValue.toLowerCase());
+      if (centroSelected) {
+        centroCusto = centroSelected.uuid;
+      } else {
+        errors.push('Centro de Custo inválido ou não encontrado');
+      }
+    } else {
+      errors.push('Centros de Custo não carregados');
+    }
+    const projetoEditValue = document.getElementById('projetoEdit').value.trim();
+    let projeto = '';
+    if (window.projetosData && window.projetosData.length > 0) {
+      const projetoSelected = window.projetosData.find(p => p.nome.toLowerCase() === projetoEditValue.toLowerCase());
+      if (projetoSelected) {
+        projeto = projetoSelected.uuid;
+      } else {
+        errors.push('Projeto inválido ou não encontrado');
+      }
+    } else {
+      errors.push('Projetos não carregados');
+    }
+
+    const dadosAtualizados = {
+      uid: document.getElementById('uid').value,
+      app_id: document.getElementById('app_id').value,
+      email: document.getElementById('email').value,
+      valor: document.getElementById('valor').value,
+      filial: filial,
+      fornecedor: fornecedor,
+      numeroDocumento: document.getElementById('numeroDocumento').value,
+      tipoDocumento: document.getElementById('tipoDocumento').value,
+      dataEmissao: document.getElementById('dataEmissao').value,
+      vencimento: document.getElementById('vencimento').value,
+      justificativa: document.getElementById('justificativa').value,
+      forma_pagamento: document.getElementById('forma_pagamento').value,
+      centro_custo: centroCusto,
+      projeto: projeto,
+      comentario_analista: document.getElementById('comentarioAnalista').value,
+      data_analise: new Date().toISOString()
+    };
+
+    return { dadosAtualizados, errors };
+  }
+
+  async function processModalUpdate(status) {
+    const lancamentoId = document.getElementById('lancamentoId').value;
+    const { dadosAtualizados, errors } = extrairDadosFormulario();
+    if (errors.length > 0) {
+      alert("Por favor, corrija os seguintes erros: " + errors.join(", "));
+      hideLoading();
+      return;
+    }
+    dadosAtualizados.status = status;
+    try {
+      await updateLancamento(AuthService, lancamentoId, dadosAtualizados);
+      const modal = bootstrap.Modal.getInstance(document.getElementById('analiseModal'));
+      modal.hide();
+      await loadDashboardData();
+    } catch (error) {
+      console.error("Erro ao processar atualização no modal:", error);
+      alert("Erro ao processar a atualização: " + error.message);
+      hideLoading();
+    }
+  }
+
+  async function processModalApprove() {
+    showLoading();
+    await processModalUpdate("Aprovado");
+  }
+
+  async function processModalReject() {
+    showLoading();
+    await processModalUpdate("Rejeitado");
+  }
+
+  async function processModalSave() {
+    showLoading();
+    await processModalUpdate("Pendente");
+  }
+
   function openModal(lancamento) {
     const modal = new bootstrap.Modal(document.getElementById('analiseModal'));
     document.getElementById('lancamentoId').value = lancamento.id;
@@ -419,6 +581,7 @@ export async function renderFinanceiroAnaliseDashboard() {
 
     document.getElementById('uid').value = dados.uid || '';
     document.getElementById('app_id').value = dados.app_id || '';
+    document.getElementById('email').value = dados.email || '';
     document.getElementById('valor').value = dados.valor || '';
     document.getElementById('filialEdit').value = filialName;
     document.getElementById('fornecedorEdit').value = fornecedorName;
@@ -426,15 +589,20 @@ export async function renderFinanceiroAnaliseDashboard() {
     document.getElementById('tipoDocumento').value = dados.tipoDocumento || '';
     document.getElementById('dataEmissao').value = dados.dataEmissao ? new Date(dados.dataEmissao).toISOString().split('T')[0] : '';
     document.getElementById('vencimento').value = dados.vencimento ? new Date(dados.vencimento).toISOString().split('T')[0] : '';
+    document.getElementById('dataInclusao').value = dados.data_inclusao || '-';
+    document.getElementById('justificativa').value = dados.justificativa || '';
+    document.getElementById('forma_pagamento').value = dados.forma_pagamento || '';
     document.getElementById('centroCustoEdit').value = centroName;
     document.getElementById('projetoEdit').value = projetoName;
-    document.getElementById('observacao').value = dados.observacao || '';
+    document.getElementById('created_at').value = lancamento.created_at ? formatDate(lancamento.created_at) : '-';
+    document.getElementById('created_by').value = lancamento.created_by || '-';
+    document.getElementById('updated_at').value = lancamento.updated_at ? formatDate(lancamento.updated_at) : '-';
+    document.getElementById('updated_by').value = lancamento.updated_by || '-';
     document.getElementById('anexos').innerHTML = formatAnexos(lancamento.anexos);
-    document.getElementById('comentarioAnalista').value = '';
+    document.getElementById('comentarioAnalista').value = dados.comentario_analista || '';
     modal.show();
   }
 
-  // Processa decisão imediata (aprovar ou rejeitar sem edição)
   async function processImmediateDecision(decision, lancamento) {
     if (!AuthService.user) {
       alert("Usuário não autenticado. Por favor, faça login novamente.");
@@ -457,108 +625,6 @@ export async function renderFinanceiroAnaliseDashboard() {
     }
   }
 
-  // Processa decisão a partir do modal (aprovar com alterações)
-  async function processModalDecision() {
-    if (!AuthService.user) {
-      alert("Usuário não autenticado. Por favor, faça login novamente.");
-      return;
-    }
-    showLoading();
-    const lancamentoId = document.getElementById('lancamentoId').value;
-    let errors = [];
-    // Filial
-    const filialEditValue = document.getElementById('filialEdit').value.trim();
-    let filial = '';
-    if (window.filiaisData && window.filiaisData.length > 0) {
-      const filialSelected = window.filiaisData.find(f => f.nome.toLowerCase() === filialEditValue.toLowerCase());
-      if (filialSelected) {
-        filial = filialSelected.uuid;
-      } else {
-        errors.push('Filial inválida ou não encontrada');
-      }
-    } else {
-      errors.push('Filiais não carregadas');
-    }
-    // Fornecedor
-    const fornecedorEditValue = document.getElementById('fornecedorEdit').value.trim();
-    let fornecedor = '';
-    if (window.fornecedoresData && window.fornecedoresData.length > 0) {
-      const fornecedorSelected = window.fornecedoresData.find(f => 
-        f.nome.toLowerCase() === fornecedorEditValue.toLowerCase() ||
-        f.cnpj.replace(/[\.\-\/\s]/g, "").toLowerCase() === fornecedorEditValue.replace(/[\.\-\/\s]/g, "").toLowerCase()
-      );
-      if (fornecedorSelected) {
-        fornecedor = fornecedorSelected.uuid;
-      } else {
-        errors.push('Fornecedor inválido ou não encontrado');
-      }
-    } else {
-      errors.push('Fornecedores não carregados');
-    }
-    // Centro de Custo
-    const centroCustoEditValue = document.getElementById('centroCustoEdit').value.trim();
-    let centroCusto = '';
-    if (window.centrosData && window.centrosData.length > 0) {
-      const centroSelected = window.centrosData.find(c => c.nome.toLowerCase() === centroCustoEditValue.toLowerCase());
-      if (centroSelected) {
-        centroCusto = centroSelected.uuid;
-      } else {
-        errors.push('Centro de Custo inválido ou não encontrado');
-      }
-    } else {
-      errors.push('Centros de Custo não carregados');
-    }
-    // Projeto
-    const projetoEditValue = document.getElementById('projetoEdit').value.trim();
-    let projeto = '';
-    if (window.projetosData && window.projetosData.length > 0) {
-      const projetoSelected = window.projetosData.find(p => p.nome.toLowerCase() === projetoEditValue.toLowerCase());
-      if (projetoSelected) {
-        projeto = projetoSelected.uuid;
-      } else {
-        errors.push('Projeto inválido ou não encontrado');
-      }
-    } else {
-      errors.push('Projetos não carregados');
-    }
-
-    const atualizacoes = {
-      uid: document.getElementById('uid').value,
-      app_id: document.getElementById('app_id').value,
-      valor: document.getElementById('valor').value,
-      filial: filial,
-      fornecedor: fornecedor,
-      numeroDocumento: document.getElementById('numeroDocumento').value,
-      tipoDocumento: document.getElementById('tipoDocumento').value,
-      dataEmissao: document.getElementById('dataEmissao').value,
-      vencimento: document.getElementById('vencimento').value,
-      centro_custo: centroCusto,
-      projeto: projeto,
-      status: 'Aprovado',
-      observacao: document.getElementById('observacao').value,
-      comentario_analista: document.getElementById('comentarioAnalista').value,
-      data_analise: new Date().toISOString()
-    };
-
-    if (errors.length > 0) {
-      alert("Por favor, corrija os seguintes erros: " + errors.join(", "));
-      hideLoading();
-      return;
-    }
-
-    try {
-      await updateLancamento(AuthService, lancamentoId, atualizacoes);
-      const modal = bootstrap.Modal.getInstance(document.getElementById('analiseModal'));
-      modal.hide();
-      await loadDashboardData();
-    } catch (error) {
-      console.error("Erro ao processar a decisão no modal:", error);
-      alert("Erro ao processar a decisão: " + error.message);
-      hideLoading();
-    }
-  }
-
-  // Delegação de eventos para botões na tabela
   document.getElementById('analise-tabela').addEventListener('click', (e) => {
     const button = e.target.closest('button');
     if (!button) return;
@@ -576,10 +642,11 @@ export async function renderFinanceiroAnaliseDashboard() {
     });
   });
 
-  // Evento do modal para aprovação com alterações
-  document.getElementById('btnAprovarAlteracoes').addEventListener('click', processModalDecision);
+  document.getElementById('btnAprovarModal').addEventListener('click', processModalApprove);
+  document.getElementById('btnRejeitarModal').addEventListener('click', processModalReject);
+  document.getElementById('btnSalvarModal').addEventListener('click', processModalSave);
+  // btnCancelarModal já possui data-bs-dismiss="modal"
 
-  // Monitora a autenticação
   AuthService.onAuthChange((user) => {
     if (user) {
       loadDashboardData();
@@ -595,5 +662,4 @@ export async function renderFinanceiroAnaliseDashboard() {
   });
 }
 
-// Registra a rota para a página de Dashboard de Análise
 registerRoute('#dashboard-analise', renderFinanceiroAnaliseDashboard);

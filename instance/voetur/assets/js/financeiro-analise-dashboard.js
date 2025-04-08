@@ -188,7 +188,7 @@ export async function renderFinanceiroAnaliseDashboard() {
             <div class="modal-body">
               <form id="analiseForm">
                 <input type="hidden" id="lancamentoId">
-                <!-- Os campos abaixo serão exibidos como somente leitura -->
+                <!-- Exibir campos somente leitura -->
                 <div class="mb-3">
                   <label for="uid" class="form-label">UUID</label>
                   <input type="text" class="form-control" id="uid" readonly>
@@ -242,7 +242,7 @@ export async function renderFinanceiroAnaliseDashboard() {
                   <label for="dataInclusao" class="form-label">Data de Inclusão</label>
                   <input type="text" class="form-control" id="dataInclusao" readonly>
                 </div>
-                <!-- Justificativa será exibida como somente leitura -->
+                <!-- Justificativa exibida como somente leitura -->
                 <div class="mb-3">
                   <label for="justificativa" class="form-label">Justificativa</label>
                   <textarea class="form-control" id="justificativa" rows="3" readonly></textarea>
@@ -297,16 +297,16 @@ export async function renderFinanceiroAnaliseDashboard() {
               </form>
             </div>
             <div class="modal-footer">
-              <button id="btnAprovarModal" type="button" class="btn btn-success" title="Aprovar">
+              <button id="btnAprovarModal" type="button" class="btn btn-sm btn-aprovar" style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724;" title="Aprovar">
                 Aprovar
               </button>
-              <button id="btnRejeitarModal" type="button" class="btn btn-danger" title="Rejeitar">
+              <button id="btnRejeitarModal" type="button" class="btn btn-sm btn-rejeitar" style="background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24;" title="Rejeitar">
                 Rejeitar
               </button>
-              <button id="btnSalvarModal" type="button" class="btn btn-primary" title="Salvar Alterações">
+              <button id="btnSalvarModal" type="button" class="btn btn-sm btn-editar" style="background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404;" title="Salvar Alterações">
                 Salvar
               </button>
-              <button id="btnCancelarModal" type="button" class="btn btn-secondary" data-bs-dismiss="modal" title="Cancelar">
+              <button id="btnCancelarModal" type="button" class="btn btn-sm btn-secondary" style="background-color: #f8f9fa; border: 1px solid #dee2e6; color: #6c757d;" data-bs-dismiss="modal" title="Cancelar">
                 Cancelar
               </button>
             </div>
@@ -645,7 +645,7 @@ export async function renderFinanceiroAnaliseDashboard() {
   document.getElementById('btnAprovarModal').addEventListener('click', processModalApprove);
   document.getElementById('btnRejeitarModal').addEventListener('click', processModalReject);
   document.getElementById('btnSalvarModal').addEventListener('click', processModalSave);
-  // btnCancelarModal já possui data-bs-dismiss="modal"
+  // O botão Cancelar utiliza o atributo data-bs-dismiss="modal"
 
   AuthService.onAuthChange((user) => {
     if (user) {

@@ -115,7 +115,7 @@
           });
         }
 
-        // Configura o botão de abrir chat
+        // Configura o botão de abrir chat (se estiver habilitado)
         const openChatBtn = document.getElementById('openChatBtn');
         const chatModal = document.getElementById('chatModal');
         const closeChatBtn = document.getElementById('closeChatBtn');
@@ -167,45 +167,6 @@
           </div>
           <div class="nav-right">
             <ul class="header-right">
-              <!-- Botão de Chat -->
-               <!--
-              <li>
-                <button id="openChatBtn" type="button">Chat LexiDecis</button>
-              </li>
-              -->
-              <!-- Dropdown de idioma -->
-              <!-- 
-              <li class="custom-dropdown">
-                <div class="translate_wrapper">
-                  <div class="current_lang">
-                    <a class="lang" href="javascript:void(0)">
-                      <i class="flag-icon flag-icon-us"></i>
-                      <h6 class="lang-txt f-w-700">ENG</h6>
-                    </a>
-                  </div>
-                  <ul class="custom-menu profile-menu language-menu py-0 more_lang">
-                    <li class="d-block">
-                      <a class="lang" href="#" data-value="English">
-                        <i class="flag-icon flag-icon-us"></i>
-                        <div class="lang-txt">English</div>
-                      </a>
-                    </li>
-                    <li class="d-block">
-                      <a class="lang" href="#" data-value="fr">
-                        <i class="flag-icon flag-icon-fr"></i>
-                        <div class="lang-txt">Français</div>
-                      </a>
-                    </li>
-                    <li class="d-block">
-                      <a class="lang" href="#" data-value="es">
-                        <i class="flag-icon flag-icon-es"></i>
-                        <div class="lang-txt">Español</div>
-                      </a>
-                    </li>
-                  </ul>
-                </div>
-              </li> 
-              -->
               <!-- Ícone de busca para telas pequenas -->
               <li class="search d-lg-none d-flex">
                 <a href="javascript:void(0)">
@@ -332,84 +293,7 @@
           <div class="left-arrow" id="left-arrow"><i data-feather="arrow-left"></i></div>
           <div class="main-sidebar" id="main-sidebar">
             <ul class="sidebar-menu" id="simple-bar">
-              <li class="sidebar-main-title">
-                <div>
-                  <h5 class="sidebar-title f-w-700">Menu</h5>
-                </div>
-              </li>
-              <!-- Dashboard -->
-              <li class="sidebar-list">
-                <a class="sidebar-link" href="#dashboard">
-                  <svg class="stroke-icon">
-                    <use href="../assets/svg/iconly-sprite.svg#Home-dashboard"></use>
-                  </svg>
-                  <h6>Página Inicial</h6>
-                  <i class="iconly-Arrow-Right-2 icli"></i>
-                </a>
-                <ul class="sidebar-submenu">
-                  <li><a href="#financeiro-lancamentos">Lançar pagamento</a></li>
-                  <li><a href="#financeiro-lancamentos-list">Meus lançamentos</a></li>
-                </ul>
-              </li>
-              <!-- Financeiro -->
-              <li class="sidebar-main-title">
-                <div>
-                  <h5 class="sidebar-title f-w-700">Área do Gestor</h5>
-                </div>
-              </li>
-              <li class="sidebar-list">
-                <a class="sidebar-link" href="#dashboard-analise"">
-                  <svg class="stroke-icon">
-                    <use href="../assets/svg/iconly-sprite.svg#News"></use>
-                  </svg>
-                  <h6>Pagamentos</h6>
-                  <i class="iconly-Arrow-Right-2 icli"></i>
-                </a>
-                <ul class="sidebar-submenu">
-                  <!--
-                  <li><a href="#aprovacoes-contas-a-pagar">Aprovar pagamento</a></li>
-                -->                  
-                  <li><a href="#financeiro-lancamentos">Lançar pagamento</a></li>
-                  <li><a href="#financeiro-lancamentos-list">Meus lançamentos</a></li>
-                </ul>
-              </li>              
-              <!-- Controladoria -->
-              <li class="sidebar-main-title">
-                <div>
-                  <h5 class="sidebar-title f-w-700">Controladoria</h5>
-                </div>
-              </li>
-              <li class="sidebar-list">
-                <a class="sidebar-link" href="#dashboard-analise"">
-                  <svg class="stroke-icon">
-                    <use href="../assets/svg/iconly-sprite.svg#News"></use>
-                  </svg>
-                  <h6>Janela Única</h6>
-                  <i class="iconly-Arrow-Right-2 icli"></i>
-                </a>
-                <ul class="sidebar-submenu">
-                  <li><a href="#dashboard-analise">Analisar lançamentos</a></li>
-                  <li><a href="#lancamentos-completo">Todos os lançamentos</a></li>
-                </ul>
-              </li>
-              <!-- Aprovações -->
-              <!--  <li class="sidebar-list">
-                 <a class="sidebar-link">
-                   <svg class="stroke-icon">
-                    <use href="../assets/svg/iconly-sprite.svg#Profile"></use>
-                  </svg>
-                  <h6>Aprovações</h6>
-                  <i class="iconly-Arrow-Right-2 icli"></i>
-                </a>
-                <ul class="sidebar-submenu">
-                  <li><a href="#aprovacoes-contas-a-pagar">Contas a Pagar</a></li>
-                  <li><a href="#aprovacoes-contratos">Contratos</a></li>
-                  <li><a href="#aprovacoes-apontamento-de-contrato">Apontamento de Contratos</a></li>
-                  <li><a href="#aprovacoes-ordens-de-compra">Ordens de Compra</a></li>
-                  <li><a href="#aprovacoes-requisicoes-de-materiais">Requisição de Material</a></li>
-                </ul>
-              </li> -->
-              <!-- Seções "User" e "Conformidade" foram removidas -->
+              <!-- O menu será carregado dinamicamente via JavaScript -->
             </ul>
           </div>
           <div class="right-arrow" id="right-arrow"><i data-feather="arrow-right"></i></div>
@@ -441,7 +325,7 @@
       </div>
     </div>
 
-    <!-- Modal de Chat -->
+    <!-- Modal de Chat (opcional) -->
     <!-- 
     <div id="chatModal">
       <div class="modal-content">
@@ -449,7 +333,7 @@
         <iframe src="../../../pages/chat.html"></iframe>
       </div>
     </div>
-    <--
+    -->
 
     <!-- Importação de scripts externos -->
     <script src="../assets/js/vendors/jquery/jquery.min.js"></script>
@@ -464,11 +348,11 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
     <script src="../assets/js/js-datatables/datatables/jquery.dataTables.min.js"></script>
-    <!--<script src="../assets/js/js-datatables/datatables/datatable.custom.js"></script>-->
+    <!-- <script src="../assets/js/js-datatables/datatables/datatable.custom.js"></script> -->
     <script src="../assets/js/datatable/datatables/datatable.custom.js"></script>
     <script src="../assets/js/script.js"></script>
-    
-    <!-- Roteamento: importa o router e os arquivos de rotas -->
+
+    <!-- Importando arquivos de rotas -->
     <script type="module" src="../assets/js/dashboard.js"></script>
     <script type="module" src="../assets/js/consutaCNPJ.js"></script>
     <script type="module" src="../assets/js/financeiro-lancamentos-list.js"></script>
@@ -476,22 +360,43 @@
     <script type="module" src="../assets/js/financeiro-lancamentos.js"></script>
     <script type="module" src="../assets/js/financeiro-analise-dashboard.js"></script>
     <script type="module" src="../assets/js/financeiro-lancamentos-completo.js"></script>
-    
-    
     <!-- <script type="module" src="../assets/js/chat.js"></script> -->
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
-
-
     <link rel="stylesheet" href="https://cdn.datatables.net/colreorder/1.6.2/css/colReorder.dataTables.min.css">
     <script src="https://cdn.datatables.net/colreorder/1.6.2/js/dataTables.colReorder.min.js"></script>
 
-
-    <!-- Feather icons (se necessário) -->
+    <!-- Script para Feather icons -->
     <script>
       if (typeof feather !== "undefined") {
         feather.replace();
       }
+    </script>
+
+    <!-- Script para montar o menu dinâmico baseado nas permissões do usuário -->
+    <script type="module">
+      import AuthService from "../assets/js/auth.js";
+      import { getUserProfile } from "../assets/js/api.js";
+      import { buildSidebarMenu } from "../assets/js/menu-builder.js";
+
+      AuthService.onAuthChange(async (user) => {
+        if (user) {
+          try {
+            const profileData = await getUserProfile(AuthService);
+            // Se a API retorna um array, use o primeiro objeto
+            const profile = Array.isArray(profileData) && profileData.length > 0 ? profileData[0] : profileData;
+            console.log("Perfil retornado da API (ajustado):", profile);
+            window.userProfile = profile;
+            buildSidebarMenu(profile);
+          } catch (err) {
+            console.error("Erro ao carregar perfil/menu:", err);
+            const simpleBar = document.getElementById("simple-bar");
+            if (simpleBar) {
+              simpleBar.innerHTML = `<li><a href="#">Erro ao carregar menu</a></li>`;
+            }
+          }
+        }
+      });
     </script>
   </body>
 </html>

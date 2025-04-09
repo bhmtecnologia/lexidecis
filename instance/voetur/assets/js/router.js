@@ -1,10 +1,20 @@
-// router.js - Versão Melhorada com logs
-const routes = new Map();
+// router.js - Versão com suporte a permissões por rota e espera pelo perfil do usuário
 
-// Registra as rotas e loga a ação
-export function registerRoute(hash, renderFunction) {
+const routes = new Map();
+const routePermissions = new Map();
+
+/**
+ * Registra uma rota com função de renderização e chave de permissão opcional.
+ * Se permissionKey não for passado, assume o próprio hash como chave de permissão.
+ * @param {string} hash - Ex: "#dashboard"
+ * @param {Function} renderFunction - Função assíncrona que renderiza a página
+ * @param {string} [permissionKey] - Chave que será comparada com userProfile.routes
+ */
+export function registerRoute(hash, renderFunction, permissionKey) {
   console.log(`Registrando rota: ${hash}`);
   routes.set(hash, renderFunction);
+  // Se permissionKey não for informado, usa o próprio hash
+  routePermissions.set(hash, permissionKey || hash);
 }
 
 // Exibe um spinner enquanto a página carrega
@@ -24,28 +34,50 @@ function clearOldScripts() {
   document.querySelectorAll("script.dynamic-script").forEach(script => script.remove());
 }
 
-// Roteador que procura a rota atual e a renderiza
+/**
+ * Aguarda até que window.userProfile esteja definido ou até timeout (ms)
+ * @param {number} timeout Tempo máximo em milissegundos para aguardar
+ */
+async function waitProfile(timeout = 3000) {
+  const start = Date.now();
+  while (!window.userProfile && Date.now() - start < timeout) {
+    await new Promise(res => setTimeout(res, 50));
+  }
+}
+
+// Função principal do roteador
 async function router() {
   let hash = window.location.hash;
   console.log("Roteador iniciado. Hash atual:", hash);
-  
+
   if (!hash || hash === "#") {
-    hash = "#dashboard"; // Define página padrão
+    hash = "#dashboard"; // Rota padrão
     console.log("Nenhuma hash definida. Redirecionando para a rota padrão:", hash);
     window.location.hash = hash;
+    return;
+  }
+
+  // Aguarda que o perfil seja carregado (até 3 segundos)
+  await waitProfile(3000);
+  if (!window.userProfile) {
+    console.warn("Perfil do usuário não carregado; acesso negado.");
+    const content = document.getElementById("content");
+    if (content) content.innerHTML = `<h1>Acesso negado</h1>`;
+    return;
   }
 
   const renderFunc = routes.get(hash);
-  
-  if (renderFunc) {
+  const permissionKey = routePermissions.get(hash) || hash;
+  const hasPermission = (window.userProfile?.routes || []).includes(permissionKey);
+
+  if (renderFunc && hasPermission) {
     console.log(`Rota encontrada para ${hash}. Iniciando carregamento...`);
     showLoading();
-    
+
     try {
-      // Atraso mínimo para o loading ser visível
       setTimeout(async () => {
         console.log(`Executando função de renderização para ${hash}...`);
-        await renderFunc(); // Suporta funções assíncronas
+        await renderFunc();
         clearOldScripts();
         console.log(`Rota ${hash} renderizada com sucesso.`);
       }, 100);
@@ -56,6 +88,12 @@ async function router() {
         content.innerHTML = `<h1>Erro ao carregar a página.</h1>`;
       }
     }
+  } else if (!hasPermission) {
+    console.warn(`Usuário sem permissão para acessar a rota ${hash}.`);
+    const content = document.getElementById("content");
+    if (content) {
+      content.innerHTML = `<h1>Acesso negado</h1>`;
+    }
   } else {
     console.warn(`Nenhuma rota registrada para ${hash}.`);
     const content = document.getElementById("content");
@@ -65,6 +103,7 @@ async function router() {
   }
 }
 
+// Escuta mudanças de hash e carregamento inicial
 window.addEventListener("hashchange", router);
 window.addEventListener("load", router);
 

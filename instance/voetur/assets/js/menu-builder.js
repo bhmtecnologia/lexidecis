@@ -8,7 +8,7 @@ export const menuItems = [
       // Subitens para o Dashboard:
       children: [
         { label: "Notícias", route: "#financeiro-lancamentos" },
-        { label: "Comunicados", route: "#financeiro-lancamentos-list" },
+        { label: "Chat", route: "#chat" },
       ]
     },
     {

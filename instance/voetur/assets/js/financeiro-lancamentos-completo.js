@@ -173,8 +173,8 @@ export async function renderFinanceiroLancamentosCompleto() {
         order: [[15, "desc"]], // Ordena pela coluna 'Data criação' (índice 15) de forma decrescente
         colReorder: true,
         paging: true, // Habilita paginação
-        pageLength: 10, // Exibe 10 registros por página
-        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]], // Menu para selecionar a quantidade de itens
+        pageLength: 5, // Exibe 10 registros por página
+        lengthMenu: [[5, 25, 50, -1], [5, 25, 50, "All"]], // Menu para selecionar a quantidade de itens
         dom: 'lBfrtip',
         buttons: ['copy', 'excel', 'csv', 'pdf'],
         language: {

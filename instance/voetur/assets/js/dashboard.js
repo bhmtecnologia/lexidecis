@@ -10,8 +10,8 @@ export async function renderDashboard() {
       <div class="page-title">
         <div class="row">
           <div class="col-sm-6 col-12">
-            <h2>Dashboard</h2>
-            <p class="mb-0 text-title-gray">"Seja bem vindo novamente."</p>
+            <h2>Bem-vindo ao Portal</h2>
+            <p class="mb-0 text-title-gray">Este portal está em fase de testes.</p>
           </div>
           <div class="col-sm-6 col-12">
             <ol class="breadcrumb">
@@ -20,60 +20,20 @@ export async function renderDashboard() {
                   <i class="iconly-Home icli svg-color"></i>
                 </a>
               </li>
-              <li class="breadcrumb-item">Dashboard</li>
-              <li class="breadcrumb-item active">Lançamentos</li>
+              <li class="breadcrumb-item active">Boas-vindas</li>
             </ol>
           </div>
         </div>
       </div>
 
-      <!-- Cards Resumo -->
-      <div class="row">
-        <div class="col-md-4 col-sm-6">
-          <div class="card">
-            <div class="card-body">
-              <h5 class="card-title">Total de Lançamentos</h5>
-              <h3 id="total-lancamentos">--</h3>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-4 col-sm-6">
-          <div class="card">
-            <div class="card-body">
-              <h5 class="card-title">Total Pago</h5>
-              <h3 id="total-pago">--</h3>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-4 col-sm-6">
-          <div class="card">
-            <div class="card-body">
-              <h5 class="card-title">Total em Aberto</h5>
-              <h3 id="total-aberto">--</h3>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tabela de Últimos Lançamentos -->
+      <!-- Mensagem de Boas-Vindas -->
       <div class="card">
-        <div class="card-header">
-          <h5>Últimos Lançamentos</h5>
-        </div>
-        <div class="card-body table-responsive">
-          <table class="table table-striped">
-            <thead>
-              <tr>
-                <th>Descrição</th>
-                <th>Data</th>
-                <th>Valor</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody id="lancamentos-tabela">
-              <tr><td colspan="4">Carregando...</td></tr>
-            </tbody>
-          </table>
+        <div class="card-body">
+          <h5 class="card-title">Bem-vindo!</h5>
+          <p class="card-text">
+            O portal está em fase de testes. Caso encontre erros ou deseje enviar sugestões, entre em contato pelo e-mail:
+            <a href="mailto:suporte@bhm.tec.br">suporte@bhm.tec.br</a>.
+          </p>
         </div>
       </div>
     </div>

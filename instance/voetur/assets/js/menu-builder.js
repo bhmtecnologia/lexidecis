@@ -5,15 +5,10 @@ export const menuItems = [
       label: "Página Inicial",
       icon: "Home-dashboard",
       route: "#dashboard",
-      // Subitens para o Dashboard:
-      children: [
-        { label: "Notícias", route: "#financeiro-lancamentos" },
-        { label: "Chat", route: "#chat" },
-      ]
     },
     {
         label: "Área do Gestor",
-        icon: "icon-face-smile",
+        icon: "Document",
         route: "#dashboard",
         // Subitens para o Dashboard:
         children: [

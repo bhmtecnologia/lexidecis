@@ -33,24 +33,26 @@ function formatDateISO(dateObj) {
 
 export async function renderFinanceiroLancamentos() {
   const content = document.getElementById('content');
+  // Cabeçalho ajustado: título e subtítulo com texto preto (como no formulário)
+  // e breadcrumb com a cor theme default.
   content.innerHTML = `
-    <div class="container-fluid">
-      <!-- Título e Breadcrumb -->
-      <div class="page-title">
+    <div class="container-fluid" style="background-color: var(--body-color); color: var(--body-font-color);">
+      <!-- Cabeçalho: Título, Subtítulo e Breadcrumb -->
+      <div class="page-title" style="padding: 1rem;">
         <div class="row">
           <div class="col-sm-6 col-12">
-            <h2>Financeiro - Lançamentos</h2>
-            <p class="mb-0 text-title-gray">Crie e gerencie novos lançamentos de pagamento</p>
+            <h2 style="color: var(--black);">Financeiro - Lançamentos</h2>
+            <p class="mb-0" style="color: var(--black);">Crie e gerencie novos lançamentos de pagamento</p>
           </div>
           <div class="col-sm-6 col-12">
-            <ol class="breadcrumb">
+            <ol class="breadcrumb" style="color: var(--theme-default);">
               <li class="breadcrumb-item">
-                <a href="index.html">
+                <a href="index.html" style="color: var(--theme-default);">
                   <i class="iconly-Home icli svg-color"></i>
                 </a>
               </li>
-              <li class="breadcrumb-item">Financeiro</li>
-              <li class="breadcrumb-item active">Lançamentos</li>
+              <li class="breadcrumb-item" style="color: var(--theme-default);">Financeiro</li>
+              <li class="breadcrumb-item active" style="color: var(--theme-default);">Lançamentos</li>
             </ol>
           </div>
         </div>
@@ -58,33 +60,41 @@ export async function renderFinanceiroLancamentos() {
       
       <!-- Área do Formulário -->
       <div id="form-section" class="mt-4">
-        <div class="card">
+        <div class="card" style="border: 1px solid var(--border-color); background-color: var(--white); color: var(--black);">
           <div class="card-body">
             <form id="lancamentoForm">
-              <!-- 1. Filial (Input com Datalist) -->
+              <!-- Campo: Filial -->
               <div class="mb-3">
-                <label for="filialInput" class="form-label">Filial</label>
+                <label for="filialInput" class="form-label" style="color: var(--black);">
+                  Filial <span style="color: red;">*</span>
+                </label>
                 <input class="form-control" id="filialInput" list="filialOptions" placeholder="Digite ou escolha uma filial" required aria-required="true">
                 <datalist id="filialOptions">
                   <option value="">Selecione</option>
                 </datalist>
               </div>
-              <!-- 2. Fornecedor (Input com Datalist) -->
+              <!-- Campo: Fornecedor -->
               <div class="mb-3">
-                <label for="fornecedorInput" class="form-label">Fornecedor</label>
+                <label for="fornecedorInput" class="form-label" style="color: var(--black);">
+                  Fornecedor <span style="color: red;">*</span>
+                </label>
                 <input class="form-control" id="fornecedorInput" list="fornecedorOptions" placeholder="Digite ou escolha um fornecedor" required aria-required="true">
                 <datalist id="fornecedorOptions">
                   <option value="">Selecione</option>
                 </datalist>
               </div>
-              <!-- 3. N° Documento (Campo de Texto) -->
+              <!-- Campo: N° Documento -->
               <div class="mb-3">
-                <label for="numeroDocumento" class="form-label">N° Documento</label>
+                <label for="numeroDocumento" class="form-label" style="color: var(--black);">
+                  N° Documento <span style="color: red;">*</span>
+                </label>
                 <input type="text" class="form-control" id="numeroDocumento" placeholder="Digite o número do documento" required aria-required="true">
               </div>
-              <!-- 4. Tipo de Documento (Lista Suspensa) -->
+              <!-- Campo: Tipo de Documento -->
               <div class="mb-3">
-                <label for="tipoDocumento" class="form-label">Tipo de Documento</label>
+                <label for="tipoDocumento" class="form-label" style="color: var(--black);">
+                  Tipo de Documento <span style="color: red;">*</span>
+                </label>
                 <select class="form-select" id="tipoDocumento" required aria-required="true">
                   <option value="">Selecione</option>
                   <option value="Nota Fiscal">Nota Fiscal</option>
@@ -94,19 +104,28 @@ export async function renderFinanceiroLancamentos() {
                   <option value="Outros">Outros</option>
                 </select>
               </div>
-              <!-- 5. Data de Emissão (Seleção de Data) -->
+              <!-- Campo: Data de Emissão -->
               <div class="mb-3">
-                <label for="dataEmissao" class="form-label">Data de Emissão</label>
+                <label for="dataEmissao" class="form-label" style="color: var(--black);">
+                  Data de Emissão <span style="color: red;">*</span>
+                </label>
                 <input type="date" class="form-control" id="dataEmissao" required aria-required="true">
+                <small class="form-text text-muted" style="color: var(--black);">
+                  A data de emissão não pode ser superior à data atual
+                </small>
               </div>
-              <!-- 6. Valor Bruto (Número com máscara financeira) -->
+              <!-- Campo: Valor Bruto -->
               <div class="mb-3">
-                <label for="valor" class="form-label">Valor Bruto</label>
+                <label for="valor" class="form-label" style="color: var(--black);">
+                  Valor Bruto <span style="color: red;">*</span>
+                </label>
                 <input type="number" step="0.01" class="form-control" id="valor" placeholder="0.00" required aria-required="true">
               </div>
-              <!-- 7. Forma de Pagamento (Lista Suspensa) - reposicionado logo após Valor Bruto -->
+              <!-- Campo: Forma de Pagamento -->
               <div class="mb-3">
-                <label for="formaPagamento" class="form-label">Forma de Pagamento</label>
+                <label for="formaPagamento" class="form-label" style="color: var(--black);">
+                  Forma de Pagamento <span style="color: red;">*</span>
+                </label>
                 <select class="form-select" id="formaPagamento" required aria-required="true">
                   <option value="">Selecione</option>
                   <option value="Boleto">Boleto</option>
@@ -114,40 +133,52 @@ export async function renderFinanceiroLancamentos() {
                   <option value="Depósito">Depósito</option>
                 </select>
               </div>
-              <!-- 8. Vencimento (Seleção de Data) -->
+              <!-- Campo: Vencimento -->
               <div class="mb-3">
-                <label for="vencimento" class="form-label">Vencimento</label>
+                <label for="vencimento" class="form-label" style="color: var(--black);">
+                  Vencimento <span style="color: red;">*</span>
+                </label>
                 <input type="date" class="form-control" id="vencimento" required aria-required="true">
               </div>
-              <!-- 9. Centro de Custo (Input com Datalist) -->
+              <!-- Campo: Centro de Custo -->
               <div class="mb-3">
-                <label for="centroCustoInput" class="form-label">Centro de Custo</label>
+                <label for="centroCustoInput" class="form-label" style="color: var(--black);">
+                  Centro de Custo <span style="color: red;">*</span>
+                </label>
                 <input class="form-control" id="centroCustoInput" list="centroCustoOptions" placeholder="Digite ou escolha um centro de custo" required aria-required="true">
                 <datalist id="centroCustoOptions">
                   <option value="">Selecione</option>
                 </datalist>
               </div>
-              <!-- 10. Projeto (Input com Datalist) - não obrigatório -->
+              <!-- Campo: Projeto (não obrigatório) -->
               <div class="mb-3">
-                <label for="projetoInput" class="form-label">Projeto</label>
+                <label for="projetoInput" class="form-label" style="color: var(--black);">
+                  Projeto
+                </label>
                 <input class="form-control" id="projetoInput" list="projetoOptions" placeholder="Digite ou escolha um projeto">
                 <datalist id="projetoOptions">
                   <option value="">Selecione</option>
                 </datalist>
               </div>
-              <!-- 11. Justificativa (Campo Aberto com 3 linhas) -->
+              <!-- Campo: Justificativa -->
               <div class="mb-3">
-                <label for="justificativa" class="form-label">Justificativa</label>
-                <textarea class="form-control" id="justificativa" rows="3" placeholder="Exemplo com uma justificativa"></textarea>
+                <label for="justificativa" class="form-label" style="color: var(--black);">
+                  Justificativa <span style="color: red;">*</span>
+                </label>
+                <textarea class="form-control" id="justificativa" rows="3" placeholder="Exemplo com uma justificativa" required aria-required="true"></textarea>
               </div>
-              <!-- 12. Inserir Anexo (Upload) - Permite múltiplos anexos -->
+              <!-- Campo: Inserir Anexo -->
               <div class="mb-3">
-                <label for="arquivo" class="form-label">Inserir Anexo</label>
+                <label for="arquivo" class="form-label" style="color: var(--black);">
+                  Inserir Anexo <span style="color: red;">*</span>
+                </label>
                 <input type="file" class="form-control" id="arquivo" accept="image/*" multiple>
               </div>
-              <button type="submit" class="btn btn-primary">Criar Lançamento</button>
+              <button type="submit" class="btn btn-primary" style="background-color: var(--theme-default); border-color: var(--shape-border);">
+                Criar Lançamento
+              </button>
             </form>
-            <div id="formError" class="mt-2" role="alert" aria-live="assertive"></div>
+            <div id="formError" class="mt-2" role="alert" aria-live="assertive" style="color: var(--danger-color);"></div>
           </div>
         </div>
       </div>
@@ -183,9 +214,9 @@ export async function renderFinanceiroLancamentos() {
     } else {
       errors.push('Filiais não carregadas');
     }
+
     const fornecedorInputValue = document.getElementById('fornecedorInput').value.trim();
     let fornecedor = '';
-    // Alteração na pesquisa: compara com a formatação "Nome - CNPJ"
     if (window.fornecedoresData && window.fornecedoresData.length > 0) {
       const fornecedorSelecionado = window.fornecedoresData.find(forn => {
         const formattedFornec = `${forn.nome} - ${forn.cnpj}`;
@@ -199,6 +230,7 @@ export async function renderFinanceiroLancamentos() {
     } else {
       errors.push('Fornecedores não carregados');
     }
+
     const numeroDocumento = document.getElementById('numeroDocumento').value.trim();
     const tipoDocumento = document.getElementById('tipoDocumento').value;
     const dataEmissao = document.getElementById('dataEmissao').value;
@@ -217,8 +249,8 @@ export async function renderFinanceiroLancamentos() {
     } else {
       errors.push('Centros de Custo não carregados');
     }
+
     const projetoInputValue = document.getElementById('projetoInput').value.trim();
-    // O campo Projeto não é obrigatório; se preenchido, valida; caso contrário, mantém vazio.
     let projeto = "";
     if (projetoInputValue) {
       if (window.projetosData && window.projetosData.length > 0) {
@@ -232,7 +264,12 @@ export async function renderFinanceiroLancamentos() {
         errors.push('Projetos não carregados');
       }
     }
+
     const justificativa = document.getElementById('justificativa').value.trim();
+    if (!justificativa) {
+      errors.push("Justificativa");
+    }
+    
     const arquivoInput = document.getElementById('arquivo');
 
     // Validação de campos obrigatórios com mensagens amigáveis
@@ -245,14 +282,12 @@ export async function renderFinanceiroLancamentos() {
     if (!formaPagamentoValue) errors.push("Forma de Pagamento");
     if (!vencimento) errors.push("Vencimento");
     if (!centroCustoInputValue) errors.push("Centro de Custo");
-    // Campo Projeto não é obrigatório
+    if (!justificativa) errors.push("Justificativa");
 
-    // O formulário deve ter pelo menos um anexo
     if (arquivoInput.files.length === 0) {
       errors.push("Pelo menos um anexo é obrigatório");
     }
 
-    // Validação de formato para campos de data e valor
     if (dataEmissao && isNaN(Date.parse(dataEmissao))) {
       errors.push("Data de Emissão inválida");
     }
@@ -263,15 +298,16 @@ export async function renderFinanceiroLancamentos() {
       errors.push("Valor deve ser numérico");
     }
 
-    // Validação para que a data de emissão não seja superior à data atual
     if (dataEmissao && new Date(dataEmissao) > new Date()) {
       errors.push("Data de Emissão não pode ser superior à data atual");
     }
 
     if (errors.length > 0) {
-      formError.innerHTML = `<div class="alert alert-danger"><strong>Por favor, corrija os seguintes campos:</strong><ul>${errors.map(err => `<li>${err}</li>`).join('')}</ul></div>`;
-      // Foca no primeiro campo vazio
-      const fields = ["filialInput", "fornecedorInput", "numeroDocumento", "tipoDocumento", "dataEmissao", "valor", "formaPagamento", "vencimento", "centroCustoInput"];
+      formError.innerHTML = `<div class="alert alert-danger">
+        <strong>Por favor, corrija os seguintes campos:</strong>
+        <ul>${errors.map(err => `<li>${err}</li>`).join('')}</ul>
+      </div>`;
+      const fields = ["filialInput", "fornecedorInput", "numeroDocumento", "tipoDocumento", "dataEmissao", "valor", "formaPagamento", "vencimento", "centroCustoInput", "justificativa"];
       for (let fieldId of fields) {
         const field = document.getElementById(fieldId);
         if (field && !field.value.trim()) {
@@ -284,10 +320,8 @@ export async function renderFinanceiroLancamentos() {
       return;
     }
 
-    // Prepara a data de inclusão no formato ISO 8601 "yyyy-mm-dd hh:mm:ss"
     const dataInclusao = formatDateISO(new Date());
 
-    // Preparação do objeto payload para a API de lançamento, utilizando o email do usuário vindo do Firebase
     let payload = {
       dados: {
         uid: AuthService.user.uid,
@@ -309,7 +343,6 @@ export async function renderFinanceiroLancamentos() {
       }
     };
 
-    // Processa o upload de múltiplos anexos
     try {
       const files = Array.from(arquivoInput.files);
       if (files.length === 0) {
@@ -362,7 +395,6 @@ export async function renderFinanceiroLancamentos() {
     if (user) {
       document.getElementById('form-section').classList.remove('d-none');
       
-      // Popula o datalist de Filiais com dados da API
       (async () => {
         try {
           const datalistFilial = document.getElementById('filialOptions');
@@ -378,7 +410,6 @@ export async function renderFinanceiroLancamentos() {
         }
       })();
       
-      // Popula o datalist de Centro de Custo com dados da API
       (async () => {
         try {
           const datalist = document.getElementById('centroCustoOptions');
@@ -394,7 +425,6 @@ export async function renderFinanceiroLancamentos() {
         }
       })();
       
-      // Popula o datalist de Projetos com dados da API
       (async () => {
         try {
           const datalistProj = document.getElementById('projetoOptions');
@@ -410,7 +440,6 @@ export async function renderFinanceiroLancamentos() {
         }
       })();
       
-      // Popula o datalist de Fornecedores com dados da API
       (async () => {
         try {
           const datalistFornecedores = document.getElementById('fornecedorOptions');
@@ -418,7 +447,6 @@ export async function renderFinanceiroLancamentos() {
           window.fornecedoresData = await listFornecedores(AuthService);
           window.fornecedoresData.forEach(forn => {
             const option = document.createElement('option');
-            // Exibe no datalist "Nome - CNPJ"
             option.value = `${forn.nome} - ${forn.cnpj}`;
             datalistFornecedores.appendChild(option);
           });
@@ -428,10 +456,8 @@ export async function renderFinanceiroLancamentos() {
       })();
     } else {
       content.innerHTML = `
-        <div class="container-fluid">
-          <div class="alert alert-warning text-center mt-4">
-            Autenticação necessária
-          </div>
+        <div class="container-fluid" style="background-color: var(--body-color); color: var(--body-font-color);">
+          <div class="alert alert-warning text-center mt-4">Autenticação necessária</div>
         </div>
       `;
     }

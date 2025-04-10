@@ -96,62 +96,65 @@ export async function renderFinanceiroLancamentosCompleto() {
   const content = document.getElementById('content');
   content.innerHTML = `
     <div class="container-fluid">
-      <!-- Overlay de Carregamento -->
-      <div id="loadingOverlay" style="display: none;"></div>
-      
-      <!-- Título e Breadcrumb -->
-      <div class="page-title">
-        <div class="row">
-          <div class="col-sm-6 col-12">
-            <h2>Lançamentos - Visualização Completa</h2>
-            <p class="mb-0 text-title-gray">Exibição de todos os lançamentos com todas as colunas disponíveis</p>
-          </div>
-          <div class="col-sm-6 col-12">
-            <ol class="breadcrumb">
-              <li class="breadcrumb-item">
-                <a href="index.html">
-                  <i class="iconly-Home icli svg-color"></i>
-                </a>
-              </li>
-              <li class="breadcrumb-item">Financeiro</li>
-              <li class="breadcrumb-item active">Lançamentos Completo</li>
-            </ol>
+      <!-- Conteiner com rolagem para manter o rodapé sempre visível -->
+      <div class="content-scroll" style="overflow-y: auto; overflow-x: hidden; max-height: calc(100vh - 150px);">
+        <!-- Overlay de Carregamento -->
+        <div id="loadingOverlay" style="display: none;"></div>
+        
+        <!-- Título e Breadcrumb -->
+        <div class="page-title">
+          <div class="row">
+            <div class="col-sm-6 col-12">
+              <h2>Lançamentos - Visualização Completa</h2>
+              <p class="mb-0 text-title-gray">Exibição de todos os lançamentos com todas as colunas disponíveis</p>
+            </div>
+            <div class="col-sm-6 col-12">
+              <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                  <a href="index.html">
+                    <i class="iconly-Home icli svg-color"></i>
+                  </a>
+                </li>
+                <li class="breadcrumb-item">Financeiro</li>
+                <li class="breadcrumb-item active">Lançamentos Completo</li>
+              </ol>
+            </div>
           </div>
         </div>
-      </div>
-      
-      <!-- Tabela Completa de Lançamentos -->
-      <div class="card">
-        <div class="card-header">
-          <h5>Tabela Completa de Lançamentos</h5>
-        </div>
-        <div class="card-body table-responsive">
-          <table id="lancamentosTable" class="table table-striped table-bordered">
-            <thead>
-              <tr>
-                <th>Status</th>
-                <th>Anexo(s)</th>
-                <th>Filial</th>
-                <th>Data de Inclusão</th>
-                <th>Data de Emissão</th>
-                <th>Data de Vencimento</th>
-                <th>Fornecedor</th>
-                <th>N do documento</th>
-                <th>Valor</th>
-                <th>Justificativa</th>
-                <th>Tipo de Documento</th>
-                <th>Forma de Pagamento</th>
-                <th>Centro de Custo</th>
-                <th>Projeto</th>
-                <th>Email</th>
-                <th>Data criação</th>
-                <th>id usuário criação</th>
-                <th>Data alteração</th>
-                <th>id usuário alteração</th>
-              </tr>
-            </thead>
-            <tbody id="lancamentos-tbody"></tbody>
-          </table>
+        
+        <!-- Tabela Completa de Lançamentos -->
+        <div class="card">
+          <div class="card-header">
+            <h5>Tabela Completa de Lançamentos</h5>
+          </div>
+          <div class="card-body table-responsive">
+            <table id="lancamentosTable" class="table table-striped table-bordered">
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Anexo(s)</th>
+                  <th>Filial</th>
+                  <th>Data de Inclusão</th>
+                  <th>Data de Emissão</th>
+                  <th>Data de Vencimento</th>
+                  <th>Fornecedor</th>
+                  <th>N do documento</th>
+                  <th>Valor</th>
+                  <th>Justificativa</th>
+                  <th>Tipo de Documento</th>
+                  <th>Forma de Pagamento</th>
+                  <th>Centro de Custo</th>
+                  <th>Projeto</th>
+                  <th>Email</th>
+                  <th>Data criação</th>
+                  <th>id usuário criação</th>
+                  <th>Data alteração</th>
+                  <th>id usuário alteração</th>
+                </tr>
+              </thead>
+              <tbody id="lancamentos-tbody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

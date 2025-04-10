@@ -129,6 +129,7 @@ export async function renderFinanceiroLancamentosCompleto() {
           <table id="lancamentosTable" class="table table-striped table-bordered">
             <thead>
               <tr>
+                <th>Status</th>
                 <th>Anexo(s)</th>
                 <th>Filial</th>
                 <th>Data de Inclusão</th>
@@ -137,7 +138,6 @@ export async function renderFinanceiroLancamentosCompleto() {
                 <th>Fornecedor</th>
                 <th>N do documento</th>
                 <th>Valor</th>
-                <th>Status</th>
                 <th>Justificativa</th>
                 <th>Tipo de Documento</th>
                 <th>Forma de Pagamento</th>
@@ -157,7 +157,7 @@ export async function renderFinanceiroLancamentosCompleto() {
     </div>
   `;
 
-  // Função para inicializar o DataTable (janela única: todos os registros exibidos)
+  // Função para inicializar o DataTable com paginação, menu de seleção e ordenação por data de criação
   function initializeDataTable() {
     if (window.jQuery && $.fn.DataTable) {
       if ($.fn.DataTable.isDataTable("#lancamentosTable")) {
@@ -167,8 +167,11 @@ export async function renderFinanceiroLancamentosCompleto() {
         responsive: true,
         autoWidth: false,
         ordering: true,
+        order: [[15, "desc"]], // Ordena pela coluna 'Data criação' (índice 15) de forma decrescente
         colReorder: true,
-        paging: false,  // Exibe todos os registros em uma única página
+        paging: true, // Habilita paginação
+        pageLength: 10, // Exibe 10 registros por página
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]], // Menu para selecionar a quantidade de itens
         dom: 'lBfrtip',
         buttons: ['copy', 'excel', 'csv', 'pdf'],
         language: {
@@ -221,6 +224,7 @@ export async function renderFinanceiroLancamentosCompleto() {
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
+          <td>${dadosLanc.status || '-'}</td>
           <td>${formatAnexos(lanc.anexos)}</td>
           <td>${filialName}</td>
           <td>${lanc.created_at ? formatDateTime(lanc.created_at) : '-'}</td>
@@ -229,7 +233,6 @@ export async function renderFinanceiroLancamentosCompleto() {
           <td>${fornecedorName}</td>
           <td>${dadosLanc.numeroDocumento || '-'}</td>
           <td>${dadosLanc.valor ? formatCurrency(dadosLanc.valor) : '-'}</td>
-          <td>${dadosLanc.status || '-'}</td>
           <td>${dadosLanc.justificativa || '-'}</td>
           <td>${dadosLanc.tipoDocumento || '-'}</td>
           <td>${dadosLanc.formaPagamento || dadosLanc.forma_pagamento || '-'}</td>
@@ -248,7 +251,7 @@ export async function renderFinanceiroLancamentosCompleto() {
       hideLoading();
     } catch (error) {
       console.error("Erro ao carregar lançamentos completos:", error);
-      document.getElementById('lancamentos-tbody').innerHTML = '<tr><td colspan="22">Erro ao carregar os dados.</td></tr>';
+      document.getElementById('lancamentos-tbody').innerHTML = '<tr><td colspan="19">Erro ao carregar os dados.</td></tr>';
       hideLoading();
     }
   }

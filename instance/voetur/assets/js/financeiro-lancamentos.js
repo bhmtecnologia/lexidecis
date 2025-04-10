@@ -119,7 +119,7 @@ export async function renderFinanceiroLancamentos() {
                 <label for="valor" class="form-label" style="color: var(--black);">
                   Valor Bruto <span style="color: red;">*</span>
                 </label>
-                <input type="number" step="0.01" class="form-control" id="valor" placeholder="0.00" required aria-required="true">
+                <input type="number" step="0.01" class="form-control" id="valor" placeholder="0,00" required aria-required="true">
               </div>
               <!-- Campo: Forma de Pagamento -->
               <div class="mb-3">
@@ -165,12 +165,12 @@ export async function renderFinanceiroLancamentos() {
                 <label for="justificativa" class="form-label" style="color: var(--black);">
                   Justificativa <span style="color: red;">*</span>
                 </label>
-                <textarea class="form-control" id="justificativa" rows="3" placeholder="Exemplo com uma justificativa" required aria-required="true"></textarea>
+                <textarea class="form-control" id="justificativa" rows="3" placeholder="Justifique o lançamento desta despesa com os detalhes de acordo com procedimento PR-001." required aria-required="true"></textarea>
               </div>
               <!-- Campo: Inserir Anexo -->
               <div class="mb-3">
                 <label for="arquivo" class="form-label" style="color: var(--black);">
-                  Inserir Anexo <span style="color: red;">*</span>
+                  Inserir Anexo(s) <span style="color: red;">*</span>
                 </label>
                 <input type="file" class="form-control" id="arquivo" accept="image/*" multiple>
               </div>

@@ -2,11 +2,13 @@
  * @file financeiro-lancamento-create-v2.js
  * @description Responsável por renderizar a página de "Financeiro - Lançamento Create V2" no módulo financeiro,
  * permitindo a criação de novos lançamentos via formulário e enviando os dados para a API.
- * Os campos Filial, Fornecedor, N° Documento, Tipo de Documento, Data de Emissão, Valor Bruto,
+ * Os campos Filial, Fornecedor, Conta Financeira, N° Documento, Tipo de Documento, Data de Emissão, Valor Bruto,
  * Forma de Pagamento, Vencimento, Centro de Custo, Projeto, Justificativa e Inserir Anexo são apresentados
- * e serão enviados para o JSONB de dados.
+ * e serão enviados para a API no formato JSON.
  *
  * API de lançamento utilizada: https://n8n.power.tec.br/webhook-test/voetur/v1/lancamentos
+ *
+ * Observação: A função listContasFinanceiras é utilizada para obter a lista de contas financeiras.
  */
 
 // Função centralizada para tratamento de erros
@@ -24,9 +26,10 @@ function handleError(error, context = "Erro") {
     listProjetos,
     listFiliais,
     listFornecedores,
+    listContasFinanceiras
   } from "./api.js";
   
-  // Função auxiliar para formatar a data no padrão ISO 8601 "yyyy-mm-dd hh:mm:ss"
+  // Função auxiliar para formatar a data no padrão "yyyy-mm-dd hh:mm:ss"
   function formatDateISO(dateObj) {
     const pad = (num) => num.toString().padStart(2, "0");
     const year = dateObj.getFullYear();
@@ -40,7 +43,6 @@ function handleError(error, context = "Erro") {
   
   export async function renderFinanceiroLancamentoCreateV2() {
     const content = document.getElementById("content");
-    // Cabeçalho e breadcrumb
     content.innerHTML = `
       <div class="container-fluid" style="background-color: var(--body-color); color: var(--body-font-color);">
         <div class="page-title" style="padding: 1rem;">
@@ -63,7 +65,6 @@ function handleError(error, context = "Erro") {
           </div>
         </div>
         
-        <!-- Área do Formulário -->
         <div id="form-section" class="mt-4">
           <div class="card" style="border: 1px solid var(--border-color); background-color: var(--white); color: var(--black);">
             <div class="card-body">
@@ -85,6 +86,16 @@ function handleError(error, context = "Erro") {
                   </label>
                   <input class="form-control" id="fornecedorInput" list="fornecedorOptions" placeholder="Digite ou escolha um fornecedor" required aria-required="true">
                   <datalist id="fornecedorOptions">
+                    <option value="">Selecione</option>
+                  </datalist>
+                </div>
+                <!-- Campo: Conta Financeira -->
+                <div class="mb-3">
+                  <label for="contaFinanceiraInput" class="form-label" style="color: var(--black);">
+                    Conta Financeira <span style="color: red;">*</span>
+                  </label>
+                  <input class="form-control" id="contaFinanceiraInput" list="contaFinanceiraOptions" placeholder="Digite ou escolha uma conta financeira" required aria-required="true">
+                  <datalist id="contaFinanceiraOptions">
                     <option value="">Selecione</option>
                   </datalist>
                 </div>
@@ -124,7 +135,7 @@ function handleError(error, context = "Erro") {
                   <label for="valor" class="form-label" style="color: var(--black);">
                     Valor Bruto <span style="color: red;">*</span>
                   </label>
-                  <input type="number" step="0.01" class="form-control" id="valor" placeholder="0,00" required aria-required="true">
+                  <input type="text" class="form-control" id="valor" placeholder="0,00" required aria-required="true">
                 </div>
                 <!-- Campo: Forma de Pagamento -->
                 <div class="mb-3">
@@ -155,7 +166,7 @@ function handleError(error, context = "Erro") {
                     <option value="">Selecione</option>
                   </datalist>
                 </div>
-                <!-- Campo: Projeto -->
+                <!-- Campo: Projeto (opcional) -->
                 <div class="mb-3">
                   <label for="projetoInput" class="form-label" style="color: var(--black);">
                     Projeto
@@ -190,7 +201,8 @@ function handleError(error, context = "Erro") {
       </div>
     `;
       
-    // Validação do campo "Filial" no evento blur
+    // Validação dos campos no evento "blur"
+    // Filial
     const filialInput = document.getElementById("filialInput");
     filialInput.addEventListener("blur", function () {
       const inputValue = this.value.trim().toLowerCase();
@@ -205,7 +217,7 @@ function handleError(error, context = "Erro") {
       }
     });
       
-    // Validação do campo "Fornecedor" no evento blur
+    // Fornecedor
     const fornecedorInput = document.getElementById("fornecedorInput");
     fornecedorInput.addEventListener("blur", function () {
       const inputValue = this.value.trim().toLowerCase();
@@ -222,7 +234,25 @@ function handleError(error, context = "Erro") {
       }
     });
       
-    // Validação do campo "Centro de Custo" no evento blur (se não estiver readonly)
+    // Conta Financeira (Formato: estrutura - código - nome)
+    const contaFinanceiraInput = document.getElementById("contaFinanceiraInput");
+    contaFinanceiraInput.addEventListener("blur", function () {
+      const inputValue = this.value.trim().toLowerCase();
+      if (window.contasFinanceirasData && window.contasFinanceirasData.length > 0) {
+        const found = window.contasFinanceirasData.some(
+          conta =>
+            `${conta.estrutura} - ${conta.codigo} - ${conta.nome}`.toLowerCase() === inputValue
+        );
+        if (!found) {
+          this.setCustomValidity("Selecione uma conta financeira válida (estrutura - código - nome).");
+          this.reportValidity();
+        } else {
+          this.setCustomValidity("");
+        }
+      }
+    });
+      
+    // Centro de Custo
     const centroCustoInput = document.getElementById("centroCustoInput");
     centroCustoInput.addEventListener("blur", function () {
       if (this.hasAttribute("readonly")) return;
@@ -238,10 +268,9 @@ function handleError(error, context = "Erro") {
       }
     });
       
-    // Validação do campo "Projeto" no evento blur
+    // Projeto (opcional)
     const projetoInput = document.getElementById("projetoInput");
     projetoInput.addEventListener("blur", function () {
-      // Valida apenas se houver valor digitado
       if (this.value.trim() === "") {
         this.setCustomValidity("");
         return;
@@ -258,348 +287,31 @@ function handleError(error, context = "Erro") {
       }
     });
       
-    // Carrega dados e, se a API de centros de custo retornar apenas um resultado,
-    // preenche automaticamente o campo e o torna somente leitura.
-    (async () => {
-      try {
-        const datalist = document.getElementById("centroCustoOptions");
-        datalist.innerHTML = '<option value="">Selecione</option>';
-        window.centrosData = await listCentrosCustos(AuthService);
-        if (window.centrosData.length === 1) {
-          const centro = window.centrosData[0];
-          const centroInput = document.getElementById("centroCustoInput");
-          centroInput.value = centro.nome;
-          centroInput.setAttribute("readonly", "true");
-        } else {
-          window.centrosData.forEach((centro) => {
-            const option = document.createElement("option");
-            option.value = centro.nome;
-            datalist.appendChild(option);
-          });
-        }
-      } catch (error) {
-        console.error("Erro ao carregar centros de custo:", handleError(error, "Centros de Custo"));
-      }
-    })();
-      
-    // Carrega dados para Filiais
-    (async () => {
-      try {
-        const datalistFilial = document.getElementById("filialOptions");
-        datalistFilial.innerHTML = '<option value="">Selecione</option>';
-        window.filiaisData = await listFiliais(AuthService);
-        // Se houver apenas um resultado, preenche e torna o campo read-only
-        if (window.filiaisData.length === 1) {
-          const fil = window.filiaisData[0];
-          const filialInput = document.getElementById("filialInput");
-          filialInput.value = fil.nome;
-          filialInput.setAttribute("readonly", "true");
-        } else {
-          window.filiaisData.forEach((fil) => {
-            const option = document.createElement("option");
-            option.value = fil.nome;
-            datalistFilial.appendChild(option);
-          });
-        }
-      } catch (error) {
-        console.error("Erro ao carregar filiais:", handleError(error, "Filiais"));
-      }
-    })();
-      
-    // Carrega dados para Projetos
-    (async () => {
-      try {
-        const datalistProj = document.getElementById("projetoOptions");
-        datalistProj.innerHTML = '<option value="">Selecione</option>';
-        window.projetosData = await listProjetos(AuthService);
-        // Se houver apenas um resultado, preenche e torna o campo read-only
-        if (window.projetosData.length === 1) {
-          const proj = window.projetosData[0];
-          const projetoInput = document.getElementById("projetoInput");
-          projetoInput.value = proj.nome;
-          projetoInput.setAttribute("readonly", "true");
-        } else {
-          window.projetosData.forEach((proj) => {
-            const option = document.createElement("option");
-            option.value = proj.nome;
-            datalistProj.appendChild(option);
-          });
-        }
-      } catch (error) {
-        console.error("Erro ao carregar projetos:", handleError(error, "Projetos"));
-      }
-    })();
-      
-    // Carrega dados para Fornecedores
-    (async () => {
-      try {
-        const datalistFornecedores = document.getElementById("fornecedorOptions");
-        datalistFornecedores.innerHTML = '<option value="">Selecione</option>';
-        window.fornecedoresData = await listFornecedores(AuthService);
-        window.fornecedoresData.forEach((forn) => {
-          const option = document.createElement("option");
-          option.value = `${forn.nome} - ${forn.cnpj}`;
-          datalistFornecedores.appendChild(option);
-        });
-      } catch (error) {
-        console.error("Erro ao carregar fornecedores:", handleError(error, "Fornecedores"));
-      }
-    })();
-      
-    // Evento de submissão do formulário com feedback visual (loading)
-    const lancamentoForm = document.getElementById("lancamentoForm");
-    lancamentoForm.addEventListener("submit", async function (e) {
-      e.preventDefault();
-      const formError = document.getElementById("formError");
-      formError.innerHTML = "";
-          
-      const submitBtn = lancamentoForm.querySelector('button[type="submit"]');
-      submitBtn.disabled = true;
-      const originalBtnText = submitBtn.innerHTML;
-      submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processando...`;
-          
-      let errors = [];
-          
-      const filialInputValue = document.getElementById("filialInput").value.trim();
-      let filial = "";
-      if (window.filiaisData && window.filiaisData.length > 0) {
-        const filialSelecionada = window.filiaisData.find(fil => fil.nome.toLowerCase() === filialInputValue.toLowerCase());
-        if (filialSelecionada) {
-          filial = filialSelecionada.uuid;
-        } else {
-          errors.push("Filial inválida ou não encontrada");
-        }
-      } else {
-        errors.push("Filiais não carregadas");
-      }
-          
-      const fornecedorInputValue = document.getElementById("fornecedorInput").value.trim();
-      let fornecedor = "";
-      if (window.fornecedoresData && window.fornecedoresData.length > 0) {
-        const fornecedorSelecionado = window.fornecedoresData.find(forn => {
-          const formattedFornec = `${forn.nome} - ${forn.cnpj}`;
-          return formattedFornec.toLowerCase() === fornecedorInputValue.toLowerCase();
-        });
-        if (fornecedorSelecionado) {
-          fornecedor = fornecedorSelecionado.uuid;
-        } else {
-          errors.push("Fornecedor inválido ou não encontrado");
-        }
-      } else {
-        errors.push("Fornecedores não carregados");
-      }
-          
-      const numeroDocumento = document.getElementById("numeroDocumento").value.trim();
-      const tipoDocumento = document.getElementById("tipoDocumento").value;
-      const dataEmissao = document.getElementById("dataEmissao").value;
-      const valor = document.getElementById("valor").value.trim();
-      const formaPagamentoValue = document.getElementById("formaPagamento").value;
-      const vencimento = document.getElementById("vencimento").value;
-      const centroCustoInputValue = document.getElementById("centroCustoInput").value.trim();
-      let centroCusto = "";
-      if (window.centrosData && window.centrosData.length > 0) {
-        const centroSelecionado = window.centrosData.find(centro => centro.nome.toLowerCase() === centroCustoInputValue.toLowerCase());
-        if (centroSelecionado) {
-          centroCusto = centroSelecionado.uuid;
-        } else {
-          errors.push("Centro de Custo inválido ou não encontrado");
-        }
-      } else {
-        errors.push("Centros de Custo não carregados");
-      }
-          
-      const projetoInputValue = document.getElementById("projetoInput").value.trim();
-      let projeto = "";
-      if (projetoInputValue) {
-        if (window.projetosData && window.projetosData.length > 0) {
-          const projetoSelecionado = window.projetosData.find(proj => proj.nome.toLowerCase() === projetoInputValue.toLowerCase());
-          if (projetoSelecionado) {
-            projeto = projetoSelecionado.uuid;
-          } else {
-            errors.push("Projeto inválido ou não encontrado");
-          }
-        } else {
-          errors.push("Projetos não carregados");
-        }
-      }
-          
-      const justificativa = document.getElementById("justificativa").value.trim();
-      if (!justificativa) {
-        errors.push("Justificativa");
-      }
-          
-      const arquivoInput = document.getElementById("arquivo");
-          
-      if (!filialInputValue) errors.push("Filial");
-      if (!fornecedorInputValue) errors.push("Fornecedor");
-      if (!numeroDocumento) errors.push("N° Documento");
-      if (!tipoDocumento) errors.push("Tipo de Documento");
-      if (!dataEmissao) errors.push("Data de Emissão");
-      if (!valor) errors.push("Valor Bruto");
-      if (!formaPagamentoValue) errors.push("Forma de Pagamento");
-      if (!vencimento) errors.push("Vencimento");
-      if (!centroCustoInputValue) errors.push("Centro de Custo");
-      if (!justificativa) errors.push("Justificativa");
-          
-      if (arquivoInput.files.length === 0) {
-        errors.push("Pelo menos um anexo é obrigatório");
-      }
-          
-      if (dataEmissao && isNaN(Date.parse(dataEmissao))) {
-        errors.push("Data de Emissão inválida");
-      }
-      if (vencimento && isNaN(Date.parse(vencimento))) {
-        errors.push("Vencimento inválido");
-      }
-      if (valor && isNaN(parseFloat(valor))) {
-        errors.push("Valor deve ser numérico");
-      }
-          
-      if (dataEmissao && new Date(dataEmissao) > new Date()) {
-        errors.push("Data de Emissão não pode ser superior à data atual");
-      }
-          
-      if (errors.length > 0) {
-        formError.innerHTML = `<div class="alert alert-danger">
-          <strong>Por favor, corrija os seguintes campos:</strong>
-          <ul>${errors.map(err => `<li>${err}</li>`).join("")}</ul>
-        </div>`;
-        const fields = ["filialInput", "fornecedorInput", "numeroDocumento", "tipoDocumento", "dataEmissao", "valor", "formaPagamento", "vencimento", "centroCustoInput", "justificativa"];
-        for (let fieldId of fields) {
-          const field = document.getElementById(fieldId);
-          if (field && !field.value.trim()) {
-            field.focus();
-            break;
-          }
-        }
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalBtnText;
-        return;
-      }
-          
-      const dataInclusao = formatDateISO(new Date());
-          
-      let payload = {
-        dados: {
-          uid: AuthService.user.uid,
-          app_id: "empresaVTCLog",
-          filial: filial,
-          fornecedor: fornecedor,
-          numeroDocumento: numeroDocumento,
-          tipoDocumento: tipoDocumento,
-          dataEmissao: dataEmissao,
-          valor: parseFloat(valor),
-          forma_pagamento: formaPagamentoValue,
-          vencimento: vencimento,
-          centro_custo: centroCusto,
-          projeto: projeto,
-          email: AuthService.user.email,
-          justificativa: justificativa,
-          status: "Pendente",
-          data_inclusao: dataInclusao,
-        },
-      };
-          
-      try {
-        const files = Array.from(arquivoInput.files);
-        if (files.length === 0) {
-          throw new Error("É necessário enviar pelo menos um anexo.");
-        }
-        const allowedTypes = ["image/png", "image/jpeg"];
-        const MAX_FILE_SIZE = 4096 * 1024; // 4096KB
-        for (const file of files) {
-          if (!allowedTypes.includes(file.type)) {
-            throw new Error(`Arquivo ${file.name} possui formato inválido. Apenas PNG, JPG e JPEG são permitidos.`);
-          }
-          if (file.size > MAX_FILE_SIZE) {
-            throw new Error(`Arquivo ${file.name} excede o tamanho máximo de 4096KB.`);
-          }
-        }
-                
-        const uploadResponses = await Promise.all(
-          files.map(async (file) => {
-            return uploadArquivo(AuthService, file);
-          })
-        );
-        let anexosArray = [];
-        for (const uploadResponse of uploadResponses) {
-          let parsedResponse =
-            typeof uploadResponse === "string"
-              ? JSON.parse(uploadResponse)
-              : uploadResponse;
-          let resultObj =
-            Array.isArray(parsedResponse) && parsedResponse.length > 0
-              ? parsedResponse[0]
-              : parsedResponse;
-                
-          if (
-            resultObj.status_validacao &&
-            resultObj.status_validacao.trim() === "inválido"
-          ) {
-            let errorMessage =
-              "Mensagem: " +
-              (resultObj.mensagem ? resultObj.mensagem.trim() : "Não definida.");
-            if (resultObj.acao_recomendada) {
-              errorMessage += "<br>Ação Recomendada: " + resultObj.acao_recomendada.trim();
-            }
-            throw new Error(errorMessage);
-          }
-                
-          if (!resultObj.data) {
-            if (resultObj.mensagem && resultObj.acao_recomendada) {
-              let errorMessage =
-                "Mensagem: " +
-                resultObj.mensagem.trim() +
-                "<br>Ação Recomendada: " +
-                resultObj.acao_recomendada.trim();
-              throw new Error(errorMessage);
-            } else {
-              throw new Error("Resposta de upload inválida");
-            }
-          }
-                
-          const responseData = JSON.parse(resultObj.data);
-          const filename = responseData.filename;
-          anexosArray.push({
-            url: filename,
-            categoria: "comprovante",
-          });
-        }
-        payload.anexo = anexosArray;
-      } catch (uploadError) {
-        const newFileInput = arquivoInput.cloneNode(true);
-        arquivoInput.parentNode.replaceChild(newFileInput, arquivoInput);
-        formError.innerHTML = `<div class="alert alert-danger">
-          Erro ao fazer upload dos anexos:<br> ${handleError(uploadError, "Upload")}
-        </div>`;
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalBtnText;
-        return;
-      }
-            
-      try {
-        const result = await createLancamento(AuthService, payload);
-        if (!result || !result.id) {
-          throw new Error("A resposta da API não contém os dados esperados.");
-        }
-        alert("Lançamento criado com sucesso! ID: " + result.id);
-        lancamentoForm.reset();
-      } catch (error) {
-        formError.innerHTML = `<div class="alert alert-danger">
-          Erro ao criar lançamento: ${handleError(error, "CreateLancamento")}
-        </div>`;
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalBtnText;
+    // Máscara no campo "Valor Bruto": permite apenas dígitos e vírgula e formata para "1.234,56" ao perder o foco
+    const valorInput = document.getElementById("valor");
+    valorInput.addEventListener("keypress", function (e) {
+      const char = String.fromCharCode(e.which);
+      if (!/[\d,]/.test(char)) {
+        e.preventDefault();
       }
     });
-          
+    valorInput.addEventListener("blur", function () {
+      let input = this.value.replace(/[^0-9,.-]/g, "");
+      input = input.replace(",", ".");
+      const numericValue = parseFloat(input);
+      if (!isNaN(numericValue)) {
+        this.value = numericValue.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+    });
+      
+    // Carrega os dados dentro de AuthService.onAuthChange para evitar duplicações
     AuthService.onAuthChange((user) => {
       if (user) {
         document.getElementById("form-section").classList.remove("d-none");
             
         (async () => {
           try {
+            // Filiais
             const datalistFilial = document.getElementById("filialOptions");
             datalistFilial.innerHTML = '<option value="">Selecione</option>';
             window.filiaisData = await listFiliais(AuthService);
@@ -622,6 +334,7 @@ function handleError(error, context = "Erro") {
             
         (async () => {
           try {
+            // Centros de Custo
             const datalist = document.getElementById("centroCustoOptions");
             datalist.innerHTML = '<option value="">Selecione</option>';
             window.centrosData = await listCentrosCustos(AuthService);
@@ -644,21 +357,38 @@ function handleError(error, context = "Erro") {
             
         (async () => {
           try {
+            // Contas Financeiras
+            const datalistConta = document.getElementById("contaFinanceiraOptions");
+            datalistConta.innerHTML = '<option value="">Selecione</option>';
+            window.contasFinanceirasData = await listContasFinanceiras(AuthService);
+            if (window.contasFinanceirasData.length === 1) {
+              const conta = window.contasFinanceirasData[0];
+              const contaInput = document.getElementById("contaFinanceiraInput");
+              contaInput.value = `${conta.estrutura} - ${conta.codigo} - ${conta.nome}`;
+              contaInput.setAttribute("readonly", "true");
+            } else {
+              window.contasFinanceirasData.forEach((conta) => {
+                const option = document.createElement("option");
+                option.value = `${conta.estrutura} - ${conta.codigo} - ${conta.nome}`;
+                datalistConta.appendChild(option);
+              });
+            }
+          } catch (error) {
+            console.error("Erro ao carregar contas financeiras:", handleError(error, "Contas Financeiras"));
+          }
+        })();
+            
+        (async () => {
+          try {
+            // Projetos
             const datalistProj = document.getElementById("projetoOptions");
             datalistProj.innerHTML = '<option value="">Selecione</option>';
             window.projetosData = await listProjetos(AuthService);
-            if (window.projetosData.length === 1) {
-              const proj = window.projetosData[0];
-              const projetoInput = document.getElementById("projetoInput");
-              projetoInput.value = proj.nome;
-              projetoInput.setAttribute("readonly", "true");
-            } else {
-              window.projetosData.forEach((proj) => {
-                const option = document.createElement("option");
-                option.value = proj.nome;
-                datalistProj.appendChild(option);
-              });
-            }
+            window.projetosData.forEach((proj) => {
+              const option = document.createElement("option");
+              option.value = proj.nome;
+              datalistProj.appendChild(option);
+            });
           } catch (error) {
             console.error("Erro ao carregar projetos:", handleError(error, "Projetos"));
           }
@@ -666,6 +396,7 @@ function handleError(error, context = "Erro") {
             
         (async () => {
           try {
+            // Fornecedores
             const datalistFornecedores = document.getElementById("fornecedorOptions");
             datalistFornecedores.innerHTML = '<option value="">Selecione</option>';
             window.fornecedoresData = await listFornecedores(AuthService);
@@ -686,6 +417,248 @@ function handleError(error, context = "Erro") {
         `;
       }
     });
-  }
+      
+    // Evento de submissão do formulário
+    const lancamentoForm = document.getElementById("lancamentoForm");
+    lancamentoForm.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const formError = document.getElementById("formError");
+      formError.innerHTML = "";
           
+      const submitBtn = lancamentoForm.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      const originalBtnText = submitBtn.innerHTML;
+      submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processando...`;
+          
+      let errors = [];
+          
+      // Busca os registros completos para compor o payload
+      const filialInputValue = document.getElementById("filialInput").value.trim();
+      let filialRecord = null;
+      if (window.filiaisData && window.filiaisData.length > 0) {
+        filialRecord = window.filiaisData.find(fil => fil.nome.toLowerCase() === filialInputValue.toLowerCase());
+        if (!filialRecord) {
+          errors.push("Filial inválida ou não encontrada");
+        }
+      } else {
+        errors.push("Filiais não carregadas");
+      }
+          
+      const fornecedorInputValue = document.getElementById("fornecedorInput").value.trim();
+      let fornecedorRecord = null;
+      if (window.fornecedoresData && window.fornecedoresData.length > 0) {
+        fornecedorRecord = window.fornecedoresData.find(forn => {
+          const formattedFornec = `${forn.nome} - ${forn.cnpj}`;
+          return formattedFornec.toLowerCase() === fornecedorInputValue.toLowerCase();
+        });
+        if (!fornecedorRecord) {
+          errors.push("Fornecedor inválido ou não encontrado");
+        }
+      } else {
+        errors.push("Fornecedores não carregados");
+      }
+          
+      const contaFinanceiraInputValue = document.getElementById("contaFinanceiraInput").value.trim();
+      let contaFinanceiraRecord = null;
+      if (window.contasFinanceirasData && window.contasFinanceirasData.length > 0) {
+        contaFinanceiraRecord = window.contasFinanceirasData.find(conta =>
+          `${conta.estrutura} - ${conta.codigo} - ${conta.nome}`.toLowerCase() === contaFinanceiraInputValue.toLowerCase()
+        );
+        if (!contaFinanceiraRecord) {
+          errors.push("Conta Financeira inválida ou não encontrada");
+        }
+      } else {
+        errors.push("Contas Financeiras não carregadas");
+      }
+          
+      const numeroDocumento = document.getElementById("numeroDocumento").value.trim();
+      const tipoDocumento = document.getElementById("tipoDocumento").value;
+      const dataEmissao = document.getElementById("dataEmissao").value;
+      const valor = document.getElementById("valor").value.trim();
+      const formaPagamentoValue = document.getElementById("formaPagamento").value;
+      const vencimento = document.getElementById("vencimento").value;
+          
+      const centroCustoInputValue = document.getElementById("centroCustoInput").value.trim();
+      let centroCustoRecord = null;
+      if (window.centrosData && window.centrosData.length > 0) {
+        centroCustoRecord = window.centrosData.find(centro => centro.nome.toLowerCase() === centroCustoInputValue.toLowerCase());
+        if (!centroCustoRecord) {
+          errors.push("Centro de Custo inválido ou não encontrado");
+        }
+      } else {
+        errors.push("Centros de Custo não carregados");
+      }
+          
+      const projetoInputValue = document.getElementById("projetoInput").value.trim();
+      let projetoRecord = null;
+      if (projetoInputValue) {
+        if (window.projetosData && window.projetosData.length > 0) {
+          projetoRecord = window.projetosData.find(proj => proj.nome.toLowerCase() === projetoInputValue.toLowerCase());
+          if (!projetoRecord) {
+            errors.push("Projeto inválido ou não encontrado");
+          }
+        } else {
+          errors.push("Projetos não carregados");
+        }
+      }
+          
+      const justificativa = document.getElementById("justificativa").value.trim();
+      if (!justificativa) {
+        errors.push("Justificativa");
+      }
+          
+      const arquivoInput = document.getElementById("arquivo");
+      if (arquivoInput.files.length === 0) {
+        errors.push("Pelo menos um anexo é obrigatório");
+      }
+          
+      if (dataEmissao && isNaN(Date.parse(dataEmissao))) {
+        errors.push("Data de Emissão inválida");
+      }
+      if (vencimento && isNaN(Date.parse(vencimento))) {
+        errors.push("Vencimento inválido");
+      }
+      if (valor && isNaN(parseFloat(valor.replace(/[^\d,.-]/g, "").replace(",", ".")))) {
+        errors.push("Valor deve ser numérico");
+      }
+      if (dataEmissao && new Date(dataEmissao) > new Date()) {
+        errors.push("Data de Emissão não pode ser superior à data atual");
+      }
+          
+      if (errors.length > 0) {
+        formError.innerHTML = `<div class="alert alert-danger">
+            <strong>Por favor, corrija os seguintes campos:</strong>
+            <ul>${errors.map(err => `<li>${err}</li>`).join('')}</ul>
+        </div>`;
+        const fields = ["filialInput", "fornecedorInput", "numeroDocumento", "tipoDocumento", "dataEmissao", "valor", "formaPagamento", "vencimento", "centroCustoInput", "justificativa"];
+        for (let fieldId of fields) {
+          const field = document.getElementById(fieldId);
+          if (field && !field.value.trim()) {
+            field.focus();
+            break;
+          }
+        }
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+        return;
+      }
+          
+      const dataInclusao = formatDateISO(new Date());
+          
+      // Monta o payload conforme o novo formato
+      let payload = {
+        app_id: "empresa_vtc_log",
+        status: "Pendente",
+        valor: parseFloat(valor.replace(/[^\d,.-]/g, "").replace(",", ".")),
+        tipo_documento: tipoDocumento,
+        numero_documento: numeroDocumento,
+        forma_pagamento: formaPagamentoValue,
+        justificativa: justificativa,
+        data_emissao: dataEmissao,
+        data_vencimento: vencimento,
+        data_inclusao: dataInclusao,
+        usuario_inclusao: AuthService.user.email,
+        fornecedor_nome: fornecedorRecord.nome,
+        fornecedor_cnpj: fornecedorRecord.cnpj,
+        fornecedor_id_benner: fornecedorRecord.id_benner,
+        fornecedor_uuid: fornecedorRecord.uuid,
+        filial_nome: filialRecord.nome,
+        filial_id_benner: filialRecord.id_benner,
+        filial_uuid: filialRecord.uuid,
+        projeto_nome: projetoRecord ? projetoRecord.nome : "",
+        projeto_id_benner: projetoRecord ? projetoRecord.id_benner : "",
+        projeto_uuid: projetoRecord ? projetoRecord.uuid : "",
+        centro_custo_nome: centroCustoRecord.nome,
+        centro_custo_id_benner: centroCustoRecord.id_benner,
+        centro_custo_uuid: centroCustoRecord.uuid,
+        conta_financeira_nome: contaFinanceiraRecord.nome,
+        conta_financeira_codigo: contaFinanceiraRecord.codigo,
+        conta_financeira_estrutura: contaFinanceiraRecord.estrutura,
+        conta_financeira_id_benner: contaFinanceiraRecord.id_benner,
+        conta_financeira_uuid: contaFinanceiraRecord.uuid,
+        uid: AuthService.user.uid
+      };
+          
+      try {
+        const files = Array.from(arquivoInput.files);
+        const allowedTypes = ["image/png", "image/jpeg"];
+        const MAX_FILE_SIZE = 4096 * 1024;
+        for (const file of files) {
+          if (!allowedTypes.includes(file.type)) {
+            throw new Error(`Arquivo ${file.name} possui formato inválido. Apenas PNG, JPG e JPEG são permitidos.`);
+          }
+          if (file.size > MAX_FILE_SIZE) {
+            throw new Error(`Arquivo ${file.name} excede o tamanho máximo de 4096KB.`);
+          }
+        }
+                
+        const uploadResponses = await Promise.all(
+          Array.from(arquivoInput.files).map(async (file) => {
+            return uploadArquivo(AuthService, file);
+          })
+        );
+        let anexosArray = [];
+        for (const uploadResponse of uploadResponses) {
+          let parsedResponse = typeof uploadResponse === "string"
+            ? JSON.parse(uploadResponse)
+            : uploadResponse;
+          let resultObj = Array.isArray(parsedResponse) && parsedResponse.length > 0
+            ? parsedResponse[0]
+            : parsedResponse;
+                
+          if (resultObj.status_validacao && resultObj.status_validacao.trim() === "inválido") {
+            let errorMessage = "Mensagem: " + (resultObj.mensagem ? resultObj.mensagem.trim() : "Não definida.");
+            if (resultObj.acao_recomendada) {
+              errorMessage += "<br>Ação Recomendada: " + resultObj.acao_recomendada.trim();
+            }
+            throw new Error(errorMessage);
+          }
+                
+          if (!resultObj.data) {
+            if (resultObj.mensagem && resultObj.acao_recomendada) {
+              let errorMessage = "Mensagem: " + resultObj.mensagem.trim() +
+                                 "<br>Ação Recomendada: " + resultObj.acao_recomendada.trim();
+              throw new Error(errorMessage);
+            } else {
+              throw new Error("Resposta de upload inválida");
+            }
+          }
+                
+          const responseData = JSON.parse(resultObj.data);
+          const filename = responseData.filename;
+          anexosArray.push({
+            url: filename,
+            categoria: "comprovante"
+          });
+        }
+        payload.anexo = anexosArray;
+      } catch (uploadError) {
+        const newFileInput = arquivoInput.cloneNode(true);
+        arquivoInput.parentNode.replaceChild(newFileInput, arquivoInput);
+        formError.innerHTML = `<div class="alert alert-danger">
+            Erro ao fazer upload dos anexos:<br> ${handleError(uploadError, "Upload")}
+        </div>`;
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+        return;
+      }
+                
+      try {
+        const result = await createLancamento(AuthService, payload);
+        if (!result || !result.id) {
+          throw new Error("A resposta da API não contém os dados esperados.");
+        }
+        alert("Lançamento criado com sucesso! ID: " + result.id);
+        lancamentoForm.reset();
+      } catch (error) {
+        formError.innerHTML = `<div class="alert alert-danger">
+            Erro ao criar lançamento: ${handleError(error, "CreateLancamento")}
+        </div>`;
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+      }
+    });
+  }
+    
   registerRoute("#financeiro-lancamento-create-v2", renderFinanceiroLancamentoCreateV2);

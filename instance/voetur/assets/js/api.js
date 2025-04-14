@@ -318,3 +318,31 @@ export async function getUserProfile(AuthService) {
 
   return await response.json();
 }
+
+/**
+ * Lista os centros de custos.
+ *
+ * @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
+ * @returns {Promise<Array>} - Array com os centros de custos.
+ * @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro na API.
+ */
+export async function listContasFinanceiras(AuthService) {
+  const user = AuthService.user;
+  if (!user) throw new Error("Usuário não autenticado");
+  const token = await user.getIdToken();
+
+  const response = await fetch('https://webhook.power.tec.br/webhook/voetur/v1/contas-financeiras', {
+    method: "GET",
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error("Erro ao listar centros de custos: " + errorText);
+  }
+
+  return await response.json();
+}

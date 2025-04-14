@@ -60,47 +60,12 @@ async function loadLancamentosNoCache() {
   return await response.json();
 }
 
-// Funções para exibir e esconder overlay de carregamento
-function showLoading() {
-  let overlay = document.getElementById("loadingOverlay");
-  if (!overlay) {
-    overlay = document.createElement("div");
-    overlay.id = "loadingOverlay";
-    overlay.style.position = "fixed";
-    overlay.style.top = "0";
-    overlay.style.left = "0";
-    overlay.style.width = "100%";
-    overlay.style.height = "100%";
-    overlay.style.backgroundColor = "rgba(255, 255, 255, 0.8)";
-    overlay.style.display = "flex";
-    overlay.style.alignItems = "center";
-    overlay.style.justifyContent = "center";
-    overlay.style.zIndex = "10000";
-    overlay.innerHTML = `<div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Carregando...</span>
-    </div>`;
-    document.body.appendChild(overlay);
-  } else {
-    overlay.style.display = "flex";
-  }
-}
-
-function hideLoading() {
-  const overlay = document.getElementById("loadingOverlay");
-  if (overlay) {
-    overlay.style.display = "none";
-  }
-}
-
 export async function renderFinanceiroLancamentosCompleto() {
   const content = document.getElementById('content');
   content.innerHTML = `
     <div class="container-fluid">
       <!-- Conteiner com rolagem para manter o rodapé sempre visível -->
       <div class="content-scroll" style="overflow-y: auto; overflow-x: hidden; max-height: calc(100vh - 150px);">
-        <!-- Overlay de Carregamento -->
-        <div id="loadingOverlay" style="display: none;"></div>
-        
         <!-- Título e Breadcrumb -->
         <div class="page-title">
           <div class="row">
@@ -134,25 +99,25 @@ export async function renderFinanceiroLancamentosCompleto() {
                   <th>Status</th>
                   <th>Anexo(s)</th>
                   <th>Filial</th>
-                  <th>Data de Inclusão</th>
-                  <th>Data de Emissão</th>
-                  <th>Data de Vencimento</th>
+                  <th>Inclusão</th>
+                  <th>Emissão</th>
+                  <th>Venc.</th>
                   <th>Fornecedor</th>
-                  <th>N do documento</th>
+                  <th>Documento</th>
                   <th>Valor</th>
-                  <th>Justificativa</th>
-                  <th>Tipo de Documento</th>
-                  <th>Forma de Pagamento</th>
-                  <th>Centro de Custo</th>
+                  <th>Just.</th>
+                  <th>Tipo</th>
+                  <th>Forma</th>
+                  <th>Centro</th>
                   <th>Projeto</th>
                   <th>Email</th>
-                  <th>Data criação</th>
-                  <th>id usuário criação</th>
-                  <th>Data alteração</th>
-                  <th>id usuário alteração</th>
+                  <th>Data Criação</th>
+                  <th>Usuário Criação</th>
+                  <th>Alteração</th>
+                  <th>Usuário Alteração</th>
                 </tr>
               </thead>
-              <tbody id="lancamentos-tbody"></tbody>
+              <tbody></tbody>
             </table>
           </div>
         </div>
@@ -160,118 +125,203 @@ export async function renderFinanceiroLancamentosCompleto() {
     </div>
   `;
 
-  // Função para inicializar o DataTable com paginação, menu de seleção e ordenação por data de criação
-  function initializeDataTable() {
-    if (window.jQuery && $.fn.DataTable) {
-      if ($.fn.DataTable.isDataTable("#lancamentosTable")) {
-        $("#lancamentosTable").DataTable().destroy();
-      }
-      $("#lancamentosTable").DataTable({
-        responsive: true,
-        autoWidth: false,
-        ordering: true,
-        order: [[15, "desc"]], // Ordena pela coluna 'Data criação' (índice 15) de forma decrescente
-        colReorder: true,
-        paging: true, // Habilita paginação
-        pageLength: 5, // Exibe 10 registros por página
-        lengthMenu: [[5, 25, 50, -1], [5, 25, 50, "All"]], // Menu para selecionar a quantidade de itens
-        dom: 'lBfrtip',
-        buttons: ['copy', 'excel', 'csv', 'pdf'],
-        language: {
-          url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json"
+  // Carrega os dados de mapeamento necessários (filiais, fornecedores, projetos, centros de custo)
+  try {
+    const [filiais, fornecedores, projetos, centros] = await Promise.all([
+      listFiliais(AuthService),
+      listFornecedores(AuthService),
+      listProjetos(AuthService),
+      listCentrosCustos(AuthService)
+    ]);
+    window.filiaisData = filiais;
+    window.fornecedoresData = fornecedores;
+    window.projetosData = projetos;
+    window.centrosData = centros;
+  } catch (error) {
+    console.error("Erro ao carregar os dados de mapeamento:", error);
+    content.innerHTML = `<div class="container-fluid">
+      <div class="alert alert-warning text-center mt-4">
+        Erro ao carregar os dados de mapeamento. Tente novamente.
+      </div>
+    </div>`;
+    return;
+  }
+
+  // Inicializa o DataTable usando a propriedade AJAX e nova estrutura de 'dom'
+  var table = $("#lancamentosTable").DataTable({
+    processing: true, // Exibe o overlay de processamento integrado
+    responsive: true,
+    autoWidth: false,
+    ordering: true,
+    order: [[15, "desc"]], // Ordena pela coluna "Data Criação" (índice 15)
+    colReorder: true,
+    paging: true,
+    pageLength: 5,
+    lengthMenu: [[5, 25, 50, -1], [5, 25, 50, "All"]],
+    // Layout DOM: Linha 1: Length menu, filtro e container para filtro de data
+    // Linha 2: Botões de exportação
+    // Linha 3: Tabela
+    // Linha 4: Informação e paginação
+    dom: "<'row'<'col-sm-4'l><'col-sm-4 text-center date-filter'><'col-sm-4'f>>" +
+         "<'row'<'col-sm-12'B>>" +
+         "<'row'<'col-sm-12't>>" +
+         "<'row'<'col-sm-5'i><'col-sm-7'p>>",
+    buttons: [
+      {
+        extend: 'copyHtml5',
+        text: 'Copiar',
+        action: function ( e, dt, button, config ) {
+          $.fn.dataTable.ext.buttons.copyHtml5.action.call(this, e, dt, button, config);
+          alert('Dados copiados com sucesso!');
         }
-      });
-    } else {
-      console.error("DataTables não está carregado.");
+      },
+      {
+        extend: 'excelHtml5',
+        text: 'Excel',
+        action: function ( e, dt, button, config ) {
+          $.fn.dataTable.ext.buttons.excelHtml5.action.call(this, e, dt, button, config);
+          alert('Arquivo Excel gerado com sucesso!');
+        }
+      },
+      {
+        extend: 'csvHtml5',
+        text: 'CSV',
+        action: function ( e, dt, button, config ) {
+          $.fn.dataTable.ext.buttons.csvHtml5.action.call(this, e, dt, button, config);
+          alert('Arquivo CSV gerado com sucesso!');
+        }
+      },
+      {
+        // Botão PDF com as opções solicitadas e redução do tamanho da tabela via customize
+        extend: 'pdfHtml5',
+        text: 'PDF',
+        title: 'Relatório Financeiro',                     // Define o título do PDF
+        orientation: 'landscape',                         // Define a orientação como paisagem
+        message: 'Impresso por ' + 
+                 (AuthService.user && AuthService.user.email ? AuthService.user.email : 'usuário') +
+                 ' em ' + new Date().toLocaleString('pt-BR'), // Define a mensagem de impressão
+        customize: function(doc) {
+          // Reduz o tamanho da fonte geral e dos cabeçalhos para "encolher" a tabela
+          doc.defaultStyle.fontSize = 8;
+          if (doc.styles.tableHeader) {
+            doc.styles.tableHeader.fontSize = 8;
+          }
+          // Você pode ajustar também as margens da página, se necessário
+          doc.pageMargins = [20, 20, 20, 20];
+          // Ajusta as larguras das colunas para distribuir de forma mais compacta
+          if (doc.content[1] && doc.content[1].table) {
+            var colCount = doc.content[1].table.body[0].length;
+            doc.content[1].table.widths = Array(colCount).fill('*');
+          }
+        },
+        action: function ( e, dt, button, config ) {
+          $.fn.dataTable.ext.buttons.pdfHtml5.action.call(this, e, dt, button, config);
+          alert('Arquivo PDF gerado com sucesso!');
+        }
+      },
+      'colvis'
+    ],
+    language: {
+      url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json"
+    },
+    ajax: function(data, callback, settings) {
+      loadLancamentosNoCache()
+        .then(dados => {
+          // Processa cada lançamento para aplicar a formatação e mapeamento desejados
+          const processedData = dados.map(lanc => {
+            const dadosLanc = lanc.dados || {};
+            const filialObj = window.filiaisData.find(f => f.uuid === dadosLanc.filial);
+            const filialName = filialObj ? filialObj.nome : dadosLanc.filial || '-';
+            const fornecedorObj = window.fornecedoresData.find(f => f.uuid === dadosLanc.fornecedor);
+            const fornecedorName = fornecedorObj ? fornecedorObj.nome : dadosLanc.fornecedor || '-';
+            const centroObj = window.centrosData.find(c => c.uuid === dadosLanc.centro_custo);
+            const centroName = centroObj ? centroObj.nome : dadosLanc.centro_custo || '-';
+            const projetoObj = window.projetosData.find(p => p.uuid === dadosLanc.projeto);
+            const projetoName = projetoObj ? projetoObj.nome : dadosLanc.projeto || '-';
+            
+            return {
+              status: dadosLanc.status || '-',
+              anexos: formatAnexos(lanc.anexos),
+              filial: filialName,
+              inclusao: lanc.created_at ? formatDateTime(lanc.created_at) : '-',
+              emissao: dadosLanc.dataEmissao ? formatDate(dadosLanc.dataEmissao) : '-',
+              vencimento: dadosLanc.vencimento ? formatDate(dadosLanc.vencimento) : '-',
+              fornecedor: fornecedorName,
+              documento: dadosLanc.numeroDocumento || '-',
+              valor: dadosLanc.valor ? formatCurrency(dadosLanc.valor) : '-',
+              justificativa: dadosLanc.justificativa || '-',
+              tipoDocumento: dadosLanc.tipoDocumento || '-',
+              formaPagamento: dadosLanc.formaPagamento || dadosLanc.forma_pagamento || '-',
+              centroCusto: centroName,
+              projeto: projetoName,
+              email: dadosLanc.email || '-',
+              dataCriacao: lanc.created_at ? formatDateTime(lanc.created_at) : '-',
+              usuarioCriacao: lanc.created_by || '-',
+              dataAlteracao: lanc.updated_at ? formatDateTime(lanc.updated_at) : '-',
+              usuarioAlteracao: lanc.updated_by || '-'
+            };
+          });
+          callback({ data: processedData });
+        })
+        .catch(error => {
+          console.error("Erro ao carregar os lançamentos:", error);
+        });
+    },
+    columns: [
+      { data: "status" },
+      { data: "anexos" },
+      { data: "filial" },
+      { data: "inclusao" },
+      { data: "emissao" },
+      { data: "vencimento" },
+      { data: "fornecedor" },
+      { data: "documento" },
+      { data: "valor" },
+      { data: "justificativa" },
+      { data: "tipoDocumento" },
+      { data: "formaPagamento" },
+      { data: "centroCusto" },
+      { data: "projeto" },
+      { data: "email" },
+      { data: "dataCriacao" },
+      { data: "usuarioCriacao" },
+      { data: "dataAlteracao" },
+      { data: "usuarioAlteracao" }
+    ],
+    createdRow: function(row, data, dataIndex) {
+      $(row).addClass('dataRow');
     }
-  }
+  });
 
-  // Função que carrega os dados e atualiza a tabela completa
-  async function loadLancamentosCompleto() {
-    try {
-      showLoading();
-      // Carrega os dados de mapeamento para filiais, fornecedores, projetos e centros de custo
-      const [filiais, fornecedores, projetos, centros] = await Promise.all([
-        listFiliais(AuthService),
-        listFornecedores(AuthService),
-        listProjetos(AuthService),
-        listCentrosCustos(AuthService)
-      ]);
-      window.filiaisData = filiais;
-      window.fornecedoresData = fornecedores;
-      window.projetosData = projetos;
-      window.centrosData = centros;
+  // Preenche o container para filtro por data no DOM
+  $('.date-filter').html('Filtrar por data (Inclusão): De <input type="date" id="startDate"> até <input type="date" id="endDate">');
 
-      // Limpa o tbody da tabela
-      const tbody = document.getElementById('lancamentos-tbody');
-      tbody.innerHTML = '';
+  // Registra evento para atualizar o filtro de data
+  $('#startDate, #endDate').on('change', function() {
+    table.draw();
+  });
 
-      // Carrega os lançamentos sem cache (com all=true)
-      const dados = await loadLancamentosNoCache();
-
-      // Para cada lançamento, mapeia os campos que utilizam UUID para seus respectivos nomes
-      dados.forEach(lanc => {
-        const dadosLanc = lanc.dados || {};
-
-        const filialObj = window.filiaisData.find(f => f.uuid === dadosLanc.filial);
-        const filialName = filialObj ? filialObj.nome : dadosLanc.filial || '-';
-
-        const fornecedorObj = window.fornecedoresData.find(f => f.uuid === dadosLanc.fornecedor);
-        const fornecedorName = fornecedorObj ? fornecedorObj.nome : dadosLanc.fornecedor || '-';
-
-        const centroObj = window.centrosData.find(c => c.uuid === dadosLanc.centro_custo);
-        const centroName = centroObj ? centroObj.nome : dadosLanc.centro_custo || '-';
-
-        const projetoObj = window.projetosData.find(p => p.uuid === dadosLanc.projeto);
-        const projetoName = projetoObj ? projetoObj.nome : dadosLanc.projeto || '-';
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${dadosLanc.status || '-'}</td>
-          <td>${formatAnexos(lanc.anexos)}</td>
-          <td>${filialName}</td>
-          <td>${lanc.created_at ? formatDateTime(lanc.created_at) : '-'}</td>
-          <td>${dadosLanc.dataEmissao ? formatDate(dadosLanc.dataEmissao) : '-'}</td>
-          <td>${dadosLanc.vencimento ? formatDate(dadosLanc.vencimento) : '-'}</td>
-          <td>${fornecedorName}</td>
-          <td>${dadosLanc.numeroDocumento || '-'}</td>
-          <td>${dadosLanc.valor ? formatCurrency(dadosLanc.valor) : '-'}</td>
-          <td>${dadosLanc.justificativa || '-'}</td>
-          <td>${dadosLanc.tipoDocumento || '-'}</td>
-          <td>${dadosLanc.formaPagamento || dadosLanc.forma_pagamento || '-'}</td>
-          <td>${centroName}</td>
-          <td>${projetoName}</td>
-          <td>${dadosLanc.email || '-'}</td>
-          <td>${lanc.created_at ? formatDateTime(lanc.created_at) : '-'}</td>
-          <td>${lanc.created_by || '-'}</td>
-          <td>${lanc.updated_at ? formatDateTime(lanc.updated_at) : '-'}</td>
-          <td>${lanc.updated_by || '-'}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      initializeDataTable();
-      hideLoading();
-    } catch (error) {
-      console.error("Erro ao carregar lançamentos completos:", error);
-      document.getElementById('lancamentos-tbody').innerHTML = '<tr><td colspan="19">Erro ao carregar os dados.</td></tr>';
-      hideLoading();
+  // Registra o filtro customizado para a coluna "Inclusão" (índice 3)
+  $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+    const min = $('#startDate').val();
+    const max = $('#endDate').val();
+    const dateStr = data[3]; // "Inclusão" (expectativa: data formatada pelo formatDateTime)
+    if (!min && !max) {
+      return true;
     }
-  }
-
-  // Aguarda a autenticação do usuário para carregar os dados
-  AuthService.onAuthChange((user) => {
-    if (user) {
-      loadLancamentosCompleto();
-    } else {
-      content.innerHTML = `
-        <div class="container-fluid">
-          <div class="alert alert-warning text-center mt-4">
-            Usuário não autenticado. Por favor, faça login.
-          </div>
-        </div>
-      `;
+    if (dateStr === '-' || dateStr.trim() === '') {
+      return true;
     }
+    const date = new Date(dateStr);
+    if (min) {
+      const minDate = new Date(min);
+      if (date < minDate) return false;
+    }
+    if (max) {
+      const maxDate = new Date(max);
+      if (date > maxDate) return false;
+    }
+    return true;
   });
 }
 

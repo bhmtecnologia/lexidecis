@@ -2,7 +2,7 @@
  * @file financeiro-lancamento-create-v2.js
  * @description Responsável por renderizar a página de "Financeiro - Lançamento Create V2" no módulo financeiro,
  * permitindo a criação de novos lançamentos via formulário e enviando os dados para a API.
- * Os campos Filial, Fornecedor, N° Documento, Tipo de Documento, Data de Emissão, Valor Bruto, 
+ * Os campos Filial, Fornecedor, N° Documento, Tipo de Documento, Data de Emissão, Valor Bruto,
  * Forma de Pagamento, Vencimento, Centro de Custo, Projeto, Justificativa e Inserir Anexo são apresentados
  * e serão enviados para o JSONB de dados.
  *
@@ -17,7 +17,14 @@ function handleError(error, context = 'Erro') {
   
   import { registerRoute } from "./router.js";
   import AuthService, { auth, db, analytics } from "./auth.js";
-  import { createLancamento, uploadArquivo, listCentrosCustos, listProjetos, listFiliais, listFornecedores } from "./api.js";
+  import {
+    createLancamento,
+    uploadArquivo,
+    listCentrosCustos,
+    listProjetos,
+    listFiliais,
+    listFornecedores
+  } from "./api.js";
   
   // Função auxiliar para formatar a data no padrão ISO 8601 "yyyy-mm-dd hh:mm:ss"
   function formatDateISO(dateObj) {
@@ -32,12 +39,10 @@ function handleError(error, context = 'Erro') {
   }
   
   export async function renderFinanceiroLancamentoCreateV2() {
-    const content = document.getElementById('content');
-    // Cabeçalho ajustado: título e subtítulo com texto preto (como no formulário)
-    // e breadcrumb com a cor theme default.
+    const content = document.getElementById("content");
+    // Cabeçalho e breadcrumb
     content.innerHTML = `
       <div class="container-fluid" style="background-color: var(--body-color); color: var(--body-font-color);">
-        <!-- Cabeçalho: Título, Subtítulo e Breadcrumb -->
         <div class="page-title" style="padding: 1rem;">
           <div class="row">
             <div class="col-sm-6 col-12">
@@ -184,39 +189,39 @@ function handleError(error, context = 'Erro') {
         </div>
       </div>
     `;
-  
+      
     // Evento de submissão do formulário com feedback visual (loading)
-    const lancamentoForm = document.getElementById('lancamentoForm');
-    lancamentoForm.addEventListener('submit', async function (e) {
+    const lancamentoForm = document.getElementById("lancamentoForm");
+    lancamentoForm.addEventListener("submit", async function (e) {
       e.preventDefault();
-      const formError = document.getElementById('formError');
-      formError.innerHTML = '';
-  
-      // Desabilita o botão de submit e exibe um indicador de loading
+      const formError = document.getElementById("formError");
+      formError.innerHTML = "";
+          
+      // Desabilita o botão e mostra loading
       const submitBtn = lancamentoForm.querySelector('button[type="submit"]');
       submitBtn.disabled = true;
       const originalBtnText = submitBtn.innerHTML;
       submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processando...`;
-  
-      // Cria um array para armazenar erros
+          
+      // Armazena os erros
       let errors = [];
-  
-      // Coleta dos valores do formulário
-      const filialInputValue = document.getElementById('filialInput').value.trim();
-      let filial = '';
+          
+      // Coleta os valores do formulário
+      const filialInputValue = document.getElementById("filialInput").value.trim();
+      let filial = "";
       if (window.filiaisData && window.filiaisData.length > 0) {
         const filialSelecionada = window.filiaisData.find(fil => fil.nome.toLowerCase() === filialInputValue.toLowerCase());
         if (filialSelecionada) {
           filial = filialSelecionada.uuid;
         } else {
-          errors.push('Filial inválida ou não encontrada');
+          errors.push("Filial inválida ou não encontrada");
         }
       } else {
-        errors.push('Filiais não carregadas');
+        errors.push("Filiais não carregadas");
       }
-  
-      const fornecedorInputValue = document.getElementById('fornecedorInput').value.trim();
-      let fornecedor = '';
+          
+      const fornecedorInputValue = document.getElementById("fornecedorInput").value.trim();
+      let fornecedor = "";
       if (window.fornecedoresData && window.fornecedoresData.length > 0) {
         const fornecedorSelecionado = window.fornecedoresData.find(forn => {
           const formattedFornec = `${forn.nome} - ${forn.cnpj}`;
@@ -225,32 +230,32 @@ function handleError(error, context = 'Erro') {
         if (fornecedorSelecionado) {
           fornecedor = fornecedorSelecionado.uuid;
         } else {
-          errors.push('Fornecedor inválido ou não encontrado');
+          errors.push("Fornecedor inválido ou não encontrado");
         }
       } else {
-        errors.push('Fornecedores não carregados');
+        errors.push("Fornecedores não carregados");
       }
-  
-      const numeroDocumento = document.getElementById('numeroDocumento').value.trim();
-      const tipoDocumento = document.getElementById('tipoDocumento').value;
-      const dataEmissao = document.getElementById('dataEmissao').value;
-      const valor = document.getElementById('valor').value.trim();
-      const formaPagamentoValue = document.getElementById('formaPagamento').value;
-      const vencimento = document.getElementById('vencimento').value;
-      const centroCustoInputValue = document.getElementById('centroCustoInput').value.trim();
-      let centroCusto = '';
+          
+      const numeroDocumento = document.getElementById("numeroDocumento").value.trim();
+      const tipoDocumento = document.getElementById("tipoDocumento").value;
+      const dataEmissao = document.getElementById("dataEmissao").value;
+      const valor = document.getElementById("valor").value.trim();
+      const formaPagamentoValue = document.getElementById("formaPagamento").value;
+      const vencimento = document.getElementById("vencimento").value;
+      const centroCustoInputValue = document.getElementById("centroCustoInput").value.trim();
+      let centroCusto = "";
       if (window.centrosData && window.centrosData.length > 0) {
         const centroSelecionado = window.centrosData.find(centro => centro.nome.toLowerCase() === centroCustoInputValue.toLowerCase());
         if (centroSelecionado) {
           centroCusto = centroSelecionado.uuid;
         } else {
-          errors.push('Centro de Custo inválido ou não encontrado');
+          errors.push("Centro de Custo inválido ou não encontrado");
         }
       } else {
-        errors.push('Centros de Custo não carregados');
+        errors.push("Centros de Custo não carregados");
       }
-  
-      const projetoInputValue = document.getElementById('projetoInput').value.trim();
+          
+      const projetoInputValue = document.getElementById("projetoInput").value.trim();
       let projeto = "";
       if (projetoInputValue) {
         if (window.projetosData && window.projetosData.length > 0) {
@@ -258,21 +263,21 @@ function handleError(error, context = 'Erro') {
           if (projetoSelecionado) {
             projeto = projetoSelecionado.uuid;
           } else {
-            errors.push('Projeto inválido ou não encontrado');
+            errors.push("Projeto inválido ou não encontrado");
           }
         } else {
-          errors.push('Projetos não carregados');
+          errors.push("Projetos não carregados");
         }
       }
-  
-      const justificativa = document.getElementById('justificativa').value.trim();
+          
+      const justificativa = document.getElementById("justificativa").value.trim();
       if (!justificativa) {
         errors.push("Justificativa");
       }
-      
-      const arquivoInput = document.getElementById('arquivo');
-  
-      // Validação de campos obrigatórios com mensagens amigáveis
+          
+      const arquivoInput = document.getElementById("arquivo");
+          
+      // Validação dos campos obrigatórios
       if (!filialInputValue) errors.push("Filial");
       if (!fornecedorInputValue) errors.push("Fornecedor");
       if (!numeroDocumento) errors.push("N° Documento");
@@ -283,11 +288,11 @@ function handleError(error, context = 'Erro') {
       if (!vencimento) errors.push("Vencimento");
       if (!centroCustoInputValue) errors.push("Centro de Custo");
       if (!justificativa) errors.push("Justificativa");
-  
+          
       if (arquivoInput.files.length === 0) {
         errors.push("Pelo menos um anexo é obrigatório");
       }
-  
+          
       if (dataEmissao && isNaN(Date.parse(dataEmissao))) {
         errors.push("Data de Emissão inválida");
       }
@@ -297,11 +302,11 @@ function handleError(error, context = 'Erro') {
       if (valor && isNaN(parseFloat(valor))) {
         errors.push("Valor deve ser numérico");
       }
-  
+          
       if (dataEmissao && new Date(dataEmissao) > new Date()) {
         errors.push("Data de Emissão não pode ser superior à data atual");
       }
-  
+          
       if (errors.length > 0) {
         formError.innerHTML = `<div class="alert alert-danger">
           <strong>Por favor, corrija os seguintes campos:</strong>
@@ -319,9 +324,9 @@ function handleError(error, context = 'Erro') {
         submitBtn.innerHTML = originalBtnText;
         return;
       }
-  
+          
       const dataInclusao = formatDateISO(new Date());
-  
+          
       let payload = {
         dados: {
           uid: AuthService.user.uid,
@@ -342,7 +347,7 @@ function handleError(error, context = 'Erro') {
           data_inclusao: dataInclusao
         }
       };
-  
+          
       try {
         const files = Array.from(arquivoInput.files);
         if (files.length === 0) {
@@ -359,36 +364,46 @@ function handleError(error, context = 'Erro') {
             throw new Error(`Arquivo ${file.name} excede o tamanho máximo de 4096KB.`);
           }
         }
-  
-        // Processamento dos arquivos: garantir o envio sempre em binário
-        const uploadResponses = await Promise.all(files.map(async file => {
-          const buffer = await file.arrayBuffer();
-          const binaryFile = new Blob([buffer], { type: file.type });
-          return uploadArquivo(AuthService, binaryFile);
-        }));
+        
+        // Envia os arquivos diretamente; o objeto File já é um Blob nativo
+        const uploadResponses = await Promise.all(
+          files.map(async file => {
+            return uploadArquivo(AuthService, file);
+          })
+        );
         let anexosArray = [];
         for (const uploadResponse of uploadResponses) {
-          let parsedResponse = typeof uploadResponse === 'string' ? JSON.parse(uploadResponse) : uploadResponse;
-          let resultObj;
-          if (Array.isArray(parsedResponse) && parsedResponse.length > 0) {
-            resultObj = parsedResponse[0];
-          } else {
-            resultObj = parsedResponse;
-          }
-          if (resultObj.status_validacao && resultObj.status_validacao === "inválido") {
-            let errorMessage = resultObj.mensagem || "O anexo não foi reconhecido como válido.";
+          let parsedResponse = typeof uploadResponse === "string" 
+            ? JSON.parse(uploadResponse) 
+            : uploadResponse;
+          let resultObj =
+            Array.isArray(parsedResponse) && parsedResponse.length > 0
+              ? parsedResponse[0]
+              : parsedResponse;
+        
+          // Se resultObj.status_validacao (após trim) for "inválido", formata a mensagem para exibição
+          if (
+            resultObj.status_validacao &&
+            resultObj.status_validacao.trim() === "inválido"
+          ) {
+            let errorMessage = "Mensagem: " + (resultObj.mensagem ? resultObj.mensagem.trim() : "Não definida.");
             if (resultObj.acao_recomendada) {
-              errorMessage += " " + resultObj.acao_recomendada;
+              errorMessage += "<br>Ação Recomendada: " + resultObj.acao_recomendada.trim();
             }
             throw new Error(errorMessage);
           }
-          let uploadData;
-          if (resultObj.data) {
-            uploadData = resultObj.data;
-          } else {
-            throw new Error("Resposta de upload inválida");
+        
+          if (!resultObj.data) {
+            if (resultObj.mensagem && resultObj.acao_recomendada) {
+              let errorMessage = "Mensagem: " + resultObj.mensagem.trim() + 
+                                 "<br>Ação Recomendada: " + resultObj.acao_recomendada.trim();
+              throw new Error(errorMessage);
+            } else {
+              throw new Error("Resposta de upload inválida");
+            }
           }
-          const responseData = JSON.parse(uploadData);
+        
+          const responseData = JSON.parse(resultObj.data);
           const filename = responseData.filename;
           anexosArray.push({
             url: filename,
@@ -397,12 +412,17 @@ function handleError(error, context = 'Erro') {
         }
         payload.anexo = anexosArray;
       } catch (uploadError) {
-        formError.innerHTML = `<div class="alert alert-danger">Erro ao fazer upload dos anexos: ${handleError(uploadError, "Upload")}</div>`;
+        // Recria o campo de arquivo para garantir nova seleção
+        const newFileInput = arquivoInput.cloneNode(true);
+        arquivoInput.parentNode.replaceChild(newFileInput, arquivoInput);
+        formError.innerHTML = `<div class="alert alert-danger">
+          Erro ao fazer upload dos anexos:<br> ${handleError(uploadError, "Upload")}
+        </div>`;
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalBtnText;
         return;
       }
-  
+          
       try {
         const result = await createLancamento(AuthService, payload);
         if (!result || !result.id) {
@@ -411,74 +431,76 @@ function handleError(error, context = 'Erro') {
         alert("Lançamento criado com sucesso! ID: " + result.id);
         lancamentoForm.reset();
       } catch (error) {
-        formError.innerHTML = `<div class="alert alert-danger">Erro ao criar lançamento: ${handleError(error, "CreateLancamento")}</div>`;
+        formError.innerHTML = `<div class="alert alert-danger">
+          Erro ao criar lançamento: ${handleError(error, "CreateLancamento")}
+        </div>`;
       } finally {
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalBtnText;
       }
     });
-  
+          
     AuthService.onAuthChange((user) => {
       if (user) {
-        document.getElementById('form-section').classList.remove('d-none');
-        
+        document.getElementById("form-section").classList.remove("d-none");
+          
         (async () => {
           try {
-            const datalistFilial = document.getElementById('filialOptions');
+            const datalistFilial = document.getElementById("filialOptions");
             datalistFilial.innerHTML = '<option value="">Selecione</option>';
             window.filiaisData = await listFiliais(AuthService);
-            window.filiaisData.forEach(fil => {
-              const option = document.createElement('option');
+            window.filiaisData.forEach((fil) => {
+              const option = document.createElement("option");
               option.value = fil.nome;
               datalistFilial.appendChild(option);
             });
           } catch (error) {
-            console.error('Erro ao carregar filiais:', handleError(error, "Filiais"));
+            console.error("Erro ao carregar filiais:", handleError(error, "Filiais"));
           }
         })();
-        
+          
         (async () => {
           try {
-            const datalist = document.getElementById('centroCustoOptions');
+            const datalist = document.getElementById("centroCustoOptions");
             datalist.innerHTML = '<option value="">Selecione</option>';
             window.centrosData = await listCentrosCustos(AuthService);
-            window.centrosData.forEach(centro => {
-              const option = document.createElement('option');
+            window.centrosData.forEach((centro) => {
+              const option = document.createElement("option");
               option.value = centro.nome;
               datalist.appendChild(option);
             });
           } catch (error) {
-            console.error('Erro ao carregar centros de custo:', handleError(error, "Centros de Custo"));
+            console.error("Erro ao carregar centros de custo:", handleError(error, "Centros de Custo"));
           }
         })();
-        
+          
         (async () => {
           try {
-            const datalistProj = document.getElementById('projetoOptions');
+            const datalistProj = document.getElementById("projetoOptions");
             datalistProj.innerHTML = '<option value="">Selecione</option>';
             window.projetosData = await listProjetos(AuthService);
-            window.projetosData.forEach(proj => {
-              const option = document.createElement('option');
+            window.projetosData.forEach((proj) => {
+              const option = document.createElement("option");
               option.value = proj.nome;
               datalistProj.appendChild(option);
             });
           } catch (error) {
-            console.error('Erro ao carregar projetos:', handleError(error, "Projetos"));
+            console.error("Erro ao carregar projetos:", handleError(error, "Projetos"));
           }
         })();
-        
+          
         (async () => {
           try {
-            const datalistFornecedores = document.getElementById('fornecedorOptions');
+            const datalistFornecedores = document.getElementById("fornecedorOptions");
             datalistFornecedores.innerHTML = '<option value="">Selecione</option>';
             window.fornecedoresData = await listFornecedores(AuthService);
-            window.fornecedoresData.forEach(forn => {
-              const option = document.createElement('option');
+            window.fornecedoresData.forEach((forn) => {
+              const option = document.createElement("option");
               option.value = `${forn.nome} - ${forn.cnpj}`;
               datalistFornecedores.appendChild(option);
             });
           } catch (error) {
-            console.error('Erro ao carregar fornecedores:', handleError(error, "Fornecedores"));
+            console.error("Erro ao carregar fornecedores:", handleError(error, "Fornecedores"));
           }
         })();
       } else {
@@ -490,5 +512,5 @@ function handleError(error, context = 'Erro') {
       }
     });
   }
-  
-  registerRoute('#financeiro-lancamento-create-v2', renderFinanceiroLancamentoCreateV2);
+          
+  registerRoute("#financeiro-lancamento-create-v2", renderFinanceiroLancamentoCreateV2);

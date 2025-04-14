@@ -10,9 +10,9 @@
  */
 
 // Função centralizada para tratamento de erros
-function handleError(error, context = 'Erro') {
+function handleError(error, context = "Erro") {
     console.error(`[${context}]`, error);
-    return error.message || 'Ocorreu um erro inesperado';
+    return error.message || "Ocorreu um erro inesperado";
   }
   
   import { registerRoute } from "./router.js";
@@ -23,12 +23,12 @@ function handleError(error, context = 'Erro') {
     listCentrosCustos,
     listProjetos,
     listFiliais,
-    listFornecedores
+    listFornecedores,
   } from "./api.js";
   
   // Função auxiliar para formatar a data no padrão ISO 8601 "yyyy-mm-dd hh:mm:ss"
   function formatDateISO(dateObj) {
-    const pad = (num) => num.toString().padStart(2, '0');
+    const pad = (num) => num.toString().padStart(2, "0");
     const year = dateObj.getFullYear();
     const month = pad(dateObj.getMonth() + 1);
     const day = pad(dateObj.getDate());
@@ -155,7 +155,7 @@ function handleError(error, context = 'Erro') {
                     <option value="">Selecione</option>
                   </datalist>
                 </div>
-                <!-- Campo: Projeto (não obrigatório) -->
+                <!-- Campo: Projeto -->
                 <div class="mb-3">
                   <label for="projetoInput" class="form-label" style="color: var(--black);">
                     Projeto
@@ -190,6 +190,162 @@ function handleError(error, context = 'Erro') {
       </div>
     `;
       
+    // Validação do campo "Filial" no evento blur
+    const filialInput = document.getElementById("filialInput");
+    filialInput.addEventListener("blur", function () {
+      const inputValue = this.value.trim().toLowerCase();
+      if (window.filiaisData && window.filiaisData.length > 0) {
+        const found = window.filiaisData.some(fil => fil.nome.toLowerCase() === inputValue);
+        if (!found) {
+          this.setCustomValidity("Selecione uma filial válida.");
+          this.reportValidity();
+        } else {
+          this.setCustomValidity("");
+        }
+      }
+    });
+      
+    // Validação do campo "Fornecedor" no evento blur
+    const fornecedorInput = document.getElementById("fornecedorInput");
+    fornecedorInput.addEventListener("blur", function () {
+      const inputValue = this.value.trim().toLowerCase();
+      if (window.fornecedoresData && window.fornecedoresData.length > 0) {
+        const found = window.fornecedoresData.some(
+          forn => (`${forn.nome} - ${forn.cnpj}`).toLowerCase() === inputValue
+        );
+        if (!found) {
+          this.setCustomValidity("Selecione um fornecedor válido.");
+          this.reportValidity();
+        } else {
+          this.setCustomValidity("");
+        }
+      }
+    });
+      
+    // Validação do campo "Centro de Custo" no evento blur (se não estiver readonly)
+    const centroCustoInput = document.getElementById("centroCustoInput");
+    centroCustoInput.addEventListener("blur", function () {
+      if (this.hasAttribute("readonly")) return;
+      const inputValue = this.value.trim().toLowerCase();
+      if (window.centrosData && window.centrosData.length > 0) {
+        const found = window.centrosData.some(centro => centro.nome.toLowerCase() === inputValue);
+        if (!found) {
+          this.setCustomValidity("Selecione um centro de custo válido.");
+          this.reportValidity();
+        } else {
+          this.setCustomValidity("");
+        }
+      }
+    });
+      
+    // Validação do campo "Projeto" no evento blur
+    const projetoInput = document.getElementById("projetoInput");
+    projetoInput.addEventListener("blur", function () {
+      // Valida apenas se houver valor digitado
+      if (this.value.trim() === "") {
+        this.setCustomValidity("");
+        return;
+      }
+      const inputValue = this.value.trim().toLowerCase();
+      if (window.projetosData && window.projetosData.length > 0) {
+        const found = window.projetosData.some(proj => proj.nome.toLowerCase() === inputValue);
+        if (!found) {
+          this.setCustomValidity("Selecione um projeto válido.");
+          this.reportValidity();
+        } else {
+          this.setCustomValidity("");
+        }
+      }
+    });
+      
+    // Carrega dados e, se a API de centros de custo retornar apenas um resultado,
+    // preenche automaticamente o campo e o torna somente leitura.
+    (async () => {
+      try {
+        const datalist = document.getElementById("centroCustoOptions");
+        datalist.innerHTML = '<option value="">Selecione</option>';
+        window.centrosData = await listCentrosCustos(AuthService);
+        if (window.centrosData.length === 1) {
+          const centro = window.centrosData[0];
+          const centroInput = document.getElementById("centroCustoInput");
+          centroInput.value = centro.nome;
+          centroInput.setAttribute("readonly", "true");
+        } else {
+          window.centrosData.forEach((centro) => {
+            const option = document.createElement("option");
+            option.value = centro.nome;
+            datalist.appendChild(option);
+          });
+        }
+      } catch (error) {
+        console.error("Erro ao carregar centros de custo:", handleError(error, "Centros de Custo"));
+      }
+    })();
+      
+    // Carrega dados para Filiais
+    (async () => {
+      try {
+        const datalistFilial = document.getElementById("filialOptions");
+        datalistFilial.innerHTML = '<option value="">Selecione</option>';
+        window.filiaisData = await listFiliais(AuthService);
+        // Se houver apenas um resultado, preenche e torna o campo read-only
+        if (window.filiaisData.length === 1) {
+          const fil = window.filiaisData[0];
+          const filialInput = document.getElementById("filialInput");
+          filialInput.value = fil.nome;
+          filialInput.setAttribute("readonly", "true");
+        } else {
+          window.filiaisData.forEach((fil) => {
+            const option = document.createElement("option");
+            option.value = fil.nome;
+            datalistFilial.appendChild(option);
+          });
+        }
+      } catch (error) {
+        console.error("Erro ao carregar filiais:", handleError(error, "Filiais"));
+      }
+    })();
+      
+    // Carrega dados para Projetos
+    (async () => {
+      try {
+        const datalistProj = document.getElementById("projetoOptions");
+        datalistProj.innerHTML = '<option value="">Selecione</option>';
+        window.projetosData = await listProjetos(AuthService);
+        // Se houver apenas um resultado, preenche e torna o campo read-only
+        if (window.projetosData.length === 1) {
+          const proj = window.projetosData[0];
+          const projetoInput = document.getElementById("projetoInput");
+          projetoInput.value = proj.nome;
+          projetoInput.setAttribute("readonly", "true");
+        } else {
+          window.projetosData.forEach((proj) => {
+            const option = document.createElement("option");
+            option.value = proj.nome;
+            datalistProj.appendChild(option);
+          });
+        }
+      } catch (error) {
+        console.error("Erro ao carregar projetos:", handleError(error, "Projetos"));
+      }
+    })();
+      
+    // Carrega dados para Fornecedores
+    (async () => {
+      try {
+        const datalistFornecedores = document.getElementById("fornecedorOptions");
+        datalistFornecedores.innerHTML = '<option value="">Selecione</option>';
+        window.fornecedoresData = await listFornecedores(AuthService);
+        window.fornecedoresData.forEach((forn) => {
+          const option = document.createElement("option");
+          option.value = `${forn.nome} - ${forn.cnpj}`;
+          datalistFornecedores.appendChild(option);
+        });
+      } catch (error) {
+        console.error("Erro ao carregar fornecedores:", handleError(error, "Fornecedores"));
+      }
+    })();
+      
     // Evento de submissão do formulário com feedback visual (loading)
     const lancamentoForm = document.getElementById("lancamentoForm");
     lancamentoForm.addEventListener("submit", async function (e) {
@@ -197,16 +353,13 @@ function handleError(error, context = 'Erro') {
       const formError = document.getElementById("formError");
       formError.innerHTML = "";
           
-      // Desabilita o botão e mostra loading
       const submitBtn = lancamentoForm.querySelector('button[type="submit"]');
       submitBtn.disabled = true;
       const originalBtnText = submitBtn.innerHTML;
       submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processando...`;
           
-      // Armazena os erros
       let errors = [];
           
-      // Coleta os valores do formulário
       const filialInputValue = document.getElementById("filialInput").value.trim();
       let filial = "";
       if (window.filiaisData && window.filiaisData.length > 0) {
@@ -277,7 +430,6 @@ function handleError(error, context = 'Erro') {
           
       const arquivoInput = document.getElementById("arquivo");
           
-      // Validação dos campos obrigatórios
       if (!filialInputValue) errors.push("Filial");
       if (!fornecedorInputValue) errors.push("Fornecedor");
       if (!numeroDocumento) errors.push("N° Documento");
@@ -310,7 +462,7 @@ function handleError(error, context = 'Erro') {
       if (errors.length > 0) {
         formError.innerHTML = `<div class="alert alert-danger">
           <strong>Por favor, corrija os seguintes campos:</strong>
-          <ul>${errors.map(err => `<li>${err}</li>`).join('')}</ul>
+          <ul>${errors.map(err => `<li>${err}</li>`).join("")}</ul>
         </div>`;
         const fields = ["filialInput", "fornecedorInput", "numeroDocumento", "tipoDocumento", "dataEmissao", "valor", "formaPagamento", "vencimento", "centroCustoInput", "justificativa"];
         for (let fieldId of fields) {
@@ -344,8 +496,8 @@ function handleError(error, context = 'Erro') {
           email: AuthService.user.email,
           justificativa: justificativa,
           status: "Pendente",
-          data_inclusao: dataInclusao
-        }
+          data_inclusao: dataInclusao,
+        },
       };
           
       try {
@@ -353,9 +505,8 @@ function handleError(error, context = 'Erro') {
         if (files.length === 0) {
           throw new Error("É necessário enviar pelo menos um anexo.");
         }
-        // Validação de tipo e tamanho dos arquivos
         const allowedTypes = ["image/png", "image/jpeg"];
-        const MAX_FILE_SIZE = 4096 * 1024; // 4096KB => 4MB
+        const MAX_FILE_SIZE = 4096 * 1024; // 4096KB
         for (const file of files) {
           if (!allowedTypes.includes(file.type)) {
             throw new Error(`Arquivo ${file.name} possui formato inválido. Apenas PNG, JPG e JPEG são permitidos.`);
@@ -364,55 +515,58 @@ function handleError(error, context = 'Erro') {
             throw new Error(`Arquivo ${file.name} excede o tamanho máximo de 4096KB.`);
           }
         }
-        
-        // Envia os arquivos diretamente; o objeto File já é um Blob nativo
+                
         const uploadResponses = await Promise.all(
-          files.map(async file => {
+          files.map(async (file) => {
             return uploadArquivo(AuthService, file);
           })
         );
         let anexosArray = [];
         for (const uploadResponse of uploadResponses) {
-          let parsedResponse = typeof uploadResponse === "string" 
-            ? JSON.parse(uploadResponse) 
-            : uploadResponse;
+          let parsedResponse =
+            typeof uploadResponse === "string"
+              ? JSON.parse(uploadResponse)
+              : uploadResponse;
           let resultObj =
             Array.isArray(parsedResponse) && parsedResponse.length > 0
               ? parsedResponse[0]
               : parsedResponse;
-        
-          // Se resultObj.status_validacao (após trim) for "inválido", formata a mensagem para exibição
+                
           if (
             resultObj.status_validacao &&
             resultObj.status_validacao.trim() === "inválido"
           ) {
-            let errorMessage = "Mensagem: " + (resultObj.mensagem ? resultObj.mensagem.trim() : "Não definida.");
+            let errorMessage =
+              "Mensagem: " +
+              (resultObj.mensagem ? resultObj.mensagem.trim() : "Não definida.");
             if (resultObj.acao_recomendada) {
               errorMessage += "<br>Ação Recomendada: " + resultObj.acao_recomendada.trim();
             }
             throw new Error(errorMessage);
           }
-        
+                
           if (!resultObj.data) {
             if (resultObj.mensagem && resultObj.acao_recomendada) {
-              let errorMessage = "Mensagem: " + resultObj.mensagem.trim() + 
-                                 "<br>Ação Recomendada: " + resultObj.acao_recomendada.trim();
+              let errorMessage =
+                "Mensagem: " +
+                resultObj.mensagem.trim() +
+                "<br>Ação Recomendada: " +
+                resultObj.acao_recomendada.trim();
               throw new Error(errorMessage);
             } else {
               throw new Error("Resposta de upload inválida");
             }
           }
-        
+                
           const responseData = JSON.parse(resultObj.data);
           const filename = responseData.filename;
           anexosArray.push({
             url: filename,
-            categoria: "comprovante"
+            categoria: "comprovante",
           });
         }
         payload.anexo = anexosArray;
       } catch (uploadError) {
-        // Recria o campo de arquivo para garantir nova seleção
         const newFileInput = arquivoInput.cloneNode(true);
         arquivoInput.parentNode.replaceChild(newFileInput, arquivoInput);
         formError.innerHTML = `<div class="alert alert-danger">
@@ -422,7 +576,7 @@ function handleError(error, context = 'Erro') {
         submitBtn.innerHTML = originalBtnText;
         return;
       }
-          
+            
       try {
         const result = await createLancamento(AuthService, payload);
         if (!result || !result.id) {
@@ -443,52 +597,73 @@ function handleError(error, context = 'Erro') {
     AuthService.onAuthChange((user) => {
       if (user) {
         document.getElementById("form-section").classList.remove("d-none");
-          
+            
         (async () => {
           try {
             const datalistFilial = document.getElementById("filialOptions");
             datalistFilial.innerHTML = '<option value="">Selecione</option>';
             window.filiaisData = await listFiliais(AuthService);
-            window.filiaisData.forEach((fil) => {
-              const option = document.createElement("option");
-              option.value = fil.nome;
-              datalistFilial.appendChild(option);
-            });
+            if (window.filiaisData.length === 1) {
+              const fil = window.filiaisData[0];
+              const filialInput = document.getElementById("filialInput");
+              filialInput.value = fil.nome;
+              filialInput.setAttribute("readonly", "true");
+            } else {
+              window.filiaisData.forEach((fil) => {
+                const option = document.createElement("option");
+                option.value = fil.nome;
+                datalistFilial.appendChild(option);
+              });
+            }
           } catch (error) {
             console.error("Erro ao carregar filiais:", handleError(error, "Filiais"));
           }
         })();
-          
+            
         (async () => {
           try {
             const datalist = document.getElementById("centroCustoOptions");
             datalist.innerHTML = '<option value="">Selecione</option>';
             window.centrosData = await listCentrosCustos(AuthService);
-            window.centrosData.forEach((centro) => {
-              const option = document.createElement("option");
-              option.value = centro.nome;
-              datalist.appendChild(option);
-            });
+            if (window.centrosData.length === 1) {
+              const centro = window.centrosData[0];
+              const centroInput = document.getElementById("centroCustoInput");
+              centroInput.value = centro.nome;
+              centroInput.setAttribute("readonly", "true");
+            } else {
+              window.centrosData.forEach((centro) => {
+                const option = document.createElement("option");
+                option.value = centro.nome;
+                datalist.appendChild(option);
+              });
+            }
           } catch (error) {
             console.error("Erro ao carregar centros de custo:", handleError(error, "Centros de Custo"));
           }
         })();
-          
+            
         (async () => {
           try {
             const datalistProj = document.getElementById("projetoOptions");
             datalistProj.innerHTML = '<option value="">Selecione</option>';
             window.projetosData = await listProjetos(AuthService);
-            window.projetosData.forEach((proj) => {
-              const option = document.createElement("option");
-              option.value = proj.nome;
-              datalistProj.appendChild(option);
-            });
+            if (window.projetosData.length === 1) {
+              const proj = window.projetosData[0];
+              const projetoInput = document.getElementById("projetoInput");
+              projetoInput.value = proj.nome;
+              projetoInput.setAttribute("readonly", "true");
+            } else {
+              window.projetosData.forEach((proj) => {
+                const option = document.createElement("option");
+                option.value = proj.nome;
+                datalistProj.appendChild(option);
+              });
+            }
           } catch (error) {
             console.error("Erro ao carregar projetos:", handleError(error, "Projetos"));
           }
         })();
-          
+            
         (async () => {
           try {
             const datalistFornecedores = document.getElementById("fornecedorOptions");

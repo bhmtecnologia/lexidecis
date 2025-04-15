@@ -67,13 +67,14 @@ function handleError(error, context = "Erro") {
     }
   
     // Conta Financeira
-    const contaInput = document.getElementById("contaFinanceiraInput");
+    const contaSelect = document.getElementById("contaFinanceiraSelect");
     if (window.contasFinanceirasData && window.contasFinanceirasData.length === 1) {
       const conta = window.contasFinanceirasData[0];
-      contaInput.value = `${conta.estrutura} - ${conta.codigo} - ${conta.nome}`;
-      contaInput.setAttribute("readonly", "true");
+      contaSelect.value = `${conta.estrutura} - ${conta.codigo} - ${conta.nome}`;
+      // Se desejar bloquear a edição, pode desabilitar o Select2 para esse campo.
+      contaSelect.setAttribute("readonly", "true");
     } else {
-      contaInput.removeAttribute("readonly");
+      contaSelect.removeAttribute("readonly");
     }
   }
   
@@ -124,15 +125,14 @@ function handleError(error, context = "Erro") {
                     <option value="">Selecione</option>
                   </select>
                 </div>
-                <!-- Campo: Conta Financeira -->
+                <!-- Campo: Conta Financeira (usando Select2) -->
                 <div class="mb-3">
-                  <label for="contaFinanceiraInput" class="form-label" style="color: var(--black);">
+                  <label for="contaFinanceiraSelect" class="form-label" style="color: var(--black);">
                     Conta Financeira <span style="color: red;">*</span>
                   </label>
-                  <input class="form-control" id="contaFinanceiraInput" list="contaFinanceiraOptions" placeholder="Digite ou escolha uma conta financeira" required aria-required="true">
-                  <datalist id="contaFinanceiraOptions">
+                  <select class="form-control" id="contaFinanceiraSelect" required aria-required="true">
                     <option value="">Selecione</option>
-                  </datalist>
+                  </select>
                 </div>
                 <!-- Campo: N° Documento -->
                 <div class="mb-3">
@@ -235,15 +235,19 @@ function handleError(error, context = "Erro") {
         </div>
     `;
   
-    // Após injetar o conteúdo, inicialize o Select2 para o campo Fornecedor
+    // Inicializa o Select2 para os campos de Fornecedor e Conta Financeira
     if (window.$ && $.fn.select2) {
       $('#fornecedorSelect').select2({
         placeholder: "Selecione um fornecedor",
         width: '100%'
       });
+      $('#contaFinanceiraSelect').select2({
+        placeholder: "Selecione uma conta financeira",
+        width: '100%'
+      });
     }
   
-    // Validação do campo Fornecedor com select2 (o valor é lido do select)
+    // Validação do campo Fornecedor via Select2 (valor lido do select)
     const fornecedorSelect = document.getElementById("fornecedorSelect");
     fornecedorSelect.addEventListener("change", function () {
       const inputValue = this.value.trim().toLowerCase();
@@ -260,7 +264,24 @@ function handleError(error, context = "Erro") {
       }
     });
   
-    // Outras validações (manutenção dos campos existentes)
+    // Validação do campo Conta Financeira via Select2 (valor lido do select)
+    const contaFinanceiraSelect = document.getElementById("contaFinanceiraSelect");
+    contaFinanceiraSelect.addEventListener("change", function () {
+      const inputValue = this.value.trim().toLowerCase();
+      if (window.contasFinanceirasData && window.contasFinanceirasData.length > 0) {
+        const found = window.contasFinanceirasData.some(
+          conta => `${conta.estrutura} - ${conta.codigo} - ${conta.nome}`.toLowerCase() === inputValue
+        );
+        if (!found) {
+          this.setCustomValidity("Selecione uma conta financeira válida (estrutura - código - nome).");
+          this.reportValidity();
+        } else {
+          this.setCustomValidity("");
+        }
+      }
+    });
+  
+    // Outras validações dos campos existentes
     const filialInput = document.getElementById("filialInput");
     filialInput.addEventListener("blur", function () {
       const inputValue = this.value.trim().toLowerCase();
@@ -268,23 +289,6 @@ function handleError(error, context = "Erro") {
         const found = window.filiaisData.some(fil => fil.nome.toLowerCase() === inputValue);
         if (!found) {
           this.setCustomValidity("Selecione uma filial válida.");
-          this.reportValidity();
-        } else {
-          this.setCustomValidity("");
-        }
-      }
-    });
-    
-    const contaFinanceiraInput = document.getElementById("contaFinanceiraInput");
-    contaFinanceiraInput.addEventListener("blur", function () {
-      const inputValue = this.value.trim().toLowerCase();
-      if (window.contasFinanceirasData && window.contasFinanceirasData.length > 0) {
-        const found = window.contasFinanceirasData.some(
-          conta =>
-            `${conta.estrutura} - ${conta.codigo} - ${conta.nome}`.toLowerCase() === inputValue
-        );
-        if (!found) {
-          this.setCustomValidity("Selecione uma conta financeira válida (estrutura - código - nome).");
           this.reportValidity();
         } else {
           this.setCustomValidity("");
@@ -394,21 +398,27 @@ function handleError(error, context = "Erro") {
     
         (async () => {
           try {
-            // Contas Financeiras
-            const datalistConta = document.getElementById("contaFinanceiraOptions");
-            datalistConta.innerHTML = '<option value="">Selecione</option>';
+            // Contas Financeiras - Preenche o select para uso do Select2
+            const contaSelect = document.getElementById("contaFinanceiraSelect");
+            contaSelect.innerHTML = '<option value="">Selecione</option>';
             window.contasFinanceirasData = await listContasFinanceiras(AuthService);
             if (window.contasFinanceirasData.length === 1) {
               const conta = window.contasFinanceirasData[0];
-              const contaInput = document.getElementById("contaFinanceiraInput");
-              contaInput.value = `${conta.estrutura} - ${conta.codigo} - ${conta.nome}`;
-              contaInput.setAttribute("readonly", "true");
+              const valueText = `${conta.estrutura} - ${conta.codigo} - ${conta.nome}`;
+              contaSelect.innerHTML = `<option value="${valueText}">${valueText}</option>`;
+              contaSelect.setAttribute("readonly", "true");
             } else {
               window.contasFinanceirasData.forEach((conta) => {
                 const option = document.createElement("option");
-                option.value = `${conta.estrutura} - ${conta.codigo} - ${conta.nome}`;
-                datalistConta.appendChild(option);
+                const valueText = `${conta.estrutura} - ${conta.codigo} - ${conta.nome}`;
+                option.value = valueText;
+                option.textContent = valueText;
+                contaSelect.appendChild(option);
               });
+            }
+            // Após preencher o select, dispara o evento de atualização se o Select2 estiver ativo.
+            if (window.$ && $.fn.select2) {
+              $('#contaFinanceiraSelect').trigger('change');
             }
           } catch (error) {
             console.error("Erro ao carregar contas financeiras:", handleError(error, "Contas Financeiras"));
@@ -439,11 +449,11 @@ function handleError(error, context = "Erro") {
             window.fornecedoresData = await listFornecedores(AuthService);
             window.fornecedoresData.forEach((forn) => {
               const option = document.createElement("option");
-              option.value = `${forn.nome} - ${forn.cnpj}`;
-              option.textContent = `${forn.nome} - ${forn.cnpj}`;
+              const valueText = `${forn.nome} - ${forn.cnpj}`;
+              option.value = valueText;
+              option.textContent = valueText;
               fornecedorSelect.appendChild(option);
             });
-            // Após preencher o select, se o Select2 já estiver carregado, você pode disparar o evento de atualização
             if (window.$ && $.fn.select2) {
               $('#fornecedorSelect').trigger('change');
             }
@@ -474,7 +484,7 @@ function handleError(error, context = "Erro") {
     
       let errors = [];
     
-      // Busca os registros completos para compor o payload
+      // Filial
       const filialInputValue = document.getElementById("filialInput").value.trim();
       let filialRecord = null;
       if (window.filiaisData && window.filiaisData.length > 0) {
@@ -486,6 +496,7 @@ function handleError(error, context = "Erro") {
         errors.push("Filiais não carregadas");
       }
     
+      // Fornecedor
       const fornecedorSelectValue = document.getElementById("fornecedorSelect").value.trim();
       let fornecedorRecord = null;
       if (window.fornecedoresData && window.fornecedoresData.length > 0) {
@@ -500,11 +511,12 @@ function handleError(error, context = "Erro") {
         errors.push("Fornecedores não carregados");
       }
     
-      const contaFinanceiraInputValue = document.getElementById("contaFinanceiraInput").value.trim();
+      // Conta Financeira
+      const contaFinanceiraSelectValue = document.getElementById("contaFinanceiraSelect").value.trim();
       let contaFinanceiraRecord = null;
       if (window.contasFinanceirasData && window.contasFinanceirasData.length > 0) {
         contaFinanceiraRecord = window.contasFinanceirasData.find(conta =>
-          `${conta.estrutura} - ${conta.codigo} - ${conta.nome}`.toLowerCase() === contaFinanceiraInputValue.toLowerCase()
+          `${conta.estrutura} - ${conta.codigo} - ${conta.nome}`.toLowerCase() === contaFinanceiraSelectValue.toLowerCase()
         );
         if (!contaFinanceiraRecord) {
           errors.push("Conta Financeira inválida ou não encontrada");
@@ -513,6 +525,7 @@ function handleError(error, context = "Erro") {
         errors.push("Contas Financeiras não carregadas");
       }
     
+      // Outros campos do formulário
       const numeroDocumento = document.getElementById("numeroDocumento").value.trim();
       const tipoDocumento = document.getElementById("tipoDocumento").value;
       const dataEmissao = document.getElementById("dataEmissao").value;
@@ -572,7 +585,7 @@ function handleError(error, context = "Erro") {
                 <strong>Por favor, corrija os seguintes campos:</strong>
                 <ul>${errors.map(err => `<li>${err}</li>`).join("")}</ul>
             </div>`;
-        const fields = ["filialInput", "fornecedorSelect", "numeroDocumento", "tipoDocumento", "dataEmissao", "valor", "formaPagamento", "vencimento", "centroCustoInput", "justificativa"];
+        const fields = ["filialInput", "fornecedorSelect", "contaFinanceiraSelect", "numeroDocumento", "tipoDocumento", "dataEmissao", "valor", "formaPagamento", "vencimento", "centroCustoInput", "justificativa"];
         for (let fieldId of fields) {
           const field = document.getElementById(fieldId);
           if (field && !field.value.trim()) {

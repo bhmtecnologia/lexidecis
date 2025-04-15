@@ -31,207 +31,208 @@ import {
   
 // Função auxiliar para formatar a data no padrão "yyyy-mm-dd hh:mm:ss"
 function formatDateISO(dateObj) {
-  const pad = (num) => num.toString().padStart(2, "0");
-  const year = dateObj.getFullYear();
-  const month = pad(dateObj.getMonth() + 1);
-  const day = pad(dateObj.getDate());
-  const hours = pad(dateObj.getHours());
-  const minutes = pad(dateObj.getMinutes());
-  const seconds = pad(dateObj.getSeconds());
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    const pad = (num) => num.toString().padStart(2, "0");
+    const year = dateObj.getFullYear();
+    const month = pad(dateObj.getMonth() + 1);
+    const day = pad(dateObj.getDate());
+    const hours = pad(dateObj.getHours());
+    const minutes = pad(dateObj.getMinutes());
+    const seconds = pad(dateObj.getSeconds());
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
   
 // Função para reinicializar os campos após o lançamento
-// Agora, o campo Projeto não será preenchido automaticamente, permanecendo vazio, pois não é obrigatório.
+// O campo Projeto não é preenchido automaticamente, permanecendo vazio.
 function resetFormFields() {
-  // Filial
-  const filialSelect = document.getElementById("filialSelect");
-  if (window.filiaisData && window.filiaisData.length === 1) {
-    const fil = window.filiaisData[0];
-    filialSelect.value = fil.nome;
-    filialSelect.setAttribute("readonly", "true");
-  } else {
-    filialSelect.removeAttribute("readonly");
-  }
-  // Conta Financeira
-  const contaSelect = document.getElementById("contaFinanceiraSelect");
-  if (window.contasFinanceirasData && window.contasFinanceirasData.length === 1) {
-    const conta = window.contasFinanceirasData[0];
-    const valueText = `${conta.estrutura} - ${conta.codigo} - ${conta.nome}`;
-    contaSelect.value = valueText;
-    contaSelect.setAttribute("readonly", "true");
-  } else {
-    contaSelect.removeAttribute("readonly");
-  }
-  // Centro de Custo
-  const centroSelect = document.getElementById("centroCustoSelect");
-  if (window.centrosData && window.centrosData.length === 1) {
-    const centro = window.centrosData[0];
-    centroSelect.value = centro.nome;
-    centroSelect.setAttribute("readonly", "true");
-  } else {
-    centroSelect.removeAttribute("readonly");
-  }
-  // Projeto – Mesmo que haja apenas uma opção, o campo deve ser deixado vazio
-  const projetoSelect = document.getElementById("projetoSelect");
-  projetoSelect.value = "";
-  projetoSelect.removeAttribute("readonly");
+    // Filial
+    const filialSelect = document.getElementById("filialSelect");
+    if (window.filiaisData && window.filiaisData.length === 1) {
+        const fil = window.filiaisData[0];
+        filialSelect.value = fil.nome;
+        filialSelect.setAttribute("readonly", "true");
+    } else {
+        filialSelect.removeAttribute("readonly");
+    }
+    // Conta Financeira
+    const contaSelect = document.getElementById("contaFinanceiraSelect");
+    if (window.contasFinanceirasData && window.contasFinanceirasData.length === 1) {
+        const conta = window.contasFinanceirasData[0];
+        const valueText = `${conta.estrutura} - ${conta.codigo} - ${conta.nome}`;
+        contaSelect.value = valueText;
+        contaSelect.setAttribute("readonly", "true");
+    } else {
+        contaSelect.removeAttribute("readonly");
+    }
+    // Centro de Custo
+    const centroSelect = document.getElementById("centroCustoSelect");
+    if (window.centrosData && window.centrosData.length === 1) {
+        const centro = window.centrosData[0];
+        centroSelect.value = centro.nome;
+        centroSelect.setAttribute("readonly", "true");
+    } else {
+        centroSelect.removeAttribute("readonly");
+    }
+    // Projeto – Sempre deixa o campo vazio, pois não é obrigatório
+    const projetoSelect = document.getElementById("projetoSelect");
+    projetoSelect.value = "";
+    projetoSelect.removeAttribute("readonly");
 }
   
 export async function renderFinanceiroLancamentoCreateV2() {
-  const content = document.getElementById("content");
-  // O formulário inicia oculto para aguardar o carregamento dos dados
-  content.innerHTML = `
-    <div class="container-fluid" style="background-color: var(--body-color); color: var(--body-font-color);">
-      <div class="page-title" style="padding: 1rem;">
-        <div class="row">
-          <div class="col-sm-6 col-12">
-            <h2 style="color: var(--black);">Financeiro - Lançamento Create V2</h2>
-            <p class="mb-0" style="color: var(--black);">Crie e gerencie novos lançamentos de pagamento</p>
-          </div>
-          <div class="col-sm-6 col-12">
-            <ol class="breadcrumb" style="color: var(--theme-default);">
-              <li class="breadcrumb-item">
-                <a href="index.html" style="color: var(--theme-default);">
-                  <i class="iconly-Home icli svg-color"></i>
-                </a>
-              </li>
-              <li class="breadcrumb-item" style="color: var(--theme-default);">Financeiro</li>
-              <li class="breadcrumb-item active" style="color: var(--theme-default);">Lançamento Create V2</li>
-            </ol>
+    const content = document.getElementById("content");
+    // O formulário inicia oculto para aguardar o carregamento dos dados
+    content.innerHTML = `
+      <div class="container-fluid" style="background-color: var(--body-color); color: var(--body-font-color);">
+        <div class="page-title" style="padding: 1rem;">
+          <div class="row">
+            <div class="col-sm-6 col-12">
+              <h2 style="color: var(--black);">Financeiro - Lançamento Create V2</h2>
+              <p class="mb-0" style="color: var(--black);">Crie e gerencie novos lançamentos de pagamento</p>
+            </div>
+            <div class="col-sm-6 col-12">
+              <ol class="breadcrumb" style="color: var(--theme-default);">
+                <li class="breadcrumb-item">
+                  <a href="index.html" style="color: var(--theme-default);">
+                    <i class="iconly-Home icli svg-color"></i>
+                  </a>
+                </li>
+                <li class="breadcrumb-item" style="color: var(--theme-default);">Financeiro</li>
+                <li class="breadcrumb-item active" style="color: var(--theme-default);">Lançamento Create V2</li>
+              </ol>
+            </div>
           </div>
         </div>
-      </div>
-      
-      <!-- Formulário oculto enquanto os dados não são carregados -->
-      <div id="form-section" class="mt-4 d-none">
-        <div class="card" style="border: 1px solid var(--border-color); background-color: var(--white); color: var(--black);">
-          <div class="card-body">
-            <form id="lancamentoForm">
-              <!-- Campo: Filial (Select2) -->
-              <div class="mb-3">
-                <label for="filialSelect" class="form-label" style="color: var(--black);">
-                  Filial <span style="color: red;">*</span>
-                </label>
-                <select class="form-control" id="filialSelect" required aria-required="true">
-                  <option value="">Selecione</option>
-                </select>
-              </div>
-              <!-- Campo: Fornecedor (Select2) -->
-              <div class="mb-3">
-                <label for="fornecedorSelect" class="form-label" style="color: var(--black);">
-                  Fornecedor <span style="color: red;">*</span>
-                </label>
-                <select class="form-control" id="fornecedorSelect" required aria-required="true">
-                  <option value="">Selecione</option>
-                </select>
-              </div>
-              <!-- Campo: Conta Financeira (Select2) -->
-              <div class="mb-3">
-                <label for="contaFinanceiraSelect" class="form-label" style="color: var(--black);">
-                  Conta Financeira <span style="color: red;">*</span>
-                </label>
-                <select class="form-control" id="contaFinanceiraSelect" required aria-required="true">
-                  <option value="">Selecione</option>
-                </select>
-              </div>
-              <!-- Campo: Centro de Custo (Select2) -->
-              <div class="mb-3">
-                <label for="centroCustoSelect" class="form-label" style="color: var(--black);">
-                  Centro de Custo <span style="color: red;">*</span>
-                </label>
-                <select class="form-control" id="centroCustoSelect" required aria-required="true">
-                  <option value="">Selecione</option>
-                </select>
-              </div>
-              <!-- Campo: Projeto (Select2) -->
-              <div class="mb-3">
-                <label for="projetoSelect" class="form-label" style="color: var(--black);">
-                  Projeto
-                </label>
-                <select class="form-control" id="projetoSelect">
-                  <option value="">Selecione</option>
-                </select>
-              </div>
-              <!-- Campo: N° Documento -->
-              <div class="mb-3">
-                <label for="numeroDocumento" class="form-label" style="color: var(--black);">
-                  N° Documento <span style="color: red;">*</span>
-                </label>
-                <input type="text" class="form-control" id="numeroDocumento" placeholder="Digite o número do documento" required aria-required="true">
-              </div>
-              <!-- Campo: Tipo de Documento -->
-              <div class="mb-3">
-                <label for="tipoDocumento" class="form-label" style="color: var(--black);">
-                  Tipo de Documento <span style="color: red;">*</span>
-                </label>
-                <select class="form-select" id="tipoDocumento" required aria-required="true">
-                  <option value="">Selecione</option>
-                  <option value="Nota Fiscal">Nota Fiscal</option>
-                  <option value="Fatura">Fatura</option>
-                  <option value="Boleto">Boleto</option>
-                  <option value="Reembolso">Reembolso</option>
-                  <option value="Outros">Outros</option>
-                </select>
-              </div>
-              <!-- Campo: Data de Emissão -->
-              <div class="mb-3">
-                <label for="dataEmissao" class="form-label" style="color: var(--black);">
-                  Data de Emissão <span style="color: red;">*</span>
-                </label>
-                <input type="date" class="form-control" id="dataEmissao" required aria-required="true">
-                <small class="form-text text-muted" style="color: var(--black);">
-                  A data de emissão não pode ser superior à data atual.
-                </small>
-              </div>
-              <!-- Campo: Valor Bruto -->
-              <div class="mb-3">
-                <label for="valor" class="form-label" style="color: var(--black);">
-                  Valor Bruto <span style="color: red;">*</span>
-                </label>
-                <input type="text" class="form-control" id="valor" placeholder="0,00" required aria-required="true">
-              </div>
-              <!-- Campo: Forma de Pagamento -->
-              <div class="mb-3">
-                <label for="formaPagamento" class="form-label" style="color: var(--black);">
-                  Forma de Pagamento <span style="color: red;">*</span>
-                </label>
-                <select class="form-select" id="formaPagamento" required aria-required="true">
-                  <option value="">Selecione</option>
-                  <option value="Boleto">Boleto</option>
-                  <option value="Pix">Pix</option>
-                  <option value="Depósito">Depósito</option>
-                </select>
-              </div>
-              <!-- Campo: Vencimento -->
-              <div class="mb-3">
-                <label for="vencimento" class="form-label" style="color: var(--black);">
-                  Vencimento <span style="color: red;">*</span>
-                </label>
-                <input type="date" class="form-control" id="vencimento" required aria-required="true">
-              </div>
-              <!-- Campo: Justificativa -->
-              <div class="mb-3">
-                <label for="justificativa" class="form-label" style="color: var(--black);">
-                  Justificativa <span style="color: red;">*</span>
-                </label>
-                <textarea class="form-control" id="justificativa" rows="3" placeholder="Justifique o lançamento desta despesa com os detalhes de acordo com o procedimento PR-001." required aria-required="true"></textarea>
-              </div>
-              <!-- Campo: Inserir Anexo -->
-              <div class="mb-3">
-                <label for="arquivo" class="form-label" style="color: var(--black);">
-                  Inserir Anexo(s) <span style="color: red;">*</span>
-                </label>
-                <input type="file" class="form-control" id="arquivo" accept="image/png, image/jpeg" multiple>
-                <small class="form-text text-muted" style="color: var(--black);">
-                  Cada anexo deve ter até 4MB. Apenas os formatos PNG e JPEG são permitidos.
-                </small>
-              </div>
-              <button type="submit" class="btn btn-primary" style="background-color: var(--theme-default); border-color: var(--shape-border);">
-                Criar Lançamento
-              </button>
-            </form>
-            <div id="formError" class="mt-2" role="alert" aria-live="assertive" style="color: var(--danger-color);"></div>
+        
+        <!-- Formulário oculto enquanto os dados não são carregados -->
+        <div id="form-section" class="mt-4 d-none">
+          <div class="card" style="border: 1px solid var(--border-color); background-color: var(--white); color: var(--black);">
+            <div class="card-body">
+              <form id="lancamentoForm">
+                <!-- Campo: Filial (Select2) -->
+                <div class="mb-3">
+                  <label for="filialSelect" class="form-label" style="color: var(--black);">
+                    Filial <span style="color: red;">*</span>
+                  </label>
+                  <select class="form-control" id="filialSelect" required aria-required="true">
+                    <option value="">Selecione</option>
+                  </select>
+                </div>
+                <!-- Campo: Fornecedor (Select2) -->
+                <div class="mb-3">
+                  <label for="fornecedorSelect" class="form-label" style="color: var(--black);">
+                    Fornecedor <span style="color: red;">*</span>
+                  </label>
+                  <select class="form-control" id="fornecedorSelect" required aria-required="true">
+                    <option value="">Selecione</option>
+                  </select>
+                </div>
+                <!-- Campo: Conta Financeira (Select2) -->
+                <div class="mb-3">
+                  <label for="contaFinanceiraSelect" class="form-label" style="color: var(--black);">
+                    Conta Financeira <span style="color: red;">*</span>
+                  </label>
+                  <select class="form-control" id="contaFinanceiraSelect" required aria-required="true">
+                    <option value="">Selecione</option>
+                  </select>
+                </div>
+                <!-- Campo: Centro de Custo (Select2) -->
+                <div class="mb-3">
+                  <label for="centroCustoSelect" class="form-label" style="color: var(--black);">
+                    Centro de Custo <span style="color: red;">*</span>
+                  </label>
+                  <select class="form-control" id="centroCustoSelect" required aria-required="true">
+                    <option value="">Selecione</option>
+                  </select>
+                </div>
+                <!-- Campo: Projeto (Select2) -->
+                <div class="mb-3">
+                  <label for="projetoSelect" class="form-label" style="color: var(--black);">
+                    Projeto
+                  </label>
+                  <select class="form-control" id="projetoSelect">
+                    <option value="">Selecione</option>
+                  </select>
+                </div>
+                <!-- Campo: N° Documento -->
+                <div class="mb-3">
+                  <label for="numeroDocumento" class="form-label" style="color: var(--black);">
+                    N° Documento <span style="color: red;">*</span>
+                  </label>
+                  <input type="text" class="form-control" id="numeroDocumento" placeholder="Digite o número do documento" required aria-required="true">
+                </div>
+                <!-- Campo: Tipo de Documento -->
+                <div class="mb-3">
+                  <label for="tipoDocumento" class="form-label" style="color: var(--black);">
+                    Tipo de Documento <span style="color: red;">*</span>
+                  </label>
+                  <select class="form-select" id="tipoDocumento" required aria-required="true">
+                    <option value="">Selecione</option>
+                    <option value="Nota Fiscal">Nota Fiscal</option>
+                    <option value="Fatura">Fatura</option>
+                    <option value="Boleto">Boleto</option>
+                    <option value="Reembolso">Reembolso</option>
+                    <option value="Outros">Outros</option>
+                  </select>
+                </div>
+                <!-- Campo: Data de Emissão -->
+                <div class="mb-3">
+                  <label for="dataEmissao" class="form-label" style="color: var(--black);">
+                    Data de Emissão <span style="color: red;">*</span>
+                  </label>
+                  <input type="date" class="form-control" id="dataEmissao" required aria-required="true">
+                  <small class="form-text text-muted" style="color: var(--black);">
+                    A data de emissão não pode ser superior à data atual.
+                  </small>
+                </div>
+                <!-- Campo: Valor Bruto -->
+                <div class="mb-3">
+                  <label for="valor" class="form-label" style="color: var(--black);">
+                    Valor Bruto <span style="color: red;">*</span>
+                  </label>
+                  <input type="text" class="form-control" id="valor" placeholder="0,00" required aria-required="true">
+                </div>
+                <!-- Campo: Forma de Pagamento -->
+                <div class="mb-3">
+                  <label for="formaPagamento" class="form-label" style="color: var(--black);">
+                    Forma de Pagamento <span style="color: red;">*</span>
+                  </label>
+                  <select class="form-select" id="formaPagamento" required aria-required="true">
+                    <option value="">Selecione</option>
+                    <option value="Boleto">Boleto</option>
+                    <option value="Pix">Pix</option>
+                    <option value="Depósito">Depósito</option>
+                  </select>
+                </div>
+                <!-- Campo: Vencimento -->
+                <div class="mb-3">
+                  <label for="vencimento" class="form-label" style="color: var(--black);">
+                    Vencimento <span style="color: red;">*</span>
+                  </label>
+                  <input type="date" class="form-control" id="vencimento" required aria-required="true">
+                </div>
+                <!-- Campo: Justificativa -->
+                <div class="mb-3">
+                  <label for="justificativa" class="form-label" style="color: var(--black);">
+                    Justificativa <span style="color: red;">*</span>
+                  </label>
+                  <textarea class="form-control" id="justificativa" rows="3" placeholder="Justifique o lançamento desta despesa com os detalhes de acordo com o procedimento PR-001." required aria-required="true"></textarea>
+                </div>
+                <!-- Campo: Inserir Anexo -->
+                <div class="mb-3">
+                  <label for="arquivo" class="form-label" style="color: var(--black);">
+                    Inserir Anexo(s) <span style="color: red;">*</span>
+                  </label>
+                  <input type="file" class="form-control" id="arquivo" accept="image/png, image/jpeg" multiple>
+                  <small class="form-text text-muted" style="color: var(--black);">
+                    Cada anexo deve ter até 4MB. Apenas os formatos PNG e JPEG são permitidos.
+                  </small>
+                </div>
+                <button type="submit" class="btn btn-primary" style="background-color: var(--theme-default); border-color: var(--shape-border);">
+                  Criar Lançamento
+                </button>
+              </form>
+              <div id="formError" class="mt-2" role="alert" aria-live="assertive" style="color: var(--danger-color);"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -328,7 +329,7 @@ export async function renderFinanceiroLancamentoCreateV2() {
     const projetoSelectField = document.getElementById("projetoSelect");
     projetoSelectField.addEventListener("change", function () {
       const inputValue = this.value.trim().toLowerCase();
-      // Campo Projeto é opcional – valida somente se houver valor selecionado
+      // Projeto é opcional – valida somente se houver valor selecionado
       if (inputValue !== "" && window.projetosData && window.projetosData.length > 0) {
         const found = window.projetosData.some(proj => proj.nome.toLowerCase() === inputValue);
         if (!found) {
@@ -342,7 +343,7 @@ export async function renderFinanceiroLancamentoCreateV2() {
       }
     });
       
-    // Outras validações para campos não ligados ao Select2
+    // Validações para campos não ligados ao Select2
     const valorInput = document.getElementById("valor");
     valorInput.addEventListener("keypress", function (e) {
       const char = String.fromCharCode(e.which);
@@ -463,6 +464,9 @@ export async function renderFinanceiroLancamentoCreateV2() {
             if (window.$ && $.fn.select2) {
               $('#fornecedorSelect').trigger('change');
             }
+        
+            // Preenche a data de emissão com a data de hoje
+            document.getElementById("dataEmissao").value = new Date().toISOString().split("T")[0];
         
             // Exibe o formulário, pois todos os dados foram carregados
             document.getElementById("form-section").classList.remove("d-none");

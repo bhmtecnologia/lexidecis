@@ -5,8 +5,8 @@
  */
 
 import { registerRoute } from "./router.js";
-import AuthService, { auth, db, analytics } from "./auth.js";
-import { listLancamentos, listFiliais, listFornecedores, listProjetos, listCentrosCustos } from "./api.js";
+import AuthService from "./auth.js";
+import { listLancamentos } from "./api.js";
 
 /**
  * Renderiza a tela de "Financeiro - Listagem de Lançamentos".
@@ -45,26 +45,42 @@ export async function renderFinanceiroLancamentosList() {
               <table id="lancamentosTable" class="display table table-bordered table-striped">
                 <thead>
                   <tr>
-                    <th>Status</th>
-                    <th>Comentário Analista</th>
                     <th>ID</th>
-                    <th>Filial</th>
-                    <th>Fornecedor</th>
-                    <th>N° Documento</th>
-                    <th>Tipo de Documento</th>
-                    <th>Data de Emissão</th>
-                    <th>Valor</th>
-                    <th>Forma de Pagamento</th>
-                    <th>Vencimento</th>
-                    <th>Centro de Custo</th>
-                    <th>Projeto</th>
-                    <th>Justificativa</th>
-                    <th>Email</th>
-                    <th>Anexos</th>
-                    <th>Data Inclusão</th>
-                    <th>Criado Em</th>
-                    <th>Atualizado Em</th>
-                    <th>Updated By</th>
+                    <th>uid</th>
+                    <th>app_id</th>
+                    <th>status</th>
+                    <th>valor</th>
+                    <th>filial_nome</th>
+                    <th>filial_uuid</th>
+                    <th>data_emissao</th>
+                    <th>projeto_nome</th>
+                    <th>projeto_uuid</th>
+                    <th>data_inclusao</th>
+                    <th>justificativa</th>
+                    <th>tipo_documento</th>
+                    <th>data_vencimento</th>
+                    <th>forma_pagamento</th>
+                    <th>fornecedor_cnpj</th>
+                    <th>fornecedor_nome</th>
+                    <th>fornecedor_uuid</th>
+                    <th>filial_id_benner</th>
+                    <th>numero_documento</th>
+                    <th>usuario_inclusao</th>
+                    <th>centro_custo_nome</th>
+                    <th>centro_custo_uuid</th>
+                    <th>projeto_id_benner</th>
+                    <th>fornecedor_id_benner</th>
+                    <th>conta_financeira_nome</th>
+                    <th>conta_financeira_uuid</th>
+                    <th>centro_custo_id_benner</th>
+                    <th>conta_financeira_codigo</th>
+                    <th>conta_financeira_estrutura</th>
+                    <th>conta_financeira_id_benner</th>
+                    <th>anexo(s)</th>
+                    <th>created_at</th>
+                    <th>updated_at</th>
+                    <th>created_by</th>
+                    <th>updated_by</th>
                   </tr>
                 </thead>
                 <tbody></tbody>
@@ -84,7 +100,7 @@ export async function renderFinanceiroLancamentosList() {
   `;
 
   /**
-   * Formata uma data (string ISO) para o padrão 'pt-BR'.
+   * Formata uma data (string ISO) para o padrão 'pt-BR' (apenas data).
    * @param {string} dateStr - Data no formato ISO.
    * @returns {string} Data formatada.
    */
@@ -92,6 +108,22 @@ export async function renderFinanceiroLancamentosList() {
     if (!dateStr) return '-';
     const date = new Date(dateStr);
     return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+  }
+
+  /**
+   * Formata uma data e hora (string ISO) para o formato 'dd/mm/aaaa hh:mm:ss'.
+   * @param {string} dateStr - Data no formato ISO.
+   * @returns {string} Data e hora formatadas.
+   */
+  function formatDateTime(dateStr) {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    return date.toLocaleString('pt-BR', { 
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+      hour12: false,
+      timeZone: 'UTC'
+    });
   }
 
   /**
@@ -105,24 +137,13 @@ export async function renderFinanceiroLancamentosList() {
   }
 
   /**
-   * Gera os links dos anexos.
-   * Trata tanto o formato antigo (array direto) quanto o novo (objeto com propriedade "anexos").
-   * @param {Object|Array} anexos - Objeto ou array de anexos.
+   * Gera os links dos anexos a partir do array de anexos.
+   * @param {Array} anexos - Array de anexos.
    * @returns {string} HTML com os links dos anexos.
    */
   function formatAnexos(anexos) {
-    if (!anexos) return '-';
-    let lista = [];
-    if (anexos.anexos && Array.isArray(anexos.anexos)) {
-      lista = anexos.anexos;
-    } else if (Array.isArray(anexos)) {
-      lista = anexos;
-    } else if (typeof anexos === 'object' && anexos.url) {
-      return `<a href="${anexos.url}" target="_blank">${anexos.categoria}</a>`;
-    } else {
-      return '-';
-    }
-    return lista.map(anexo => `<a href="${anexo.url}" target="_blank">${anexo.categoria}</a>`).join('<br>');
+    if (!anexos || !Array.isArray(anexos) || anexos.length === 0) return '-';
+    return anexos.map(anexo => `<a href="${anexo.url}" target="_blank">${anexo.categoria}</a>`).join('<br>');
   }
 
   /**
@@ -143,8 +164,9 @@ export async function renderFinanceiroLancamentosList() {
         language: {
           url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json"
         },
+        order: [[33, 'desc']],
         columnDefs: [
-          { type: 'num', targets: 5 }
+          { type: 'num', targets: 0 }
         ]
       });
     } else {
@@ -153,67 +175,57 @@ export async function renderFinanceiroLancamentosList() {
   }
 
   /**
-   * Atualiza a tabela com os lançamentos obtidos via API, mapeando os IDs para os nomes dos campos gerenciais.
+   * Atualiza a tabela com os lançamentos obtidos via API, exibindo todos os campos do objeto dados e os campos top-level.
    */
   async function updateTable() {
     const overlay = document.getElementById('tableOverlay');
     overlay.classList.remove('d-none');
 
     try {
-      // Carrega os dados de mapeamento para filiais, fornecedores, projetos e centros de custo
-      const [filiais, fornecedores, projetos, centros] = await Promise.all([
-        listFiliais(AuthService),
-        listFornecedores(AuthService),
-        listProjetos(AuthService),
-        listCentrosCustos(AuthService)
-      ]);
-      window.filiaisData = filiais;
-      window.fornecedoresData = fornecedores;
-      window.projetosData = projetos;
-      window.centrosData = centros;
-
       const lancamentos = await listLancamentos(AuthService);
       const tbody = document.querySelector('#lancamentosTable tbody');
       tbody.innerHTML = '';
 
       lancamentos.forEach(lanc => {
         const dados = lanc.dados || {};
-
-        // Mapeia os IDs para os nomes correspondentes
-        const filialObj = window.filiaisData.find(f => f.uuid === dados.filial);
-        const filialName = filialObj ? filialObj.nome : dados.filial || '-';
-
-        const fornecedorObj = window.fornecedoresData.find(f => f.uuid === dados.fornecedor);
-        const fornecedorName = fornecedorObj ? fornecedorObj.nome : dados.fornecedor || '-';
-
-        const centroObj = window.centrosData.find(c => c.uuid === dados.centro_custo);
-        const centroName = centroObj ? centroObj.nome : dados.centro_custo || '-';
-
-        const projetoObj = window.projetosData.find(p => p.uuid === dados.projeto);
-        const projetoName = projetoObj ? projetoObj.nome : dados.projeto || '-';
-
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td>${dados.status || '-'}</td>
-          <td>${dados.comentario_analista || '-'}</td>
           <td>${lanc.id || '-'}</td>
-          <td>${filialName}</td>
-          <td>${fornecedorName}</td>
-          <td>${dados.numeroDocumento || '-'}</td>
-          <td>${dados.tipoDocumento || '-'}</td>
-          <td>${dados.dataEmissao ? formatDate(dados.dataEmissao) : '-'}</td>
+          <td>${dados.uid || '-'}</td>
+          <td>${dados.app_id || '-'}</td>
+          <td>${dados.status || '-'}</td>
           <td>${dados.valor ? formatCurrency(dados.valor) : '-'}</td>
-          <td>${dados.formaPagamento || dados.forma_pagamento || '-'}</td>
-          <td>${dados.vencimento ? formatDate(dados.vencimento) : '-'}</td>
-          <td>${centroName}</td>
-          <td>${projetoName}</td>
+          <td>${dados.filial_nome || '-'}</td>
+          <td>${dados.filial_uuid || '-'}</td>
+          <td>${dados.data_emissao ? formatDate(dados.data_emissao) : '-'}</td>
+          <td>${dados.projeto_nome || '-'}</td>
+          <td>${dados.projeto_uuid || '-'}</td>
+          <td>${dados.data_inclusao ? dados.data_inclusao : '-'}</td>
           <td>${dados.justificativa || '-'}</td>
-          <td>${dados.email || '-'}</td>
-          <td>${formatAnexos(lanc.anexos)}</td>
-          <td>${dados.data_inclusao ? formatDate(dados.data_inclusao) : '-'}</td>
-          <td>${lanc.created_at ? formatDate(lanc.created_at) : '-'}</td>
-          <td>${lanc.updated_at ? formatDate(lanc.updated_at) : '-'}</td>
-          <td>${lanc.updated_by ? lanc.updated_by : '-'}</td>
+          <td>${dados.tipo_documento || '-'}</td>
+          <td>${dados.data_vencimento ? formatDate(dados.data_vencimento) : '-'}</td>
+          <td>${dados.forma_pagamento || '-'}</td>
+          <td>${dados.fornecedor_cnpj || '-'}</td>
+          <td>${dados.fornecedor_nome || '-'}</td>
+          <td>${dados.fornecedor_uuid || '-'}</td>
+          <td>${dados.filial_id_benner || '-'}</td>
+          <td>${dados.numero_documento || '-'}</td>
+          <td>${dados.usuario_inclusao || '-'}</td>
+          <td>${dados.centro_custo_nome || '-'}</td>
+          <td>${dados.centro_custo_uuid || '-'}</td>
+          <td>${dados.projeto_id_benner || '-'}</td>
+          <td>${dados.fornecedor_id_benner || '-'}</td>
+          <td>${dados.conta_financeira_nome || '-'}</td>
+          <td>${dados.conta_financeira_uuid || '-'}</td>
+          <td>${dados.centro_custo_id_benner || '-'}</td>
+          <td>${dados.conta_financeira_codigo || '-'}</td>
+          <td>${dados.conta_financeira_estrutura || '-'}</td>
+          <td>${dados.conta_financeira_id_benner || '-'}</td>
+          <td>${(dados.anexo && Array.isArray(dados.anexo)) ? formatAnexos(dados.anexo) : '-'}</td>
+          <td>${lanc.created_at ? formatDateTime(lanc.created_at) : '-'}</td>
+          <td>${lanc.updated_at ? formatDateTime(lanc.updated_at) : '-'}</td>
+          <td>${lanc.created_by || '-'}</td>
+          <td>${lanc.updated_by || '-'}</td>
         `;
         tbody.appendChild(tr);
       });

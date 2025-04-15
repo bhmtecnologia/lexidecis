@@ -89,13 +89,6 @@ export async function renderFinanceiroLancamentosList() {
           </div>
         </div>
       </div>
-      
-      <!-- Overlay de Loading -->
-      <div id="tableOverlay" class="d-none position-absolute top-0 start-0 w-100 h-100 bg-light bg-opacity-75 d-flex align-items-center justify-content-center" style="z-index: 1000;">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Carregando...</span>
-        </div>
-      </div>
     </div>
   `;
 
@@ -118,7 +111,7 @@ export async function renderFinanceiroLancamentosList() {
   function formatDateTime(dateStr) {
     if (!dateStr) return '-';
     const date = new Date(dateStr);
-    return date.toLocaleString('pt-BR', { 
+    return date.toLocaleString('pt-BR', {
       day: '2-digit', month: '2-digit', year: 'numeric',
       hour: '2-digit', minute: '2-digit', second: '2-digit',
       hour12: false,
@@ -157,8 +150,10 @@ export async function renderFinanceiroLancamentosList() {
       $("#lancamentosTable").DataTable({
         responsive: true,
         autoWidth: false,
+        processing: true,
         ordering: true,
         paging: true,
+        colReorder: true,
         dom: 'lBfrtip',
         buttons: ['copy', 'excel', 'csv', 'pdf'],
         language: {
@@ -178,9 +173,6 @@ export async function renderFinanceiroLancamentosList() {
    * Atualiza a tabela com os lançamentos obtidos via API, exibindo todos os campos do objeto dados e os campos top-level.
    */
   async function updateTable() {
-    const overlay = document.getElementById('tableOverlay');
-    overlay.classList.remove('d-none');
-
     try {
       const lancamentos = await listLancamentos(AuthService);
       const tbody = document.querySelector('#lancamentosTable tbody');
@@ -234,8 +226,6 @@ export async function renderFinanceiroLancamentosList() {
     } catch (error) {
       console.error("Erro ao listar lançamentos:", error);
       alert("Erro ao listar lançamentos: " + error.message);
-    } finally {
-      overlay.classList.add('d-none');
     }
   }
 

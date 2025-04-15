@@ -13,7 +13,7 @@
 
 // Função centralizada para tratamento de erros
 function handleError(error, context = "Erro") {
-    console.error(`[${context}]`, error);
+    console.error("[" + context + "]", error);
     return error.message || "Ocorreu um erro inesperado";
   }
   
@@ -39,6 +39,42 @@ function handleError(error, context = "Erro") {
     const minutes = pad(dateObj.getMinutes());
     const seconds = pad(dateObj.getSeconds());
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  }
+  
+  // Função para reinicializar os campos que foram preenchidos de forma automática
+  // caso o formulário seja resetado após um lançamento.
+  // Ela reconfigura os campos de Filial, Centro de Custo e Conta Financeira de acordo
+  // com os dados carregados e com a lógica aplicada quando há somente uma opção.
+  function resetFormFields() {
+    // Filial
+    const filialInput = document.getElementById("filialInput");
+    if (window.filiaisData && window.filiaisData.length === 1) {
+      const fil = window.filiaisData[0];
+      filialInput.value = fil.nome;
+      filialInput.setAttribute("readonly", "true");
+    } else {
+      filialInput.removeAttribute("readonly");
+    }
+  
+    // Centro de Custo
+    const centroCustoInput = document.getElementById("centroCustoInput");
+    if (window.centrosData && window.centrosData.length === 1) {
+      const centro = window.centrosData[0];
+      centroCustoInput.value = centro.nome;
+      centroCustoInput.setAttribute("readonly", "true");
+    } else {
+      centroCustoInput.removeAttribute("readonly");
+    }
+  
+    // Conta Financeira
+    const contaInput = document.getElementById("contaFinanceiraInput");
+    if (window.contasFinanceirasData && window.contasFinanceirasData.length === 1) {
+      const conta = window.contasFinanceirasData[0];
+      contaInput.value = `${conta.estrutura} - ${conta.codigo} - ${conta.nome}`;
+      contaInput.setAttribute("readonly", "true");
+    } else {
+      contaInput.removeAttribute("readonly");
+    }
   }
   
   export async function renderFinanceiroLancamentoCreateV2() {
@@ -198,11 +234,9 @@ function handleError(error, context = "Erro") {
             </div>
           </div>
         </div>
-      </div>
     `;
-      
+  
     // Validação dos campos no evento "blur"
-    // Filial
     const filialInput = document.getElementById("filialInput");
     filialInput.addEventListener("blur", function () {
       const inputValue = this.value.trim().toLowerCase();
@@ -216,8 +250,7 @@ function handleError(error, context = "Erro") {
         }
       }
     });
-      
-    // Fornecedor
+  
     const fornecedorInput = document.getElementById("fornecedorInput");
     fornecedorInput.addEventListener("blur", function () {
       const inputValue = this.value.trim().toLowerCase();
@@ -233,8 +266,7 @@ function handleError(error, context = "Erro") {
         }
       }
     });
-      
-    // Conta Financeira (Formato: estrutura - código - nome)
+  
     const contaFinanceiraInput = document.getElementById("contaFinanceiraInput");
     contaFinanceiraInput.addEventListener("blur", function () {
       const inputValue = this.value.trim().toLowerCase();
@@ -251,8 +283,7 @@ function handleError(error, context = "Erro") {
         }
       }
     });
-      
-    // Centro de Custo
+  
     const centroCustoInput = document.getElementById("centroCustoInput");
     centroCustoInput.addEventListener("blur", function () {
       if (this.hasAttribute("readonly")) return;
@@ -267,8 +298,7 @@ function handleError(error, context = "Erro") {
         }
       }
     });
-      
-    // Projeto (opcional)
+  
     const projetoInput = document.getElementById("projetoInput");
     projetoInput.addEventListener("blur", function () {
       if (this.value.trim() === "") {
@@ -286,8 +316,7 @@ function handleError(error, context = "Erro") {
         }
       }
     });
-      
-    // Máscara no campo "Valor Bruto": permite apenas dígitos e vírgula e formata para "1.234,56" ao perder o foco
+  
     const valorInput = document.getElementById("valor");
     valorInput.addEventListener("keypress", function (e) {
       const char = String.fromCharCode(e.which);
@@ -303,12 +332,12 @@ function handleError(error, context = "Erro") {
         this.value = numericValue.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       }
     });
-      
+  
     // Carrega os dados dentro de AuthService.onAuthChange para evitar duplicações
     AuthService.onAuthChange((user) => {
       if (user) {
         document.getElementById("form-section").classList.remove("d-none");
-            
+  
         (async () => {
           try {
             // Filiais
@@ -331,7 +360,7 @@ function handleError(error, context = "Erro") {
             console.error("Erro ao carregar filiais:", handleError(error, "Filiais"));
           }
         })();
-            
+  
         (async () => {
           try {
             // Centros de Custo
@@ -354,7 +383,7 @@ function handleError(error, context = "Erro") {
             console.error("Erro ao carregar centros de custo:", handleError(error, "Centros de Custo"));
           }
         })();
-            
+  
         (async () => {
           try {
             // Contas Financeiras
@@ -377,7 +406,7 @@ function handleError(error, context = "Erro") {
             console.error("Erro ao carregar contas financeiras:", handleError(error, "Contas Financeiras"));
           }
         })();
-            
+  
         (async () => {
           try {
             // Projetos
@@ -393,7 +422,7 @@ function handleError(error, context = "Erro") {
             console.error("Erro ao carregar projetos:", handleError(error, "Projetos"));
           }
         })();
-            
+  
         (async () => {
           try {
             // Fornecedores
@@ -417,21 +446,21 @@ function handleError(error, context = "Erro") {
         `;
       }
     });
-      
+  
     // Evento de submissão do formulário
     const lancamentoForm = document.getElementById("lancamentoForm");
     lancamentoForm.addEventListener("submit", async function (e) {
       e.preventDefault();
       const formError = document.getElementById("formError");
       formError.innerHTML = "";
-          
+  
       const submitBtn = lancamentoForm.querySelector('button[type="submit"]');
       submitBtn.disabled = true;
       const originalBtnText = submitBtn.innerHTML;
       submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processando...`;
-          
+  
       let errors = [];
-          
+  
       // Busca os registros completos para compor o payload
       const filialInputValue = document.getElementById("filialInput").value.trim();
       let filialRecord = null;
@@ -443,7 +472,7 @@ function handleError(error, context = "Erro") {
       } else {
         errors.push("Filiais não carregadas");
       }
-          
+  
       const fornecedorInputValue = document.getElementById("fornecedorInput").value.trim();
       let fornecedorRecord = null;
       if (window.fornecedoresData && window.fornecedoresData.length > 0) {
@@ -457,7 +486,7 @@ function handleError(error, context = "Erro") {
       } else {
         errors.push("Fornecedores não carregados");
       }
-          
+  
       const contaFinanceiraInputValue = document.getElementById("contaFinanceiraInput").value.trim();
       let contaFinanceiraRecord = null;
       if (window.contasFinanceirasData && window.contasFinanceirasData.length > 0) {
@@ -470,14 +499,14 @@ function handleError(error, context = "Erro") {
       } else {
         errors.push("Contas Financeiras não carregadas");
       }
-          
+  
       const numeroDocumento = document.getElementById("numeroDocumento").value.trim();
       const tipoDocumento = document.getElementById("tipoDocumento").value;
       const dataEmissao = document.getElementById("dataEmissao").value;
       const valor = document.getElementById("valor").value.trim();
       const formaPagamentoValue = document.getElementById("formaPagamento").value;
       const vencimento = document.getElementById("vencimento").value;
-          
+  
       const centroCustoInputValue = document.getElementById("centroCustoInput").value.trim();
       let centroCustoRecord = null;
       if (window.centrosData && window.centrosData.length > 0) {
@@ -488,7 +517,7 @@ function handleError(error, context = "Erro") {
       } else {
         errors.push("Centros de Custo não carregados");
       }
-          
+  
       const projetoInputValue = document.getElementById("projetoInput").value.trim();
       let projetoRecord = null;
       if (projetoInputValue) {
@@ -501,17 +530,17 @@ function handleError(error, context = "Erro") {
           errors.push("Projetos não carregados");
         }
       }
-          
+  
       const justificativa = document.getElementById("justificativa").value.trim();
       if (!justificativa) {
         errors.push("Justificativa");
       }
-          
+  
       const arquivoInput = document.getElementById("arquivo");
       if (arquivoInput.files.length === 0) {
         errors.push("Pelo menos um anexo é obrigatório");
       }
-          
+  
       if (dataEmissao && isNaN(Date.parse(dataEmissao))) {
         errors.push("Data de Emissão inválida");
       }
@@ -524,12 +553,12 @@ function handleError(error, context = "Erro") {
       if (dataEmissao && new Date(dataEmissao) > new Date()) {
         errors.push("Data de Emissão não pode ser superior à data atual");
       }
-          
+  
       if (errors.length > 0) {
         formError.innerHTML = `<div class="alert alert-danger">
-            <strong>Por favor, corrija os seguintes campos:</strong>
-            <ul>${errors.map(err => `<li>${err}</li>`).join('')}</ul>
-        </div>`;
+              <strong>Por favor, corrija os seguintes campos:</strong>
+              <ul>${errors.map(err => `<li>${err}</li>`).join("")}</ul>
+          </div>`;
         const fields = ["filialInput", "fornecedorInput", "numeroDocumento", "tipoDocumento", "dataEmissao", "valor", "formaPagamento", "vencimento", "centroCustoInput", "justificativa"];
         for (let fieldId of fields) {
           const field = document.getElementById(fieldId);
@@ -542,9 +571,9 @@ function handleError(error, context = "Erro") {
         submitBtn.innerHTML = originalBtnText;
         return;
       }
-          
+  
       const dataInclusao = formatDateISO(new Date());
-          
+  
       // Monta o payload conforme o novo formato
       let payload = {
         app_id: "empresa_vtc_log",
@@ -578,7 +607,7 @@ function handleError(error, context = "Erro") {
         conta_financeira_uuid: contaFinanceiraRecord.uuid,
         uid: AuthService.user.uid
       };
-          
+  
       try {
         const files = Array.from(arquivoInput.files);
         const allowedTypes = ["image/png", "image/jpeg"];
@@ -591,7 +620,7 @@ function handleError(error, context = "Erro") {
             throw new Error(`Arquivo ${file.name} excede o tamanho máximo de 4096KB.`);
           }
         }
-                
+  
         const uploadResponses = await Promise.all(
           Array.from(arquivoInput.files).map(async (file) => {
             return uploadArquivo(AuthService, file);
@@ -605,7 +634,7 @@ function handleError(error, context = "Erro") {
           let resultObj = Array.isArray(parsedResponse) && parsedResponse.length > 0
             ? parsedResponse[0]
             : parsedResponse;
-                
+  
           if (resultObj.status_validacao && resultObj.status_validacao.trim() === "inválido") {
             let errorMessage = "Mensagem: " + (resultObj.mensagem ? resultObj.mensagem.trim() : "Não definida.");
             if (resultObj.acao_recomendada) {
@@ -613,17 +642,17 @@ function handleError(error, context = "Erro") {
             }
             throw new Error(errorMessage);
           }
-                
+  
           if (!resultObj.data) {
             if (resultObj.mensagem && resultObj.acao_recomendada) {
               let errorMessage = "Mensagem: " + resultObj.mensagem.trim() +
-                                 "<br>Ação Recomendada: " + resultObj.acao_recomendada.trim();
+                "<br>Ação Recomendada: " + resultObj.acao_recomendada.trim();
               throw new Error(errorMessage);
             } else {
               throw new Error("Resposta de upload inválida");
             }
           }
-                
+  
           const responseData = JSON.parse(resultObj.data);
           const filename = responseData.filename;
           anexosArray.push({
@@ -636,13 +665,13 @@ function handleError(error, context = "Erro") {
         const newFileInput = arquivoInput.cloneNode(true);
         arquivoInput.parentNode.replaceChild(newFileInput, arquivoInput);
         formError.innerHTML = `<div class="alert alert-danger">
-            Erro ao fazer upload dos anexos:<br> ${handleError(uploadError, "Upload")}
-        </div>`;
+              Erro ao fazer upload dos anexos:<br> ${handleError(uploadError, "Upload")}
+          </div>`;
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalBtnText;
         return;
       }
-                
+  
       try {
         const result = await createLancamento(AuthService, payload);
         if (!result || !result.id) {
@@ -650,15 +679,16 @@ function handleError(error, context = "Erro") {
         }
         alert("Lançamento criado com sucesso! ID: " + result.id);
         lancamentoForm.reset();
+        resetFormFields();
       } catch (error) {
         formError.innerHTML = `<div class="alert alert-danger">
-            Erro ao criar lançamento: ${handleError(error, "CreateLancamento")}
-        </div>`;
+              Erro ao criar lançamento: ${handleError(error, "CreateLancamento")}
+          </div>`;
       } finally {
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalBtnText;
       }
     });
   }
-    
+  
   registerRoute("#financeiro-lancamento-create-v2", renderFinanceiroLancamentoCreateV2);

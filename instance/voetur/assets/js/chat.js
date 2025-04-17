@@ -49,7 +49,7 @@ export async function renderChat() {
       <div id="chat-sidebar" class="col-md-4 border-end" style="overflow-y: auto; width: 30%;">
         <div class="p-3 d-flex flex-column" style="height: 100%;">
           <div class="mb-3">
-            <input type="text" id="chat-search" class="form-control" placeholder="Search here.." />
+          <select id="chat-search" class="form-control" style="width: 100%;"></select>
           </div>
           <ul class="nav nav-tabs mb-3" role="tablist">
             <li class="nav-item" role="presentation">
@@ -78,6 +78,26 @@ export async function renderChat() {
     </div>
   </div>
   `;
+  
+  // Carrega Select2 (JS + CSS) dinamicamente se ainda não estiver presente
+  async function ensureSelect2() {
+    if (window.jQuery && window.jQuery.fn && window.jQuery.fn.select2) return;
+    await new Promise((resolve, reject) => {
+      const css = document.createElement('link');
+      css.rel = 'stylesheet';
+      css.href = 'https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/css/select2.min.css';
+      css.onload = () => resolve();
+      css.onerror = reject;
+      document.head.appendChild(css);
+    });
+    await new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/js/select2.min.js';
+      script.onload = () => resolve();
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  }
 
   document.getElementById('toggle-list')
     .addEventListener('click', () => document.getElementById('chat-sidebar').classList.toggle('d-none'));
@@ -104,11 +124,20 @@ export async function renderChat() {
       list.appendChild(li);
     });
   }
-  document.getElementById('chat-search')
-    .addEventListener('input', e => {
-      const term = e.target.value.toLowerCase();
-      renderChatList(chatItems.filter(c => c.name.toLowerCase().includes(term)));
-    });
+  await ensureSelect2();
+  
+  const $search = window.jQuery('#chat-search');
+  function populateSelect(items) {
+    const data = items.map(c => ({ id: c.name, text: c.name }));
+    $search.empty().select2({ data, placeholder: 'Search here...' });
+  }
+  
+  $search.on('select2:select', e => {
+    const name = e.params.data.id.toLowerCase();
+    renderChatList(chatItems.filter(c => c.name.toLowerCase().includes(name)));
+  });
+  
+  $search.on('select2:clear', () => renderChatList(chatItems));
 
   try {
     let resp = await listChats(AuthService);
@@ -119,12 +148,13 @@ export async function renderChat() {
       return Array.isArray(raw) ? raw : typeof raw === 'string' ? JSON.parse(raw) : [raw];
     });
     renderChatList(chatItems);
+    populateSelect(chatItems);
   } catch (err) {
     console.error('Erro carregando chats:', err);
   }
 
   // Inicializa Flowise com tema customizado para remover rodapé
-  import('https://cdn.jsdelivr.net/npm/flowise-embed/dist/web.js')
+  import('https://proxy-5cun.onrender.com/web.js')
     .then(({ default: Chatbot }) => {
       // Calcula altura disponível para o chat (viewport total menos o cabeçalho)
       const headerEl = document.querySelector('#chat-layout .page-title');
@@ -132,8 +162,8 @@ export async function renderChat() {
       const availableHeight = window.innerHeight - headerHeight;
 
       Chatbot.initFull({
-        chatflowid: "a81719cf-4c31-49a2-89b6-f532d6318a94",
-        apiHost: "https://flowise.power.tec.br",
+        chatflowid: "MAIN_CHAT",
+        apiHost: "https://proxy-5cun.onrender.com",
         theme: {
           chatWindow: {
             // Preenche o container, respeitando altura disponível

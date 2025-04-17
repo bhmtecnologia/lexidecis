@@ -161,6 +161,24 @@ export async function renderChat() {
       const headerHeight = headerEl ? headerEl.offsetHeight : 0;
       const availableHeight = window.innerHeight - headerHeight;
 
+      console.log('✅ AuthService.user:', AuthService.user);
+
+      console.log('✅ Enviando para proxy:', {
+        'x-user-email': AuthService.user?.email,
+        'x-user-uuid': AuthService.user?.uid
+      });
+      
+      // Intercepta todas as chamadas fetch para forçar headers de usuário
+      const originalFetch = window.fetch;
+      window.fetch = function(url, options = {}) {
+        options.headers = {
+          ...(options.headers || {}),
+          'x-user-email': AuthService.user?.email ?? '',
+          'x-user-uuid': AuthService.user?.uid ?? ''
+        };
+        return originalFetch(url, options);
+      };
+      
       Chatbot.initFull({
         chatflowid: "MAIN_CHAT",
         apiHost: "https://proxy-5cun.onrender.com",
@@ -170,6 +188,10 @@ export async function renderChat() {
             height: availableHeight,
             width: "100%"
           }
+        },
+        headers: {
+          'x-user-email': AuthService.user?.email ?? '',
+          'x-user-uuid': AuthService.user?.uid ?? ''
         }
       });
     })

@@ -346,3 +346,31 @@ export async function listContasFinanceiras(AuthService) {
 
   return await response.json();
 }
+
+/**
+ * Lista os chats do usuário.
+ *
+ * @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
+ * @returns {Promise<Array>} - Array com os chats do usuário.
+ * @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro na API.
+ */
+export async function listChats(AuthService) {
+  const user = AuthService.user;
+  if (!user) throw new Error("Usuário não autenticado");
+  const token = await user.getIdToken();
+
+  const response = await fetch('https://webhook.power.tec.br/webhook/v2/chats', {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error("Erro ao listar chats: " + errorText);
+  }
+
+  return await response.json();
+}

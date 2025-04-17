@@ -12,7 +12,7 @@ export const menuItems = [
         route: "#dashboard",
         // Subitens para o Dashboard:
         children: [
-          { label: "Lançar pagamento", route: "#financeiro-lancamentos" },
+          { label: "Chat", route: "#chat" },
           { label: "Lançar pagamento - v2", route: "#financeiro-lancamento-create-v2" },
           { label: "Meus lançamentos", route: "#financeiro-lancamentos-list" },
         ]

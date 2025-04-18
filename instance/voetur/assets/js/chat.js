@@ -182,17 +182,45 @@ export async function renderChat() {
       Chatbot.initFull({
         chatflowid: "MAIN_CHAT",
         apiHost: "https://proxy-5cun.onrender.com",
-        theme: {
-          chatWindow: {
-            // Preenche o container, respeitando altura disponível
-            height: availableHeight,
-            width: "100%"
-          }
-        },
-        headers: {
-          'x-user-email': AuthService.user?.email ?? '',
-          'x-user-uuid': AuthService.user?.uid ?? ''
+      theme: {
+        chatWindow: {
+          showTitle: false,
+          showAgentMessages: false,
+          backgroundColor:  'transparent',
+          fontSize: 14,
+          height: availableHeight,
+          width: "100%",
+          userMessage: {
+            backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--active-bg-color').trim(),
+            textColor: getComputedStyle(document.documentElement).getPropertyValue('--body-font-color').trim(),
+            showAvatar: false,
+          },
+          textInput: {
+            placeholder: 'Mensagem...',
+            backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--light-color').trim(),
+            textColor: getComputedStyle(document.documentElement).getPropertyValue('--body-font-color').trim(),
+            sendButtonColor: getComputedStyle(document.documentElement).getPropertyValue('--theme-default').trim(),
+            maxChars: 100000,
+            maxCharsWarningMessage: 'Você excedeu o limite de caracteres. Insira menos de 100000 caracteres.',
+            autoFocus: true,
+            sendMessageSound: true,
+            receiveMessageSound: true,
+          },
+          feedback: {
+            color: getComputedStyle(document.documentElement).getPropertyValue('--theme-default').trim(),
+          },
+          dateTimeToggle: {
+            date: true,
+            time: true,
+          },
+          footer: {
+              textColor: getComputedStyle(document.documentElement).getPropertyValue('--theme-default').trim(),
+              text: 'O LexiDecis pode cometer erros. Sempre verifique as respostas - ',
+              company: 'LexiDecis',
+              companyLink: 'https://lexidecis.com.br',
+          },
         }
+      }
       });
     })
     .catch(err => console.error('Erro ao carregar Flowise embed:', err));

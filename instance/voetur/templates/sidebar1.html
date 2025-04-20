@@ -336,7 +336,12 @@
       .then(({ default: Chatbot }) => {
         Chatbot.initFull({
           chatflowid: 'MAIN_CHAT',
-          apiHost: 'https://proxy-5cun.onrender.com'
+          apiHost: 'https://proxy-5cun.onrender.com',
+          theme: {
+        chatWindow: {
+          showTitle: false
+        }
+      }
         });
       })
       .catch(err => console.error('Erro carregando Flowise:', err));

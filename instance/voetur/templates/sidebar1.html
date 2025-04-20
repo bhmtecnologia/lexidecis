@@ -218,6 +218,26 @@
       min-height: 0;
       overflow-y: auto;
     }
+    /* Fix user footer to bottom on mobile */
+    @media (max-width: 768px) {
+      #chat-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+      }
+      .sidebar-bottom {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: var(--sidebar-w);
+        z-index: 1050;
+      }
+      /* Add bottom padding so chat list doesn’t hide behind footer */
+      #chat-sidebar > .flex-grow-1[data-simplebar] {
+        padding-bottom: 4rem;
+      }
+    }
   </style>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simplebar@6.2.3/dist/simplebar.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/simplebar@6.2.3/dist/simplebar.min.js"></script>

@@ -54,7 +54,6 @@
       margin-left: .25rem;
     }
 
-
     .sidebar-bottom {
       background: var(--bg-light);
       padding: 0;
@@ -137,6 +136,20 @@
     }
     #chat-sidebar li:hover {
       background: var(--table-hover-color);
+    }
+
+    /* Destaque do item selecionado */
+    #chat-sidebar li.selected {
+      background: var(--active-bg-color);
+    }
+
+    /* Cursor pointer ao passar sobre Lexi AI */
+    #lexi-ai-item {
+      cursor: pointer;
+    }
+    /* Alterar cor de fundo ao passar o mouse sobre Lexi AI */
+    #lexi-ai-item:hover {
+      background: var(--active-bg-color);
     }
 
     .btn-icon {
@@ -260,22 +273,26 @@
 
         <!-- Item fixo Lexi AI -->
         <ul class="list-unstyled m-0">
-          <li class="px-3 py-0 d-flex align-items-center">
-            <i class="bi bi-stars me-1"></i><span class="flex-grow-1">Lexi&nbsp;AI</span>
+          <li id="lexi-ai-item" class="px-3 py-0 d-flex align-items-center">
+            <i class="bi bi-stars me-1"></i><span class="flex-grow-1">Lexi&nbsp;AI (ChatGPT-4o)</span>
           </li>
         </ul>
+
         <!-- Explore GPTs -->
         <ul class="list-unstyled m-0">
           <li class="px-3 py-0 d-flex align-items-center">
             <i class="bi bi-grid-3x3-gap me-2"></i><span class="flex-grow-1">Explore&nbsp;GPTs</span>
           </li>
         </ul>
+
         <!-- Seção Chats -->
         <div class="px-3 py-0 text-muted small fw-semibold">Chats</div>
 
         <!-- Lista de chats -->
         <div class="flex-grow-1" data-simplebar style="overflow-y: auto; flex: 1; min-height: 0;">
-          <ul id="chat-list" class="mb-0 pt-0"></ul>
+          <ul id="chat-list" class="mb-0 pt-0">
+            <li id="chat-loading" class="px-3 py-2 text-muted">Carregando chats...</li>
+          </ul>
         </div>
 
       </div>
@@ -300,7 +317,6 @@
 
     <!-- Área de Mensagens -->
     <section id="chat-area">
-      <!-- Flowise Embed (ou qualquer outro componente de chat) -->
       <flowise-fullchatbot></flowise-fullchatbot>
     </section>
   </div>
@@ -328,6 +344,20 @@
         ? '<i class="bi bi-sun"></i>'
         : '<i class="bi bi-moon-stars"></i>';
     });
+    document.getElementById('lexi-ai-item').addEventListener('click', () => {
+      // Remove seleção de todos os itens
+      document.querySelectorAll('#chat-sidebar li').forEach(li => li.classList.remove('selected'));
+      // Seleciona Lexi AI
+      const lexiItem = document.getElementById('lexi-ai-item');
+      lexiItem.classList.add('selected');
+      // Recarrega o chatbot
+      const chatArea = document.getElementById('chat-area');
+      chatArea.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
+      if (window.flowiseChatbot && window.flowiseConfig) {
+        window.flowiseChatbot.initFull(window.flowiseConfig);
+      }
+    });
+
     // Intercept all fetch calls to include user identifiers
     const _origFetch = window.fetch;
     window.fetch = (resource, init = {}) => {
@@ -341,7 +371,6 @@
     
     // Load and render chat list
     (async () => {
-      // Wait until AuthService.user is available
       await new Promise(resolve => {
         const checkAuth = setInterval(() => {
           if (AuthService.user) {
@@ -350,6 +379,8 @@
           }
         }, 100);
       });
+      const chatListEl = document.getElementById('chat-list');
+      chatListEl.innerHTML = '<li id="chat-loading" class="px-3 py-2 text-muted">Carregando chats...</li>';
       try {
         let resp = await listChats(AuthService);
         if (typeof resp === 'string') resp = JSON.parse(resp);
@@ -362,7 +393,6 @@
               ? JSON.parse(raw)
               : [raw];
         });
-        const chatListEl = document.getElementById('chat-list');
         chatListEl.innerHTML = '';
         chatItems.forEach(chat => {
           const li = document.createElement('li');
@@ -407,9 +437,19 @@
     const miniNew    = document.getElementById('mini-new');
     const miniUser   = document.getElementById('mini-user');
 
-    document.getElementById('new-chat').addEventListener('click', () =>
-      alert('Criar novo chat - integrar à API')
-    );
+    document.getElementById('new-chat').addEventListener('click', () => {
+      // Remove seleção de todos os itens
+      document.querySelectorAll('#chat-sidebar li').forEach(li => li.classList.remove('selected'));
+      // Seleciona Lexi AI
+      const lexiItem = document.getElementById('lexi-ai-item');
+      lexiItem.classList.add('selected');
+      // Recarrega o chatbot
+      const chatArea = document.getElementById('chat-area');
+      chatArea.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
+      if (window.flowiseChatbot && window.flowiseConfig) {
+        window.flowiseChatbot.initFull(window.flowiseConfig);
+      }
+    });
     document.getElementById('logout-btn').addEventListener('click', () =>
       AuthService.logout()
     );
@@ -482,7 +522,8 @@
     /* ====== Flowise demo init (opcional) ====== */
     import('https://proxy-5cun.onrender.com/web.js')
       .then(({ default: Chatbot }) => {
-        Chatbot.initFull({
+        window.flowiseChatbot = Chatbot;
+        window.flowiseConfig = {
           chatflowid: 'MAIN_CHAT',
           apiHost: 'https://proxy-5cun.onrender.com',
           theme: {
@@ -490,6 +531,7 @@
               showTitle: true,
               //titleAvatarSrc: 'https://www.bhm.tec.br/images/152x152/10788698/favicon.png',
               titleBackgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--theme-default').trim(),
+              welcomeMessage: 'Sou a Lexi AI, com tecnologia ChatGPT 4o da OpenAI. Ideal para responder perguntas, gerar ideias e ajudar com clareza e rapidez. O que deseja saber?',
               errorMessage: 'Ops, reduza sua pergunta e tente novamente.',
               backgroundColor: 'transparent',
               userMessage: {
@@ -523,7 +565,8 @@
               }
             }
           }
-        });
+        };
+        Chatbot.initFull(window.flowiseConfig);
       })
       .catch(err => console.error('Erro carregando Flowise:', err));
 

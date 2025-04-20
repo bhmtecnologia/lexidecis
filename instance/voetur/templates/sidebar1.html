@@ -163,9 +163,29 @@
   }
   #sidebar-mini .mt-auto { margin-top: auto; }
   #sidebar-mini .mb-3   { margin-bottom: 1rem; }
-  body.with-mini-sidebar #wrapper {
-    margin-left: 44px; /* mesma largura da mini-sidebar */
-    transition: margin-left 0.3s ease;
+    body.with-mini-sidebar #wrapper {
+      margin-left: 44px; /* mesma largura da mini-sidebar */
+      transition: margin-left 0.3s ease;
+    }
+  /* Search icon prefix */
+  .search-box {
+    position: relative;
+  }
+
+  .search-box .search-icon {
+    position: absolute;
+    top: 50%;
+    left: 1rem;
+    transform: translateY(-50%);
+    color: #888;
+    pointer-events: none;
+    font-size: 1rem;
+    z-index: 10;
+  }
+
+  /* Add left padding to Select2 to accommodate icon */
+  .search-box .select2-selection--single {
+    padding-left: 2rem;
   }
   </style>
 </head>
@@ -184,7 +204,7 @@
     <nav id="chat-sidebar" class="d-flex flex-column">
       <div class="flex-grow-1 d-flex flex-column justify-content-start">
         <header class="sidebar-header">
-          <strong>Conversas</strong>
+          <strong></strong>
           <div class="ms-auto d-flex align-items-center">
             <button id="new-chat" class="btn-icon" title="Novo chat"><i class="bi bi-plus-lg"></i></button>
             <button id="toggle-list" class="btn-icon" title="Ocultar"><i class="bi bi-chevron-left"></i></button>
@@ -192,8 +212,11 @@
         </header>
 
         <!-- Pesquisar -->
-        <div class="px-3 py-2 border-bottom">
-          <select id="chat-search" style="width:100%"></select>
+        <div class="px-3 py-2 border-bottom search-box">
+          <i class="bi bi-search search-icon"></i>
+          <select id="chat-search" style="width:100%">
+            <option></option>
+          </select>
         </div>
 
         <!-- Item fixo Lexi AI -->
@@ -274,15 +297,23 @@
     
     function refreshSearchOptions() {
       const $sel = $('#chat-search');
-      $sel.empty();
+      // Remove all options except the placeholder
+      $sel.find('option').not(':first').remove();
+      // Append chat options
       document.querySelectorAll('#chat-list li span').forEach(span => {
         $sel.append(new Option(span.textContent, span.textContent, false, false));
       });
+      // Reset to placeholder
+      $sel.val('').trigger('change');
     }
     
     $(function(){
       refreshSearchOptions();
-      $('#chat-search').select2({ placeholder: 'Pesquisar', width: '100%' });
+      $('#chat-search').select2({
+        placeholder: 'Pesquisar',
+        allowClear: true,
+        width: '100%'
+      });
     });
 
     function isMobile() { return window.innerWidth <= 768; }
@@ -339,7 +370,11 @@
           apiHost: 'https://proxy-5cun.onrender.com',
           theme: {
         chatWindow: {
-          showTitle: false
+          showTitle: true,
+          titleAvatarSrc: 'https://www.bhm.tec.br/images/152x152/10788698/favicon.png',
+
+          errorMessage: 'Ops, reduza sua pergunta e tente novamente.',
+          backgroundColor: 'transparent'
         }
       }
         });

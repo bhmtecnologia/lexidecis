@@ -282,6 +282,14 @@
   <script type="module">
     import AuthService from '../assets/js/auth.js';
     import { listChats, getChatHistory } from "../assets/js/api.js";
+
+    // === Flowise chatflowId mapping helper ===
+    const chatflowIdMap = {
+      'efe59701-afe2-4f4c-8448-bb8e3a32161a': 'FLOW1_CHAT'
+    };
+    function mapChatflowId(id) {
+      return chatflowIdMap[id] || id;
+    }
     const themeToggle = document.getElementById('theme-toggle');
     const root = document.documentElement;
     const savedTheme = localStorage.getItem('theme');
@@ -345,7 +353,7 @@
             trigger: 'click',
             placement: 'right-start'
           });
-          // Clique para carregar histórico usando MAIN_CHAT
+          // Clique para carregar histórico usando chatflowId mapping
           li.addEventListener('click', async () => {
             // Marca visualmente o item selecionado
             document.querySelectorAll('#chat-sidebar li').forEach(elem => elem.classList.remove('selected'));
@@ -353,19 +361,23 @@
 
             const sessionId = chat.id;
             try {
-              // Busca histórico da sessão usando o proxy host
+              // Busca histórico da sessão usando o proxy host e mapped chatflowId
+              const realFlowId = 'efe59701-afe2-4f4c-8448-bb8e3a32161a';
+              const proxyFlowId = mapChatflowId(realFlowId);
               const history = await getChatHistory(
                 AuthService,
                 sessionId,
-                'MAIN_CHAT',
+                proxyFlowId,
                 window.flowiseConfig.apiHost,
                 ''
               );
-              // Injeta no localStorage para o embed detectar
-              localStorage.removeItem('MAIN_CHAT_EXTERNAL');
-              localStorage.removeItem('MAIN_CHAT_historyInjected');
-              localStorage.setItem('MAIN_CHAT_EXTERNAL', JSON.stringify({ chatHistory: history, chatId: sessionId }));
-              localStorage.setItem('MAIN_CHAT_historyInjected', 'true');
+              // Injeta usando proxyFlowId
+              localStorage.removeItem(`${proxyFlowId}_EXTERNAL`);
+              localStorage.removeItem(`${proxyFlowId}_historyInjected`);
+              localStorage.setItem(`${proxyFlowId}_EXTERNAL`, JSON.stringify({ chatHistory: history, chatId: sessionId }));
+              localStorage.setItem(`${proxyFlowId}_historyInjected`, 'true');
+              // Atualiza config para usar proxyFlowId
+              window.flowiseConfig.chatflowid = proxyFlowId;
 
               // Monta o componente full‑screen
               const chatArea = document.getElementById('chat-area');
@@ -441,7 +453,7 @@
       .then(({ default: Chatbot }) => {
         window.flowiseChatbot = Chatbot;
         window.flowiseConfig = {
-          chatflowid: 'MAIN_CHAT',
+          chatflowid: mapChatflowId('efe59701-afe2-4f4c-8448-bb8e3a32161a'),
           apiHost: 'https://proxy-5cun.onrender.com',
           theme: {
             chatWindow: {

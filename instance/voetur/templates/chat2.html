@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chat2 – Teste de Histórico e Inject</title>
+  <style>
+    body { font-family: sans-serif; margin: 2rem; }
+    input, button { font-size: 1rem; padding: 0.5rem; }
+    #history { margin-top: 1rem; white-space: pre-wrap; background: #f5f5f5; padding: 1rem; border-radius: 4px; }
+    #chatbot-container {
+      display: none;
+    }
+    #chatbot-container.active {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      margin: 0;
+      padding: 0;
+      z-index: 9999;
+      display: block;
+    }
+    flowise-fullchatbot {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .d-none { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <div id="welcome-screen">
+    <h1>Teste de Histórico do Flowise + Inject</h1>
+
+    <label for="sessionId">Session ID:</label>
+    <input id="sessionId" type="text" placeholder="Cole aqui o sessionId" size="40" />
+
+    <button id="btnFetch">Buscar e Injetar Histórico</button>
+
+    <div id="history">Ainda não buscado.</div>
+  </div>
+
+  <!-- Container onde o chatbot será montado -->
+  <div id="chatbot-container" class="d-none"></div>
+
+  <script type="module">
+    import { getChatHistory } from '../assets/js/api.js';
+    import Chatbot from 'https://cdn.jsdelivr.net/npm/flowise-embed/dist/web.js';
+
+    // Configuração fixa inicial
+    const config = {
+      token:     "0d1S97hx7o2pLVe5grVpkvUNW-RR_TTWYeGuKGK2ALs",
+      apiHost:   "https://flowise.power.tec.br",
+      chatflowId:"efe59701-afe2-4f4c-8448-bb8e3a32161a"
+    };
+
+    // AuthService fictício apenas para satisfazer o método
+    const AuthService = {
+      user: {
+        async getIdToken() {
+          // Simula renovação de token
+          return;
+        }
+      }
+    };
+
+    const btn = document.getElementById('btnFetch');
+    const out = document.getElementById('history');
+    const chatbotContainer = document.getElementById('chatbot-container');
+    const welcomeScreen = document.getElementById('welcome-screen');
+
+    btn.addEventListener('click', async () => {
+      const sessionId = document.getElementById('sessionId').value.trim();
+      if (!sessionId) {
+        out.textContent = 'Informe um sessionId válido.';
+        return;
+      }
+
+      welcomeScreen.classList.add('d-none');
+
+      out.textContent = 'Buscando histórico…';
+      try {
+        // 1. Busca o histórico pela API
+        const history = await getChatHistory(
+          AuthService,
+          sessionId,
+          config.chatflowId,
+          config.apiHost,
+          config.token
+        );
+
+        // 2. Exibe no debug
+        out.textContent = JSON.stringify(history, null, 2);
+
+        // 3. Limpa qualquer histórico anterior no localStorage
+        localStorage.removeItem(`${config.chatflowId}_EXTERNAL`);
+        localStorage.removeItem(`${config.chatflowId}_historyInjected`);
+
+        // 4. Injeta o novo histórico
+        const chatData = {
+          chatHistory: history,
+          chatId: sessionId
+        };
+        localStorage.setItem(
+          `${config.chatflowId}_EXTERNAL`,
+          JSON.stringify(chatData)
+        );
+        localStorage.setItem(
+          `${config.chatflowId}_historyInjected`,
+          'true'
+        );
+
+        // 5. Monta o componente do Flowise Embed
+        chatbotContainer.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
+        chatbotContainer.classList.add('active');
+        chatbotContainer.classList.remove('d-none');
+
+        // 6. Inicializa o chatbot com sessão e configurações
+        Chatbot.initFull({
+          chatflowid: config.chatflowId,
+          apiHost:    config.apiHost,
+          chatflowConfig: { sessionId },
+          observersConfig: {},
+          theme: {}
+        });
+
+      } catch (err) {
+        console.error(err);
+        out.textContent = 'Erro: ' + err.message;
+      }
+    });
+  </script>
+
+</body>
+</html>

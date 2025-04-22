@@ -374,3 +374,67 @@ export async function listChats(AuthService) {
 
   return await response.json();
 }
+
+/**
+ * Busca o histórico de mensagens de um chat específico.
+ *
+ * @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
+ * @param {string} sessionId - Identificador da sessão do chat.
+ * @param {string} chatflowId - Identificador do chatflow (configuração do fluxo).
+ * @param {string} apiHost - URL base da API do Flowise (ex: https://proxy-5cun.onrender.com).
+ * @param {string} token - Token de autenticação (caso necessário para acesso à API externa).
+ * @returns {Promise<Array>} - Array com o histórico de mensagens do chat.
+ * @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro na API.
+ */
+export async function fetchChatHistory(AuthService, sessionId, chatflowId, apiHost, token) {
+  const user = AuthService.user;
+  if (!user) throw new Error("Usuário não autenticado");
+  await user.getIdToken(); // Garantir autenticação (mesmo que não usado neste fetch)
+
+  const apiURL = `${apiHost}/api/v1/chatmessage/${chatflowId}?sessionId=${sessionId}`;
+  console.debug('Buscando histórico em:', apiURL);
+
+  try {
+    const response = await fetch(apiURL, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
+
+    const responseBody = await response.text();
+    console.debug('Status:', response.status, 'Resposta:', responseBody);
+
+    if (!response.ok) throw new Error("Erro ao buscar histórico de mensagens");
+
+    const apiHistory = JSON.parse(responseBody);
+
+    return apiHistory.map((msg) => ({
+      message: msg.content,
+      type: msg.role === 'userMessage' ? 'userMessage' : 'apiMessage',
+      dateTime: msg.createdDate || new Date().toISOString(),
+      messageId: msg.id || Math.random().toString(36).substring(2),
+      fileUploads: msg.fileUploads || []
+    }));
+  } catch (error) {
+    console.error('Erro ao buscar histórico:', error);
+    throw new Error('Erro ao buscar histórico de mensagens da API.');
+  }
+}
+
+/**
+ * Injeta o histórico de chat formatado no localStorage para consumo pelo Flowise Embed.
+ *
+ * @param {string} chatflowId - ID do chatflow.
+ * @param {string} sessionId - ID da sessão de chat.
+ * @param {Array} history - Array retornado por fetchChatHistory.
+ */
+export function injectChatHistory(chatflowId, sessionId, history) {
+  const keyExternal = `${chatflowId}_EXTERNAL`;
+  const keyInjected = `${chatflowId}_historyInjected`;
+  const chatData = { chatHistory: history, chatId: sessionId };
+  localStorage.setItem(keyExternal, JSON.stringify(chatData));
+  localStorage.setItem(keyInjected, 'true');
+}
+
+export { fetchChatHistory as getChatHistory };

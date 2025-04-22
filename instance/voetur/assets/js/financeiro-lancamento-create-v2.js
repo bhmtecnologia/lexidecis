@@ -20,8 +20,7 @@ import {
   listCentrosCustos,
   listProjetos,
   listFiliais,
-  listFornecedores,
-  listContasFinanceiras
+  listFornecedores
 } from "./api.js";
 
 // Função centralizada para tratamento de erros
@@ -66,32 +65,14 @@ function resetFormFields() {
       $("#filialSelect").val(null).trigger('change');
     }
   }
-  
+
   // Fornecedor
   const fornecedorSelect = document.getElementById("fornecedorSelect");
   fornecedorSelect.value = "";
   if (window.$ && $.fn.select2) {
     $("#fornecedorSelect").val(null).trigger('change');
   }
-  
-  // Conta Financeira
-  const contaSelect = document.getElementById("contaFinanceiraSelect");
-  if (window.contasFinanceirasData && window.contasFinanceirasData.length === 1) {
-    const conta = window.contasFinanceirasData[0];
-    const valueText = `${conta.estrutura} - ${conta.codigo} - ${conta.nome}`;
-    contaSelect.value = valueText;
-    contaSelect.disabled = true;
-    if (window.$ && $.fn.select2) {
-      $("#contaFinanceiraSelect").val(valueText).trigger('change');
-    }
-  } else {
-    contaSelect.value = "";
-    contaSelect.disabled = false;
-    if (window.$ && $.fn.select2) {
-      $("#contaFinanceiraSelect").val(null).trigger('change');
-    }
-  }
-  
+
   // Centro de Custo
   const centroSelect = document.getElementById("centroCustoSelect");
   if (window.centrosData && window.centrosData.length === 1) {
@@ -108,7 +89,7 @@ function resetFormFields() {
       $("#centroCustoSelect").val(null).trigger('change');
     }
   }
-  
+
   // Projeto (campo opcional): sempre deixa vazio
   const projetoSelect = document.getElementById("projetoSelect");
   projetoSelect.value = "";
@@ -116,16 +97,19 @@ function resetFormFields() {
   if (window.$ && $.fn.select2) {
     $("#projetoSelect").val(null).trigger('change');
   }
-  
+
   // Outros campos de input e textarea
   document.getElementById("numeroDocumento").value = "";
   document.getElementById("tipoDocumento").value = "";
   document.getElementById("dataEmissao").value = new Date().toISOString().split("T")[0];
   document.getElementById("valor").value = "";
   document.getElementById("formaPagamento").value = "";
-  document.getElementById("vencimento").value = "";
+  // Preenche vencimento com 3 dias após hoje
+  const vencDate = new Date();
+  vencDate.setDate(vencDate.getDate() + 3);
+  document.getElementById("vencimento").value = vencDate.toISOString().split("T")[0];
   document.getElementById("justificativa").value = "";
-  
+
   // Limpa o campo de anexos
   document.getElementById("arquivo").value = "";
 }
@@ -160,6 +144,20 @@ export async function renderFinanceiroLancamentoCreateV2() {
         <div class="card" style="border: 1px solid var(--border-color); background-color: var(--white); color: var(--black);">
           <div class="card-body">
             <form id="lancamentoForm">
+              <!-- Campo: Tipo de Documento -->
+              <div class="mb-3">
+                <label for="tipoDocumento" class="form-label" style="color: var(--black);">
+                  Tipo de Documento <span style="color: red;">*</span>
+                </label>
+                <select class="form-select" id="tipoDocumento" required aria-required="true">
+                  <option value="">Selecione</option>
+                  <option value="Nota Fiscal">Nota Fiscal</option>
+                  <option value="Fatura">Fatura</option>
+                  <option value="Boleto">Boleto</option>
+                  <option value="Reembolso">Reembolso</option>
+                  <option value="Outros">Outros</option>
+                </select>
+              </div>
               <!-- Campo: Filial (Select2) -->
               <div class="mb-3">
                 <label for="filialSelect" class="form-label" style="color: var(--black);">
@@ -175,15 +173,6 @@ export async function renderFinanceiroLancamentoCreateV2() {
                   Fornecedor <span style="color: red;">*</span>
                 </label>
                 <select class="form-control" id="fornecedorSelect" required aria-required="true">
-                  <option value="">Selecione</option>
-                </select>
-              </div>
-              <!-- Campo: Conta Financeira (Select2) -->
-              <div class="mb-3">
-                <label for="contaFinanceiraSelect" class="form-label" style="color: var(--black);">
-                  Conta Financeira <span style="color: red;">*</span>
-                </label>
-                <select class="form-control" id="contaFinanceiraSelect" required aria-required="true">
                   <option value="">Selecione</option>
                 </select>
               </div>
@@ -211,20 +200,6 @@ export async function renderFinanceiroLancamentoCreateV2() {
                   N° Documento <span style="color: red;">*</span>
                 </label>
                 <input type="text" class="form-control" id="numeroDocumento" placeholder="Digite o número do documento" required aria-required="true">
-              </div>
-              <!-- Campo: Tipo de Documento -->
-              <div class="mb-3">
-                <label for="tipoDocumento" class="form-label" style="color: var(--black);">
-                  Tipo de Documento <span style="color: red;">*</span>
-                </label>
-                <select class="form-select" id="tipoDocumento" required aria-required="true">
-                  <option value="">Selecione</option>
-                  <option value="Nota Fiscal">Nota Fiscal</option>
-                  <option value="Fatura">Fatura</option>
-                  <option value="Boleto">Boleto</option>
-                  <option value="Reembolso">Reembolso</option>
-                  <option value="Outros">Outros</option>
-                </select>
               </div>
               <!-- Campo: Data de Emissão -->
               <div class="mb-3">
@@ -293,8 +268,12 @@ export async function renderFinanceiroLancamentoCreateV2() {
     // Inicializa o Select2 para os campos relevantes
     if (window.$ && $.fn.select2) {
       $('#filialSelect').select2({ placeholder: "Selecione uma filial", width: '100%' });
-      $('#fornecedorSelect').select2({ placeholder: "Selecione um fornecedor", width: '100%' });
-      $('#contaFinanceiraSelect').select2({ placeholder: "Selecione uma conta financeira", width: '100%' });
+      $('#fornecedorSelect').select2({
+        placeholder: "Selecione um fornecedor",
+        width: '100%',
+        minimumInputLength: 3,
+        allowClear: true
+      });
       $('#centroCustoSelect').select2({ placeholder: "Selecione um centro de custo", width: '100%' });
       $('#projetoSelect').select2({ placeholder: "Selecione um projeto", allowClear: true, width: '100%' });
     }
@@ -330,21 +309,6 @@ export async function renderFinanceiroLancamentoCreateV2() {
       }
     });
       
-    const contaFinanceiraSelectField = document.getElementById("contaFinanceiraSelect");
-    contaFinanceiraSelectField.addEventListener("change", function () {
-      const inputValue = this.value.trim().toLowerCase();
-      if (window.contasFinanceirasData && window.contasFinanceirasData.length > 0) {
-        const found = window.contasFinanceirasData.some(conta =>
-          `${conta.estrutura} - ${conta.codigo} - ${conta.nome}`.toLowerCase() === inputValue
-        );
-        if (!found) {
-          this.setCustomValidity("Selecione uma conta financeira válida (estrutura - código - nome).");
-          this.reportValidity();
-        } else {
-          this.setCustomValidity("");
-        }
-      }
-    });
       
     const centroCustoSelectField = document.getElementById("centroCustoSelect");
     centroCustoSelectField.addEventListener("change", function () {
@@ -402,15 +366,13 @@ export async function renderFinanceiroLancamentoCreateV2() {
         Promise.all([
           listFiliais(AuthService),
           listCentrosCustos(AuthService),
-          listContasFinanceiras(AuthService),
           listProjetos(AuthService),
           listFornecedores(AuthService)
         ])
-          .then(([filiaisData, centrosData, contasData, projetosData, fornecedoresData]) => {
+          .then(([filiaisData, centrosData, projetosData, fornecedoresData]) => {
             // Armazena os dados para uso global
             window.filiaisData = filiaisData;
             window.centrosData = centrosData;
-            window.contasFinanceirasData = contasData;
             window.projetosData = projetosData;
             window.fornecedoresData = fornecedoresData;
         
@@ -452,26 +414,6 @@ export async function renderFinanceiroLancamentoCreateV2() {
               $('#centroCustoSelect').trigger('change');
             }
         
-            // Conta Financeira
-            const contaSelect = document.getElementById("contaFinanceiraSelect");
-            contaSelect.innerHTML = '<option value="">Selecione</option>';
-            if (contasData.length === 1) {
-              const valueText = `${contasData[0].estrutura} - ${contasData[0].codigo} - ${contasData[0].nome}`;
-              contaSelect.innerHTML = `<option value="${valueText}">${valueText}</option>`;
-              contaSelect.disabled = true;
-            } else {
-              contasData.forEach((conta) => {
-                const option = document.createElement("option");
-                const valueText = `${conta.estrutura} - ${conta.codigo} - ${conta.nome}`;
-                option.value = valueText;
-                option.textContent = valueText;
-                contaSelect.appendChild(option);
-              });
-            }
-            if (window.$ && $.fn.select2) {
-              $('#contaFinanceiraSelect').trigger('change');
-            }
-        
             // Projeto – mesmo que haja apenas um resultado, o campo deve permanecer vazio
             const projetoSelect = document.getElementById("projetoSelect");
             projetoSelect.innerHTML = '<option value="">Selecione</option>';
@@ -503,6 +445,10 @@ export async function renderFinanceiroLancamentoCreateV2() {
         
             // Preenche a data de emissão com a data de hoje
             document.getElementById("dataEmissao").value = new Date().toISOString().split("T")[0];
+            // Preenche vencimento com 3 dias após hoje
+            const vencDate = new Date();
+            vencDate.setDate(vencDate.getDate() + 3);
+            document.getElementById("vencimento").value = vencDate.toISOString().split("T")[0];
         
             // Exibe o formulário, pois todos os dados foram carregados
             document.getElementById("form-section").classList.remove("d-none");
@@ -566,19 +512,6 @@ export async function renderFinanceiroLancamentoCreateV2() {
         errors.push("Fornecedores não carregados");
       }
       
-      // Conta Financeira
-      const contaFinanceiraSelectValue = document.getElementById("contaFinanceiraSelect").value.trim();
-      let contaFinanceiraRecord = null;
-      if (window.contasFinanceirasData && window.contasFinanceirasData.length > 0) {
-        contaFinanceiraRecord = window.contasFinanceirasData.find(conta =>
-          `${conta.estrutura} - ${conta.codigo} - ${conta.nome}`.toLowerCase() === contaFinanceiraSelectValue.toLowerCase()
-        );
-        if (!contaFinanceiraRecord) {
-          errors.push("Conta Financeira inválida ou não encontrada");
-        }
-      } else {
-        errors.push("Contas Financeiras não carregadas");
-      }
       
       // Centro de Custo
       const centroCustoSelectValue = document.getElementById("centroCustoSelect").value.trim();
@@ -644,7 +577,7 @@ export async function renderFinanceiroLancamentoCreateV2() {
                 <strong>Por favor, corrija os seguintes campos:</strong>
                 <ul>${errors.map(err => `<li>${err}</li>`).join("")}</ul>
             </div>`;
-        const fields = ["filialSelect", "fornecedorSelect", "contaFinanceiraSelect", "centroCustoSelect", "projetoSelect", "numeroDocumento", "tipoDocumento", "dataEmissao", "valor", "formaPagamento", "vencimento", "justificativa"];
+        const fields = ["filialSelect", "fornecedorSelect", "centroCustoSelect", "projetoSelect", "numeroDocumento", "tipoDocumento", "dataEmissao", "valor", "formaPagamento", "vencimento", "justificativa"];
         for (let fieldId of fields) {
           const field = document.getElementById(fieldId);
           if (field && !field.value.trim()) {
@@ -662,7 +595,7 @@ export async function renderFinanceiroLancamentoCreateV2() {
       // Monta o payload conforme o novo formato
       let payload = {
         app_id: "empresa_vtc_log",
-        status: "Pendente",
+        status: "novo",
         valor: parseFloat(valor.replace(/[^\d,.-]/g, "").replace(",", ".")),
         tipo_documento: tipoDocumento,
         numero_documento: numeroDocumento,
@@ -675,21 +608,12 @@ export async function renderFinanceiroLancamentoCreateV2() {
         fornecedor_nome: fornecedorRecord.nome,
         fornecedor_cnpj: fornecedorRecord.cnpj,
         fornecedor_id_benner: fornecedorRecord.id_benner,
-        fornecedor_uuid: fornecedorRecord.uuid,
         filial_nome: filialRecord.nome,
         filial_id_benner: filialRecord.id_benner,
-        filial_uuid: filialRecord.uuid,
         projeto_nome: projetoRecord ? projetoRecord.nome : "",
         projeto_id_benner: projetoRecord ? projetoRecord.id_benner : "",
-        projeto_uuid: projetoRecord ? projetoRecord.uuid : "",
         centro_custo_nome: centroCustoRecord.nome,
         centro_custo_id_benner: centroCustoRecord.id_benner,
-        centro_custo_uuid: centroCustoRecord.uuid,
-        conta_financeira_nome: contaFinanceiraRecord.nome,
-        conta_financeira_codigo: contaFinanceiraRecord.codigo,
-        conta_financeira_estrutura: contaFinanceiraRecord.estrutura,
-        conta_financeira_id_benner: contaFinanceiraRecord.id_benner,
-        conta_financeira_uuid: contaFinanceiraRecord.uuid,
         uid: AuthService.user.uid
       };
       

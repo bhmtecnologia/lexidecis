@@ -6,7 +6,10 @@
 
 import { registerRoute } from "./router.js";
 import AuthService from "./auth.js";
-import { listLancamentos } from "./api.js";
+import { listLancamentos, updateLancamento, listFornecedores } from "./api.js";
+
+// Global DataTable instance
+let lancamentosTable;
 
 /**
  * Renderiza a tela de "Financeiro - Listagem de Lançamentos".
@@ -21,6 +24,9 @@ export async function renderFinanceiroLancamentosList() {
         <div class="row">
           <div class="col-sm-6 col-12">
             <h2>Financeiro - Listagem de Lançamentos</h2>
+            <button id="reloadTable" class="btn btn-sm btn-secondary ms-2" title="Recarregar tabela">
+              <i class="iconly-Refresh icli svg-color"></i>
+            </button>
             <p class="mb-0 text-title-gray">Visualize todos os lançamentos cadastrados com todos os detalhes</p>
           </div>
           <div class="col-sm-6 col-12">
@@ -45,16 +51,16 @@ export async function renderFinanceiroLancamentosList() {
               <table id="lancamentosTable" class="display table table-bordered table-striped">
                 <thead>
                   <tr>
-                    <th>ID</th>
+                    <th>Ações</th>
+                    <th>status</th>
                     <th>uid</th>
                     <th>app_id</th>
-                    <th>status</th>
                     <th>valor</th>
                     <th>filial_nome</th>
-                    <th>filial_uuid</th>
+                    <th>filial_id_benner</th>
                     <th>data_emissao</th>
                     <th>projeto_nome</th>
-                    <th>projeto_uuid</th>
+                    <th>projeto_id_benner</th>
                     <th>data_inclusao</th>
                     <th>justificativa</th>
                     <th>tipo_documento</th>
@@ -62,20 +68,11 @@ export async function renderFinanceiroLancamentosList() {
                     <th>forma_pagamento</th>
                     <th>fornecedor_cnpj</th>
                     <th>fornecedor_nome</th>
-                    <th>fornecedor_uuid</th>
-                    <th>filial_id_benner</th>
+                    <th>fornecedor_id_benner</th>
                     <th>numero_documento</th>
                     <th>usuario_inclusao</th>
                     <th>centro_custo_nome</th>
-                    <th>centro_custo_uuid</th>
-                    <th>projeto_id_benner</th>
-                    <th>fornecedor_id_benner</th>
-                    <th>conta_financeira_nome</th>
-                    <th>conta_financeira_uuid</th>
                     <th>centro_custo_id_benner</th>
-                    <th>conta_financeira_codigo</th>
-                    <th>conta_financeira_estrutura</th>
-                    <th>conta_financeira_id_benner</th>
                     <th>anexo(s)</th>
                     <th>created_at</th>
                     <th>updated_at</th>
@@ -87,6 +84,77 @@ export async function renderFinanceiroLancamentosList() {
               </table>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Edição -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-theme-default text-white">
+            <h5 class="modal-title" id="editModalLabel">Editar Lançamento</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          </div>
+          <form id="editForm">
+            <div class="modal-body">
+              <div class="row g-3">
+                <div class="col-md-6 form-floating">
+                  <input type="text" class="form-control" id="editNumeroDocumento" placeholder="N° Documento" required>
+                  <label for="editNumeroDocumento">N° Documento</label>
+                </div>
+                <div class="col-md-6 form-floating">
+                  <select class="form-select" id="editTipoDocumento" required>
+                    <option value="">Selecione</option>
+                    <option value="Nota Fiscal">Nota Fiscal</option>
+                    <option value="Fatura">Fatura</option>
+                    <option value="Boleto">Boleto</option>
+                    <option value="Reembolso">Reembolso</option>
+                    <option value="Outros">Outros</option>
+                  </select>
+                  <label for="editTipoDocumento">Tipo de Documento</label>
+                </div>
+                <div class="col-md-6 form-floating">
+                  <select class="form-select" id="editFornecedor" required aria-required="true"></select>
+                  <label for="editFornecedor">Fornecedor</label>
+                </div>
+                <div class="col-md-6 form-floating">
+                  <input type="date" class="form-control" id="editDataEmissao" placeholder="Data de Emissão" required>
+                  <label for="editDataEmissao">Data de Emissão</label>
+                </div>
+                <div class="col-md-6 form-floating">
+                  <input type="date" class="form-control" id="editDataVencimento" placeholder="Data de Vencimento" required>
+                  <label for="editDataVencimento">Data de Vencimento</label>
+                </div>
+                <div class="col-md-6 form-floating">
+                  <input type="text" class="form-control" id="editValor" placeholder="Valor Bruto" required>
+                  <label for="editValor">Valor Bruto</label>
+                </div>
+                <div class="col-md-6 form-floating">
+                  <select class="form-select" id="editFormaPagamento" required>
+                    <option value="">Selecione</option>
+                    <option value="Boleto">Boleto</option>
+                    <option value="Pix">Pix</option>
+                    <option value="Depósito">Depósito</option>
+                  </select>
+                  <label for="editFormaPagamento">Forma de Pagamento</label>
+                </div>
+                <div class="col-12 form-floating">
+                  <textarea class="form-control" id="editJustificativa" placeholder="Justificativa" style="height: 100px;" required></textarea>
+                  <label for="editJustificativa">Justificativa</label>
+                </div>
+                <div class="col-12 mb-3">
+                  <label for="editAnexo" class="form-label">Anexo(s)</label>
+                  <input type="file" class="form-control" id="editAnexo" accept="image/png, image/jpeg" multiple>
+                </div>
+                <div class="col-12 mb-3" id="editAnexoPreview"></div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button type="submit" class="btn btn-theme-default">Salvar alterações</button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
@@ -140,14 +208,39 @@ export async function renderFinanceiroLancamentosList() {
   }
 
   /**
-   * Inicializa o plugin DataTables na tabela de lançamentos.
+   * Inicializa o plugin DataTables na tabela de lançamentos com AJAX.
    */
   function initializeDataTable() {
     if (window.jQuery && $.fn.DataTable) {
-      if ($.fn.DataTable.isDataTable("#lancamentosTable")) {
-        $("#lancamentosTable").DataTable().destroy();
+      // Destroy existing instance if present
+      if (lancamentosTable) {
+        lancamentosTable.destroy();
       }
-      $("#lancamentosTable").DataTable({
+      // Initialize DataTable with AJAX using listLancamentos
+      lancamentosTable = $('#lancamentosTable').DataTable({
+        ajax: function(data, callback) {
+          listLancamentos(AuthService)
+            .then(lancs => {
+              // Achata o objeto, trazendo dados para o root e anexos corretamente
+              const flattened = lancs.map(l => ({
+                id: l.id,
+                created_at: l.created_at,
+                updated_at: l.updated_at,
+                created_by: l.created_by,
+                updated_by: l.updated_by,
+                ...l.dados,
+                anexos: (l.anexos && Array.isArray(l.anexos.anexos))
+                  ? l.anexos.anexos
+                  : []
+              }));
+              window.lancamentosData = flattened;
+              callback({ data: flattened });
+            })
+            .catch(err => {
+              console.error('Erro ao carregar lançamentos via DataTable:', err);
+              callback({ data: [] });
+            });
+        },
         responsive: true,
         autoWidth: false,
         processing: true,
@@ -157,82 +250,84 @@ export async function renderFinanceiroLancamentosList() {
         dom: 'lBfrtip',
         buttons: ['copy', 'excel', 'csv', 'pdf'],
         language: {
-          url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json"
+          url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json'
         },
-        order: [[33, 'desc']],
-        columnDefs: [
-          { type: 'num', targets: 0 }
+        order: [[25, 'desc']],
+        columns: [
+          {
+            data: null,
+            orderable: false,
+            render: data => {
+              const isNovo = (data.status || '').toLowerCase() === 'novo';
+              const iconClass = isNovo ? 'iconly-Edit' : 'iconly-Show';
+              let html =
+                `<button class="btn btn-sm" data-action="edit" data-id="${data.id}"` +
+                ` style="background-color: var(--theme-default); border-color: var(--theme-default); color: #fff;">` +
+                `<i class="${iconClass} icli svg-color"></i></button>`;
+              if (isNovo) {
+                html +=
+                  ` <button class="btn btn-sm" data-action="send" data-id="${data.id}"` +
+                  ` style="background-color: var(--theme-default); border-color: var(--theme-default); color: #fff;">` +
+                  `<i class="iconly-Send icli svg-color"></i></button>`;
+              }
+              return html;
+            }
+          },
+          { data: 'status',             title: 'status',             defaultContent: '-' },
+          { data: 'uid',                title: 'uid',                defaultContent: '-' },
+          { data: 'app_id',             title: 'app_id',             defaultContent: '-' },
+          { data: 'valor',              title: 'valor',              defaultContent: '-', render: v => isNaN(v)?'-':parseFloat(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) },
+          { data: 'filial_nome',        title: 'filial_nome',        defaultContent: '-' },
+          { data: 'filial_id_benner',   title: 'filial_id_benner',   defaultContent: '-' },
+          { data: 'data_emissao',       title: 'data_emissao',       defaultContent: '-', render: d => d?new Date(d).toLocaleDateString('pt-BR'): '-' },
+          { data: 'projeto_nome',       title: 'projeto_nome',       defaultContent: '-' },
+          { data: 'projeto_id_benner',  title: 'projeto_id_benner',  defaultContent: '-' },
+          { data: 'data_inclusao',      title: 'data_inclusao',      defaultContent: '-' },
+          { data: 'justificativa',      title: 'justificativa',      defaultContent: '-' },
+          { data: 'tipo_documento',     title: 'tipo_documento',     defaultContent: '-' },
+          { data: 'data_vencimento',    title: 'data_vencimento',    defaultContent: '-', render: d => d?new Date(d).toLocaleDateString('pt-BR'): '-' },
+          { data: 'forma_pagamento',    title: 'forma_pagamento',    defaultContent: '-' },
+          { data: 'fornecedor_cnpj',    title: 'fornecedor_cnpj',    defaultContent: '-' },
+          { data: 'fornecedor_nome',    title: 'fornecedor_nome',    defaultContent: '-' },
+          { data: 'fornecedor_id_benner', title: 'fornecedor_id_benner', defaultContent: '-' },
+          { data: 'numero_documento',   title: 'numero_documento',   defaultContent: '-' },
+          { data: 'usuario_inclusao',   title: 'usuario_inclusao',   defaultContent: '-' },
+          { data: 'centro_custo_nome',  title: 'centro_custo_nome',  defaultContent: '-' },
+          { data: 'centro_custo_id_benner', title: 'centro_custo_id_benner', defaultContent: '-' },
+          { data: 'comentario_analista', title: 'comentario_analista', defaultContent: '-' },
+          { data: 'anexos',             title: 'anexo(s)',            defaultContent: '-', render: a => formatAnexos(a) },
+          { data: 'created_at',         title: 'created_at',         defaultContent: '-', render: d => d?new Date(d).toLocaleString('pt-BR'): '-' },
+          { data: 'updated_at',         title: 'updated_at',         defaultContent: '-', render: d => d?new Date(d).toLocaleString('pt-BR'): '-' },
+          { data: 'created_by',         title: 'created_by',         defaultContent: '-' },
+          { data: 'updated_by',         title: 'updated_by',         defaultContent: '-' }
         ]
       });
     } else {
-      console.error("DataTables não está carregado.");
+      console.error('DataTables não está carregado.');
     }
   }
 
-  /**
-   * Atualiza a tabela com os lançamentos obtidos via API, exibindo todos os campos do objeto dados e os campos top-level.
-   */
-  async function updateTable() {
-    try {
-      const lancamentos = await listLancamentos(AuthService);
-      const tbody = document.querySelector('#lancamentosTable tbody');
-      tbody.innerHTML = '';
-
-      lancamentos.forEach(lanc => {
-        const dados = lanc.dados || {};
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${lanc.id || '-'}</td>
-          <td>${dados.uid || '-'}</td>
-          <td>${dados.app_id || '-'}</td>
-          <td>${dados.status || '-'}</td>
-          <td>${dados.valor ? formatCurrency(dados.valor) : '-'}</td>
-          <td>${dados.filial_nome || '-'}</td>
-          <td>${dados.filial_uuid || '-'}</td>
-          <td>${dados.data_emissao ? formatDate(dados.data_emissao) : '-'}</td>
-          <td>${dados.projeto_nome || '-'}</td>
-          <td>${dados.projeto_uuid || '-'}</td>
-          <td>${dados.data_inclusao ? dados.data_inclusao : '-'}</td>
-          <td>${dados.justificativa || '-'}</td>
-          <td>${dados.tipo_documento || '-'}</td>
-          <td>${dados.data_vencimento ? formatDate(dados.data_vencimento) : '-'}</td>
-          <td>${dados.forma_pagamento || '-'}</td>
-          <td>${dados.fornecedor_cnpj || '-'}</td>
-          <td>${dados.fornecedor_nome || '-'}</td>
-          <td>${dados.fornecedor_uuid || '-'}</td>
-          <td>${dados.filial_id_benner || '-'}</td>
-          <td>${dados.numero_documento || '-'}</td>
-          <td>${dados.usuario_inclusao || '-'}</td>
-          <td>${dados.centro_custo_nome || '-'}</td>
-          <td>${dados.centro_custo_uuid || '-'}</td>
-          <td>${dados.projeto_id_benner || '-'}</td>
-          <td>${dados.fornecedor_id_benner || '-'}</td>
-          <td>${dados.conta_financeira_nome || '-'}</td>
-          <td>${dados.conta_financeira_uuid || '-'}</td>
-          <td>${dados.centro_custo_id_benner || '-'}</td>
-          <td>${dados.conta_financeira_codigo || '-'}</td>
-          <td>${dados.conta_financeira_estrutura || '-'}</td>
-          <td>${dados.conta_financeira_id_benner || '-'}</td>
-          <td>${(dados.anexo && Array.isArray(dados.anexo)) ? formatAnexos(dados.anexo) : '-'}</td>
-          <td>${lanc.created_at ? formatDateTime(lanc.created_at) : '-'}</td>
-          <td>${lanc.updated_at ? formatDateTime(lanc.updated_at) : '-'}</td>
-          <td>${lanc.created_by || '-'}</td>
-          <td>${lanc.updated_by || '-'}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      initializeDataTable();
-    } catch (error) {
-      console.error("Erro ao listar lançamentos:", error);
-      alert("Erro ao listar lançamentos: " + error.message);
-    }
-  }
 
   // Monitora a autenticação para exibir a tabela somente se o usuário estiver logado
-  AuthService.onAuthChange((user) => {
+  AuthService.onAuthChange(async (user) => {
     if (user) {
-      updateTable();
+      window.fornecedoresData = await listFornecedores(AuthService);
+      // Popula e inicializa Select2 de fornecedores para edição
+      if (window.$ && $.fn.select2) {
+        const $editFor = $('#editFornecedor');
+        $editFor.empty().append('<option value=""></option>');
+        window.fornecedoresData.forEach(f => {
+          const text = `${f.nome} - ${f.cnpj}`;
+          $editFor.append(new Option(text, f.cnpj));
+        });
+        $editFor.select2({
+          placeholder: 'Selecione um fornecedor',
+          width: '100%',
+          minimumInputLength: 3,
+          allowClear: true
+        });
+      }
+      initializeDataTable();
     } else {
       content.innerHTML = `
         <div class="container-fluid">
@@ -241,6 +336,196 @@ export async function renderFinanceiroLancamentosList() {
           </div>
         </div>
       `;
+    }
+  });
+
+  // Handler para reload manual: recarrega via AJAX
+  document.getElementById('reloadTable').addEventListener('click', () => {
+    if (lancamentosTable) {
+      lancamentosTable.ajax.reload(null, false);
+    }
+  });
+
+  // Handle "Enviar" action buttons
+  document.getElementById('content').addEventListener('click', async (event) => {
+    const btn = event.target.closest('button[data-action="send"]');
+    if (!btn) return;
+    // Find the row data from DataTables
+    let id = btn.getAttribute('data-id');
+    let rowData = null;
+    if (lancamentosTable) {
+      lancamentosTable.rows().every(function() {
+        const d = this.data();
+        if (String(d.id) === id) {
+          rowData = d;
+        }
+      });
+    }
+    if (!rowData) {
+      console.error('Lançamento não encontrado para id', id);
+      return;
+    }
+    // Agora os dados estão achatados, então reenvia todos os campos exceto campos extras e atualiza o status
+    const updatedDados = { ...rowData, status: 'Enviado Controladoria' };
+    // Remove campos que não pertencem a dados (id, created_at, updated_at, created_by, updated_by, anexos)
+    delete updatedDados.id;
+    delete updatedDados.created_at;
+    delete updatedDados.updated_at;
+    delete updatedDados.created_by;
+    delete updatedDados.updated_by;
+    delete updatedDados.anexos;
+    btn.disabled = true;
+    const originalContent = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm text-white" role="status" aria-hidden="true"></span>';
+    try {
+      await updateLancamento(AuthService, id, updatedDados);
+      lancamentosTable.ajax.reload(null, false);
+    } catch (error) {
+      console.error('Erro ao enviar lançamento:', error);
+      alert('Falha ao enviar lançamento: ' + error.message);
+    } finally {
+      if (document.body.contains(btn)) {
+        btn.disabled = false;
+        btn.innerHTML = originalContent;
+      }
+    }
+  });
+
+  // Initialize Bootstrap modal for editing
+  const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+
+  // Função para aplicar máscara de moeda BRL no input
+  function applyCurrencyMask(input) {
+    input.addEventListener('input', function(e) {
+      const raw = this.value.replace(/\D/g, '');
+      const num = parseFloat(raw) / 100 || 0;
+      this.value = num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    });
+    input.addEventListener('blur', function() {
+      const num = parseFloat(this.value.replace(/\./g, '').replace(',', '.')) || 0;
+      this.value = num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    });
+  }
+  // Aplica a máscara imediatamente
+  applyCurrencyMask(document.getElementById('editValor'));
+  // Inicializa select2 no campo de fornecedor, se disponível
+  if (window.$ && $.fn.select2) {
+    $('#editFornecedor').select2({
+      placeholder: 'Selecione um fornecedor',
+      width: '100%',
+      minimumInputLength: 3,
+      allowClear: true
+    });
+  }
+
+  // Handle "Editar" action buttons
+  document.getElementById('content').addEventListener('click', (event) => {
+    const btn = event.target.closest('button[data-action="edit"]');
+    if (!btn) return;
+    const id = btn.getAttribute('data-id');
+    // Get row data from DataTables
+    let lanc = null;
+    if (lancamentosTable) {
+      lancamentosTable.rows().every(function() {
+        const d = this.data();
+        if (String(d.id) === id) {
+          lanc = d;
+        }
+      });
+    }
+    if (!lanc) return;
+    // Preencher campos do formulário com as propriedades achatadas
+    document.getElementById('editNumeroDocumento').value = lanc.numeroDocumento || '';
+    document.getElementById('editTipoDocumento').value = lanc.tipoDocumento || '';
+    document.getElementById('editDataEmissao').value = lanc.dataEmissao ? new Date(lanc.dataEmissao).toISOString().split('T')[0] : '';
+    document.getElementById('editDataVencimento').value = lanc.vencimento ? new Date(lanc.vencimento).toISOString().split('T')[0] : '';
+    // Formata valor para padrão BRL
+    const rawValor = lanc.valor != null ? parseFloat(lanc.valor) : 0;
+    document.getElementById('editValor').value = rawValor.toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+    document.getElementById('editFormaPagamento').value = lanc.forma_pagamento || '';
+    document.getElementById('editJustificativa').value = lanc.justificativa || '';
+    // Seleciona fornecedor pelo CNPJ (select2 já está populado)
+    $('#editFornecedor').val(lanc.fornecedor_cnpj).trigger('change');
+    // Preenche preview de anexos existentes
+    const preview = document.getElementById('editAnexoPreview');
+    preview.innerHTML = formatAnexos(lanc.anexos);
+    // Armazenar id no form
+    document.getElementById('editForm').setAttribute('data-id', id);
+    // Set form fields to readonly/disabled if not status 'novo'
+    const isNovo = (lanc.status || '').toLowerCase() === 'novo';
+    [
+      'editNumeroDocumento',
+      'editTipoDocumento',
+      'editFornecedor',
+      'editDataEmissao',
+      'editDataVencimento',
+      'editValor',
+      'editFormaPagamento',
+      'editJustificativa'
+    ].forEach(fid => {
+      const field = document.getElementById(fid);
+      if (!field) return;
+      if (field.tagName === 'SELECT') field.disabled = !isNovo;
+      else field.readOnly = !isNovo;
+    });
+    const saveBtn = document.querySelector('#editForm button[type="submit"]');
+    if (saveBtn) saveBtn.disabled = !isNovo;
+    editModal.show();
+  });
+
+  // Handle form submission for editing
+  document.getElementById('editForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = e.currentTarget.getAttribute('data-id');
+    // Get row data from DataTables
+    let lanc = null;
+    if (lancamentosTable) {
+      lancamentosTable.rows().every(function() {
+        const d = this.data();
+        if (String(d.id) === id) {
+          lanc = d;
+        }
+      });
+    }
+    // Monta objeto de atualização apenas com os campos editáveis
+    const updated = {
+      ...(lanc ? lanc : {}),
+      numeroDocumento: document.getElementById('editNumeroDocumento').value,
+      tipoDocumento: document.getElementById('editTipoDocumento').value,
+      dataEmissao: document.getElementById('editDataEmissao').value,
+      vencimento: document.getElementById('editDataVencimento').value,
+      valor: parseFloat(document.getElementById('editValor').value.replace(/[^\d,.-]/g, '').replace(',', '.')),
+      forma_pagamento: document.getElementById('editFormaPagamento').value,
+      justificativa: document.getElementById('editJustificativa').value
+    };
+    // Recupera registro completo de fornecedor via CNPJ para obter PKs
+    const selectedCnpj = $('#editFornecedor').val();
+    const fornecedorRecord = window.fornecedoresData.find(f => f.cnpj === selectedCnpj);
+    if (fornecedorRecord) {
+      updated.fornecedor_nome = fornecedorRecord.nome;
+      updated.fornecedor_cnpj = fornecedorRecord.cnpj;
+      updated.fornecedor_id_benner = fornecedorRecord.id_benner;
+      updated.fornecedor_uuid = fornecedorRecord.uuid;
+    }
+    // Remove campos que não pertencem a dados (id, created_at, updated_at, created_by, updated_by, anexos)
+    delete updated.id;
+    delete updated.created_at;
+    delete updated.updated_at;
+    delete updated.created_by;
+    delete updated.updated_by;
+    delete updated.anexos;
+    try {
+      await updateLancamento(AuthService, id, updated);
+      editModal.hide();
+      if (lancamentosTable) {
+        lancamentosTable.ajax.reload(null, false);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao salvar alterações: ' + err.message);
     }
   });
 }

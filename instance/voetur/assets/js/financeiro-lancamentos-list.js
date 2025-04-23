@@ -53,14 +53,12 @@ export async function renderFinanceiroLancamentosList() {
                   <tr>
                     <th>Ações</th>
                     <th>status</th>
-                    <th>uid</th>
-                    <th>app_id</th>
+                    <th>comentario_analista</th>
+                    <th>anexo(s)</th>
                     <th>valor</th>
                     <th>filial_nome</th>
-                    <th>filial_id_benner</th>
                     <th>data_emissao</th>
                     <th>projeto_nome</th>
-                    <th>projeto_id_benner</th>
                     <th>data_inclusao</th>
                     <th>justificativa</th>
                     <th>tipo_documento</th>
@@ -68,12 +66,9 @@ export async function renderFinanceiroLancamentosList() {
                     <th>forma_pagamento</th>
                     <th>fornecedor_cnpj</th>
                     <th>fornecedor_nome</th>
-                    <th>fornecedor_id_benner</th>
                     <th>numero_documento</th>
                     <th>usuario_inclusao</th>
                     <th>centro_custo_nome</th>
-                    <th>centro_custo_id_benner</th>
-                    <th>anexo(s)</th>
                     <th>created_at</th>
                     <th>updated_at</th>
                     <th>created_by</th>
@@ -233,6 +228,7 @@ export async function renderFinanceiroLancamentosList() {
                   ? l.anexos.anexos
                   : []
               }));
+              console.log('Flattened sample:', JSON.stringify(flattened[0], null, 2));
               window.lancamentosData = flattened;
               callback({ data: flattened });
             })
@@ -252,7 +248,7 @@ export async function renderFinanceiroLancamentosList() {
         language: {
           url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json'
         },
-        order: [[25, 'desc']],
+        order: [[19, 'desc']],
         columns: [
           {
             data: null,
@@ -274,14 +270,12 @@ export async function renderFinanceiroLancamentosList() {
             }
           },
           { data: 'status',             title: 'status',             defaultContent: '-' },
-          { data: 'uid',                title: 'uid',                defaultContent: '-' },
-          { data: 'app_id',             title: 'app_id',             defaultContent: '-' },
+          { data: 'comentario_analista', title: 'comentario_analista', defaultContent: '-' },
+          { data: 'anexos',             title: 'anexo(s)',            defaultContent: '-', render: a => formatAnexos(a) },
           { data: 'valor',              title: 'valor',              defaultContent: '-', render: v => isNaN(v)?'-':parseFloat(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) },
           { data: 'filial_nome',        title: 'filial_nome',        defaultContent: '-' },
-          { data: 'filial_id_benner',   title: 'filial_id_benner',   defaultContent: '-' },
           { data: 'data_emissao',       title: 'data_emissao',       defaultContent: '-', render: d => d?new Date(d).toLocaleDateString('pt-BR'): '-' },
           { data: 'projeto_nome',       title: 'projeto_nome',       defaultContent: '-' },
-          { data: 'projeto_id_benner',  title: 'projeto_id_benner',  defaultContent: '-' },
           { data: 'data_inclusao',      title: 'data_inclusao',      defaultContent: '-' },
           { data: 'justificativa',      title: 'justificativa',      defaultContent: '-' },
           { data: 'tipo_documento',     title: 'tipo_documento',     defaultContent: '-' },
@@ -289,13 +283,9 @@ export async function renderFinanceiroLancamentosList() {
           { data: 'forma_pagamento',    title: 'forma_pagamento',    defaultContent: '-' },
           { data: 'fornecedor_cnpj',    title: 'fornecedor_cnpj',    defaultContent: '-' },
           { data: 'fornecedor_nome',    title: 'fornecedor_nome',    defaultContent: '-' },
-          { data: 'fornecedor_id_benner', title: 'fornecedor_id_benner', defaultContent: '-' },
           { data: 'numero_documento',   title: 'numero_documento',   defaultContent: '-' },
           { data: 'usuario_inclusao',   title: 'usuario_inclusao',   defaultContent: '-' },
           { data: 'centro_custo_nome',  title: 'centro_custo_nome',  defaultContent: '-' },
-          { data: 'centro_custo_id_benner', title: 'centro_custo_id_benner', defaultContent: '-' },
-          { data: 'comentario_analista', title: 'comentario_analista', defaultContent: '-' },
-          { data: 'anexos',             title: 'anexo(s)',            defaultContent: '-', render: a => formatAnexos(a) },
           { data: 'created_at',         title: 'created_at',         defaultContent: '-', render: d => d?new Date(d).toLocaleString('pt-BR'): '-' },
           { data: 'updated_at',         title: 'updated_at',         defaultContent: '-', render: d => d?new Date(d).toLocaleString('pt-BR'): '-' },
           { data: 'created_by',         title: 'created_by',         defaultContent: '-' },
@@ -490,33 +480,21 @@ export async function renderFinanceiroLancamentosList() {
         }
       });
     }
-    // Monta objeto de atualização apenas com os campos editáveis
+    // Monta objeto de atualização apenas com os campos editáveis em snake_case
     const updated = {
-      ...(lanc ? lanc : {}),
-      numeroDocumento: document.getElementById('editNumeroDocumento').value,
-      tipoDocumento: document.getElementById('editTipoDocumento').value,
-      dataEmissao: document.getElementById('editDataEmissao').value,
-      vencimento: document.getElementById('editDataVencimento').value,
-      valor: parseFloat(document.getElementById('editValor').value.replace(/[^\d,.-]/g, '').replace(',', '.')),
+      status: lanc.status,
+      numero_documento: document.getElementById('editNumeroDocumento').value,
+      tipo_documento: document.getElementById('editTipoDocumento').value,
+      data_emissao: document.getElementById('editDataEmissao').value,
+      data_vencimento: document.getElementById('editDataVencimento').value,
+      valor: parseFloat(document.getElementById('editValor').value.replace(/[\D]/g, '').replace(',', '.')),
       forma_pagamento: document.getElementById('editFormaPagamento').value,
-      justificativa: document.getElementById('editJustificativa').value
+      justificativa: document.getElementById('editJustificativa').value,
+      fornecedor_cnpj: lanc.fornecedor_cnpj,
+      fornecedor_nome: lanc.fornecedor_nome,
+      fornecedor_id_benner: lanc.fornecedor_id_benner,
+      fornecedor_uuid: lanc.fornecedor_uuid
     };
-    // Recupera registro completo de fornecedor via CNPJ para obter PKs
-    const selectedCnpj = $('#editFornecedor').val();
-    const fornecedorRecord = window.fornecedoresData.find(f => f.cnpj === selectedCnpj);
-    if (fornecedorRecord) {
-      updated.fornecedor_nome = fornecedorRecord.nome;
-      updated.fornecedor_cnpj = fornecedorRecord.cnpj;
-      updated.fornecedor_id_benner = fornecedorRecord.id_benner;
-      updated.fornecedor_uuid = fornecedorRecord.uuid;
-    }
-    // Remove campos que não pertencem a dados (id, created_at, updated_at, created_by, updated_by, anexos)
-    delete updated.id;
-    delete updated.created_at;
-    delete updated.updated_at;
-    delete updated.created_by;
-    delete updated.updated_by;
-    delete updated.anexos;
     try {
       await updateLancamento(AuthService, id, updated);
       editModal.hide();

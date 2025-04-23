@@ -352,8 +352,7 @@ export async function renderFinanceiroLancamentoCreateV2() {
       }
     });
     valorInput.addEventListener("blur", function () {
-      let input = this.value.replace(/[^0-9,.-]/g, "");
-      input = input.replace(",", ".");
+      let input = this.value.replace(/\./g, "").replace(",", ".");
       const numericValue = parseFloat(input);
       if (!isNaN(numericValue)) {
         this.value = numericValue.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -596,7 +595,7 @@ export async function renderFinanceiroLancamentoCreateV2() {
       let payload = {
         app_id: "empresa_vtc_log",
         status: "Novo",
-        valor: parseFloat(valor.replace(/[^\d,.-]/g, "").replace(",", ".")),
+        valor: parseFloat(valor.replace(/\./g, "").replace(",", ".")),
         tipo_documento: tipoDocumento,
         numero_documento: numeroDocumento,
         forma_pagamento: formaPagamentoValue,

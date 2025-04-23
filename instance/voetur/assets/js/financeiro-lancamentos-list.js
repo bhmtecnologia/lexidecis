@@ -6,7 +6,7 @@
 
 import { registerRoute } from "./router.js";
 import AuthService from "./auth.js";
-import { listLancamentos, updateLancamento, listFornecedores } from "./api.js";
+import { listLancamentos, updateLancamento, listFornecedores, listFiliais, listCentrosCustos, listProjetos } from "./api.js";
 
 // Global DataTable instance
 let lancamentosTable;
@@ -95,7 +95,8 @@ export async function renderFinanceiroLancamentosList() {
           <form id="editForm">
             <div class="modal-body">
               <div class="row g-3">
-                <div class="col-md-6 form-floating">
+                <div class="col-md-6">
+                  <label for="editStatus" class="form-label">Status</label>
                   <select class="form-select" id="editStatus" required>
                     <option value="">Selecione o status</option>
                     <option value="Novo">Novo</option>
@@ -103,13 +104,13 @@ export async function renderFinanceiroLancamentosList() {
                     <option value="Enviado Controladoria">Enviado Controladoria</option>
                     <option value="Devolvido">Devolvido</option>
                   </select>
-                  <label for="editStatus">Status</label>
                 </div>
-                <div class="col-md-6 form-floating">
+                <div class="col-md-6">
+                  <label for="editNumeroDocumento" class="form-label">N° Documento</label>
                   <input type="text" class="form-control" id="editNumeroDocumento" placeholder="N° Documento" required>
-                  <label for="editNumeroDocumento">N° Documento</label>
                 </div>
-                <div class="col-md-6 form-floating">
+                <div class="col-md-6">
+                  <label for="editTipoDocumento" class="form-label">Tipo de Documento</label>
                   <select class="form-select" id="editTipoDocumento" required>
                     <option value="">Selecione</option>
                     <option value="Nota Fiscal">Nota Fiscal</option>
@@ -118,48 +119,47 @@ export async function renderFinanceiroLancamentosList() {
                     <option value="Reembolso">Reembolso</option>
                     <option value="Outros">Outros</option>
                   </select>
-                  <label for="editTipoDocumento">Tipo de Documento</label>
                 </div>
-                <div class="col-md-6 form-floating">
+                <div class="col-md-6">
+                  <label for="editFornecedor" class="form-label">Fornecedor</label>
                   <select class="form-select" id="editFornecedor" required aria-required="true"></select>
-                  <label for="editFornecedor">Fornecedor</label>
                 </div>
-                <div class="col-md-6 form-floating">
-                  <input type="text" class="form-control" id="editFilial" placeholder="Filial" readonly>
-                  <label for="editFilial">Filial</label>
+                <div class="col-md-6">
+                  <label for="editFilial" class="form-label">Filial</label>
+                  <select class="form-select" id="editFilial" required></select>
                 </div>
-                <div class="col-md-6 form-floating">
-                  <input type="text" class="form-control" id="editProjeto" placeholder="Projeto">
-                  <label for="editProjeto">Projeto</label>
+                <div class="col-md-6">
+                  <label for="editProjeto" class="form-label">Projeto</label>
+                  <select class="form-select" id="editProjeto" required></select>
                 </div>
-                <div class="col-md-6 form-floating">
-                  <input type="text" class="form-control" id="editCentroCusto" placeholder="Centro de Custo">
-                  <label for="editCentroCusto">Centro de Custo</label>
+                <div class="col-md-6">
+                  <label for="editCentroCusto" class="form-label">Centro de Custo</label>
+                  <select class="form-select" id="editCentroCusto" required></select>
                 </div>
-                <div class="col-md-6 form-floating">
+                <div class="col-md-6">
+                  <label for="editDataEmissao" class="form-label">Data de Emissão</label>
                   <input type="date" class="form-control" id="editDataEmissao" placeholder="Data de Emissão" required>
-                  <label for="editDataEmissao">Data de Emissão</label>
                 </div>
-                <div class="col-md-6 form-floating">
+                <div class="col-md-6">
+                  <label for="editDataVencimento" class="form-label">Data de Vencimento</label>
                   <input type="date" class="form-control" id="editDataVencimento" placeholder="Data de Vencimento" required>
-                  <label for="editDataVencimento">Data de Vencimento</label>
                 </div>
-                <div class="col-md-6 form-floating">
+                <div class="col-md-6">
+                  <label for="editValor" class="form-label">Valor Bruto</label>
                   <input type="text" class="form-control" id="editValor" placeholder="Valor Bruto" required>
-                  <label for="editValor">Valor Bruto</label>
                 </div>
-                <div class="col-md-6 form-floating">
+                <div class="col-md-6">
+                  <label for="editFormaPagamento" class="form-label">Forma de Pagamento</label>
                   <select class="form-select" id="editFormaPagamento" required>
                     <option value="">Selecione</option>
                     <option value="Boleto">Boleto</option>
                     <option value="Pix">Pix</option>
                     <option value="Depósito">Depósito</option>
                   </select>
-                  <label for="editFormaPagamento">Forma de Pagamento</label>
                 </div>
-                <div class="col-12 form-floating">
+                <div class="col-12">
+                  <label for="editJustificativa" class="form-label">Justificativa</label>
                   <textarea class="form-control" id="editJustificativa" placeholder="Justificativa" style="height: 100px;" required></textarea>
-                  <label for="editJustificativa">Justificativa</label>
                 </div>
                 <div class="col-12 mb-3">
                   <label for="editAnexo" class="form-label">Anexo(s)</label>
@@ -373,9 +373,58 @@ export async function renderFinanceiroLancamentosList() {
           placeholder: 'Selecione um fornecedor',
           width: '100%',
           minimumInputLength: 3,
-          allowClear: true
+          allowClear: true,
+          dropdownParent: $('#editModal')
         });
       }
+      // Popula e inicializa Select2 de filiais para edição
+      window.filiaisData = await listFiliais(AuthService);
+      const $editFilial = $('#editFilial');
+      $editFilial.empty().append('<option value=""></option>');
+      window.filiaisData.forEach(f => {
+        const text = `${f.nome} - ${f.id_benner}`;
+        $editFilial.append(new Option(text, f.id_benner));
+      });
+      $editFilial.select2({
+        placeholder: 'Selecione uma filial',
+        width: '100%',
+        minimumInputLength: 0,
+        allowClear: true,
+        dropdownParent: $('#editModal')
+      });
+
+      // Popula e inicializa Select2 de projetos
+      window.projetosData = await listProjetos(AuthService);
+      const $editProj = $('#editProjeto');
+      $editProj.empty().append('<option value=""></option>');
+      window.projetosData.forEach(p => {
+        const text = `${p.nome} - ${p.id_benner}`;
+        $editProj.append(new Option(text, p.id_benner));
+      });
+      $editProj.select2({
+        placeholder: 'Selecione um projeto',
+        width: '100%',
+        minimumInputLength: 0,
+        allowClear: true,
+        dropdownParent: $('#editModal')
+      });
+
+      // Popula e inicializa Select2 de centros de custo
+      window.centrosCustosData = await listCentrosCustos(AuthService);
+      const $editCC = $('#editCentroCusto');
+      $editCC.empty().append('<option value=""></option>');
+      window.centrosCustosData.forEach(c => {
+        const text = `${c.nome} - ${c.id_benner}`;
+        $editCC.append(new Option(text, c.id_benner));
+      });
+      $editCC.select2({
+        placeholder: 'Selecione um centro de custo',
+        width: '100%',
+        minimumInputLength: 0,
+        allowClear: true,
+        dropdownParent: $('#editModal')
+      });
+
       initializeDataTable();
     } else {
       content.innerHTML = `
@@ -457,18 +506,9 @@ export async function renderFinanceiroLancamentosList() {
   }
   // Aplica a máscara imediatamente
   applyCurrencyMask(document.getElementById('editValor'));
-  // Inicializa select2 no campo de fornecedor, se disponível
-  if (window.$ && $.fn.select2) {
-    $('#editFornecedor').select2({
-      placeholder: 'Selecione um fornecedor',
-      width: '100%',
-      minimumInputLength: 3,
-      allowClear: true
-    });
-  }
 
   // Handle "Editar" action buttons
-  document.getElementById('content').addEventListener('click', (event) => {
+  document.getElementById('content').addEventListener('click', async (event) => {
     const btn = event.target.closest('button[data-action="edit"]');
     if (btn) {
       const id = btn.getAttribute('data-id');
@@ -483,6 +523,84 @@ export async function renderFinanceiroLancamentosList() {
         });
       }
       if (!lanc) return;
+      // Atualiza lista de fornecedores no select2 dentro do modal
+      const fornecedores = await listFornecedores(AuthService);
+      const $editFor = $('#editFornecedor');
+      // Recria a instância para garantir dropdown dentro do modal
+      if ($editFor.hasClass("select2-hidden-accessible")) {
+        $editFor.select2('destroy');
+      }
+      $editFor.empty().append('<option value=""></option>');
+      fornecedores.forEach(f => {
+        const text = `${f.nome} - ${f.cnpj}`;
+        $editFor.append(new Option(text, f.id_benner));
+      });
+      $editFor.select2({
+        placeholder: 'Selecione um fornecedor',
+        width: '100%',
+        minimumInputLength: 3,
+        allowClear: true,
+        dropdownParent: $('#editModal')
+      });
+      // Seleciona o fornecedor existente
+      $editFor.val(lanc.fornecedor_id_benner).trigger('change');
+      // Atualiza lista de filiais no select2 dentro do modal
+      const filiais = await listFiliais(AuthService);
+      const $editFilial = $('#editFilial');
+      if ($editFilial.hasClass("select2-hidden-accessible")) {
+        $editFilial.select2('destroy');
+      }
+      $editFilial.empty().append('<option value=""></option>');
+      filiais.forEach(f => {
+        const text = `${f.nome} - ${f.id_benner}`;
+        $editFilial.append(new Option(text, f.id_benner));
+      });
+      $editFilial.select2({
+        placeholder: 'Selecione uma filial',
+        width: '100%',
+        minimumInputLength: 0,
+        allowClear: true,
+        dropdownParent: $('#editModal')
+      });
+      // Seleciona a filial existente
+      $editFilial.val(lanc.filial_id_benner).trigger('change');
+
+      // Projetos
+      const projetos = await listProjetos(AuthService);
+      const $editProj = $('#editProjeto');
+      if ($editProj.hasClass('select2-hidden-accessible')) $editProj.select2('destroy');
+      $editProj.empty().append('<option value=""></option>');
+      projetos.forEach(p => {
+        const text = `${p.nome} - ${p.id_benner}`;
+        $editProj.append(new Option(text, p.id_benner));
+      });
+      $editProj.select2({
+        placeholder: 'Selecione um projeto',
+        width: '100%',
+        minimumInputLength: 0,
+        allowClear: true,
+        dropdownParent: $('#editModal')
+      });
+      $editProj.val(lanc.projeto_id_benner).trigger('change');
+
+      // Centros de Custo
+      const centros = await listCentrosCustos(AuthService);
+      const $editCC = $('#editCentroCusto');
+      if ($editCC.hasClass('select2-hidden-accessible')) $editCC.select2('destroy');
+      $editCC.empty().append('<option value=""></option>');
+      centros.forEach(c => {
+        const text = `${c.nome} - ${c.id_benner}`;
+        $editCC.append(new Option(text, c.id_benner));
+      });
+      $editCC.select2({
+        placeholder: 'Selecione um centro de custo',
+        width: '100%',
+        minimumInputLength: 0,
+        allowClear: true,
+        dropdownParent: $('#editModal')
+      });
+      $editCC.val(lanc.centro_custo_id_benner).trigger('change');
+
       // Preencher campos do formulário com as propriedades achatadas
       document.getElementById('editStatus').value = lanc.status || '';
       document.getElementById('editNumeroDocumento').value = lanc.numero_documento || '';
@@ -497,11 +615,7 @@ export async function renderFinanceiroLancamentosList() {
       });
       document.getElementById('editFormaPagamento').value = lanc.forma_pagamento || '';
       document.getElementById('editJustificativa').value = lanc.justificativa || '';
-      // Seleciona fornecedor pelo CNPJ (select2 já está populado)
-      $('#editFornecedor').val(lanc.fornecedor_cnpj).trigger('change');
-      document.getElementById('editFilial').value = lanc.filial_nome || '';
-      document.getElementById('editProjeto').value = lanc.projeto_nome || '';
-      document.getElementById('editCentroCusto').value = lanc.centro_custo_nome || '';
+      // Seleciona projeto e centro de custo nos selects já atualizados acima
       // Preenche preview de anexos existentes
       const preview = document.getElementById('editAnexoPreview');
       preview.innerHTML = formatAnexos(lanc.anexos);
@@ -585,12 +699,12 @@ export async function renderFinanceiroLancamentosList() {
       fornecedor_nome: lanc.fornecedor_nome,
       fornecedor_id_benner: lanc.fornecedor_id_benner,
       fornecedor_uuid: lanc.fornecedor_uuid,
-      filial_nome: lanc.filial_nome,
-      filial_id_benner: lanc.filial_id_benner,
-      projeto_nome: document.getElementById('editProjeto').value,
-      projeto_id_benner: lanc.projeto_id_benner,
-      centro_custo_nome: document.getElementById('editCentroCusto').value,
-      centro_custo_id_benner: lanc.centro_custo_id_benner
+      filial_id_benner: document.getElementById('editFilial').value,
+      filial_nome: $('#editFilial option:selected').text().split(' - ')[0] || '',
+      projeto_id_benner: document.getElementById('editProjeto').value,
+      projeto_nome: $('#editProjeto option:selected').text().split(' - ')[0] || '',
+      centro_custo_id_benner: document.getElementById('editCentroCusto').value,
+      centro_custo_nome: $('#editCentroCusto option:selected').text().split(' - ')[0] || ''
     };
     try {
       await updateLancamento(AuthService, id, updated);

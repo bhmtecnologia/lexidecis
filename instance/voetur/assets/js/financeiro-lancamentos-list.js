@@ -96,6 +96,16 @@ export async function renderFinanceiroLancamentosList() {
             <div class="modal-body">
               <div class="row g-3">
                 <div class="col-md-6 form-floating">
+                  <select class="form-select" id="editStatus" required>
+                    <option value="">Selecione o status</option>
+                    <option value="Novo">Novo</option>
+                    <option value="Salvo">Salvo</option>
+                    <option value="Enviado Controladoria">Enviado Controladoria</option>
+                    <option value="Devolvido">Devolvido</option>
+                  </select>
+                  <label for="editStatus">Status</label>
+                </div>
+                <div class="col-md-6 form-floating">
                   <input type="text" class="form-control" id="editNumeroDocumento" placeholder="N° Documento" required>
                   <label for="editNumeroDocumento">N° Documento</label>
                 </div>
@@ -113,6 +123,18 @@ export async function renderFinanceiroLancamentosList() {
                 <div class="col-md-6 form-floating">
                   <select class="form-select" id="editFornecedor" required aria-required="true"></select>
                   <label for="editFornecedor">Fornecedor</label>
+                </div>
+                <div class="col-md-6 form-floating">
+                  <input type="text" class="form-control" id="editFilial" placeholder="Filial" readonly>
+                  <label for="editFilial">Filial</label>
+                </div>
+                <div class="col-md-6 form-floating">
+                  <input type="text" class="form-control" id="editProjeto" placeholder="Projeto">
+                  <label for="editProjeto">Projeto</label>
+                </div>
+                <div class="col-md-6 form-floating">
+                  <input type="text" class="form-control" id="editCentroCusto" placeholder="Centro de Custo">
+                  <label for="editCentroCusto">Centro de Custo</label>
                 </div>
                 <div class="col-md-6 form-floating">
                   <input type="date" class="form-control" id="editDataEmissao" placeholder="Data de Emissão" required>
@@ -462,10 +484,11 @@ export async function renderFinanceiroLancamentosList() {
       }
       if (!lanc) return;
       // Preencher campos do formulário com as propriedades achatadas
-      document.getElementById('editNumeroDocumento').value = lanc.numeroDocumento || '';
-      document.getElementById('editTipoDocumento').value = lanc.tipoDocumento || '';
-      document.getElementById('editDataEmissao').value = lanc.dataEmissao ? new Date(lanc.dataEmissao).toISOString().split('T')[0] : '';
-      document.getElementById('editDataVencimento').value = lanc.vencimento ? new Date(lanc.vencimento).toISOString().split('T')[0] : '';
+      document.getElementById('editStatus').value = lanc.status || '';
+      document.getElementById('editNumeroDocumento').value = lanc.numero_documento || '';
+      document.getElementById('editTipoDocumento').value = lanc.tipo_documento || '';
+      document.getElementById('editDataEmissao').value = lanc.data_emissao ? new Date(lanc.data_emissao).toISOString().split('T')[0] : '';
+      document.getElementById('editDataVencimento').value = lanc.data_vencimento ? new Date(lanc.data_vencimento).toISOString().split('T')[0] : '';
       // Formata valor para padrão BRL
       const rawValor = lanc.valor != null ? parseFloat(lanc.valor) : 0;
       document.getElementById('editValor').value = rawValor.toLocaleString('pt-BR', {
@@ -476,6 +499,9 @@ export async function renderFinanceiroLancamentosList() {
       document.getElementById('editJustificativa').value = lanc.justificativa || '';
       // Seleciona fornecedor pelo CNPJ (select2 já está populado)
       $('#editFornecedor').val(lanc.fornecedor_cnpj).trigger('change');
+      document.getElementById('editFilial').value = lanc.filial_nome || '';
+      document.getElementById('editProjeto').value = lanc.projeto_nome || '';
+      document.getElementById('editCentroCusto').value = lanc.centro_custo_nome || '';
       // Preenche preview de anexos existentes
       const preview = document.getElementById('editAnexoPreview');
       preview.innerHTML = formatAnexos(lanc.anexos);
@@ -485,9 +511,13 @@ export async function renderFinanceiroLancamentosList() {
       const statusLC = (lanc.status || '').toLowerCase();
       const isEditable = statusLC === 'novo' || statusLC === 'salvo' || statusLC.includes('devolvido');
       [
+        'editStatus',
         'editNumeroDocumento',
         'editTipoDocumento',
         'editFornecedor',
+        'editFilial',
+        'editProjeto',
+        'editCentroCusto',
         'editDataEmissao',
         'editDataVencimento',
         'editValor',
@@ -543,7 +573,7 @@ export async function renderFinanceiroLancamentosList() {
     }
     // Monta objeto de atualização apenas com os campos editáveis em snake_case
     const updated = {
-      status: 'Salvo',
+      status: document.getElementById('editStatus').value,
       numero_documento: document.getElementById('editNumeroDocumento').value,
       tipo_documento: document.getElementById('editTipoDocumento').value,
       data_emissao: document.getElementById('editDataEmissao').value,
@@ -554,7 +584,13 @@ export async function renderFinanceiroLancamentosList() {
       fornecedor_cnpj: lanc.fornecedor_cnpj,
       fornecedor_nome: lanc.fornecedor_nome,
       fornecedor_id_benner: lanc.fornecedor_id_benner,
-      fornecedor_uuid: lanc.fornecedor_uuid
+      fornecedor_uuid: lanc.fornecedor_uuid,
+      filial_nome: lanc.filial_nome,
+      filial_id_benner: lanc.filial_id_benner,
+      projeto_nome: document.getElementById('editProjeto').value,
+      projeto_id_benner: lanc.projeto_id_benner,
+      centro_custo_nome: document.getElementById('editCentroCusto').value,
+      centro_custo_id_benner: lanc.centro_custo_id_benner
     };
     try {
       await updateLancamento(AuthService, id, updated);

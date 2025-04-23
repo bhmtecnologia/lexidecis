@@ -595,7 +595,7 @@ export async function renderFinanceiroLancamentoCreateV2() {
       // Monta o payload conforme o novo formato
       let payload = {
         app_id: "empresa_vtc_log",
-        status: "novo",
+        status: "Novo",
         valor: parseFloat(valor.replace(/[^\d,.-]/g, "").replace(",", ".")),
         tipo_documento: tipoDocumento,
         numero_documento: numeroDocumento,

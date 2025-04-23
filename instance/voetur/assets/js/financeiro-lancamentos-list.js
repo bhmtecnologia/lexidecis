@@ -239,6 +239,7 @@ export async function renderFinanceiroLancamentosList() {
                 created_by: l.created_by,
                 updated_by: l.updated_by,
                 analise_ia: l.analise_ia,
+                ocr_ia: l.ocr_ia,
                 ...l.dados,
                 anexos: (l.anexos && Array.isArray(l.anexos.anexos))
                   ? l.anexos.anexos
@@ -264,7 +265,7 @@ export async function renderFinanceiroLancamentosList() {
         language: {
           url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json'
         },
-        order: [[19, 'desc']],
+        order: [[21, 'desc']],
         columns: [
           {
             data: null,
@@ -295,6 +296,15 @@ export async function renderFinanceiroLancamentosList() {
               // encode to safely include in data attribute
               const encoded = encodeURIComponent(md);
               return `<button class="btn btn-sm btn-secondary view-analysis" style="font-size:0.75rem; line-height:1;" data-md="${encoded}">Ver</button>`;
+            }
+          },
+          {
+            data: 'ocr_ia',
+            title: 'ocr_ia',
+            render: text => {
+              if (!text) return '-';
+              const encoded = encodeURIComponent(text);
+              return `<button class="btn btn-sm btn-info view-ocr" style="font-size:0.75rem; line-height:1;" data-md="${encoded}">Ver OCR</button>`;
             }
           },
           { data: 'comentario_analista', title: 'comentario_analista', defaultContent: '-' },
@@ -496,12 +506,23 @@ export async function renderFinanceiroLancamentosList() {
     }
     // Handle "Ver Análise IA" button clicks
     const analysisBtn = event.target.closest('.view-analysis');
-    if (!analysisBtn) return;
-    const md = decodeURIComponent(analysisBtn.getAttribute('data-md') || '');
-    // Render Markdown to HTML
-    const html = (marked.parse ? marked.parse(md) : marked(md));
-    document.getElementById('analysisContent').innerHTML = html;
-    // Show modal
+    if (analysisBtn) {
+      const md = decodeURIComponent(analysisBtn.getAttribute('data-md') || '');
+      // Render Markdown to HTML
+      const html = (marked.parse ? marked.parse(md) : marked(md));
+      document.getElementById('analysisContent').innerHTML = html;
+      // Show modal
+      const analysisModal = new bootstrap.Modal(document.getElementById('analysisModal'));
+      analysisModal.show();
+      return;
+    }
+    // Handle "Ver OCR" button clicks
+    const ocrBtn = event.target.closest('.view-ocr');
+    if (!ocrBtn) return;
+    const md = decodeURIComponent(ocrBtn.getAttribute('data-md') || '');
+    // Clean markdown fences for raw JSON display
+    const clean = md.replace(/```json|```/g, '');
+    document.getElementById('analysisContent').innerHTML = `<pre style="white-space: pre-wrap; font-size:0.85rem;">${clean}</pre>`;
     const analysisModal = new bootstrap.Modal(document.getElementById('analysisModal'));
     analysisModal.show();
   });

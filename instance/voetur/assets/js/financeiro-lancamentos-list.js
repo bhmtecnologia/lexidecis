@@ -53,6 +53,7 @@ export async function renderFinanceiroLancamentosList() {
                   <tr>
                     <th>Ações</th>
                     <th>status</th>
+                    <th>analise_ia</th>
                     <th>comentario_analista</th>
                     <th>anexo(s)</th>
                     <th>valor</th>
@@ -153,6 +154,20 @@ export async function renderFinanceiroLancamentosList() {
         </div>
       </div>
     </div>
+    <!-- Modal de Análise IA -->
+    <div class="modal fade" id="analysisModal" tabindex="-1" aria-labelledby="analysisModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-theme-default text-white">
+            <h5 class="modal-title" id="analysisModalLabel">Análise IA</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          </div>
+          <div class="modal-body">
+            <div id="analysisContent" style="font-size:0.85rem; max-height:60vh; overflow:auto; padding:1rem; word-break: break-word;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
   `;
 
   /**
@@ -223,6 +238,7 @@ export async function renderFinanceiroLancamentosList() {
                 updated_at: l.updated_at,
                 created_by: l.created_by,
                 updated_by: l.updated_by,
+                analise_ia: l.analise_ia,
                 ...l.dados,
                 anexos: (l.anexos && Array.isArray(l.anexos.anexos))
                   ? l.anexos.anexos
@@ -254,13 +270,14 @@ export async function renderFinanceiroLancamentosList() {
             data: null,
             orderable: false,
             render: data => {
-              const isNovo = (data.status || '').toLowerCase() === 'novo';
-              const iconClass = isNovo ? 'iconly-Edit' : 'iconly-Show';
+              const statusLC = (data.status || '').toLowerCase();
+              const isEditable = statusLC === 'novo' || statusLC === 'salvo' || statusLC.includes('devolvido');
+              const iconClass = isEditable ? 'iconly-Edit' : 'iconly-Show';
               let html =
                 `<button class="btn btn-sm" data-action="edit" data-id="${data.id}"` +
                 ` style="background-color: var(--theme-default); border-color: var(--theme-default); color: #fff;">` +
                 `<i class="${iconClass} icli svg-color"></i></button>`;
-              if (isNovo) {
+              if (isEditable) {
                 html +=
                   ` <button class="btn btn-sm" data-action="send" data-id="${data.id}"` +
                   ` style="background-color: var(--theme-default); border-color: var(--theme-default); color: #fff;">` +
@@ -270,6 +287,16 @@ export async function renderFinanceiroLancamentosList() {
             }
           },
           { data: 'status',             title: 'status',             defaultContent: '-' },
+          {
+            data: 'analise_ia',
+            title: 'analise_ia',
+            render: md => {
+              if (!md) return '-';
+              // encode to safely include in data attribute
+              const encoded = encodeURIComponent(md);
+              return `<button class="btn btn-sm btn-secondary view-analysis" style="font-size:0.75rem; line-height:1;" data-md="${encoded}">Ver</button>`;
+            }
+          },
           { data: 'comentario_analista', title: 'comentario_analista', defaultContent: '-' },
           { data: 'anexos',             title: 'anexo(s)',            defaultContent: '-', render: a => formatAnexos(a) },
           { data: 'valor',              title: 'valor',              defaultContent: '-', render: v => isNaN(v)?'-':parseFloat(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) },
@@ -411,59 +438,72 @@ export async function renderFinanceiroLancamentosList() {
   // Handle "Editar" action buttons
   document.getElementById('content').addEventListener('click', (event) => {
     const btn = event.target.closest('button[data-action="edit"]');
-    if (!btn) return;
-    const id = btn.getAttribute('data-id');
-    // Get row data from DataTables
-    let lanc = null;
-    if (lancamentosTable) {
-      lancamentosTable.rows().every(function() {
-        const d = this.data();
-        if (String(d.id) === id) {
-          lanc = d;
-        }
+    if (btn) {
+      const id = btn.getAttribute('data-id');
+      // Get row data from DataTables
+      let lanc = null;
+      if (lancamentosTable) {
+        lancamentosTable.rows().every(function() {
+          const d = this.data();
+          if (String(d.id) === id) {
+            lanc = d;
+          }
+        });
+      }
+      if (!lanc) return;
+      // Preencher campos do formulário com as propriedades achatadas
+      document.getElementById('editNumeroDocumento').value = lanc.numeroDocumento || '';
+      document.getElementById('editTipoDocumento').value = lanc.tipoDocumento || '';
+      document.getElementById('editDataEmissao').value = lanc.dataEmissao ? new Date(lanc.dataEmissao).toISOString().split('T')[0] : '';
+      document.getElementById('editDataVencimento').value = lanc.vencimento ? new Date(lanc.vencimento).toISOString().split('T')[0] : '';
+      // Formata valor para padrão BRL
+      const rawValor = lanc.valor != null ? parseFloat(lanc.valor) : 0;
+      document.getElementById('editValor').value = rawValor.toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
       });
+      document.getElementById('editFormaPagamento').value = lanc.forma_pagamento || '';
+      document.getElementById('editJustificativa').value = lanc.justificativa || '';
+      // Seleciona fornecedor pelo CNPJ (select2 já está populado)
+      $('#editFornecedor').val(lanc.fornecedor_cnpj).trigger('change');
+      // Preenche preview de anexos existentes
+      const preview = document.getElementById('editAnexoPreview');
+      preview.innerHTML = formatAnexos(lanc.anexos);
+      // Armazenar id no form
+      document.getElementById('editForm').setAttribute('data-id', id);
+      // Set form fields to readonly/disabled if not editable status
+      const statusLC = (lanc.status || '').toLowerCase();
+      const isEditable = statusLC === 'novo' || statusLC === 'salvo' || statusLC.includes('devolvido');
+      [
+        'editNumeroDocumento',
+        'editTipoDocumento',
+        'editFornecedor',
+        'editDataEmissao',
+        'editDataVencimento',
+        'editValor',
+        'editFormaPagamento',
+        'editJustificativa'
+      ].forEach(fid => {
+        const field = document.getElementById(fid);
+        if (!field) return;
+        if (field.tagName === 'SELECT') field.disabled = !isEditable;
+        else field.readOnly = !isEditable;
+      });
+      const saveBtn = document.querySelector('#editForm button[type="submit"]');
+      if (saveBtn) saveBtn.disabled = !isEditable;
+      editModal.show();
+      return;
     }
-    if (!lanc) return;
-    // Preencher campos do formulário com as propriedades achatadas
-    document.getElementById('editNumeroDocumento').value = lanc.numeroDocumento || '';
-    document.getElementById('editTipoDocumento').value = lanc.tipoDocumento || '';
-    document.getElementById('editDataEmissao').value = lanc.dataEmissao ? new Date(lanc.dataEmissao).toISOString().split('T')[0] : '';
-    document.getElementById('editDataVencimento').value = lanc.vencimento ? new Date(lanc.vencimento).toISOString().split('T')[0] : '';
-    // Formata valor para padrão BRL
-    const rawValor = lanc.valor != null ? parseFloat(lanc.valor) : 0;
-    document.getElementById('editValor').value = rawValor.toLocaleString('pt-BR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-    document.getElementById('editFormaPagamento').value = lanc.forma_pagamento || '';
-    document.getElementById('editJustificativa').value = lanc.justificativa || '';
-    // Seleciona fornecedor pelo CNPJ (select2 já está populado)
-    $('#editFornecedor').val(lanc.fornecedor_cnpj).trigger('change');
-    // Preenche preview de anexos existentes
-    const preview = document.getElementById('editAnexoPreview');
-    preview.innerHTML = formatAnexos(lanc.anexos);
-    // Armazenar id no form
-    document.getElementById('editForm').setAttribute('data-id', id);
-    // Set form fields to readonly/disabled if not status 'novo'
-    const isNovo = (lanc.status || '').toLowerCase() === 'novo';
-    [
-      'editNumeroDocumento',
-      'editTipoDocumento',
-      'editFornecedor',
-      'editDataEmissao',
-      'editDataVencimento',
-      'editValor',
-      'editFormaPagamento',
-      'editJustificativa'
-    ].forEach(fid => {
-      const field = document.getElementById(fid);
-      if (!field) return;
-      if (field.tagName === 'SELECT') field.disabled = !isNovo;
-      else field.readOnly = !isNovo;
-    });
-    const saveBtn = document.querySelector('#editForm button[type="submit"]');
-    if (saveBtn) saveBtn.disabled = !isNovo;
-    editModal.show();
+    // Handle "Ver Análise IA" button clicks
+    const analysisBtn = event.target.closest('.view-analysis');
+    if (!analysisBtn) return;
+    const md = decodeURIComponent(analysisBtn.getAttribute('data-md') || '');
+    // Render Markdown to HTML
+    const html = (marked.parse ? marked.parse(md) : marked(md));
+    document.getElementById('analysisContent').innerHTML = html;
+    // Show modal
+    const analysisModal = new bootstrap.Modal(document.getElementById('analysisModal'));
+    analysisModal.show();
   });
 
   // Handle form submission for editing
@@ -482,7 +522,7 @@ export async function renderFinanceiroLancamentosList() {
     }
     // Monta objeto de atualização apenas com os campos editáveis em snake_case
     const updated = {
-      status: lanc.status,
+      status: 'Salvo',
       numero_documento: document.getElementById('editNumeroDocumento').value,
       tipo_documento: document.getElementById('editTipoDocumento').value,
       data_emissao: document.getElementById('editDataEmissao').value,

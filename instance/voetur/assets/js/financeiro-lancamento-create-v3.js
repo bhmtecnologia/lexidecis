@@ -279,6 +279,44 @@ export async function renderFinanceiroLancamentoCreateV3() {
     });
   }
 
+  // Upload imediato dos boletos ao selecionar
+  const boletoInput = document.getElementById("arquivo");
+  window.boletoUrls = []; // armazena URLs dos uploads
+  if (boletoInput) {
+    boletoInput.addEventListener("change", async (e) => {
+      window.boletoUrls = [];
+      const files = Array.from(e.target.files);
+      // Limpa preview anterior
+      let previewEl = document.getElementById("boletoPreview");
+      if (previewEl) {
+        previewEl.innerHTML = "";
+      }
+      for (const file of files) {
+        try {
+          const resp = await uploadArquivo(AuthService, file);
+          const url = resp.filename || resp.url || resp;
+          window.boletoUrls.push(url);
+          // Exibe link de preview de cada boleto
+          previewEl = document.getElementById("boletoPreview")
+            || (() => {
+              const div = document.createElement("div");
+              div.id = "boletoPreview";
+              document.querySelector("#arquivo").closest(".mb-3").appendChild(div);
+              return div;
+            })();
+          const link = document.createElement("a");
+          link.href = url;
+          link.target = "_blank";
+          link.textContent = file.name;
+          previewEl.appendChild(link);
+          previewEl.appendChild(document.createElement("br"));
+        } catch (err) {
+          showAlert(`Erro ao enviar boleto ${file.name}: ${handleError(err)}`, "danger");
+        }
+      }
+    });
+  }
+
   // Classificação automática ao selecionar anexo (upload inicial)
   const arquivoClassify = document.getElementById("arquivoClassify");
   arquivoClassify.addEventListener("change", async (e) => {
@@ -716,7 +754,14 @@ export async function renderFinanceiroLancamentoCreateV3() {
     if (classification.filename) {
       payload.anexo.push({ url: classification.filename, categoria: "Nota Fiscal" });
     }
-    // Anexos de Boletos, se houver
+    // Usa URLs pré-carregadas dos boletos
+    if (window.boletoUrls && window.boletoUrls.length) {
+      window.boletoUrls.forEach(url => {
+        payload.anexo.push({ url, categoria: "Boleto" });
+      });
+    }
+    /*
+    // Anexos de Boletos, se houver (original, removido para evitar uploads duplicados)
     const boletoInput = document.getElementById("arquivo");
     if (boletoInput && boletoInput.files.length) {
       for (const file of boletoInput.files) {
@@ -724,9 +769,10 @@ export async function renderFinanceiroLancamentoCreateV3() {
         const uploadResp = await uploadArquivo(AuthService, file);
         // Extrai URL do retorno (filename ou url)
         const boletoUrl = uploadResp.filename || uploadResp.url || uploadResp;
-        payload.anexo.push({ url: boletoUrl, categoria: "Comprovante" });
+        payload.anexo.push({ url: boletoUrl, categoria: "Boleto" });
       }
     }
+    */
 
 
 

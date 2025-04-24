@@ -161,6 +161,11 @@ export async function renderFinanceiroLancamentoCreateV3() {
             <form id="lancamentoForm">
               <!-- Link do Anexo -->
               <div id="attachmentLink" class="mb-3"></div>
+              <!-- Log de Ações -->
+              <div class="mb-3">
+                <label for="logField" class="form-label">Log</label>
+                <textarea class="form-control" id="logField" rows="5" readonly style="font-size:0.85em;"></textarea>
+              </div>
               <!-- Mesmos campos da v2... -->
               <!-- Tipo de Documento -->
               <div class="mb-3">
@@ -257,10 +262,28 @@ export async function renderFinanceiroLancamentoCreateV3() {
                 <input type="file" class="form-control" id="arquivo" accept="image/png,image/jpeg" multiple>
                 <small class="form-text text-muted">Máx. 4MB por arquivo. PNG/JPEG.</small>
               </div>
-              <!-- Vencimento -->
-              <div class="mb-3">
-                <label for="vencimento" class="form-label">Vencimento <span style="color:red">*</span></label>
-                <input type="date" class="form-control" id="vencimento" required>
+              <!-- Parcelas -->
+              <div id="parcelasSection" class="mb-3">
+                <label class="form-label">Parcelas <span style="color:red">*</span></label>
+                <div id="parcelasContainer">
+                  <div class="parcela-item mb-2">
+                    <input type="date" name="parcelaData[]" class="form-control parcela-data mb-1" required>
+                    <input type="text" name="parcelaValor[]" class="form-control parcela-valor" placeholder="Valor da Parcela" required>
+                  </div>
+                </div>
+                <button type="button" id="addParcelaBtn" class="btn btn-secondary btn-sm mt-2">+ Parcela</button>
+              </div>
+              <!-- Itens da Nota Fiscal -->
+              <div id="itensSection" class="mb-3">
+                <label class="form-label">Itens <span style="color:red">*</span></label>
+                <div id="itensContainer">
+                  <div class="item-row mb-2">
+                    <input type="text" name="itemDescricao[]" class="form-control item-descricao mb-1" placeholder="Descrição do Item" required>
+                    <input type="text" name="itemQuantidade[]" class="form-control item-quantidade mb-1" placeholder="Quantidade" required>
+                    <input type="text" name="itemValorUnitario[]" class="form-control item-valor-unitario" placeholder="Valor Unitário" required>
+                  </div>
+                </div>
+                <button type="button" id="addItemBtn" class="btn btn-secondary btn-sm mt-2">+ Item</button>
               </div>
               <!-- Justificativa -->
               <div class="mb-3">
@@ -275,6 +298,15 @@ export async function renderFinanceiroLancamentoCreateV3() {
       </div>
     </div>
   `;
+
+  // Armazena entradas de log
+  window.logEntries = [];
+  function addLog(entry) {
+    const timestamp = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+    window.logEntries.unshift(`${timestamp} - ${entry}`);
+    const logEl = document.getElementById("logField");
+    if (logEl) logEl.value = window.logEntries.join("\n");
+  }
 
   // Inicializa Select2
   if (window.$ && $.fn.select2) {
@@ -295,6 +327,15 @@ export async function renderFinanceiroLancamentoCreateV3() {
       e.target.value = numeric.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     });
   }
+
+  // Aplica máscara de moeda nos campos de valor de parcela e valor unitário de item
+  document.addEventListener("input", (e) => {
+    if (e.target && (e.target.classList.contains("parcela-valor") || e.target.classList.contains("item-valor-unitario"))) {
+      let v = e.target.value.replace(/\D/g, "");
+      const numeric = Number(v) / 100;
+      e.target.value = numeric.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+  });
 
   // Exibe campo de anexo para boletos
   const formaEl = document.getElementById("formaPagamento");
@@ -376,6 +417,34 @@ export async function renderFinanceiroLancamentoCreateV3() {
       const info = resultados[0];
       // Armazena resultado para submissão
       window.classificationResult = info;
+      // Armazena dados de auditoria (extendido)
+      window.auditInfo = {
+        tipo_documento: info.tipo_documento,
+        url_anexo: info.filename,
+        nome_anexo: files[0].name,
+        status_imagem: info.status_imagem,
+        usuario: AuthService.user.email,
+        data_hora: new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })
+      };
+      // Preenche campo de log no form de forma humanizada (extendido)
+      const logEl = document.getElementById("logField");
+      if (logEl) {
+        logEl.value =
+          `Status da Imagem: ${window.auditInfo.status_imagem || '-'}\n` +
+          `Tipo de Documento: ${window.auditInfo.tipo_documento || '-'}\n` +
+          `URL do Anexo: ${window.auditInfo.url_anexo || '-'}\n` +
+          `Nome do Arquivo: ${window.auditInfo.nome_anexo || '-'}\n` +
+          `Usuário: ${window.auditInfo.usuario || '-'}\n` +
+          `Data/Hora: ${window.auditInfo.data_hora || '-'}`;
+      }
+      // Adiciona log de classificação
+      addLog(`Documento classificado como ${info.tipo_documento}`);
+      // Log do retorno cru da API de classificação
+      addLog(`Retorno da API: ${JSON.stringify(info)}`);
+      // Log do link do anexo em linha separada
+      if (info.filename) {
+        addLog(`Anexo: ${info.filename}`);
+      }
       // Exibe link clicável do anexo
       const attachmentEl = document.getElementById("attachmentLink");
       if (attachmentEl && info.filename) {
@@ -446,7 +515,7 @@ export async function renderFinanceiroLancamentoCreateV3() {
         }
 
         // Oculta campo Vencimento para Nota Fiscal
-        const vencEl = document.getElementById("vencimento");
+        const vencEl = document.getElementById("vencimentoParcela1");
         if (vencEl) {
           const mb3 = vencEl.closest(".mb-3");
           if (mb3) mb3.classList.add("d-none");
@@ -498,6 +567,25 @@ export async function renderFinanceiroLancamentoCreateV3() {
             }
           }
           showAlert("Documento classificado como Nota Fiscal. Campos preenchidos.", "success");
+          // Preenche itens da Nota Fiscal no formulário
+          const itensData = info.itens || [];
+          const itensContainer = document.getElementById('itensContainer');
+          if (itensContainer) {
+            itensContainer.innerHTML = '';
+            itensData.forEach(item => {
+              // Formata valor unitário para pt-BR
+              const numVal = Number(item.valor_unitario);
+              const formattedVal = numVal.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+              const row = document.createElement('div');
+              row.className = 'item-row mb-2';
+              row.innerHTML = `
+                <input type="text" name="itemDescricao[]" class="form-control item-descricao mb-1" placeholder="Descrição do Item" required value="${item.descricao}">
+                <input type="text" name="itemQuantidade[]" class="form-control item-quantidade mb-1" placeholder="Quantidade" required value="${item.quantidade}">
+                <input type="text" name="itemValorUnitario[]" class="form-control item-valor-unitario" placeholder="Valor Unitário" required value="${formattedVal}">
+              `;
+              itensContainer.appendChild(row);
+            });
+          }
         } else {
           // Oculta formulário normal
           document.getElementById("form-section").classList.add("d-none");
@@ -525,7 +613,26 @@ export async function renderFinanceiroLancamentoCreateV3() {
               const fornecedorSelect = document.getElementById("fornecedorSelect");
               fornecedorSelect.value = "";
               fornecedorSelect.disabled = false;
+              // Força marcação manual e bloqueia o switch de Fornecedor
+              const unlockFornecedor = document.getElementById("unlockFornecedor");
+              if (unlockFornecedor) {
+                unlockFornecedor.checked = true;
+                unlockFornecedor.disabled = true;
+              }
               if (window.$ && $.fn.select2) $("#fornecedorSelect").trigger("change");
+
+              // Força marcação manual e bloqueia o switch de Filial
+              const unlockFilial = document.getElementById("unlockFilial");
+              if (unlockFilial) {
+                unlockFilial.checked = true;
+                unlockFilial.disabled = true;
+              }
+              // Habilita o select de Filial para edição manual
+              const filialSelect = document.getElementById("filialSelect");
+              if (filialSelect) {
+                filialSelect.disabled = false;
+                if (window.$ && $.fn.select2) $("#filialSelect").trigger("change");
+              }
             });
           }
         }
@@ -600,18 +707,21 @@ export async function renderFinanceiroLancamentoCreateV3() {
   if (unlockNumero) {
     unlockNumero.addEventListener("change", e => {
       document.getElementById("numeroDocumento").disabled = !e.target.checked;
+      addLog("N° Documento definido como " + (e.target.checked ? "Manual" : "Automático"));
     });
   }
   const unlockData = document.getElementById("unlockData");
   if (unlockData) {
     unlockData.addEventListener("change", e => {
       document.getElementById("dataEmissao").disabled = !e.target.checked;
+      addLog("Data de Emissão definida como " + (e.target.checked ? "Manual" : "Automática"));
     });
   }
   const unlockValor = document.getElementById("unlockValor");
   if (unlockValor) {
     unlockValor.addEventListener("change", e => {
       document.getElementById("valor").disabled = !e.target.checked;
+      addLog("Valor Bruto definido como " + (e.target.checked ? "Manual" : "Automático"));
     });
   }
   const unlockFilial = document.getElementById("unlockFilial");
@@ -620,6 +730,7 @@ export async function renderFinanceiroLancamentoCreateV3() {
       const sel = document.getElementById("filialSelect");
       sel.disabled = !e.target.checked;
       if (window.$ && $.fn.select2) $("#filialSelect").trigger("change");
+      addLog("Filial definida como " + (e.target.checked ? "Manual" : "Automática"));
     });
   }
   const unlockFornecedor = document.getElementById("unlockFornecedor");
@@ -628,6 +739,7 @@ export async function renderFinanceiroLancamentoCreateV3() {
       const sel = document.getElementById("fornecedorSelect");
       sel.disabled = !e.target.checked;
       if (window.$ && $.fn.select2) $("#fornecedorSelect").trigger("change");
+      addLog("Fornecedor definido como " + (e.target.checked ? "Manual" : "Automático"));
     });
   }
 
@@ -737,10 +849,15 @@ export async function renderFinanceiroLancamentoCreateV3() {
 
       // Preencher selects (mesma lógica da v2)...
 
-      // Data emission/vencimento default
+      // Data de Emissão padrão
       document.getElementById("dataEmissao").value = new Date().toISOString().split("T")[0];
-      let dv = new Date(); dv.setDate(dv.getDate()+3);
-      document.getElementById("vencimento").value = dv.toISOString().split("T")[0];
+      // Define data padrão para todas as parcelas (hoje + 3 dias)
+      const dv = new Date();
+      dv.setDate(dv.getDate() + 3);
+      const dvStr = dv.toISOString().split("T")[0];
+      document.querySelectorAll('.parcela-data').forEach(el => {
+        el.value = dvStr;
+      });
 
       // Removido: document.getElementById("form-section").classList.remove("d-none");
       // Não exibe o form-section até classificação
@@ -787,7 +904,7 @@ export async function renderFinanceiroLancamentoCreateV3() {
       data_emissao: classification.data_emissao || document.getElementById("dataEmissao").value,
       // somente para contas a pagar
       data_vencimento: classification.tipo_documento === "Conta a pagar"
-        ? document.getElementById("vencimento").value
+        ? document.getElementById("vencimentoParcela1").value
         : null,
       // Converte valor total da nota (classification.valor_total_nota) para número pt-BR
       valor: (() => {
@@ -810,6 +927,21 @@ export async function renderFinanceiroLancamentoCreateV3() {
       usuario_inclusao: AuthService.user.email,
       uid: AuthService.user.uid
     };
+
+    // Inclui auditoria nos dados
+    payload.dados = { auditoria: window.auditInfo || {} };
+    // Parcelas de vencimento e valor
+    payload.dados.parcelas = [];
+    document.querySelectorAll('.parcela-item').forEach(item => {
+      const dateEl = item.querySelector('.parcela-data');
+      const valorEl = item.querySelector('.parcela-valor');
+      if (dateEl && valorEl && dateEl.value) {
+        // Converte string pt-BR para número
+        const raw = valorEl.value.replace(/\./g, '').replace(',', '.');
+        const numVal = Number(raw);
+        payload.dados.parcelas.push({ data_vencimento: dateEl.value, valor: numVal });
+      }
+    });
 
     // Filial
     const filEl = document.getElementById("filialSelect");
@@ -840,27 +972,19 @@ export async function renderFinanceiroLancamentoCreateV3() {
       payload.fornecedor_nome = classification.fornecedor || document.getElementById("supNome").value;
     }
 
-    // Itens de nota fiscal, se aplicável
-    payload.itens = Array.isArray(classification.itens) ? classification.itens.map(item => {
-      // Converte valor_unitario para número pt-BR corretamente
-      let raw = item.valor_unitario.toString();
-      let numUnit;
-      if (raw.includes(',') && raw.includes('.')) {
-        // formato europeu com milhares e decimais: "1.234,56"
-        numUnit = Number(raw.replace(/\./g, '').replace(',', '.'));
-      } else if (raw.includes(',')) {
-        // apenas vírgula decimal: "1234,56"
-        numUnit = Number(raw.replace(',', '.'));
-      } else {
-        // ponto decimal ou inteiro: "1234.56" ou "1234"
-        numUnit = Number(raw);
+    // Itens de nota fiscal a partir do formulário
+    payload.itens = [];
+    document.querySelectorAll('.item-row').forEach(row => {
+      const descEl = row.querySelector('.item-descricao');
+      const qtyEl = row.querySelector('.item-quantidade');
+      const valEl = row.querySelector('.item-valor-unitario');
+      if (descEl && qtyEl && valEl && descEl.value && qtyEl.value) {
+        const quantidade = Number(qtyEl.value.replace(',', '.'));
+        const rawVal = valEl.value.replace(/\./g, '').replace(',', '.');
+        const valor_unitario = Number(rawVal);
+        payload.itens.push({ descricao: descEl.value, quantidade, valor_unitario });
       }
-      return {
-        descricao: item.descricao,
-        quantidade: item.quantidade,
-        valor_unitario: numUnit
-      };
-    }) : [];
+    });
 
     // Anexos: Nota Fiscal e Comprovantes de Boleto
     payload.anexo = [];
@@ -894,6 +1018,8 @@ export async function renderFinanceiroLancamentoCreateV3() {
       // **Aqui** chame createLancamento para o endpoint v3
       const result = await createLancamento(AuthService, payload, { apiVersion: "v3" });
       if (!result.id) throw new Error("Resposta inesperada da API.");
+      // Log de criação do lançamento
+      addLog(`Lançamento criado por ${AuthService.user.email}`);
       await showAlert("Lançamento criado com sucesso! ID: " + result.id, "success");
       lancForm.reset();
       resetFormFields();
@@ -908,4 +1034,31 @@ export async function renderFinanceiroLancamentoCreateV3() {
 
 // Registra a rota v3
 registerRoute("#financeiro-lancamento-create-v3", renderFinanceiroLancamentoCreateV3);
-// (Busca e substituição global de info.cnpj_tomar por info.cnpj_tomador)
+// Adds new parcela fields when "+ Parcela" is clicked
+document.addEventListener('click', event => {
+  if (event.target && event.target.id === 'addParcelaBtn') {
+    const container = document.getElementById('parcelasContainer');
+    const item = document.createElement('div');
+    item.className = 'parcela-item mb-2';
+    item.innerHTML = `
+      <input type="date" name="parcelaData[]" class="form-control parcela-data mb-1" required>
+      <input type="text" name="parcelaValor[]" class="form-control parcela-valor" placeholder="Valor da Parcela" required>
+    `;
+    container.appendChild(item);
+  }
+});
+
+// Adds new item fields when "+ Item" is clicked
+document.addEventListener('click', event => {
+  if (event.target && event.target.id === 'addItemBtn') {
+    const container = document.getElementById('itensContainer');
+    const item = document.createElement('div');
+    item.className = 'item-row mb-2';
+    item.innerHTML = `
+      <input type="text" name="itemDescricao[]" class="form-control item-descricao mb-1" placeholder="Descrição do Item" required>
+      <input type="text" name="itemQuantidade[]" class="form-control item-quantidade mb-1" placeholder="Quantidade" required>
+      <input type="text" name="itemValorUnitario[]" class="form-control item-valor-unitario" placeholder="Valor Unitário" required>
+    `;
+    container.appendChild(item);
+  }
+});

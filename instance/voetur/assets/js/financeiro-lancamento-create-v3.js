@@ -509,6 +509,25 @@ export async function renderFinanceiroLancamentoCreateV3() {
           if (supNomeEl) supNomeEl.value = info.fornecedor || "";
           const supCnpjEl = document.getElementById("supCnpj");
           if (supCnpjEl) supCnpjEl.value = info.cnpj_fornecedor || "";
+          // Botão para preencher manualmente
+          let manualBtn = document.getElementById("btnManualEntry");
+          if (!manualBtn) {
+            manualBtn = document.createElement("button");
+            manualBtn.type = "button";
+            manualBtn.id = "btnManualEntry";
+            manualBtn.className = "btn btn-secondary mt-3";
+            manualBtn.textContent = "Preencher manualmente";
+            supplierSection.appendChild(manualBtn);
+            manualBtn.addEventListener("click", () => {
+              supplierSection.classList.add("d-none");
+              const formSection = document.getElementById("form-section");
+              formSection.classList.remove("d-none");
+              const fornecedorSelect = document.getElementById("fornecedorSelect");
+              fornecedorSelect.value = "";
+              fornecedorSelect.disabled = false;
+              if (window.$ && $.fn.select2) $("#fornecedorSelect").trigger("change");
+            });
+          }
         }
       } else if (info.tipo_documento === "Conta a pagar") {
         // Preenche Tipo de Documento (read-only)

@@ -177,12 +177,24 @@ export async function renderFinanceiroLancamentoCreateV3() {
               </div>
               <!-- Filial -->
               <div class="mb-3">
-                <label for="filialSelect" class="form-label">Filial <span style="color:red">*</span></label>
+                <div class="d-flex justify-content-between align-items-center">
+                  <label for="filialSelect" class="form-label">Filial <span style="color:red">*</span></label>
+                  <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox" id="unlockFilial">
+                    <label class="form-check-label" for="unlockFilial">Desbloquear</label>
+                  </div>
+                </div>
                 <select class="form-control" id="filialSelect" required><option value="">Selecione</option></select>
               </div>
               <!-- Fornecedor -->
               <div class="mb-3">
-                <label for="fornecedorSelect" class="form-label">Fornecedor <span style="color:red">*</span></label>
+                <div class="d-flex justify-content-between align-items-center">
+                  <label for="fornecedorSelect" class="form-label">Fornecedor <span style="color:red">*</span></label>
+                  <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox" id="unlockFornecedor">
+                    <label class="form-check-label" for="unlockFornecedor">Desbloquear</label>
+                  </div>
+                </div>
                 <select class="form-control" id="fornecedorSelect" required><option value="">Selecione</option></select>
               </div>
               <!-- Centro de Custo -->
@@ -197,18 +209,36 @@ export async function renderFinanceiroLancamentoCreateV3() {
               </div>
               <!-- Número do Documento -->
               <div class="mb-3">
-                <label for="numeroDocumento" class="form-label">N° Documento <span style="color:red">*</span></label>
+                <div class="d-flex justify-content-between align-items-center">
+                  <label for="numeroDocumento" class="form-label">N° Documento <span style="color:red">*</span></label>
+                  <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox" id="unlockNumero">
+                    <label class="form-check-label" for="unlockNumero">Desbloquear</label>
+                  </div>
+                </div>
                 <input type="text" class="form-control" id="numeroDocumento" required placeholder="Digite o número do documento">
               </div>
               <!-- Data de Emissão -->
               <div class="mb-3">
-                <label for="dataEmissao" class="form-label">Data de Emissão <span style="color:red">*</span></label>
+                <div class="d-flex justify-content-between align-items-center">
+                  <label for="dataEmissao" class="form-label">Data de Emissão <span style="color:red">*</span></label>
+                  <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox" id="unlockData">
+                    <label class="form-check-label" for="unlockData">Desbloquear</label>
+                  </div>
+                </div>
                 <input type="date" class="form-control" id="dataEmissao" required>
                 <small class="form-text text-muted">Não pode ser superior à data atual.</small>
               </div>
               <!-- Valor Bruto -->
               <div class="mb-3">
-                <label for="valor" class="form-label">Valor Bruto <span style="color:red">*</span></label>
+                <div class="d-flex justify-content-between align-items-center">
+                  <label for="valor" class="form-label">Valor Bruto <span style="color:red">*</span></label>
+                  <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox" id="unlockValor">
+                    <label class="form-check-label" for="unlockValor">Desbloquear</label>
+                  </div>
+                </div>
                 <input type="text" class="form-control" id="valor" required placeholder="0,00">
               </div>
               <!-- Forma de Pagamento -->
@@ -513,9 +543,44 @@ export async function renderFinanceiroLancamentoCreateV3() {
       // (A exibição do form-section agora é controlada pelo fluxo de fornecedor acima)
     }
   });
-
   // Mesmas validações de campo da v2...
   // [ ... copiar todos os eventListeners de change, blur, keypress etc. da v2 aqui ... ]
+
+  // Permite desbloquear edição de campos pré-preenchidos
+  const unlockNumero = document.getElementById("unlockNumero");
+  if (unlockNumero) {
+    unlockNumero.addEventListener("change", e => {
+      document.getElementById("numeroDocumento").disabled = !e.target.checked;
+    });
+  }
+  const unlockData = document.getElementById("unlockData");
+  if (unlockData) {
+    unlockData.addEventListener("change", e => {
+      document.getElementById("dataEmissao").disabled = !e.target.checked;
+    });
+  }
+  const unlockValor = document.getElementById("unlockValor");
+  if (unlockValor) {
+    unlockValor.addEventListener("change", e => {
+      document.getElementById("valor").disabled = !e.target.checked;
+    });
+  }
+  const unlockFilial = document.getElementById("unlockFilial");
+  if (unlockFilial) {
+    unlockFilial.addEventListener("change", e => {
+      const sel = document.getElementById("filialSelect");
+      sel.disabled = !e.target.checked;
+      if (window.$ && $.fn.select2) $("#filialSelect").trigger("change");
+    });
+  }
+  const unlockFornecedor = document.getElementById("unlockFornecedor");
+  if (unlockFornecedor) {
+    unlockFornecedor.addEventListener("change", e => {
+      const sel = document.getElementById("fornecedorSelect");
+      sel.disabled = !e.target.checked;
+      if (window.$ && $.fn.select2) $("#fornecedorSelect").trigger("change");
+    });
+  }
 
   // Carrega dados das APIs e exibe formulário
   AuthService.onAuthChange(user => {

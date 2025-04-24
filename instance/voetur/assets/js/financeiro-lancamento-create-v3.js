@@ -359,18 +359,18 @@ export async function renderFinanceiroLancamentoCreateV3() {
         // Preenche CNPJ
         const cnpjEl = document.getElementById("cnpj");
         if (cnpjEl) {
-          cnpjEl.value = info.cnpj || "";
+          cnpjEl.value = info.cnpj_fornecedor || "";
           cnpjEl.readOnly = true;
         }
 
-        // Recarrega fornecedores e busca pelo CNPJ
+        // Recarrega fornecedores e busca pelo CNPJ do fornecedor
         try {
           window.fornecedoresData = await listFornecedores(AuthService);
         } catch (err) {
           console.error("Erro ao recarregar fornecedores:", err);
         }
         const fornecedorSelect = document.getElementById("fornecedorSelect");
-        const match = (window.fornecedoresData || []).find(f => f.cnpj === info.cnpj);
+        const match = (window.fornecedoresData || []).find(f => f.cnpj === info.cnpj_fornecedor);
         // Hide classification-section before toggling others
         document.getElementById("classification-section").classList.add("d-none");
         if (match) {
@@ -383,6 +383,14 @@ export async function renderFinanceiroLancamentoCreateV3() {
           fornecedorSelect.value = optionValue;
           fornecedorSelect.disabled = true;
           if (window.$ && $.fn.select2) $("#fornecedorSelect").trigger("change");
+          // Preenche filial com o tomador (sua filial que contratou)
+          const filialMatch = (window.filiaisData || []).find(f => f.cnpj === info.cnpj_tomador);
+          if (filialMatch) {
+            const filialSelect = document.getElementById("filialSelect");
+            filialSelect.value = filialMatch.id || filialMatch.uuid || filialMatch.nome;
+            filialSelect.disabled = true;
+            if (window.$ && $.fn.select2) $("#filialSelect").trigger("change");
+          }
           showAlert("Documento classificado como Nota Fiscal. Campos preenchidos.", "success");
         } else {
           // Oculta formulário normal
@@ -394,7 +402,7 @@ export async function renderFinanceiroLancamentoCreateV3() {
           const supNomeEl = document.getElementById("supNome");
           if (supNomeEl) supNomeEl.value = info.fornecedor || "";
           const supCnpjEl = document.getElementById("supCnpj");
-          if (supCnpjEl) supCnpjEl.value = info.cnpj || "";
+          if (supCnpjEl) supCnpjEl.value = info.cnpj_fornecedor || "";
         }
       } else if (info.tipo_documento === "Conta a pagar") {
         // Preenche Tipo de Documento (read-only)
@@ -528,7 +536,7 @@ export async function renderFinanceiroLancamentoCreateV3() {
         filiaisData.forEach(f => {
           const opt = document.createElement("option");
           opt.value = f.id || f.uuid || f.nome; // ajuste conforme o campo de identificação
-          opt.text = f.nome;
+          opt.text = `${f.nome} (${f.cnpj})`;
           filialSelectEl.add(opt);
         });
         // Atualiza Select2, se ativo
@@ -654,16 +662,16 @@ export async function renderFinanceiroLancamentoCreateV3() {
     payload.projeto_nome = projEl && projEl.value ? projEl.options[projEl.selectedIndex].text : null;
 
     // Fornecedor ou novo cadastro
-    if (classification.tipo_documento === "Nota Fiscal" && classification.cnpj) {
+    if (classification.tipo_documento === "Nota Fiscal" && classification.cnpj_fornecedor) {
       // fornecedor existente
-      payload.fornecedor_cnpj = classification.cnpj;
+      payload.fornecedor_cnpj = classification.cnpj_fornecedor;
       payload.fornecedor_id = document.getElementById("fornecedorSelect").value;
       payload.fornecedor_nome = document.getElementById("fornecedorSelect").options[
         document.getElementById("fornecedorSelect").selectedIndex
       ].text.split(" (")[0];
     } else {
       // novo fornecedor
-      payload.fornecedor_cnpj = classification.cnpj || document.getElementById("supCnpj").value;
+      payload.fornecedor_cnpj = classification.cnpj_fornecedor || document.getElementById("supCnpj").value;
       payload.fornecedor_nome = classification.fornecedor || document.getElementById("supNome").value;
     }
 
@@ -714,3 +722,4 @@ export async function renderFinanceiroLancamentoCreateV3() {
 
 // Registra a rota v3
 registerRoute("#financeiro-lancamento-create-v3", renderFinanceiroLancamentoCreateV3);
+// (Busca e substituição global de info.cnpj_tomar por info.cnpj_tomador)

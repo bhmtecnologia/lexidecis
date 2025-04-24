@@ -81,12 +81,37 @@ function resetFormFields() {
   document.getElementById("dataEmissao").value = new Date().toISOString().split("T")[0];
   document.getElementById("valor").value = "";
   document.getElementById("formaPagamento").value = "";
-  // Vencimento = hoje + 3 dias
-  let venc = new Date();
-  venc.setDate(venc.getDate() + 3);
-  document.getElementById("vencimento").value = venc.toISOString().split("T")[0];
   document.getElementById("justificativa").value = "";
   document.getElementById("arquivo").value = "";
+
+  // Reset parcelas para o estado inicial (uma parcela com data hoje+3 dias)
+  const parcelasContainer = document.getElementById("parcelasContainer");
+  if (parcelasContainer) {
+    const dv = new Date();
+    dv.setDate(dv.getDate() + 3);
+    const dvStr = dv.toISOString().split("T")[0];
+    parcelasContainer.innerHTML = `
+      <div class="parcela-item mb-2">
+        <span class="parcela-index me-2">1</span>
+        <input type="date" name="parcelaData[]" class="form-control parcela-data mb-1" required value="${dvStr}">
+        <input type="text" name="parcelaValor[]" class="form-control parcela-valor" placeholder="Valor da Parcela" required>
+      </div>
+    `;
+    if (typeof updateParcelaIndices === "function") updateParcelaIndices();
+  }
+  // Reset itens para o estado inicial (um item em branco)
+  const itensContainer = document.getElementById("itensContainer");
+  if (itensContainer) {
+    itensContainer.innerHTML = `
+      <div class="item-row mb-2">
+        <span class="item-index me-2">1</span>
+        <input type="text" name="itemDescricao[]" class="form-control item-descricao mb-1" placeholder="Descrição do Item" required>
+        <input type="text" name="itemQuantidade[]" class="form-control item-quantidade mb-1" placeholder="Quantidade" required>
+        <input type="text" name="itemValorUnitario[]" class="form-control item-valor-unitario" placeholder="Valor Unitário" required>
+      </div>
+    `;
+    if (typeof updateItemIndices === "function") updateItemIndices();
+  }
 }
 
 export async function renderFinanceiroLancamentoCreateV3() {
@@ -355,8 +380,19 @@ export async function renderFinanceiroLancamentoCreateV3() {
   window.boletoUrls = []; // armazena URLs dos uploads
   if (boletoInput) {
     boletoInput.addEventListener("change", async (e) => {
-      window.boletoUrls = [];
       const files = Array.from(e.target.files);
+      if (files.length > 4) {
+        showAlert("Você pode anexar no máximo 4 anexos de boleto.", "warning");
+        e.target.value = "";
+        // Desabilita o botão de submit ao tentar selecionar muitos arquivos
+        const submitBtn = document.querySelector("#lancamentoForm button[type=submit]");
+        if (submitBtn) submitBtn.disabled = true;
+        return;
+      }
+      // Desabilita o botão de submit durante o upload dos boletos
+      const submitBtn = document.querySelector("#lancamentoForm button[type=submit]");
+      if (submitBtn) submitBtn.disabled = true;
+      window.boletoUrls = [];
       // Limpa preview anterior
       let previewEl = document.getElementById("boletoPreview");
       if (previewEl) {
@@ -367,6 +403,8 @@ export async function renderFinanceiroLancamentoCreateV3() {
           const resp = await uploadArquivo(AuthService, file);
           const url = resp.filename || resp.url || resp;
           window.boletoUrls.push(url);
+          // Registra log de boleto anexado
+          addLog(`Boleto anexado: ${url}`);
           // Exibe link de preview de cada boleto
           previewEl = document.getElementById("boletoPreview")
             || (() => {
@@ -385,6 +423,8 @@ export async function renderFinanceiroLancamentoCreateV3() {
           showAlert(`Erro ao enviar boleto ${file.name}: ${handleError(err)}`, "danger");
         }
       }
+      // Reabilita o botão criar lançamento após uploads de boleto
+      if (submitBtn) submitBtn.disabled = false;
     });
   }
 
@@ -928,8 +968,11 @@ export async function renderFinanceiroLancamentoCreateV3() {
       uid: AuthService.user.uid
     };
 
-    // Inclui auditoria nos dados
-    payload.dados = { auditoria: window.auditInfo || {} };
+    // Inclui auditoria e histórico de log nos dados
+    payload.dados = {
+      auditoria: window.auditInfo || {},
+      log: window.logEntries || []
+    };
     // Parcelas de vencimento e valor
     payload.dados.parcelas = [];
     document.querySelectorAll('.parcela-item').forEach(item => {

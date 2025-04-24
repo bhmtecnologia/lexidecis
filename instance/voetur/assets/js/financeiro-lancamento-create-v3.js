@@ -221,6 +221,12 @@ export async function renderFinanceiroLancamentoCreateV3() {
                   <option value="Depósito">Depósito</option>
                 </select>
               </div>
+              <!-- Anexo(s) -->
+              <div class="mb-3 d-none">
+                <label for="arquivo" class="form-label">Inserir Anexo(s) <span style="color:red">*</span></label>
+                <input type="file" class="form-control" id="arquivo" accept="image/png,image/jpeg" multiple>
+                <small class="form-text text-muted">Máx. 4MB por arquivo. PNG/JPEG.</small>
+              </div>
               <!-- Vencimento -->
               <div class="mb-3">
                 <label for="vencimento" class="form-label">Vencimento <span style="color:red">*</span></label>
@@ -230,12 +236,6 @@ export async function renderFinanceiroLancamentoCreateV3() {
               <div class="mb-3">
                 <label for="justificativa" class="form-label">Justificativa <span style="color:red">*</span></label>
                 <textarea class="form-control" id="justificativa" rows="3" required placeholder="Justifique o lançamento conforme PR-001."></textarea>
-              </div>
-              <!-- Anexo(s) -->
-              <div class="mb-3 d-none">
-                <label for="arquivo" class="form-label">Inserir Anexo(s) <span style="color:red">*</span></label>
-                <input type="file" class="form-control" id="arquivo" accept="image/png,image/jpeg" multiple>
-                <small class="form-text text-muted">Máx. 4MB por arquivo. PNG/JPEG.</small>
               </div>
               <button type="submit" class="btn btn-primary">Criar Lançamento v3</button>
             </form>
@@ -263,6 +263,19 @@ export async function renderFinanceiroLancamentoCreateV3() {
       // Converte para número e formata com duas casas decimais
       const numeric = Number(v) / 100;
       e.target.value = numeric.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    });
+  }
+
+  // Exibe campo de anexo para boletos
+  const formaEl = document.getElementById("formaPagamento");
+  if (formaEl) {
+    formaEl.addEventListener("change", () => {
+      const anexGroup = document.querySelector("#arquivo").closest(".mb-3");
+      if (formaEl.value === "Boleto") {
+        anexGroup.classList.remove("d-none");
+      } else {
+        anexGroup.classList.add("d-none");
+      }
     });
   }
 
@@ -697,10 +710,23 @@ export async function renderFinanceiroLancamentoCreateV3() {
       };
     }) : [];
 
-    // Anexo
-    payload.anexo = classification.filename
-      ? [{ url: classification.filename, categoria: "comprovante" }]
-      : [];
+    // Anexos: Nota Fiscal e Comprovantes de Boleto
+    payload.anexo = [];
+    // Anexo da Nota Fiscal
+    if (classification.filename) {
+      payload.anexo.push({ url: classification.filename, categoria: "Nota Fiscal" });
+    }
+    // Anexos de Boletos, se houver
+    const boletoInput = document.getElementById("arquivo");
+    if (boletoInput && boletoInput.files.length) {
+      for (const file of boletoInput.files) {
+        // Faz upload do boleto (sem classification)
+        const uploadResp = await uploadArquivo(AuthService, file);
+        // Extrai URL do retorno (filename ou url)
+        const boletoUrl = uploadResp.filename || uploadResp.url || uploadResp;
+        payload.anexo.push({ url: boletoUrl, categoria: "Comprovante" });
+      }
+    }
 
 
 

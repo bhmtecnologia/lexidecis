@@ -181,7 +181,7 @@ export async function renderFinanceiroLancamentoCreateV3() {
                   <label for="filialSelect" class="form-label">Filial <span style="color:red">*</span></label>
                   <div class="form-check form-switch mb-0">
                     <input class="form-check-input" type="checkbox" id="unlockFilial">
-                    <label class="form-check-label" for="unlockFilial">Desbloquear</label>
+                    <label class="form-check-label" for="unlockFilial">Manual</label>
                   </div>
                 </div>
                 <select class="form-control" id="filialSelect" required><option value="">Selecione</option></select>
@@ -192,7 +192,7 @@ export async function renderFinanceiroLancamentoCreateV3() {
                   <label for="fornecedorSelect" class="form-label">Fornecedor <span style="color:red">*</span></label>
                   <div class="form-check form-switch mb-0">
                     <input class="form-check-input" type="checkbox" id="unlockFornecedor">
-                    <label class="form-check-label" for="unlockFornecedor">Desbloquear</label>
+                    <label class="form-check-label" for="unlockFornecedor">Manual</label>
                   </div>
                 </div>
                 <select class="form-control" id="fornecedorSelect" required><option value="">Selecione</option></select>
@@ -213,7 +213,7 @@ export async function renderFinanceiroLancamentoCreateV3() {
                   <label for="numeroDocumento" class="form-label">N° Documento <span style="color:red">*</span></label>
                   <div class="form-check form-switch mb-0">
                     <input class="form-check-input" type="checkbox" id="unlockNumero">
-                    <label class="form-check-label" for="unlockNumero">Desbloquear</label>
+                    <label class="form-check-label" for="unlockNumero">Manual</label>
                   </div>
                 </div>
                 <input type="text" class="form-control" id="numeroDocumento" required placeholder="Digite o número do documento">
@@ -224,7 +224,7 @@ export async function renderFinanceiroLancamentoCreateV3() {
                   <label for="dataEmissao" class="form-label">Data de Emissão <span style="color:red">*</span></label>
                   <div class="form-check form-switch mb-0">
                     <input class="form-check-input" type="checkbox" id="unlockData">
-                    <label class="form-check-label" for="unlockData">Desbloquear</label>
+                    <label class="form-check-label" for="unlockData">Manual</label>
                   </div>
                 </div>
                 <input type="date" class="form-control" id="dataEmissao" required>
@@ -236,7 +236,7 @@ export async function renderFinanceiroLancamentoCreateV3() {
                   <label for="valor" class="form-label">Valor Bruto <span style="color:red">*</span></label>
                   <div class="form-check form-switch mb-0">
                     <input class="form-check-input" type="checkbox" id="unlockValor">
-                    <label class="form-check-label" for="unlockValor">Desbloquear</label>
+                    <label class="form-check-label" for="unlockValor">Manual</label>
                   </div>
                 </div>
                 <input type="text" class="form-control" id="valor" required placeholder="0,00">
@@ -388,6 +388,11 @@ export async function renderFinanceiroLancamentoCreateV3() {
         if (numeroEl) {
           numeroEl.value = info.numero_nota || "";
           numeroEl.disabled = true;
+          const unlockNumero = document.getElementById("unlockNumero");
+          if (unlockNumero) {
+            unlockNumero.checked = !info.numero_nota;
+            numeroEl.disabled = !unlockNumero.checked;
+          }
         }
 
         // Tipo de Documento (read-only)
@@ -401,6 +406,11 @@ export async function renderFinanceiroLancamentoCreateV3() {
         if (dataEl) {
           dataEl.value = info.data_emissao || "";
           dataEl.disabled = true;
+          const unlockData = document.getElementById("unlockData");
+          if (unlockData) {
+            unlockData.checked = !info.data_emissao;
+            dataEl.disabled = !unlockData.checked;
+          }
         }
 
         const valorEl = document.getElementById("valor");
@@ -428,6 +438,11 @@ export async function renderFinanceiroLancamentoCreateV3() {
             valorEl.value = "";
           }
           valorEl.disabled = true;
+          const unlockValor = document.getElementById("unlockValor");
+          if (unlockValor) {
+            unlockValor.checked = !info.valor_total_nota;
+            valorEl.disabled = !unlockValor.checked;
+          }
         }
 
         // Oculta campo Vencimento para Nota Fiscal
@@ -463,14 +478,24 @@ export async function renderFinanceiroLancamentoCreateV3() {
           const fornecedorSelect = document.getElementById("fornecedorSelect");
           fornecedorSelect.value = optionValue;
           fornecedorSelect.disabled = true;
-          if (window.$ && $.fn.select2) $("#fornecedorSelect").trigger("change");
+          const unlockFornecedor = document.getElementById("unlockFornecedor");
+          if (unlockFornecedor) {
+            unlockFornecedor.checked = !info.cnpj_fornecedor;
+            fornecedorSelect.disabled = !unlockFornecedor.checked;
+            if (window.$ && $.fn.select2) $("#fornecedorSelect").trigger("change");
+          }
           // Preenche filial com o tomador (sua filial que contratou)
           const filialMatch = (window.filiaisData || []).find(f => f.cnpj === info.cnpj_tomador);
           if (filialMatch) {
             const filialSelect = document.getElementById("filialSelect");
             filialSelect.value = filialMatch.id || filialMatch.uuid || filialMatch.nome;
             filialSelect.disabled = true;
-            if (window.$ && $.fn.select2) $("#filialSelect").trigger("change");
+            const unlockFilial = document.getElementById("unlockFilial");
+            if (unlockFilial) {
+              unlockFilial.checked = !info.cnpj_tomador;
+              filialSelect.disabled = !unlockFilial.checked;
+              if (window.$ && $.fn.select2) $("#filialSelect").trigger("change");
+            }
           }
           showAlert("Documento classificado como Nota Fiscal. Campos preenchidos.", "success");
         } else {
@@ -519,6 +544,11 @@ export async function renderFinanceiroLancamentoCreateV3() {
             valorEl.value = "";
           }
           valorEl.readOnly = true;
+          const unlockValor = document.getElementById("unlockValor");
+          if (unlockValor) {
+            unlockValor.checked = !info.valor_total_nota;
+            valorEl.disabled = !unlockValor.checked;
+          }
         }
 
         // Hide classification-section before toggling others

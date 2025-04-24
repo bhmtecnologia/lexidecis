@@ -240,6 +240,22 @@ export async function renderFinanceiroLancamentosList() {
   }
 
   /**
+   * Formata itens de nota fiscal em HTML.
+   * @param {Array} itens - Lista de itens da nota.
+   * @returns {string} HTML com descrição, quantidade e valor unitário.
+   */
+  function formatItens(itens) {
+    if (!itens || !Array.isArray(itens) || itens.length === 0) return '-';
+    return itens.map(item => {
+      // formata valor unitário como moeda
+      const valorUnit = isNaN(item.valor_unitario)
+        ? item.valor_unitario
+        : parseFloat(item.valor_unitario).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      return `${item.descricao} - Qtde: ${item.quantidade} - V.Unit: ${valorUnit}`;
+    }).join('<br>');
+  }
+
+  /**
    * Inicializa o plugin DataTables na tabela de lançamentos com AJAX.
    */
   function initializeDataTable() {
@@ -331,6 +347,7 @@ export async function renderFinanceiroLancamentosList() {
           },
           { data: 'comentario_analista', title: 'comentario_analista', defaultContent: '-' },
           { data: 'anexos',             title: 'anexo(s)',            defaultContent: '-', render: a => formatAnexos(a) },
+          { data: 'itens',              title: 'itens',              defaultContent: '-', render: i => formatItens(i) },
           { data: 'valor',              title: 'valor',              defaultContent: '-', render: v => isNaN(v)?'-':parseFloat(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) },
           { data: 'filial_nome',        title: 'filial_nome',        defaultContent: '-' },
           { data: 'data_emissao',       title: 'data_emissao',       defaultContent: '-', render: d => d?new Date(d).toLocaleDateString('pt-BR'): '-' },

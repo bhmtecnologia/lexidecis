@@ -159,6 +159,8 @@ export async function renderFinanceiroLancamentoCreateV3() {
         <div class="card" style="border:1px solid var(--border-color);background:var(--white);color:var(--black);">
           <div class="card-body">
             <form id="lancamentoForm">
+              <!-- Link do Anexo -->
+              <div id="attachmentLink" class="mb-3"></div>
               <!-- Mesmos campos da v2... -->
               <!-- Tipo de Documento -->
               <div class="mb-3">
@@ -252,6 +254,18 @@ export async function renderFinanceiroLancamentoCreateV3() {
     $("#projetoSelect").select2({ placeholder: "Selecione um projeto", allowClear: true, width: "100%" });
   }
 
+  // Aplica máscara de moeda no campo Valor Bruto
+  const valorInput = document.getElementById("valor");
+  if (valorInput) {
+    valorInput.addEventListener("input", (e) => {
+      // Remove caracteres não numéricos
+      let v = e.target.value.replace(/\D/g, "");
+      // Converte para número e formata com duas casas decimais
+      const numeric = Number(v) / 100;
+      e.target.value = numeric.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    });
+  }
+
   // Classificação automática ao selecionar anexo (upload inicial)
   const arquivoClassify = document.getElementById("arquivoClassify");
   arquivoClassify.addEventListener("change", async (e) => {
@@ -279,6 +293,14 @@ export async function renderFinanceiroLancamentoCreateV3() {
       }
       // Processa o primeiro resultado
       const info = resultados[0];
+      // Armazena resultado para submissão
+      window.classificationResult = info;
+      // Exibe link clicável do anexo
+      const attachmentEl = document.getElementById("attachmentLink");
+      if (attachmentEl && info.filename) {
+        attachmentEl.innerHTML = `<label class="form-label">Anexo:</label>
+          <div><a href="${info.filename}" target="_blank">${info.filename}</a></div>`;
+      }
       if (info.tipo_documento === "Nota Fiscal") {
         // Preenche campos da nota fiscal com checagem de existência
         const numeroEl = document.getElementById("numeroDocumento");
@@ -302,7 +324,28 @@ export async function renderFinanceiroLancamentoCreateV3() {
 
         const valorEl = document.getElementById("valor");
         if (valorEl) {
-          valorEl.value = info.valor_total_nota || "";
+          // Formata e preenche Valor Bruto como moeda pt-BR
+          if (info.valor_total_nota) {
+            // Converte string para número considerando formatos "1234.56", "1.234,56" ou "1234,56"
+            let raw = info.valor_total_nota;
+            let num;
+            if (raw.includes(',') && raw.includes('.')) {
+              // formato europeu com milhares e decimais: "1.234,56"
+              num = Number(raw.replace(/\./g, '').replace(',', '.'));
+            } else if (raw.includes(',')) {
+              // formato apenas com vírgula decimal: "1234,56"
+              num = Number(raw.replace(',', '.'));
+            } else {
+              // assume formato ponto como decimal: "1234.56" ou inteiro
+              num = Number(raw);
+            }
+            valorEl.value = num.toLocaleString("pt-BR", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            });
+          } else {
+            valorEl.value = "";
+          }
           valorEl.disabled = true;
         }
 
@@ -364,7 +407,28 @@ export async function renderFinanceiroLancamentoCreateV3() {
         // Preenche Valor Bruto
         const valorEl = document.getElementById("valor");
         if (valorEl) {
-          valorEl.value = info.valor_total_nota || "";
+          // Formata e preenche Valor Bruto como moeda pt-BR
+          if (info.valor_total_nota) {
+            // Converte string para número considerando formatos "1234.56", "1.234,56" ou "1234,56"
+            let raw = info.valor_total_nota;
+            let num;
+            if (raw.includes(',') && raw.includes('.')) {
+              // formato europeu com milhares e decimais: "1.234,56"
+              num = Number(raw.replace(/\./g, '').replace(',', '.'));
+            } else if (raw.includes(',')) {
+              // formato apenas com vírgula decimal: "1234,56"
+              num = Number(raw.replace(',', '.'));
+            } else {
+              // assume formato ponto como decimal: "1234.56" ou inteiro
+              num = Number(raw);
+            }
+            valorEl.value = num.toLocaleString("pt-BR", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            });
+          } else {
+            valorEl.value = "";
+          }
           valorEl.readOnly = true;
         }
 
@@ -536,27 +600,101 @@ export async function renderFinanceiroLancamentoCreateV3() {
       return;
     }
 
-    // Monta payload (igual v2)
+    // Monta payload v3 com todos os campos e itens da nota
     const dataInclusao = formatDateISO(new Date());
+    const classification = window.classificationResult || {};
+    // Campos básicos do formulário
     let payload = {
       app_id: "empresa_vtc_log",
       status: "Novo",
-      // ... demais campos iguais
+      tipo_documento: classification.tipo_documento || document.getElementById("tipoDocumento").value,
+      numero_documento: classification.numero_nota || document.getElementById("numeroDocumento").value,
+      forma_pagamento: document.getElementById("formaPagamento").value,
+      justificativa: document.getElementById("justificativa").value,
+      data_emissao: classification.data_emissao || document.getElementById("dataEmissao").value,
+      // somente para contas a pagar
+      data_vencimento: classification.tipo_documento === "Conta a pagar"
+        ? document.getElementById("vencimento").value
+        : null,
+      // Converte valor total da nota (classification.valor_total_nota) para número pt-BR
+      valor: (() => {
+        const rawVal = classification.valor_total_nota;
+        if (!rawVal) return 0;
+        let numVal;
+        if (rawVal.includes(',') && rawVal.includes('.')) {
+          // formato europeu: "1.234,56"
+          numVal = Number(rawVal.replace(/\./g, '').replace(',', '.'));
+        } else if (rawVal.includes(',')) {
+          // formato vírgula decimal: "1234,56"
+          numVal = Number(rawVal.replace(',', '.'));
+        } else {
+          // ponto decimal ou inteiro: "1234.56" ou "1234"
+          numVal = Number(rawVal);
+        }
+        return numVal;
+      })(),
       data_inclusao: dataInclusao,
       usuario_inclusao: AuthService.user.email,
-      // ...
+      uid: AuthService.user.uid
     };
 
-    try {
-      // Upload anexos (igual v2)
-      // Array de anexos – substituir pela lógica real de upload
-      payload.anexo = [];
-    } catch (upErr) {
-      formError.innerHTML = `Erro no upload: ${handleError(upErr)}`;
-      btn.disabled = false;
-      btn.innerHTML = original;
-      return;
+    // Filial
+    const filEl = document.getElementById("filialSelect");
+    payload.filial_id = filEl ? filEl.value : null;
+    payload.filial_nome = filEl ? filEl.options[filEl.selectedIndex].text : null;
+
+    // Centro de Custo
+    const ctrEl = document.getElementById("centroCustoSelect");
+    payload.centro_custo_id = ctrEl ? ctrEl.value : null;
+    payload.centro_custo_nome = ctrEl ? ctrEl.options[ctrEl.selectedIndex].text : null;
+
+    // Projeto (opcional)
+    const projEl = document.getElementById("projetoSelect");
+    payload.projeto_id = projEl && projEl.value ? projEl.value : null;
+    payload.projeto_nome = projEl && projEl.value ? projEl.options[projEl.selectedIndex].text : null;
+
+    // Fornecedor ou novo cadastro
+    if (classification.tipo_documento === "Nota Fiscal" && classification.cnpj) {
+      // fornecedor existente
+      payload.fornecedor_cnpj = classification.cnpj;
+      payload.fornecedor_id = document.getElementById("fornecedorSelect").value;
+      payload.fornecedor_nome = document.getElementById("fornecedorSelect").options[
+        document.getElementById("fornecedorSelect").selectedIndex
+      ].text.split(" (")[0];
+    } else {
+      // novo fornecedor
+      payload.fornecedor_cnpj = classification.cnpj || document.getElementById("supCnpj").value;
+      payload.fornecedor_nome = classification.fornecedor || document.getElementById("supNome").value;
     }
+
+    // Itens de nota fiscal, se aplicável
+    payload.itens = Array.isArray(classification.itens) ? classification.itens.map(item => {
+      // Converte valor_unitario para número pt-BR corretamente
+      let raw = item.valor_unitario.toString();
+      let numUnit;
+      if (raw.includes(',') && raw.includes('.')) {
+        // formato europeu com milhares e decimais: "1.234,56"
+        numUnit = Number(raw.replace(/\./g, '').replace(',', '.'));
+      } else if (raw.includes(',')) {
+        // apenas vírgula decimal: "1234,56"
+        numUnit = Number(raw.replace(',', '.'));
+      } else {
+        // ponto decimal ou inteiro: "1234.56" ou "1234"
+        numUnit = Number(raw);
+      }
+      return {
+        descricao: item.descricao,
+        quantidade: item.quantidade,
+        valor_unitario: numUnit
+      };
+    }) : [];
+
+    // Anexo
+    payload.anexo = classification.filename
+      ? [{ url: classification.filename, categoria: "comprovante" }]
+      : [];
+
+
 
     try {
       // **Aqui** chame createLancamento para o endpoint v3

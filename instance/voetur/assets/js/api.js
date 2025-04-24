@@ -162,7 +162,7 @@ export async function uploadArquivo(AuthService, file) {
   const formData = new FormData();
   formData.append('file', file);
 
-  const response = await fetch('https://webhook.power.tec.br/webhook/voetur/v1/upload', {
+  const response = await fetch('https://n8n.power.tec.br/webhook/voetur/v2/upload', {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${token}`

@@ -14,6 +14,7 @@ export const menuItems = [
         children: [
           { label: "Chat", route: "#chat" },
           { label: "Lançar pagamento - v2", route: "#financeiro-lancamento-create-v2" },
+          { label: "Lançar pagamento - v3", route: "#financeiro-lancamento-create-v3" },
           { label: "Meus lançamentos", route: "#financeiro-lancamentos-list" },
         ]
       },

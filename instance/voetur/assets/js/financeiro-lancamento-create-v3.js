@@ -95,6 +95,7 @@ function resetFormFields() {
         <span class="parcela-index me-2">1</span>
         <input type="date" name="parcelaData[]" class="form-control parcela-data mb-1" required value="${dvStr}">
         <input type="text" name="parcelaValor[]" class="form-control parcela-valor" placeholder="Valor da Parcela" required>
+        <button type="button" class="btn btn-danger btn-sm remove-parcela-btn ms-2">- Parcela</button>
       </div>
     `;
     if (typeof updateParcelaIndices === "function") updateParcelaIndices();
@@ -1126,6 +1127,7 @@ document.addEventListener('click', event => {
     item.innerHTML = `
       <input type="date" name="parcelaData[]" class="form-control parcela-data mb-1" required>
       <input type="text" name="parcelaValor[]" class="form-control parcela-valor" placeholder="Valor da Parcela" required value="${valorAtual}">
+      <button type="button" class="btn btn-danger btn-sm remove-parcela-btn ms-2">- Parcela</button>
     `;
     container.appendChild(item);
   }
@@ -1143,5 +1145,15 @@ document.addEventListener('click', event => {
       <input type="text" name="itemValorUnitario[]" class="form-control item-valor-unitario" placeholder="Valor Unitário" required>
     `;
     container.appendChild(item);
+  }
+});
+// Remove parcela when '-' button clicked
+document.addEventListener('click', event => {
+  if (event.target && event.target.classList.contains('remove-parcela-btn')) {
+    const item = event.target.closest('.parcela-item');
+    if (item) {
+      item.remove();
+      if (typeof updateParcelaIndices === "function") updateParcelaIndices();
+    }
   }
 });

@@ -117,20 +117,34 @@ function resetFormFields() {
 export async function renderFinanceiroLancamentoCreateV3() {
   const content = document.getElementById("content");
   content.innerHTML = `
+    <style>
+      @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+      /* Removed spin animation for loader logo */
+      .bhm-loader-logo { width: 100px; height: 100px; }
+      .loader-text { color: var(--black); font-size: 1.2rem; margin-top: 1rem; animation: pulse 1.5s ease-in-out infinite; }
+      .loader-bar-container { width: 50%; margin-top: 1rem; }
+      .loader-percent { font-size: 1.2rem; margin-top: 0.5rem; }
+    </style>
     <div class="container-fluid" style="background-color: var(--body-color); color: var(--body-font-color);">
       <!-- Loading Overlay -->
       <div id="loadingOverlay" class="d-none" style="
         position: fixed;
         top: 0; left: 0;
         width: 100%; height: 100%;
-        background: rgba(255,255,255,0.8);
+        background: rgba(255,255,255,0.9);
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
         z-index: 1050;">
-        <div class="spinner-border" role="status" style="width: 4rem; height: 4rem;">
-          <span class="visually-hidden">Carregando...</span>
+        <img src="https://www.bhm.tec.br/images/152x152/10788698/favicon.png" alt="Carregando" class="bhm-loader-logo">
+        <div class="loader-text">Processando com LexiDecis AI...</div>
+        <div class="loader-bar-container">
+          <div class="progress">
+            <div id="loaderBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+          </div>
         </div>
+        <div id="loaderPercent" class="loader-percent">0%</div>
       </div>
       <div class="page-title" style="padding: 1rem;">
         <div class="row">
@@ -324,6 +338,27 @@ export async function renderFinanceiroLancamentoCreateV3() {
     </div>
   `;
 
+  // Loader animation logic for progress bar and percent
+  let loaderInterval;
+  function startLoaderAnimation() {
+    const bar = document.getElementById("loaderBar");
+    const pct = document.getElementById("loaderPercent");
+    let value = 0;
+    if (loaderInterval) clearInterval(loaderInterval);
+    loaderInterval = setInterval(() => {
+      value = (value + 1) % 101;
+      if (bar) bar.style.width = value + "%";
+      if (pct) pct.textContent = value + "%";
+    }, 100);
+  }
+  function stopLoaderAnimation() {
+    clearInterval(loaderInterval);
+    const bar = document.getElementById("loaderBar");
+    const pct = document.getElementById("loaderPercent");
+    if (bar) bar.style.width = "0%";
+    if (pct) pct.textContent = "0%";
+  }
+
   // Armazena entradas de log
   window.logEntries = [];
   function addLog(entry) {
@@ -440,6 +475,7 @@ export async function renderFinanceiroLancamentoCreateV3() {
     const overlay = document.getElementById("loadingOverlay");
     submitBtn.disabled = true;
     if (overlay) overlay.classList.remove("d-none");
+    startLoaderAnimation();
     try {
       // Esconde a área de classificação
       document.getElementById("classification-section").classList.add("d-none");
@@ -735,6 +771,7 @@ export async function renderFinanceiroLancamentoCreateV3() {
       submitBtn.disabled = false;
       // Oculta overlay de carregamento
       if (overlay) overlay.classList.add("d-none");
+      stopLoaderAnimation();
       // Exibe o formulário após classificação
       // (A exibição do form-section agora é controlada pelo fluxo de fornecedor acima)
     }

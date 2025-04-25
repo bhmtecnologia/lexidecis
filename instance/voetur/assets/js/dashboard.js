@@ -34,6 +34,12 @@ export async function renderDashboard() {
             O portal está em fase de testes. Caso encontre erros ou deseje enviar sugestões, entre em contato pelo e-mail:
             <a href="mailto:suporte@bhm.tec.br">suporte@bhm.tec.br</a>.
           </p>
+          <div class="mt-3">
+            <a href="#financeiro-lancamento-create-v3" class="btn btn-primary d-flex align-items-center">
+              <i class="iconly-Plus icli svg-color me-2"></i>
+              Lançar Pagamento
+            </a>
+          </div>
         </div>
       </div>
     </div>

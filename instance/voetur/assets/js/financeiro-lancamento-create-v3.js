@@ -144,7 +144,6 @@ export async function renderFinanceiroLancamentoCreateV3() {
             <div id="loaderBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
           </div>
         </div>
-        <div id="loaderPercent" class="loader-percent">0%</div>
       </div>
       <div class="page-title" style="padding: 1rem;">
         <div class="row">
@@ -338,25 +337,19 @@ export async function renderFinanceiroLancamentoCreateV3() {
     </div>
   `;
 
-  // Loader animation logic for progress bar and percent
-  let loaderInterval;
+  // Loader animation logic for progress bar (indeterminate)
   function startLoaderAnimation() {
     const bar = document.getElementById("loaderBar");
-    const pct = document.getElementById("loaderPercent");
-    let value = 0;
-    if (loaderInterval) clearInterval(loaderInterval);
-    loaderInterval = setInterval(() => {
-      value = (value + 1) % 101;
-      if (bar) bar.style.width = value + "%";
-      if (pct) pct.textContent = value + "%";
-    }, 100);
+    if (bar) {
+      // Indeterminate progress: full width with stripe animation
+      bar.style.width = "100%";
+    }
   }
   function stopLoaderAnimation() {
-    clearInterval(loaderInterval);
     const bar = document.getElementById("loaderBar");
-    const pct = document.getElementById("loaderPercent");
-    if (bar) bar.style.width = "0%";
-    if (pct) pct.textContent = "0%";
+    if (bar) {
+      bar.style.width = "0%";
+    }
   }
 
   // Armazena entradas de log

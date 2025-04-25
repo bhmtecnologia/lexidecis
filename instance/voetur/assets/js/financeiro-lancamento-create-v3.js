@@ -385,6 +385,10 @@ export async function renderFinanceiroLancamentoCreateV3() {
       // Converte para número e formata com duas casas decimais
       const numeric = Number(v) / 100;
       e.target.value = numeric.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      // Atualize parcelas para o mesmo valor
+      document.querySelectorAll('.parcela-valor').forEach(el => {
+        el.value = e.target.value;
+      });
     });
   }
 
@@ -589,6 +593,11 @@ export async function renderFinanceiroLancamentoCreateV3() {
             valorEl.disabled = !unlockValor.checked;
           }
         }
+
+        // Atualiza o valor das parcelas para o valor bruto preenchido
+        document.querySelectorAll('.parcela-valor').forEach(el => {
+          el.value = valorEl.value;
+        });
 
         // Oculta campo Vencimento para Nota Fiscal
         const vencEl = document.getElementById("vencimentoParcela1");
@@ -1120,9 +1129,10 @@ document.addEventListener('click', event => {
     const container = document.getElementById('parcelasContainer');
     const item = document.createElement('div');
     item.className = 'parcela-item mb-2';
+    const valorAtual = document.getElementById('valor').value;
     item.innerHTML = `
       <input type="date" name="parcelaData[]" class="form-control parcela-data mb-1" required>
-      <input type="text" name="parcelaValor[]" class="form-control parcela-valor" placeholder="Valor da Parcela" required>
+      <input type="text" name="parcelaValor[]" class="form-control parcela-valor" placeholder="Valor da Parcela" required value="${valorAtual}">
     `;
     container.appendChild(item);
   }

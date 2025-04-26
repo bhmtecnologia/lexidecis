@@ -590,9 +590,9 @@
               ? gpt.flowiseConfig.flowise.apiHost
               : window.flowiseConfig.apiHost;
             const flowId = `${proxyFlowId}_${sessionId}`;
-            // Define unique storage keys based on this session-specific flowId
-            const extKey = `${flowId}_EXTERNAL`;
-            const flagKey = `${flowId}_historyInjected`;
+            // Use realFlowId and sessionId with double underscore for unique storage keys
+            const extKey = `${realFlowId}__${sessionId}_EXTERNAL`;
+            const flagKey = `${realFlowId}__${sessionId}_historyInjected`;
             // Inject history only if not already stored for this session
             if (!localStorage.getItem(flagKey)) {
               // Fetch history directly from Flowise API with proper token

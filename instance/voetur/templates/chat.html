@@ -281,6 +281,14 @@
     #chat-list li:hover * {
       color: var(--theme-body-font-color) !important;
     }
+
+    /* Provider icon style for AI providers sidebar list */
+    .provider-icon {
+      width: 1rem;
+      height: 1rem;
+      margin-right: 0.5rem;
+      object-fit: contain;
+    }
   </style>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simplebar@6.2.3/dist/simplebar.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/simplebar@6.2.3/dist/simplebar.min.js"></script>
@@ -315,14 +323,7 @@
           <i class="bi bi-search search-icon"></i>
           <select id="chat-search" style="width:100%"><option></option></select>
         </div>
-        <ul class="list-unstyled m-0">
-          <li id="lexi-ai-item" class="px-3 py-2 d-flex align-items-center" role="button" tabindex="0"><i class="bi bi-stars me-1"></i><span class="flex-grow-1">Lexi AI (ChatGPT)</span></li>
-        </ul>
-        <ul class="list-unstyled m-0">
-          <li id="gemini-ai-item" class="px-3 py-2 d-flex align-items-center" role="button" tabindex="0">
-            <i class="bi bi-stars me-1"></i><span class="flex-grow-1">Lexi AI (Gemini)</span>
-          </li>
-        </ul>
+        <ul id="ai-providers-list" class="list-unstyled m-0"></ul>
         <ul class="list-unstyled m-0">
           <li id="explore-gpt-item" class="px-3 py-2 d-flex align-items-center" role="button" tabindex="0" data-bs-toggle="modal" data-bs-target="#gptModal"><i class="bi bi-grid-3x3-gap me-2"></i><span class="flex-grow-1">Explore GPTs</span></li>
         </ul>
@@ -380,28 +381,36 @@
       themeToggle.innerHTML = isDark ? '<i class="bi bi-sun"></i>' : '<i class="bi bi-moon-stars"></i>';
       miniThemeToggle.innerHTML = themeToggle.innerHTML;
     });
-document.getElementById('lexi-ai-item').addEventListener('click', () => {
-  document.querySelectorAll('#chat-sidebar li').forEach(li => li.classList.remove('selected'));
-  const lexiItem = document.getElementById('lexi-ai-item'); lexiItem.classList.add('selected');
-  const chatArea = document.getElementById('chat-area');
-  chatArea.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
-  if (window.flowiseChatbot && window.flowiseConfig) {
-    // Ensure ChatGPT flow is used
-    window.flowiseConfig.chatflowid = mapChatflowId('efe59701-afe2-4f4c-8448-bb8e3a32161a');
-    window.flowiseChatbot.initFull(window.flowiseConfig);
-  }
-});
-document.getElementById('gemini-ai-item').addEventListener('click', () => {
-  document.querySelectorAll('#chat-sidebar li').forEach(li => li.classList.remove('selected'));
-  const gemItem = document.getElementById('gemini-ai-item'); gemItem.classList.add('selected');
-  const chatArea = document.getElementById('chat-area');
-  chatArea.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
-  if (window.flowiseChatbot && window.flowiseConfig) {
-    // Use Gemini flow ID
-    window.flowiseConfig.chatflowid = 'FLOW2_CHAT';
-    window.flowiseChatbot.initFull(window.flowiseConfig);
-  }
-});
+
+  // Dynamically generate AI provider list and handlers
+  const providers = [
+    { id: 'lexi-ai-item',    label: 'ChatGPT',   flowId: mapChatflowId('efe59701-afe2-4f4c-8448-bb8e3a32161a') },
+    { id: 'gemini-ai-item',  label: 'Gemini',     flowId: 'FLOW2_CHAT' },
+    { id: 'deepseek-ai-item',label: 'DeepSeek',   flowId: 'FLOW3_CHAT' },
+    { id: 'grok-ai-item',    label: 'Grok',       flowId: 'FLOW4_CHAT' },
+    { id: 'anthropic-ai-item', label: 'Anthropic', flowId: 'FLOW5_CHAT' },
+    { id: 'llama-ai-item',   label: 'Llama',      flowId: 'FLOW6_CHAT' }
+  ];
+  const aiList = document.getElementById('ai-providers-list');
+  providers.forEach(p => {
+    const li = document.createElement('li');
+    li.id = p.id;
+    li.className = 'px-3 py-2 d-flex align-items-center';
+    li.setAttribute('role', 'button');
+    li.tabIndex = 0;
+    li.innerHTML = `
+      <img src="../assets/svg/${p.id}.svg" class="provider-icon" alt="${p.label} icon"/>
+      <span class="flex-grow-1">${p.label}</span>
+    `;
+    li.addEventListener('click', () => {
+      document.querySelectorAll('#chat-sidebar li').forEach(x => x.classList.remove('selected'));
+      li.classList.add('selected');
+      document.getElementById('chat-area').innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
+      window.flowiseConfig.chatflowid = p.flowId;
+      window.flowiseChatbot.initFull(window.flowiseConfig);
+    });
+    aiList.appendChild(li);
+  });
     const _origFetch = window.fetch;
     window.fetch = (resource, init = {}) => {
       const headers = new Headers(init.headers || {});

@@ -290,6 +290,25 @@
       object-fit: contain;
     }
 
+    /* Shadow at bottom to indicate more content */
+    .scroll-shadow {
+      position: relative;
+    }
+    .scroll-shadow::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 2.5rem; /* increased height for a stronger fade */
+      pointer-events: none;
+      background: linear-gradient(to bottom, transparent, var(--shape-border)); /* darker end color */
+    }
+    /* Hide shadow when scrolled to bottom */
+    .scroll-shadow.at-bottom::after {
+      display: none;
+    }
+
     /* Smaller font size for chat list items */
     #chat-list li {
       font-size: 0.875rem;
@@ -347,8 +366,10 @@
           <select id="chat-search" style="width:100%"><option></option></select>
         </div>
         <div class="px-3 py-0 text-muted small fw-semibold">GPTs</div>
-        <div class="flex-grow-1" style="overflow-y: auto; max-height: 200px;">
-          <ul id="ai-providers-list" class="list-unstyled m-0"></ul>
+        <div class="flex-grow-1 scroll-shadow" style="position: relative; max-height: 200px;">
+          <div class="scroll-content" style="overflow-y: auto; max-height: 200px;">
+            <ul id="ai-providers-list" class="list-unstyled m-0"></ul>
+          </div>
         </div>
         <ul class="list-unstyled m-0">
           <li id="explore-gpt-item" class="px-3 py-2 d-flex align-items-center" role="button" tabindex="0" data-bs-toggle="modal" data-bs-target="#gptModal"><i class="bi bi-grid-3x3-gap me-2"></i><span class="flex-grow-1">Explore GPTs</span></li>
@@ -773,6 +794,26 @@
       } catch (error) {
         console.error('Erro ao carregar GPTs:', error);
         body.innerHTML = '<p class="text-danger">Falha ao carregar GPTs. Tente novamente mais tarde.</p>';
+      }
+    });
+    // Shadow toggle on scroll for GPT list
+    window.addEventListener('DOMContentLoaded', () => {
+      const scrollContent = document.querySelector('.scroll-shadow .scroll-content');
+      if (scrollContent) {
+        const container = scrollContent.parentElement;
+        const updateShadow = () => {
+          if (scrollContent.scrollHeight - scrollContent.scrollTop <= scrollContent.clientHeight + 1) {
+            container.classList.add('at-bottom');
+          } else {
+            container.classList.remove('at-bottom');
+          }
+        };
+        // Initialize shadow state
+        updateShadow();
+        // Update on scroll
+        scrollContent.addEventListener('scroll', updateShadow);
+        // Also update on window resize
+        window.addEventListener('resize', updateShadow);
       }
     });
   </script>

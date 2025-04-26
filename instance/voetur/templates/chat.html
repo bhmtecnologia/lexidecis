@@ -532,13 +532,69 @@
     const gptModalEl = document.getElementById('gptModal');
     gptModalEl.addEventListener('show.bs.modal', async () => {
       const body = document.getElementById('gptModalBody');
-      body.innerHTML = '<div class="text-center py-4"><div class="spinner-border" role="status"><span class="visually-hidden">Carregando...</span></div></div>';
+      body.innerHTML = `
+        <select id="gpt-search" style="width: 100%"></select>
+        <div id="gpt-cards" class="row mt-3"></div>
+      `;
       try {
         const gpts = await listGpts(AuthService);
         if (!Array.isArray(gpts) || gpts.length === 0) {
           body.innerHTML = '<p class="text-muted">Nenhum GPT disponível.</p>';
           return;
         }
+        // Populate search dropdown
+        const searchSelect = document.getElementById('gpt-search');
+        // Group GPTs by category
+        const categories = {};
+        gpts.forEach(g => {
+          const cat = g.category || 'Sem categoria';
+          if (!categories[cat]) categories[cat] = [];
+          categories[cat].push(g);
+        });
+        // Build grouped options
+        let groupHtml = '<option></option>';
+        for (const cat of Object.keys(categories)) {
+          groupHtml += `<optgroup label="${cat}">`;
+          categories[cat].forEach(g => {
+            groupHtml += `<option value="${g.name}" data-image-url="${g.imageUrl}">${g.name}</option>`;
+          });
+          groupHtml += `</optgroup>`;
+        }
+        searchSelect.innerHTML = groupHtml;
+        $(searchSelect).select2({
+          placeholder: 'Pesquisar GPT',
+          allowClear: true,
+          width: '100%',
+          dropdownParent: $('#gptModal'),
+          templateResult: function(data) {
+            if (!data.id) return data.text;
+            const imgUrl = $(data.element).data('image-url');
+            if (!imgUrl) return data.text;
+            const $result = $(`
+              <span><img src="${imgUrl}" style="width:24px;height:24px;object-fit:cover;margin-right:8px;" />${data.text}</span>
+            `);
+            return $result;
+          },
+          templateSelection: function(data) {
+            if (!data.id) return data.text;
+            const imgUrl = $(data.element).data('image-url');
+            if (!imgUrl) return data.text;
+            const $selection = $(`
+              <span><img src="${imgUrl}" style="width:20px;height:20px;object-fit:cover;margin-right:4px;" />${data.text}</span>
+            `);
+            return $selection;
+          }
+        });
+
+        // Filter cards on selection
+        $(searchSelect).on('change', function() {
+          const val = this.value;
+          document.querySelectorAll('#gpt-cards .col-12').forEach(col => {
+            const title = col.querySelector('.card-title').textContent;
+            col.style.display = (!val || title === val) ? '' : 'none';
+          });
+        });
+
         const cards = gpts.map(gpt => {
           const { name, description, category, imageUrl } = gpt;
           return `
@@ -553,7 +609,7 @@
               </div>
             </div>`;
         }).join('');
-        body.innerHTML = `<div class="row">${cards}</div>`;
+        document.getElementById('gpt-cards').innerHTML = cards;
       } catch (error) {
         console.error('Erro ao carregar GPTs:', error);
         body.innerHTML = '<p class="text-danger">Falha ao carregar GPTs. Tente novamente mais tarde.</p>';

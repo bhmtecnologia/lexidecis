@@ -305,6 +305,24 @@
       <i class="bi bi-grid-3x3-gap"></i>
     </button>
     <button id="mini-new"    class="btn-icon mt-3" title="Novo chat"><i class="bi bi-plus-lg"></i></button>
+    <button id="mini-lexi-ai-item" class="btn-icon" title="ChatGPT">
+      <img src="../assets/svg/lexi-ai-item.svg" class="provider-icon" alt="ChatGPT"/>
+    </button>
+    <button id="mini-gemini-ai-item" class="btn-icon" title="Gemini">
+      <img src="../assets/svg/gemini-ai-item.svg" class="provider-icon" alt="Gemini"/>
+    </button>
+    <button id="mini-deepseek-ai-item" class="btn-icon" title="DeepSeek">
+      <img src="../assets/svg/deepseek-ai-item.svg" class="provider-icon" alt="DeepSeek"/>
+    </button>
+    <button id="mini-grok-ai-item" class="btn-icon" title="Grok">
+      <img src="../assets/svg/grok-ai-item.svg" class="provider-icon" alt="Grok"/>
+    </button>
+    <button id="mini-anthropic-ai-item" class="btn-icon" title="Anthropic">
+      <img src="../assets/svg/anthropic-ai-item.svg" class="provider-icon" alt="Anthropic"/>
+    </button>
+    <button id="mini-llama-ai-item" class="btn-icon" title="Llama">
+      <img src="../assets/svg/llama-ai-item.svg" class="provider-icon" alt="Llama"/>
+    </button>
     <button id="mini-user"   class="btn-icon mt-auto mb-3" title="Minha conta"><i class="bi bi-person-circle"></i></button>
   </div>
   <div id="wrapper">
@@ -552,6 +570,31 @@
     miniToggle.addEventListener('click', toggleSidebar);
     miniNew.addEventListener('click', () => document.getElementById('new-chat').click());
     miniUser.addEventListener('click', () => { if (!sidebarVisible()) toggleSidebar(); document.getElementById('userMenuBtn').click(); });
+    // Mini sidebar AI provider buttons
+    document.getElementById('mini-lexi-ai-item').addEventListener('click', () => {
+      document.getElementById('mini-new').click();
+      document.getElementById('lexi-ai-item').click();
+    });
+    document.getElementById('mini-gemini-ai-item').addEventListener('click', () => {
+      document.getElementById('mini-new').click();
+      document.getElementById('gemini-ai-item').click();
+    });
+    document.getElementById('mini-deepseek-ai-item').addEventListener('click', () => {
+      document.getElementById('mini-new').click();
+      document.getElementById('deepseek-ai-item').click();
+    });
+    document.getElementById('mini-grok-ai-item').addEventListener('click', () => {
+      document.getElementById('mini-new').click();
+      document.getElementById('grok-ai-item').click();
+    });
+    document.getElementById('mini-anthropic-ai-item').addEventListener('click', () => {
+      document.getElementById('mini-new').click();
+      document.getElementById('anthropic-ai-item').click();
+    });
+    document.getElementById('mini-llama-ai-item').addEventListener('click', () => {
+      document.getElementById('mini-new').click();
+      document.getElementById('llama-ai-item').click();
+    });
     window.addEventListener('resize', () => {
       if (window.innerWidth <= 768) { sidebar.classList.add('hidden'); localStorage.setItem(SIDEBAR_KEY, 'true'); }
       else { sidebar.classList.remove('hidden'); localStorage.setItem(SIDEBAR_KEY, 'false'); }

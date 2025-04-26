@@ -420,7 +420,7 @@
   </div>
   <script type="module">
     import AuthService from '../assets/js/auth.js';
-    import { listChats, listGpts, getChatHistory, getGptConfig } from "../assets/js/api.js";
+    import { listChats, listGpts, getGptConfig } from "../assets/js/api.js";
 
     // === Flowise chatflowId mapping helper ===
     const chatflowIdMap = {
@@ -451,6 +451,8 @@
     // === Build dynamic AI provider list ===
     const aiList = document.getElementById('ai-providers-list');
     const configCache = {};
+    // Make gptMap available to chat history loader
+    let gptMap = {};
     (async () => {
       await new Promise(resolve => {
         const checkAuth = setInterval(() => {
@@ -458,7 +460,7 @@
         }, 100);
       });
       const gptList = await listGpts(AuthService);
-      const gptMap = Object.fromEntries(gptList.map(g => [g.id, g]));
+      gptMap = Object.fromEntries(gptList.map(g => [g.id, g]));
       gptList.forEach(gpt => {
         const li = document.createElement('li');
         li.id = gpt.id;
@@ -487,14 +489,34 @@
               }
             }
           }
+          // Ensure sessionId is set: generate only for new chats
+          if (!override.sessionId) {
+            const sessionId = crypto.randomUUID();
+            override = { sessionId, ...override };
+            configCache[gpt.id] = override;
+          }
           // Use base Flowise config from the GPT metadata
           const baseFlowise = gpt.flowiseConfig.flowise;
+          // Track actual send/loading events to avoid initial load logs
+          let loadingTriggered = false;
           // Build config with chatflowConfig nested
           const cfg = {
             chatflowid:       baseFlowise.chatflowId,
             apiHost:          baseFlowise.apiHost,
             token:            baseFlowise.token,
             theme:            window.flowiseConfig.theme,
+            observersConfig: {
+              // Log to console simulating API call when chatflow loading begins/ends
+              observeLoading: (loading) => {
+                if (loading) {
+                  loadingTriggered = true;
+                  console.log('Simulando chamada de API: enviando mensagem...');
+                } else if (loadingTriggered) {
+                  console.log('Simulando API: mensagem enviada.');
+                  loadingTriggered = false;
+                }
+              }
+            },
             chatflowConfig:   override
           };
           console.log('GPT Override for', gpt.id, override);
@@ -556,23 +578,41 @@
 
             const sessionId = chat.id;
             try {
-              // Busca histórico da sessão usando o proxy host e mapped chatflowId
-              const realFlowId = 'efe59701-afe2-4f4c-8448-bb8e3a32161a';
-              const proxyFlowId = mapChatflowId(realFlowId);
-              const history = await getChatHistory(
-                AuthService,
-                sessionId,
-                proxyFlowId,
-                window.flowiseConfig.apiHost,
-                ''
+            // Determine the actual Flowise chatflowId for this GPT
+            const gptKey = chat.fk_gpt_id || chat.gpt_id;
+            const gpt = gptMap[gptKey];
+            const realFlowId = gpt && gpt.flowiseConfig && gpt.flowiseConfig.flowise
+              ? gpt.flowiseConfig.flowise.chatflowId
+              : (chat.fk_gpt_id || chat.gpt_id);
+            const proxyFlowId = mapChatflowId(realFlowId);
+            // Determine API host for this GPT
+            const apiHost = gpt && gpt.flowiseConfig && gpt.flowiseConfig.flowise
+              ? gpt.flowiseConfig.flowise.apiHost
+              : window.flowiseConfig.apiHost;
+            const flowId = `${proxyFlowId}_${sessionId}`;
+            // Define unique storage keys based on this session-specific flowId
+            const extKey = `${flowId}_EXTERNAL`;
+            const flagKey = `${flowId}_historyInjected`;
+            // Inject history only if not already stored for this session
+            if (!localStorage.getItem(flagKey)) {
+              // Fetch history directly from Flowise API with proper token
+              const response = await fetch(
+                `${apiHost}/api/v1/chatmessage/${realFlowId}?sessionId=${sessionId}`, {
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${gpt.flowiseConfig.flowise.token}`
+                  }
+                }
               );
-              // Injeta usando proxyFlowId
-              localStorage.removeItem(`${proxyFlowId}_EXTERNAL`);
-              localStorage.removeItem(`${proxyFlowId}_historyInjected`);
-              localStorage.setItem(`${proxyFlowId}_EXTERNAL`, JSON.stringify({ chatHistory: history, chatId: sessionId }));
-              localStorage.setItem(`${proxyFlowId}_historyInjected`, 'true');
-              // Atualiza config para usar proxyFlowId
-              window.flowiseConfig.chatflowid = proxyFlowId;
+              if (!response.ok) throw new Error(`Status ${response.status}`);
+              const history = await response.json();
+              localStorage.setItem(extKey, JSON.stringify({ chatHistory: history, chatId: sessionId }));
+              localStorage.setItem(flagKey, 'true');
+            }
+            // Set chatflowid to the real Flowise ID (without sessionId) for streaming endpoint
+            window.flowiseConfig.chatflowid = realFlowId;
+            // API host remains set to this GPT's host
+            window.flowiseConfig.apiHost = apiHost;
 
               // Monta o componente full‑screen
               const chatArea = document.getElementById('chat-area');

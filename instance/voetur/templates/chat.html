@@ -281,7 +281,7 @@
         </div>
       </div>
       <div class="sidebar-bottom" id="avatarBlock">
-        <button id="userMenuBtn"><i class="bi bi-person-circle fs-2 me-2"></i><span class="fw-semibold" id="user-name">Bruno Murakami</span><i class="bi bi-chevron-up small"></i></button>
+        <button id="userMenuBtn"><i class="bi bi-person-circle fs-2 me-2"></i><span class="fw-semibold" id="user-name"></span><i class="bi bi-chevron-up small"></i></button>
         <ul id="userMenu" class="hidden">
           <li><button class="dropdown-item" id="logout-btn"><i class="bi bi-box-arrow-right me-2"></i>Sair</button></li>
         </ul>
@@ -419,7 +419,13 @@
         console.error('Erro ao carregar chats:', err);
       }
     })();
-    AuthService.onAuthChange(user => { if (!user) window.location.href = './login.html'; });
+    AuthService.onAuthChange(user => {
+      if (!user) {
+        window.location.href = './login.html';
+      } else {
+        document.getElementById('user-name').textContent = user.email;
+      }
+    });
     const sidebar    = document.getElementById('chat-sidebar');
     const toggleBtn  = document.getElementById('toggle-list');
     const miniBar    = document.getElementById('sidebar-mini');

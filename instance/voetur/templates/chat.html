@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Chat – Demo Sidebar + Área de Mensagens</title>
 
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
   <!-- Bootstrap Icons (apenas para os ícones) -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <!-- Select2 (pesquisa) -->
@@ -151,6 +153,13 @@
     #lexi-ai-item:hover {
       background: var(--active-bg-color);
     }
+    /* Make Explore GPTs look clickable */
+    #explore-gpt-item {
+      cursor: pointer;
+    }
+    #explore-gpt-item:hover {
+      background: var(--active-bg-color);
+    }
 
     .btn-icon {
       color: var(--font-color);
@@ -237,6 +246,7 @@
   <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css" />
   <script src="https://unpkg.com/@popperjs/core@2"></script>
   <script src="https://unpkg.com/tippy.js@6"></script>
+  <!-- Custom modal CSS removed (now using Bootstrap modal) -->
 </head>
 <body>
   <div id="sidebar-mini" class="hidden">
@@ -263,7 +273,7 @@
           <li id="lexi-ai-item" class="px-3 py-0 d-flex align-items-center"><i class="bi bi-stars me-1"></i><span class="flex-grow-1">Lexi AI (ChatGPT-4o)</span></li>
         </ul>
         <ul class="list-unstyled m-0">
-          <li class="px-3 py-0 d-flex align-items-center"><i class="bi bi-grid-3x3-gap me-2"></i><span class="flex-grow-1">Explore GPTs</span></li>
+          <li id="explore-gpt-item" role="button" data-bs-toggle="modal" data-bs-target="#gptModal" class="px-3 py-0 d-flex align-items-center"><i class="bi bi-grid-3x3-gap me-2"></i><span class="flex-grow-1">Explore GPTs</span></li>
         </ul>
         <div class="px-3 py-0 text-muted small fw-semibold">Chats</div>
         <div class="flex-grow-1" data-simplebar style="overflow-y: auto; flex: 1; min-height: 0;">
@@ -278,6 +288,18 @@
       </div>
     </nav>
     <section id="chat-area"><flowise-fullchatbot></flowise-fullchatbot></section>
+    <!-- GPT Explorer Modal -->
+    <div class="modal fade" id="gptModal" tabindex="-1" aria-labelledby="gptModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="gptModalLabel">Explore GPTs</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          </div>
+          <div class="modal-body" id="gptModalBody">Carregando...</div>
+        </div>
+      </div>
+    </div>
   </div>
   <script type="module">
     import AuthService from '../assets/js/auth.js';
@@ -499,6 +521,22 @@
     const userBtn     = document.getElementById('userMenuBtn');
     userBtn.addEventListener('click', () => { userMenu.classList.toggle('hidden'); avatarBlock.classList.toggle('open'); });
     document.addEventListener('click', e => { if (!avatarBlock.contains(e.target)) { userMenu.classList.add('hidden'); avatarBlock.classList.remove('open'); } });
+
+    // GPT Explorer Modal logic (Bootstrap 5 modal integration)
+    const gptModalEl = document.getElementById('gptModal');
+    gptModalEl.addEventListener('show.bs.modal', async () => {
+      const body = document.getElementById('gptModalBody');
+      body.textContent = 'Carregando...';
+      try {
+        let resp = await listChats(AuthService);
+        if (typeof resp === 'string') resp = JSON.parse(resp);
+        const items = Array.isArray(resp) ? resp : resp.data ? resp.data : resp;
+        body.innerHTML = '<ul>' + items.map(gpt => `<li>${gpt.name||gpt.id||'Sem nome'}</li>`).join('') + '</ul>';
+      } catch {
+        body.textContent = 'Erro ao carregar GPTs.';
+      }
+    });
   </script>
 </body>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
 </html>

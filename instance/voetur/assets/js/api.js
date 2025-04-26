@@ -437,4 +437,32 @@ export function injectChatHistory(chatflowId, sessionId, history) {
   localStorage.setItem(keyInjected, 'true');
 }
 
+/**
+ * Lista os GPTs disponíveis.
+ *
+ * @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
+ * @returns {Promise<Array>} - Array com os GPTs.
+ * @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro na API.
+ */
+export async function listGpts(AuthService) {
+  const user = AuthService.user;
+  if (!user) throw new Error("Usuário não autenticado");
+  const token = await user.getIdToken();
+
+  const response = await fetch('https://webhook.power.tec.br/webhook/lexidecis/gpt/list', {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error("Erro ao listar GPTs: " + errorText);
+  }
+
+  return await response.json();
+}
+
 export { fetchChatHistory as getChatHistory };

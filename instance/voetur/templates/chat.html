@@ -290,28 +290,18 @@
       object-fit: contain;
     }
 
-    /* Shadow at bottom to indicate more content */
-    .scroll-shadow {
-      position: relative;
-    }
-    .scroll-shadow::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 2.5rem; /* increased height for a stronger fade */
-      pointer-events: none;
-      background: linear-gradient(to bottom, transparent, var(--shape-border)); /* darker end color */
-    }
-    /* Hide shadow when scrolled to bottom */
-    .scroll-shadow.at-bottom::after {
-      display: none;
-    }
-
     /* Smaller font size for chat list items */
     #chat-list li {
       font-size: 0.875rem;
+    }
+
+    /* Modern sidebar divider */
+    #chat-sidebar hr {
+      border: none;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--theme-default), transparent);
+      margin: 0.5rem 1rem;
+      opacity: 0.7;
     }
   </style>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simplebar@6.2.3/dist/simplebar.min.css" />
@@ -365,15 +355,39 @@
           <i class="bi bi-search search-icon"></i>
           <select id="chat-search" style="width:100%"><option></option></select>
         </div>
+        <hr class="mx-3 my-2" />
+        <div class="px-3 py-0 text-muted small fw-semibold">LLMs</div>
+        <ul class="list-unstyled m-0">
+          <li id="lexi-ai-item" class="px-3 py-2 d-flex align-items-center" role="button" tabindex="0">
+            <img src="../assets/svg/lexi-ai-item.svg" class="provider-icon" alt="ChatGPT icon"/>
+            <span class="flex-grow-1">ChatGPT</span>
+          </li>
+          <li id="gemini-ai-item" class="px-3 py-2 d-flex align-items-center" role="button" tabindex="0">
+            <img src="../assets/svg/gemini-ai-item.svg" class="provider-icon" alt="Gemini icon"/>
+            <span class="flex-grow-1">Gemini</span>
+          </li>
+          <li id="deepseek-ai-item" class="px-3 py-2 d-flex align-items-center" role="button" tabindex="0">
+            <img src="../assets/svg/deepseek-ai-item.svg" class="provider-icon" alt="DeepSeek icon"/>
+            <span class="flex-grow-1">DeepSeek</span>
+          </li>
+          <li id="grok-ai-item" class="px-3 py-2 d-flex align-items-center" role="button" tabindex="0">
+            <img src="../assets/svg/grok-ai-item.svg" class="provider-icon" alt="Grok icon"/>
+            <span class="flex-grow-1">Grok</span>
+          </li>
+          <li id="anthropic-ai-item" class="px-3 py-2 d-flex align-items-center" role="button" tabindex="0">
+            <img src="../assets/svg/anthropic-ai-item.svg" class="provider-icon" alt="Anthropic icon"/>
+            <span class="flex-grow-1">Anthropic</span>
+          </li>
+        </ul>
+        <hr class="mx-3 my-2" />
         <div class="px-3 py-0 text-muted small fw-semibold">GPTs</div>
-        <div class="flex-grow-1 scroll-shadow" style="position: relative; max-height: 200px;">
-          <div class="scroll-content" style="overflow-y: auto; max-height: 200px;">
-            <ul id="ai-providers-list" class="list-unstyled m-0"></ul>
-          </div>
+        <div class="flex-grow-1" style="overflow-y: auto; max-height: 200px;">
+          <ul id="ai-providers-list" class="list-unstyled m-0"></ul>
         </div>
         <ul class="list-unstyled m-0">
           <li id="explore-gpt-item" class="px-3 py-2 d-flex align-items-center" role="button" tabindex="0" data-bs-toggle="modal" data-bs-target="#gptModal"><i class="bi bi-grid-3x3-gap me-2"></i><span class="flex-grow-1">Explore GPTs</span></li>
         </ul>
+        <hr class="mx-3 my-2" />
         <div class="px-3 py-0 text-muted small fw-semibold">Chats</div>
         <div class="flex-grow-1" data-simplebar style="overflow-y: auto; flex: 1; min-height: 0;">
           <ul id="chat-list" class="mb-0 pt-0"><li id="chat-loading" class="px-3 py-2 text-muted">Carregando chats...</li></ul>
@@ -402,7 +416,7 @@
   </div>
   <script type="module">
     import AuthService from '../assets/js/auth.js';
-    import { listChats, listGpts, getChatHistory } from "../assets/js/api.js";
+    import { listChats, listGpts, getChatHistory, getGptConfig } from "../assets/js/api.js";
 
     // === Flowise chatflowId mapping helper ===
     const chatflowIdMap = {
@@ -429,43 +443,45 @@
       miniThemeToggle.innerHTML = themeToggle.innerHTML;
     });
 
-  // Dynamically generate AI provider list and handlers
-  const providers = [
-    { id: 'lexi-ai-item',    label: 'ChatGPT',   flowId: mapChatflowId('efe59701-afe2-4f4c-8448-bb8e3a32161a') },
-    { id: 'gemini-ai-item',  label: 'Gemini',     flowId: 'FLOW2_CHAT' },
-    { id: 'deepseek-ai-item',label: 'DeepSeek',   flowId: 'FLOW3_CHAT' },
-    { id: 'grok-ai-item',    label: 'Grok',       flowId: 'FLOW4_CHAT' },
-    { id: 'anthropic-ai-item', label: 'Anthropic', flowId: 'FLOW5_CHAT' },
-    { id: 'gemma-ai-item', label: 'Gemma', flowId: 'FLOW6_CHAT' },
-    { id: 'groq-ai-item', label: 'Groq', flowId: 'FLOW7_CHAT' },
-    { id: 'llama-ai-item',   label: 'Llama',      flowId: 'FLOW8_CHAT' }
-  ];
-  const aiList = document.getElementById('ai-providers-list');
-  providers.forEach(p => {
-    const li = document.createElement('li');
-    li.id = p.id;
-    li.className = 'px-3 py-2 d-flex align-items-center';
-    li.setAttribute('role', 'button');
-    li.tabIndex = 0;
-    li.innerHTML = `
-      <img src="../assets/svg/${p.id}.svg" class="provider-icon" alt="${p.label} icon"/>
-      <span class="flex-grow-1">${p.label}</span>
-    `;
-    li.addEventListener('click', () => {
-      document.querySelectorAll('#chat-sidebar li').forEach(x => x.classList.remove('selected'));
-      li.classList.add('selected');
-      document.getElementById('chat-area').innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
-      window.flowiseConfig.chatflowid = p.flowId;
-      window.flowiseChatbot.initFull(window.flowiseConfig);
-    });
-    aiList.appendChild(li);
-  });
-    const _origFetch = window.fetch;
-    window.fetch = (resource, init = {}) => {
-      const headers = new Headers(init.headers || {});
-      if (AuthService.user) { headers.set('x-user-email', AuthService.user.email); headers.set('x-user-uuid', AuthService.user.uid); }
-      return _origFetch(resource, { ...init, headers });
-    };
+    // === Build dynamic AI provider list ===
+    // === Build dynamic AI provider list ===
+    const aiList = document.getElementById('ai-providers-list');
+    const configCache = {};
+    (async () => {
+      await new Promise(resolve => {
+        const checkAuth = setInterval(() => {
+          if (AuthService.user) { clearInterval(checkAuth); resolve(); }
+        }, 100);
+      });
+      const gptList = await listGpts(AuthService);
+      const gptMap = Object.fromEntries(gptList.map(g => [g.id, g]));
+      gptList.forEach(gpt => {
+        const li = document.createElement('li');
+        li.id = gpt.id;
+        li.className = 'px-3 py-2 d-flex align-items-center';
+        li.setAttribute('role', 'button');
+        li.tabIndex = 0;
+        li.innerHTML = `
+          <img src="${gpt.imageUrl}" class="provider-icon" alt="${gpt.name} icon"/>
+          <span class="flex-grow-1">${gpt.name}</span>
+        `;
+        li.addEventListener('click', async () => {
+          let override = configCache[gpt.id];
+          if (!override) {
+            override = await getGptConfig(AuthService, gpt.id);
+            configCache[gpt.id] = override;
+          }
+          const cfg = {
+            chatflowid: override.flowise.flowise.chatflowId,
+            apiHost:    override.flowise.flowise.apiHost,
+            token:      override.flowise.flowise.token,
+            theme:      window.flowiseConfig.theme
+          };
+          Chatbot.initFull(cfg);
+        });
+        aiList.appendChild(li);
+      });
+    })();
     (async () => {
       await new Promise(resolve => {
         const checkAuth = setInterval(() => {
@@ -794,26 +810,6 @@
       } catch (error) {
         console.error('Erro ao carregar GPTs:', error);
         body.innerHTML = '<p class="text-danger">Falha ao carregar GPTs. Tente novamente mais tarde.</p>';
-      }
-    });
-    // Shadow toggle on scroll for GPT list
-    window.addEventListener('DOMContentLoaded', () => {
-      const scrollContent = document.querySelector('.scroll-shadow .scroll-content');
-      if (scrollContent) {
-        const container = scrollContent.parentElement;
-        const updateShadow = () => {
-          if (scrollContent.scrollHeight - scrollContent.scrollTop <= scrollContent.clientHeight + 1) {
-            container.classList.add('at-bottom');
-          } else {
-            container.classList.remove('at-bottom');
-          }
-        };
-        // Initialize shadow state
-        updateShadow();
-        // Update on scroll
-        scrollContent.addEventListener('scroll', updateShadow);
-        // Also update on window resize
-        window.addEventListener('resize', updateShadow);
       }
     });
   </script>

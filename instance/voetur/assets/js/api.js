@@ -465,4 +465,34 @@ export async function listGpts(AuthService) {
   return await response.json();
 }
 
+
 export { fetchChatHistory as getChatHistory };
+
+/**
+ * Busca a configuração completa de um GPT, incluindo overrides de Flowise (vector store, LangChain, tools, etc).
+ *
+ * @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
+ * @param {string} gptId - Identificador do GPT.
+ * @returns {Promise<Object>} - Objeto JSON com todas as configurações do GPT.
+ * @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro na API.
+ */
+export async function getGptConfig(AuthService, gptId) {
+  const user = AuthService.user;
+  if (!user) throw new Error("Usuário não autenticado");
+  const token = await user.getIdToken();
+
+  const response = await fetch(`https://webhook.power.tec.br/webhook/lexidecis/gpt/config/${gptId}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error("Erro ao buscar configurações do GPT: " + errorText);
+  }
+
+  return await response.json();
+}

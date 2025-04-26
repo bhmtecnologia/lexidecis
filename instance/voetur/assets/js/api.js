@@ -481,7 +481,7 @@ export async function getGptConfig(AuthService, gptId) {
   if (!user) throw new Error("Usuário não autenticado");
   const token = await user.getIdToken();
 
-  const response = await fetch(`https://webhook.power.tec.br/webhook/lexidecis/gpt/config/${gptId}`, {
+  const response = await fetch(`https://webhook.power.tec.br/webhook/lexidecis/v2/gpt/configs?gpt_id=${gptId}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",

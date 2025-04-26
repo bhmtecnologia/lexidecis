@@ -469,14 +469,37 @@
           let override = configCache[gpt.id];
           if (!override) {
             override = await getGptConfig(AuthService, gpt.id);
-            configCache[gpt.id] = override;
+            configCache[gpt.id] = override; // now a flat object
           }
+          // Handle case where override is an array with a JSON string under an empty key
+          if (Array.isArray(override) && override.length > 0) {
+            const wrapper = override[0];
+            if (wrapper && typeof wrapper === 'object' && Object.prototype.hasOwnProperty.call(wrapper, '')) {
+              try {
+                override = JSON.parse(wrapper['']);
+                configCache[gpt.id] = override;
+              } catch (err) {
+                console.error('Error parsing chatflowConfig JSON string:', err);
+              }
+            }
+          }
+          // Use base Flowise config from the GPT metadata
+          const baseFlowise = gpt.flowiseConfig.flowise;
+          // Build config with chatflowConfig nested
           const cfg = {
-            chatflowid: override.flowise.flowise.chatflowId,
-            apiHost:    override.flowise.flowise.apiHost,
-            token:      override.flowise.flowise.token,
-            theme:      window.flowiseConfig.theme
+            chatflowid:       baseFlowise.chatflowId,
+            apiHost:          baseFlowise.apiHost,
+            token:            baseFlowise.token,
+            theme:            window.flowiseConfig.theme,
+            chatflowConfig:   override
           };
+          console.log('GPT Override for', gpt.id, override);
+          console.log('Config object passed to Chatbot.initFull:', cfg);
+          console.log('Full Chatbot.initFull payload (JSON):', JSON.stringify(cfg, null, 2));
+          // Ensure the chatbot container exists
+          const chatArea = document.getElementById('chat-area');
+          chatArea.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
+          // Initialize with new config
           Chatbot.initFull(cfg);
         });
         aiList.appendChild(li);

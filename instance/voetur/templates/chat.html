@@ -240,6 +240,39 @@
       min-height: 0;
       overflow-y: auto;
     }
+    /* Theme buttons matching default theme colors */
+    .btn-theme {
+      background-color: var(--theme-default);
+      color: var(--theme-body-font-color);
+      border: none;
+    }
+    .btn-theme:hover {
+      background-color: var(--active-bg-color);
+      color: var(--theme-body-font-color);
+    }
+    .btn-outline-theme {
+      background: none;
+      color: var(--theme-default);
+      border: 1px solid var(--theme-default);
+    }
+    .btn-outline-theme:hover {
+      background-color: var(--active-bg-color);
+      color: var(--theme-body-font-color);
+    }
+
+    /* Override Lexi AI and Explore GPTs button to match theme text-only style */
+    #lexi-ai-item,
+    #explore-gpt-item {
+      color: var(--theme-default);
+      background: none;
+      border: none;
+      background-color: transparent;
+    }
+    #lexi-ai-item:hover,
+    #explore-gpt-item:hover {
+      background-color: var(--theme-default) !important;
+      color: var(--body-color) !important;
+    }
   </style>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simplebar@6.2.3/dist/simplebar.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/simplebar@6.2.3/dist/simplebar.min.js"></script>
@@ -270,10 +303,10 @@
           <select id="chat-search" style="width:100%"><option></option></select>
         </div>
         <ul class="list-unstyled m-0">
-          <li id="lexi-ai-item" class="px-3 py-0 d-flex align-items-center"><i class="bi bi-stars me-1"></i><span class="flex-grow-1">Lexi AI (ChatGPT-4o)</span></li>
+          <li id="lexi-ai-item" class="px-3 py-2 d-flex align-items-center" role="button" tabindex="0"><i class="bi bi-stars me-1"></i><span class="flex-grow-1">Lexi AI (ChatGPT-4o)</span></li>
         </ul>
         <ul class="list-unstyled m-0">
-          <li id="explore-gpt-item" role="button" data-bs-toggle="modal" data-bs-target="#gptModal" class="px-3 py-0 d-flex align-items-center"><i class="bi bi-grid-3x3-gap me-2"></i><span class="flex-grow-1">Explore GPTs</span></li>
+          <li id="explore-gpt-item" class="px-3 py-2 d-flex align-items-center" role="button" tabindex="0" data-bs-toggle="modal" data-bs-target="#gptModal"><i class="bi bi-grid-3x3-gap me-2"></i><span class="flex-grow-1">Explore GPTs</span></li>
         </ul>
         <div class="px-3 py-0 text-muted small fw-semibold">Chats</div>
         <div class="flex-grow-1" data-simplebar style="overflow-y: auto; flex: 1; min-height: 0;">

@@ -4,7 +4,12 @@ export const menuItems = [
     {
       label: "Página Inicial",
       icon: "Home-dashboard",
-      route: "#dashboard",
+      route: "#chat",
+              // Subitens para o Dashboard:
+              children: [
+                { label: "Página Inicial", route: "#dashboard" },
+                { label: "Chat", route: "#chat" },
+              ]
     },
     {
         label: "Área do Gestor",
@@ -12,7 +17,7 @@ export const menuItems = [
         route: "#dashboard",
         // Subitens para o Dashboard:
         children: [
-          { label: "Chat", route: "#chat" },
+          { label: "Financeiro", route: "#vtc-financeiro-gestor" },
           { label: "Lançar pagamento - v2", route: "#financeiro-lancamento-create-v2" },
           { label: "Lançar pagamento - v3", route: "#financeiro-lancamento-create-v3" },
           { label: "Meus lançamentos", route: "#financeiro-lancamentos-list" },

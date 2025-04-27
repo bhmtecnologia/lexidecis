@@ -419,6 +419,73 @@
     </div>
   </div>
   <script type="module">
+    // Intercept all fetch calls to include user identifiers
+    const _origFetch = window.fetch;
+    window.fetch = async (resource, init = {}) => {
+      const headers = new Headers(init.headers || {});
+      if (AuthService.user) {
+        headers.set('x-user-email', AuthService.user.email);
+        headers.set('x-user-uuid',  AuthService.user.uid);
+        // Include the user's JWT in every request
+        let jwt = AuthService.token;
+        // If AuthService.user provides getIdToken(), use it
+        if (!jwt && AuthService.user && typeof AuthService.user.getIdToken === 'function') {
+          jwt = await AuthService.user.getIdToken();
+        }
+        if (jwt) {
+          headers.set('x-user-jwt', jwt);
+        }
+        // Include the GPT ID header
+        headers.set('x-gpt-id', '1');
+        // Include the user's JWT as a Bearer token
+        headers.set('Authorization', `Bearer ${jwt}`);
+      }
+      return _origFetch(resource, { ...init, headers });
+    };
+    // Initialize Flowise embed configuration with LexiDecis theme and observers stub
+    window.flowiseConfig = {
+      theme: {
+        chatWindow: {
+          showTitle: true,
+          titleBackgroundColor: "#20703b",
+          welcomeMessage: "Sou a Lexi AI, com tecnologia ChatGPT 4o da OpenAI. Ideal para responder perguntas, gerar ideias e ajudar com clareza e rapidez. O que deseja saber?",
+          errorMessage: "Ops, reduza sua pergunta e tente novamente.",
+          backgroundColor: "transparent",
+          userMessage: {
+            backgroundColor: "#d9e8e5",
+            textColor: "#292929",
+            showAvatar: false
+          },
+          textInput: {
+            placeholder: "Mensagem...",
+            backgroundColor: "#f5f5f5",
+            textColor: "#292929",
+            sendButtonColor: "#20703b",
+            maxChars: 100000,
+            maxCharsWarningMessage: "Você excedeu o limite de caracteres. Insira menos de 100000 caracteres.",
+            autoFocus: true,
+            sendMessageSound: true,
+            receiveMessageSound: true
+          },
+          feedback: {
+            color: "#20703b"
+          },
+          dateTimeToggle: {
+            date: true,
+            time: true
+          },
+          footer: {
+            textColor: "#20703b",
+            text: "Sempre verifique as respostas - ",
+            company: "LexiDecis",
+            companyLink: "https://lexidecis.com.br"
+          }
+        }
+      },
+      observersConfig: {
+        // Stub: will be overridden per session
+      }
+    };
     import AuthService from '../assets/js/auth.js';
     import { listChats, listGpts, getGptConfig } from "../assets/js/api.js";
 
@@ -497,13 +564,28 @@
           }
           // Use base Flowise config from the GPT metadata
           const baseFlowise = gpt.flowiseConfig.flowise;
+          // === Initialize empty history in localStorage for new session ===
+          const newExtKey = `${baseFlowise.chatflowId}__${override.sessionId}_EXTERNAL`;
+          const newFlagKey = `${baseFlowise.chatflowId}__${override.sessionId}_historyInjected`;
+          if (!localStorage.getItem(newFlagKey)) {
+            localStorage.setItem(newExtKey, JSON.stringify({ chatHistory: [], chatId: override.sessionId }));
+            localStorage.setItem(newFlagKey, 'true');
+          }
           // Track actual send/loading events to avoid initial load logs
           let loadingTriggered = false;
           // Build config with chatflowConfig nested
           const cfg = {
-            chatflowid:       baseFlowise.chatflowId,
+            chatflowid: baseFlowise.chatflowId,
             apiHost:          baseFlowise.apiHost,
             token:            baseFlowise.token,
+            headers: {
+              'x-user-email': AuthService.user.email,
+              'x-user-uuid':  AuthService.user.uid,
+              'x-gpt-id':  1,
+              
+
+              'x-user-jwt':   AuthService.token
+            },
             theme:            window.flowiseConfig.theme,
             observersConfig: {
               // Log to console simulating API call when chatflow loading begins/ends
@@ -577,9 +659,18 @@
             li.classList.add('selected');
 
             const sessionId = chat.id;
+            // Load GPT-specific override config (if not proxy)
+            const gptKey = chat.fk_gpt_id || chat.gpt_id;
+            let override = configCache[gptKey];
+            if (!override) {
+              override = await getGptConfig(AuthService, gptKey);
+              configCache[gptKey] = override;
+            }
+            // Ensure sessionId is included first in the override
+            override = { sessionId, ...override };
+            configCache[gptKey] = override;
             try {
             // Determine the actual Flowise chatflowId for this GPT
-            const gptKey = chat.fk_gpt_id || chat.gpt_id;
             const gpt = gptMap[gptKey];
             const realFlowId = gpt && gpt.flowiseConfig && gpt.flowiseConfig.flowise
               ? gpt.flowiseConfig.flowise.chatflowId
@@ -608,18 +699,41 @@
               const history = await response.json();
               localStorage.setItem(extKey, JSON.stringify({ chatHistory: history, chatId: sessionId }));
               localStorage.setItem(flagKey, 'true');
+              // Present the last question and answer
+              console.log('Gravado em localStorage:', extKey, flagKey);
+              // Present the last question and answer
+              const stored = JSON.parse(localStorage.getItem(extKey));
+              if (stored && Array.isArray(stored.chatHistory) && stored.chatHistory.length >= 2) {
+                const history = stored.chatHistory;
+                // Find the last user message and the following assistant message
+                const lastUserIndex = history.map(m => m.role).lastIndexOf('userMessage');
+                const question = history[lastUserIndex].content;
+                const answer = history[lastUserIndex + 1] && history[lastUserIndex + 1].role === 'apiMessage'
+                  ? history[lastUserIndex + 1].content
+                  : '<sem resposta encontrada>';
+                console.log('📄 Pergunta:', question);
+                console.log('🤖 Resposta:', answer);
+              }
             }
-            // Set chatflowid to the real Flowise ID (without sessionId) for streaming endpoint
-            window.flowiseConfig.chatflowid = realFlowId;
-            // API host remains set to this GPT's host
-            window.flowiseConfig.apiHost = apiHost;
+            // === Configure and initialize embed ===
+            window.flowiseConfig = {
+              chatflowid: `${realFlowId}__${sessionId}`,
+              apiHost:    apiHost,
+              token:      token,
+              headers: {
+                'x-user-email': AuthService.user.email,
+                'x-user-uuid':  AuthService.user.uid,
+                'x-user-jwt':   AuthService.token
+              },
+              chatflowConfig: override,
+              theme:      window.flowiseConfig.theme,
+              observersConfig: window.flowiseConfig.observersConfig
+            };
 
               // Monta o componente full‑screen
               const chatArea = document.getElementById('chat-area');
               chatArea.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
 
-              // Atualiza apenas o sessionId na configuração global
-              window.flowiseConfig.chatflowConfig = { sessionId };
               // Inicializa em full‑screen com histórico injetado
               window.flowiseChatbot.initFull(window.flowiseConfig);
             } catch (err) {
@@ -718,45 +832,31 @@
     import('https://proxy-5cun.onrender.com/web.js')
       .then(({ default: Chatbot }) => {
         window.flowiseChatbot = Chatbot;
+        // Default flow using proxy-based chatflow ID
+        const chatflowidPadrao = mapChatflowId('efe59701-afe2-4f4c-8448-bb8e3a32161a');
+        // Generate and inject default session history for proxy-based chat
+        const defaultSessionId = crypto.randomUUID();
+        const defaultExtKey = `${chatflowidPadrao}_EXTERNAL`;
+        const defaultFlagKey = `${chatflowidPadrao}_historyInjected`;
+        if (!localStorage.getItem(defaultFlagKey)) {
+          localStorage.setItem(defaultExtKey, JSON.stringify({ chatHistory: [], chatId: defaultSessionId }));
+          localStorage.setItem(defaultFlagKey, 'true');
+        }
+        // Preserve any existing config (e.g., theme, observers) if set
+        const baseConfig = window.flowiseConfig || {};
         window.flowiseConfig = {
-          chatflowid: mapChatflowId('efe59701-afe2-4f4c-8448-bb8e3a32161a'),
-          apiHost: 'https://proxy-5cun.onrender.com',
-          theme: {
-            chatWindow: {
-              showTitle: true,
-              titleBackgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--theme-default').trim(),
-              welcomeMessage: 'Sou a Lexi AI, com tecnologia ChatGPT 4o da OpenAI. Ideal para responder perguntas, gerar ideias e ajudar com clareza e rapidez. O que deseja saber?',
-              errorMessage: 'Ops, reduza sua pergunta e tente novamente.',
-              backgroundColor: 'transparent',
-              userMessage: {
-                backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--active-bg-color').trim(),
-                textColor: getComputedStyle(document.documentElement).getPropertyValue('--body-font-color').trim(),
-                showAvatar: false
-              },
-              textInput: {
-                placeholder: 'Mensagem...',
-                backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--light-color').trim(),
-                textColor: getComputedStyle(document.documentElement).getPropertyValue('--body-font-color').trim(),
-                sendButtonColor: getComputedStyle(document.documentElement).getPropertyValue('--theme-default').trim(),
-                maxChars: 100000,
-                maxCharsWarningMessage: 'Você excedeu o limite de caracteres. Insira menos de 100000 caracteres.',
-                autoFocus: true,
-                sendMessageSound: true,
-                receiveMessageSound: true
-              },
-              feedback: {
-                color: getComputedStyle(document.documentElement).getPropertyValue('--theme-default').trim()
-              },
-              dateTimeToggle: { date: true, time: true },
-              footer: {
-                textColor: getComputedStyle(document.documentElement).getPropertyValue('--theme-default').trim(),
-                text: 'Sempre verifique as respostas - ',
-                company: 'LexiDecis',
-                companyLink: 'https://lexidecis.com.br'
-              }
-            }
-          }
+          ...baseConfig,
+          chatflowid:     chatflowidPadrao,
+          apiHost:        'https://proxy-5cun.onrender.com',
+          headers: {
+            'x-user-email': AuthService.user?.email || '',
+            'x-user-uuid':  AuthService.user?.uid   || '',
+            'x-user-jwt':   AuthService.token       || '',
+            'x-gpt-id':     '1'
+          },
+          chatflowConfig: { sessionId: defaultSessionId }
         };
+        // Initialize embed with preserved theme and observers if available
         Chatbot.initFull(window.flowiseConfig);
       })
       .catch(err => console.error('Erro carregando Flowise:', err));

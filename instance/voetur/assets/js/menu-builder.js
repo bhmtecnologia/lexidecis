@@ -4,7 +4,7 @@ export const menuItems = [
     {
       label: "Página Inicial",
       icon: "Home-dashboard",
-      route: "#chat",
+      route: "#dashboard",
               // Subitens para o Dashboard:
               children: [
                 { label: "Página Inicial", route: "#dashboard" },

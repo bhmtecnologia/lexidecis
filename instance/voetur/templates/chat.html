@@ -689,15 +689,16 @@
             const realFlowId = gpt && gpt.flowiseConfig && gpt.flowiseConfig.flowise
               ? gpt.flowiseConfig.flowise.chatflowId
               : (chat.fk_gpt_id || chat.gpt_id);
+            // Use proxy-mapped chatflow ID only, without sessionId
             const proxyFlowId = mapChatflowId(realFlowId);
             // Determine API host for this GPT
             const apiHost = gpt && gpt.flowiseConfig && gpt.flowiseConfig.flowise
               ? gpt.flowiseConfig.flowise.apiHost
               : window.flowiseConfig.apiHost;
             const flowId = `${proxyFlowId}_${sessionId}`;
-            // Use realFlowId and sessionId with double underscore for unique storage keys
-            const extKey = `${realFlowId}__${sessionId}_EXTERNAL`;
-            const flagKey = `${realFlowId}__${sessionId}_historyInjected`;
+            // Use proxyFlowId only (no sessionId) for localStorage keys, as expected by web.js
+            const extKey = `${proxyFlowId}_EXTERNAL`;
+            const flagKey = `${proxyFlowId}_historyInjected`;
             // Inject history only if not already stored for this session
             if (!localStorage.getItem(flagKey)) {
               // Fetch history directly from Flowise API with proper token
@@ -733,7 +734,7 @@
             window.flowiseConfig = {
               chatflowid: `${realFlowId}__${sessionId}`,
               apiHost:    apiHost,
-              token:      token,
+              token:      gpt.flowiseConfig.flowise.token,
               headers: {
                 'x-user-email': AuthService.user.email,
                 'x-user-uuid':  AuthService.user.uid,

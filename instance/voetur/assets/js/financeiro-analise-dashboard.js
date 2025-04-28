@@ -371,6 +371,7 @@ export async function renderFinanceiroAnaliseDashboard() {
   }
 
   async function loadDashboardData() {
+    showLoading();
     try {
       const [filiais, fornecedores, projetos, centros] = await Promise.all([
         listFiliais(AuthService),
@@ -510,8 +511,10 @@ export async function renderFinanceiroAnaliseDashboard() {
       });
 
       initializeDataTable();
+      hideLoading();
     } catch (error) {
       console.error("Erro ao carregar dados para análise:", error);
+      hideLoading();
       document.getElementById('analise-tabela').innerHTML = '<tr><td colspan="20">Erro ao carregar os dados.</td></tr>';
     }
   }
@@ -620,7 +623,7 @@ export async function renderFinanceiroAnaliseDashboard() {
 
   async function processModalReject() {
     showLoading();
-    await processModalUpdate("Rejeitado");
+    await processModalUpdate("Devolvido Controladoria");
   }
 
   async function processModalSave() {
@@ -674,7 +677,7 @@ export async function renderFinanceiroAnaliseDashboard() {
     const dadosLanc = lancamento.dados || {};
     const atualizacoes = {
       ...dadosLanc,
-      status: decision === 'aprovar' ? 'Aprovado' : 'Rejeitado',
+      status: decision === 'aprovar' ? 'Aprovado' : 'Devolvido Controladoria',
       data_analise: new Date().toISOString()
     };
     try {

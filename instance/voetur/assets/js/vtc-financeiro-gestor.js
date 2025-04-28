@@ -67,6 +67,7 @@ export async function renderVtcFinanceiroGestor() {
                     <th>Fornecedor</th>
                     <th>Valor</th>
                     <th>Data Emissão</th>
+                    <th>Atualizado Em</th>
                     <th>Forma de Pagamento</th>
                     <th>Comentário</th>
                     <th>Anexos</th>
@@ -209,7 +210,7 @@ export async function renderVtcFinanceiroGestor() {
         language: {
           url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json'
         },
-        order: [[5, 'desc']],
+        order: [[6, 'desc']],
         columns: [
           {
             data: null,
@@ -236,6 +237,7 @@ export async function renderVtcFinanceiroGestor() {
           { data: 'fornecedor_nome',   title: 'Fornecedor',        defaultContent: '-' },
           { data: 'valor',             title: 'Valor',             defaultContent: '-', render: v => isNaN(v) ? '-' : parseFloat(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) },
           { data: 'data_emissao',      title: 'Data Emissão',      defaultContent: '-', render: d => d ? new Date(d).toLocaleDateString('pt-BR') : '-' },
+          { data: 'updated_at',        title: 'Atualizado Em',     defaultContent: '-', render: u => u ? new Date(u).toLocaleString('pt-BR') : '-' },
           { data: 'forma_pagamento',   title: 'Forma de Pagamento', defaultContent: '-' },
           { data: 'comentario_analista', title: 'Comentário',       defaultContent: '-' },
           { data: 'anexos',            title: 'Anexos',            defaultContent: '-', render: a => formatAnexos(a) }
@@ -315,10 +317,16 @@ export async function renderVtcFinanceiroGestor() {
   // Handler para enviar lançamento
   $('#lancamentosTable tbody').on('click', 'button[data-action="send"]', function() {
     const id = $(this).data('id');
-    // Chama a API para enviar o lançamento
-    updateLancamento(AuthService, id)
+    const lanc = lancamentosData.find(l => l.id === id);
+    if (!lanc) {
+      console.error('Lançamento não encontrado para envio:', id);
+      return;
+    }
+    // Remove internal fields and prepare payload with full data plus updated status
+    const { id: _, created_at, updated_at, created_by, updated_by, analise_ia, ocr_ia, ...dados } = lanc;
+    const payload = { ...dados, status: 'Enviado Controladoria' };
+    updateLancamento(AuthService, id, payload)
       .then(() => {
-        // Recarrega a tabela após envio bem-sucedido
         if (lancamentosTable) lancamentosTable.ajax.reload(null, false);
       })
       .catch(err => {
@@ -337,7 +345,7 @@ export async function renderVtcFinanceiroGestor() {
       }
     });
     // Envia atualização
-    updateLancamento(AuthService, { ...currentLanc, ...updated })
+    updateLancamento(AuthService, currentLanc.id, updated)
       .then(() => {
         if (lancamentosTable) lancamentosTable.ajax.reload(null, false);
         editModal.hide();

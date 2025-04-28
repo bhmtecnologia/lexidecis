@@ -62,30 +62,14 @@ export async function renderVtcFinanceiroGestor() {
                 <thead>
                   <tr>
                     <th>Ações</th>
-                    <th>status</th>
-                    <th>analise_ia</th>
-                    <th>ocr_ia</th>
-                    <th>comentario_analista</th>
-                    <th>anexo(s)</th>
-                    <th>itens</th>
-                    <th>valor</th>
-                    <th>filial_nome</th>
-                    <th>data_emissao</th>
-                    <th>projeto_nome</th>
-                    <th>data_inclusao</th>
-                    <th>justificativa</th>
-                    <th>tipo_documento</th>
-                    <th>data_vencimento</th>
-                    <th>forma_pagamento</th>
-                    <th>fornecedor_cnpj</th>
-                    <th>fornecedor_nome</th>
-                    <th>numero_documento</th>
-                    <th>usuario_inclusao</th>
-                    <th>centro_custo_nome</th>
-                    <th>created_at</th>
-                    <th>updated_at</th>
-                    <th>created_by</th>
-                    <th>updated_by</th>
+                    <th>Status</th>
+                    <th>Filial</th>
+                    <th>Fornecedor</th>
+                    <th>Valor</th>
+                    <th>Data Emissão</th>
+                    <th>Forma de Pagamento</th>
+                    <th>Comentário</th>
+                    <th>Anexos</th>
                   </tr>
                 </thead>
                 <tbody></tbody>
@@ -106,7 +90,7 @@ export async function renderVtcFinanceiroGestor() {
           </div>
           <div class="modal-body">
             <!-- Container onde o Alpaca vai renderizar o formulário -->
-            <div id="editDadosForm"></div>
+            <form id="editFormContainer"></form>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
@@ -189,16 +173,6 @@ export async function renderVtcFinanceiroGestor() {
       lancamentosTable = $('#lancamentosTable').DataTable({
         pageLength: 25,
         lengthMenu: [ [10, 25, 50, 100], [10, 25, 50, 100] ],
-        rowCallback: function(row, data) {
-          const status = (data.status || '').toLowerCase();
-          if (status === 'novo') {
-            $(row).addClass('table-success');
-          } else if (status.includes('devolvido')) {
-            $(row).addClass('table-warning');
-          } else if (status.includes('enviado')) {
-            $(row).addClass('table-primary');
-          }
-        },
         ajax: function(data, callback) {
           listLancamentos(AuthService)
             .then(lancs => {
@@ -235,7 +209,7 @@ export async function renderVtcFinanceiroGestor() {
         language: {
           url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json'
         },
-        order: [[21, 'desc']],
+        order: [[5, 'desc']],
         columns: [
           {
             data: null,
@@ -257,46 +231,14 @@ export async function renderVtcFinanceiroGestor() {
               return html;
             }
           },
-          { data: 'status',             title: 'status',             defaultContent: '-' },
-          {
-            data: 'analise_ia',
-            title: 'analise_ia',
-            render: md => {
-              if (!md) return '-';
-              const encoded = encodeURIComponent(md);
-              return `<button class="btn btn-sm btn-secondary view-analysis" style="font-size:0.75rem; line-height:1;" data-md="${encoded}">Ver</button>`;
-            }
-          },
-          {
-            data: 'ocr_ia',
-            title: 'ocr_ia',
-            render: text => {
-              if (!text) return '-';
-              const encoded = encodeURIComponent(text);
-              return `<button class="btn btn-sm btn-info view-ocr" style="font-size:0.75rem; line-height:1;" data-md="${encoded}">Ver OCR</button>`;
-            }
-          },
-          { data: 'comentario_analista', title: 'comentario_analista', defaultContent: '-' },
-          { data: 'anexos',             title: 'anexo(s)',            defaultContent: '-', render: a => formatAnexos(a) },
-          { data: 'itens',              title: 'itens',              defaultContent: '-', render: i => formatItens(i) },
-          { data: 'valor',              title: 'valor',              defaultContent: '-', render: v => isNaN(v) ? '-' : parseFloat(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) },
-          { data: 'filial_nome',        title: 'filial_nome',        defaultContent: '-' },
-          { data: 'data_emissao',       title: 'data_emissao',       defaultContent: '-', render: d => d ? new Date(d).toLocaleDateString('pt-BR') : '-' },
-          { data: 'projeto_nome',       title: 'projeto_nome',       defaultContent: '-' },
-          { data: 'data_inclusao',      title: 'data_inclusao',      defaultContent: '-' },
-          { data: 'justificativa',      title: 'justificativa',      defaultContent: '-' },
-          { data: 'tipo_documento',     title: 'tipo_documento',     defaultContent: '-' },
-          { data: 'data_vencimento',    title: 'data_vencimento',    defaultContent: '-', render: d => d ? new Date(d).toLocaleDateString('pt-BR') : '-' },
-          { data: 'forma_pagamento',    title: 'forma_pagamento',    defaultContent: '-' },
-          { data: 'fornecedor_cnpj',    title: 'fornecedor_cnpj',    defaultContent: '-' },
-          { data: 'fornecedor_nome',    title: 'fornecedor_nome',    defaultContent: '-' },
-          { data: 'numero_documento',   title: 'numero_documento',   defaultContent: '-' },
-          { data: 'usuario_inclusao',   title: 'usuario_inclusao',   defaultContent: '-' },
-          { data: 'centro_custo_nome',  title: 'centro_custo_nome',  defaultContent: '-' },
-          { data: 'created_at',         title: 'created_at',         defaultContent: '-', render: d => d ? new Date(d).toLocaleString('pt-BR') : '-' },
-          { data: 'updated_at',         title: 'updated_at',         defaultContent: '-', render: d => d ? new Date(d).toLocaleString('pt-BR') : '-' },
-          { data: 'created_by',         title: 'created_by',         defaultContent: '-' },
-          { data: 'updated_by',         title: 'updated_by',         defaultContent: '-' }
+          { data: 'status',            title: 'Status',            defaultContent: '-' },
+          { data: 'filial_nome',       title: 'Filial',            defaultContent: '-' },
+          { data: 'fornecedor_nome',   title: 'Fornecedor',        defaultContent: '-' },
+          { data: 'valor',             title: 'Valor',             defaultContent: '-', render: v => isNaN(v) ? '-' : parseFloat(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) },
+          { data: 'data_emissao',      title: 'Data Emissão',      defaultContent: '-', render: d => d ? new Date(d).toLocaleDateString('pt-BR') : '-' },
+          { data: 'forma_pagamento',   title: 'Forma de Pagamento', defaultContent: '-' },
+          { data: 'comentario_analista', title: 'Comentário',       defaultContent: '-' },
+          { data: 'anexos',            title: 'Anexos',            defaultContent: '-', render: a => formatAnexos(a) }
         ]
       });
     } else {
@@ -321,6 +263,9 @@ export async function renderVtcFinanceiroGestor() {
   if (editModalEl) {
     editModal = new bootstrap.Modal(editModalEl);
   }
+
+  let currentLanc;
+
   AuthService.onAuthChange(user => {
     if (user) {
       // ... mesma inicialização que em renderFinanceiroLancamentosList()
@@ -348,16 +293,56 @@ export async function renderVtcFinanceiroGestor() {
     const id = $(this).data('id');
     const lanc = lancamentosData.find(l => l.id === id);
     if (lanc) {
-      // Inicializa o Alpaca no container, destruindo instâncias anteriores
-      $('#editDadosForm').alpaca('destroy');
-      $('#editDadosForm').alpaca({
-        schema: schemaDados,
-        options: optionsDados,
-        data: lanc.dados
+      currentLanc = lanc;
+      // Gera formulário editável com campos principais
+      const fields = ['justificativa', 'data_emissao', 'valor', 'forma_pagamento'];
+      let formHtml = '';
+      fields.forEach(key => {
+        const value = lanc[key] !== null && lanc[key] !== undefined ? lanc[key] : '';
+        // Escolhe tipo de input baseado na chave
+        const type = key === 'data_emissao' ? 'date' : key === 'valor' ? 'number' : 'text';
+        formHtml +=
+          `<div class="mb-3">
+             <label for="field_${key}" class="form-label">${key.replace('_', ' ').replace(/\b\w/g, l=>l.toUpperCase())}</label>
+             <input type="${type}" class="form-control" id="field_${key}" name="${key}" value="${value}">
+           </div>`;
       });
+      $('#editFormContainer').html(formHtml);
       // Exibe o modal
       editModal.show();
     }
+  });
+  // Handler para enviar lançamento
+  $('#lancamentosTable tbody').on('click', 'button[data-action="send"]', function() {
+    const id = $(this).data('id');
+    // Chama a API para enviar o lançamento
+    updateLancamento(AuthService, id)
+      .then(() => {
+        // Recarrega a tabela após envio bem-sucedido
+        if (lancamentosTable) lancamentosTable.ajax.reload(null, false);
+      })
+      .catch(err => {
+        console.error('Erro ao enviar lançamento:', err);
+      });
+  });
+
+  // Handler para salvar edição
+  document.getElementById('saveBtn').addEventListener('click', () => {
+    const form = document.getElementById('editFormContainer');
+    const updated = {};
+    ['justificativa', 'data_emissao', 'valor', 'forma_pagamento'].forEach(key => {
+      const el = form.querySelector(`[name="${key}"]`);
+      if (el) {
+        updated[key] = el.value;
+      }
+    });
+    // Envia atualização
+    updateLancamento(AuthService, { ...currentLanc, ...updated })
+      .then(() => {
+        if (lancamentosTable) lancamentosTable.ajax.reload(null, false);
+        editModal.hide();
+      })
+      .catch(err => console.error('Erro ao salvar edição:', err));
   });
 }
 

@@ -2,137 +2,268 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Chat2 – Teste de Histórico e Inject</title>
-  <style>
-    body { font-family: sans-serif; margin: 2rem; }
-    input, button { font-size: 1rem; padding: 0.5rem; }
-    #history { margin-top: 1rem; white-space: pre-wrap; background: #f5f5f5; padding: 1rem; border-radius: 4px; }
-    #chatbot-container {
-      display: none;
-    }
-    #chatbot-container.active {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      margin: 0;
-      padding: 0;
-      z-index: 9999;
-      display: block;
-    }
-    flowise-fullchatbot {
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
-    .d-none { display: none !important; }
-  </style>
+  <title>Edição de JSON com Alpaca</title>
+  <!-- Bootstrap CSS -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+  />
+  <!-- jQuery UI CSS for datepicker -->
+  <link
+    rel="stylesheet"
+    href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css"
+  />
+  <!-- Alpaca CSS -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/alpaca@1.5.27/dist/alpaca/bootstrap/alpaca.min.css"
+  />
 </head>
 <body>
+  <div class="container py-4">
+    <h1 class="mb-4">Editar Payload JSON com Alpaca</h1>
 
-  <div id="welcome-screen">
-    <h1>Teste de Histórico do Flowise + Inject</h1>
+    <!-- Aqui mostramos o JSON original -->
+    <pre id="rawJson" class="bg-light p-3 border"></pre>
 
-    <label for="sessionId">Session ID:</label>
-    <input id="sessionId" type="text" placeholder="Cole aqui o sessionId" size="40" />
+    <!-- Container do formulário Alpaca -->
+    <div id="editForm"></div>
 
-    <button id="btnFetch">Buscar e Injetar Histórico</button>
-
-    <div id="history">Ainda não buscado.</div>
+    <button id="saveBtn" class="btn btn-primary mt-3">Salvar Alterações</button>
   </div>
 
-  <!-- Container onde o chatbot será montado -->
-  <div id="chatbot-container" class="d-none"></div>
+  <!-- Dependências -->
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
+  <!-- jQuery UI for datepicker -->
+  <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/underscore@1.13.6/underscore-min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/handlebars@4.7.7/dist/handlebars.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/alpaca@1.5.27/dist/alpaca/bootstrap/alpaca.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-  <script type="module">
-    import { getChatHistory } from '../assets/js/api.js';
-    import Chatbot from 'https://cdn.jsdelivr.net/npm/flowise-embed/dist/web.js';
-
-    // Configuração fixa inicial
-    const config = {
-      token:     "0d1S97hx7o2pLVe5grVpkvUNW-RR_TTWYeGuKGK2ALs",
-      apiHost:   "https://flowise.power.tec.br",
-      chatflowId:"efe59701-afe2-4f4c-8448-bb8e3a32161a"
-    };
-
-    // AuthService fictício apenas para satisfazer o método
-    const AuthService = {
-      user: {
-        async getIdToken() {
-          // Simula renovação de token
-          return;
+  <script>
+    // --- 1. Payload JSON completo definido "na mão" ---
+    const payload = {
+      uid: "SkIDNDYwvFSutsnNTOls7ZvRrHn2",
+      anexo: [
+        {
+          url: "https://.../1745760413816-eueq6p4ue.png",
+          categoria: "Nota Fiscal"
         }
+      ],
+      dados: {
+        log: [
+          "27/04/2025, 10:28:37 - Valor Bruto definido como Manual",
+          "27/04/2025, 10:27:01 - Anexo carregado"
+        ],
+        parcelas: [
+          { valor: 6000, data_vencimento: "2025-04-30" }
+        ],
+        auditoria: {
+          usuario: "brunohiroshi@gmail.com",
+          data_hora: "27/04/2025, 10:27:01",
+          url_anexo: "...png",
+          nome_anexo: "ed47d43a.jpeg",
+          status_imagem: "Imagem legível",
+          tipo_documento: "Nota Fiscal"
+        }
+      },
+      itens: [
+        { descricao: "Pneu", quantidade: 1, valor_unitario: 150 }
+      ],
+      valor: 5868.8,
+      app_id: "empresa_vtc_log",
+      status: "Novo",
+      filial_id: "7eaa9884-831d-45f0-838d-07f0831fcd93",
+      filial_nome: "VTCLOG_GUARULHOS",
+      data_emissao: "2025-04-11",
+      data_inclusao: "2025-04-27 10:29:45",
+      fornecedor_id: "6a553391-fa82-47ca-b403-803bc315a61c",
+      justificativa: "Ddds",
+      tipo_documento: "Nota Fiscal",
+      centro_custo_id: "083361cb-1f65-4f11-b46a-ce5167fb49dd",
+      forma_pagamento: "Depósito",
+      fornecedor_cnpj: "24.893.687/0011-71",
+      fornecedor_nome: "PNEULANDIA COMERCIAL LTDA-PAL",
+      numero_documento: "43.645",
+      usuario_inclusao: "brunohiroshi@gmail.com",
+      centro_custo_nome: "Sistemas"
+    };
+
+    // Exibe o JSON original na tela
+    document.getElementById("rawJson").textContent = JSON.stringify(payload, null, 2);
+
+    // --- 2. Schema completo para todo o payload ---
+    const schemaCompleto = {
+      type: "object",
+      title: "Payload Completo",
+      properties: {
+        uid: { type: "string", title: "UID" },
+        anexo: {
+          type: "array",
+          title: "Anexos",
+          items: {
+            type: "object",
+            properties: {
+              url: { type: "string", format: "uri", title: "URL" },
+              categoria: { type: "string", title: "Categoria" }
+            }
+          }
+        },
+        dados: {
+          type: "object",
+          title: "Dados do Lançamento",
+          properties: {
+            log: {
+              type: "array",
+              title: "Log de Eventos",
+              items: { type: "string" }
+            },
+            parcelas: {
+              type: "array",
+              title: "Parcelas",
+              items: {
+                type: "object",
+                properties: {
+                  valor: { type: "number", title: "Valor (R$)" },
+                  data_vencimento: { type: "string", format: "date", title: "Data de Vencimento" }
+                }
+              }
+            },
+            auditoria: {
+              type: "object",
+              title: "Auditoria",
+              properties: {
+                usuario: { type: "string", title: "Usuário" },
+                data_hora: { type: "string", title: "Data/Hora" },
+                url_anexo: { type: "string", format: "uri", title: "URL do Anexo" },
+                nome_anexo: { type: "string", title: "Nome do Anexo" },
+                status_imagem: { type: "string", title: "Status da Imagem" },
+                tipo_documento: { type: "string", title: "Tipo de Documento" }
+              }
+            }
+          }
+        },
+        itens: {
+          type: "array",
+          title: "Itens",
+          items: {
+            type: "object",
+            properties: {
+              descricao: { type: "string", title: "Descrição" },
+              quantidade: { type: "number", title: "Quantidade" },
+              valor_unitario: { type: "number", title: "Valor Unitário (R$)" }
+            }
+          }
+        },
+        valor: { type: "number", title: "Valor Total (R$)" },
+        app_id: { type: "string", title: "App ID" },
+        status: { type: "string", title: "Status" },
+        filial_id: { type: "string", title: "Filial ID" },
+        filial_nome: { type: "string", title: "Filial Nome" },
+        data_emissao: { type: "string", format: "date", title: "Data de Emissão" },
+        data_inclusao: { type: "string", title: "Data de Inclusão" },
+        fornecedor_id: { type: "string", title: "Fornecedor ID" },
+        justificativa: { type: "string", title: "Justificativa" },
+        tipo_documento: { type: "string", title: "Tipo de Documento" },
+        centro_custo_id: { type: "string", title: "Centro de Custo ID" },
+        forma_pagamento: { type: "string", title: "Forma de Pagamento" },
+        fornecedor_cnpj: { type: "string", title: "Fornecedor CNPJ" },
+        fornecedor_nome: { type: "string", title: "Fornecedor Nome" },
+        numero_documento: { type: "string", title: "Número do Documento" },
+        usuario_inclusao: { type: "string", title: "Usuário de Inclusão" },
+        centro_custo_nome: { type: "string", title: "Centro de Custo Nome" }
       }
     };
 
-    const btn = document.getElementById('btnFetch');
-    const out = document.getElementById('history');
-    const chatbotContainer = document.getElementById('chatbot-container');
-    const welcomeScreen = document.getElementById('welcome-screen');
-
-    btn.addEventListener('click', async () => {
-      const sessionId = document.getElementById('sessionId').value.trim();
-      if (!sessionId) {
-        out.textContent = 'Informe um sessionId válido.';
-        return;
+    const optionsCompleto = {
+      fields: {
+        uid: { label: "UID" },
+        anexo: {
+          label: "Anexos",
+          items: {
+            fields: {
+              url: { type: "text", label: "URL" },
+              categoria: { label: "Categoria" }
+            }
+          }
+        },
+        dados: {
+          label: "Dados do Lançamento",
+          fields: {
+            log: { type: "array", items: { type: "text" }, label: "Log de Eventos" },
+            parcelas: {
+              items: {
+                fields: {
+                  valor: { label: "Valor (R$)" },
+                  data_vencimento: { type: "date", label: "Data de Vencimento" }
+                }
+              }
+            },
+            auditoria: {
+              fields: {
+                usuario: { label: "Usuário" },
+                data_hora: { label: "Data/Hora" },
+                url_anexo: { type: "text", label: "URL do Anexo" },
+                nome_anexo: { label: "Nome do Anexo" },
+                status_imagem: { label: "Status da Imagem" },
+                tipo_documento: { label: "Tipo de Documento" }
+              }
+            }
+          }
+        },
+        itens: {
+          label: "Itens",
+          items: {
+            fields: {
+              descricao: { label: "Descrição" },
+              quantidade: { label: "Quantidade" },
+              valor_unitario: { label: "Valor Unitário (R$)" }
+            }
+          }
+        },
+        valor: { label: "Valor Total (R$)" },
+        app_id: { label: "App ID" },
+        status: { label: "Status" },
+        filial_id: { label: "Filial ID" },
+        filial_nome: { label: "Filial Nome" },
+        data_emissao: {
+          type: "date",
+          label: "Data de Emissão",
+          picker: {
+            changeMonth: true,
+            changeYear: true,
+            dateFormat: "yy-mm-dd"
+          }
+        },
+        data_inclusao: { label: "Data de Inclusão" },
+        fornecedor_id: { label: "Fornecedor ID" },
+        justificativa: { type: "text", label: "Justificativa" },
+        tipo_documento: { label: "Tipo de Documento" },
+        centro_custo_id: { label: "Centro de Custo ID" },
+        forma_pagamento: { label: "Forma de Pagamento" },
+        fornecedor_cnpj: { label: "Fornecedor CNPJ" },
+        fornecedor_nome: { label: "Fornecedor Nome" },
+        numero_documento: { label: "Número do Documento" },
+        usuario_inclusao: { label: "Usuário de Inclusão" },
+        centro_custo_nome: { label: "Centro de Custo Nome" }
       }
+    };
 
-      welcomeScreen.classList.add('d-none');
+    // --- 3. Inicializa o Alpaca para editar todo o payload ---
+    $(function() {
+      $("#editForm").alpaca({
+        schema: schemaCompleto,
+        options: optionsCompleto,
+        data: payload
+      });
 
-      out.textContent = 'Buscando histórico…';
-      try {
-        // 1. Busca o histórico pela API
-        const history = await getChatHistory(
-          AuthService,
-          sessionId,
-          config.chatflowId,
-          config.apiHost,
-          config.token
-        );
-
-        // 2. Exibe no debug
-        out.textContent = JSON.stringify(history, null, 2);
-
-        // 3. Limpa qualquer histórico anterior no localStorage
-        localStorage.removeItem(`${config.chatflowId}_EXTERNAL`);
-        localStorage.removeItem(`${config.chatflowId}_historyInjected`);
-
-        // 4. Injeta o novo histórico
-        const chatData = {
-          chatHistory: history,
-          chatId: sessionId
-        };
-        localStorage.setItem(
-          `${config.chatflowId}_EXTERNAL`,
-          JSON.stringify(chatData)
-        );
-        localStorage.setItem(
-          `${config.chatflowId}_historyInjected`,
-          'true'
-        );
-
-        // 5. Monta o componente do Flowise Embed
-        chatbotContainer.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
-        chatbotContainer.classList.add('active');
-        chatbotContainer.classList.remove('d-none');
-
-        // 6. Inicializa o chatbot com sessão e configurações
-        Chatbot.initFull({
-          chatflowid: config.chatflowId,
-          apiHost:    config.apiHost,
-          chatflowConfig: { sessionId },
-          observersConfig: {},
-          theme: {}
-        });
-
-      } catch (err) {
-        console.error(err);
-        out.textContent = 'Erro: ' + err.message;
-      }
+      $("#saveBtn").click(function() {
+        const updatedPayload = $("#editForm").alpaca("get").getValue();
+        console.log("Payload atualizado:", updatedPayload);
+        document.getElementById("rawJson").textContent = JSON.stringify(updatedPayload, null, 2);
+      });
     });
   </script>
-
 </body>
 </html>

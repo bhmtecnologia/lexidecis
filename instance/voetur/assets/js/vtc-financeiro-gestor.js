@@ -17,6 +17,8 @@ import {
 
 // Global DataTable instance
 let lancamentosTable;
+// Armazena os lançamentos carregados para edição
+let lancamentosData = [];
 
 export async function renderVtcFinanceiroGestor() {
   const content = document.getElementById('content');
@@ -27,9 +29,6 @@ export async function renderVtcFinanceiroGestor() {
         <div class="row">
           <div class="col-sm-6 col-12">
             <h2>VT&C Financeiro – Visão Gestor</h2>
-            <button id="reloadTable" class="btn btn-sm btn-secondary ms-2" title="Recarregar tabela">
-              <i class="iconly-Refresh icli svg-color"></i>
-            </button>
             <p class="mb-0 text-title-gray">Visão de gestor com todos os lançamentos e detalhes</p>
           </div>
           <div class="col-sm-6 col-12">
@@ -50,8 +49,16 @@ export async function renderVtcFinanceiroGestor() {
       <div id="table-section" class="mt-4">
         <div class="card">
           <div class="card-body">
+            <div class="mb-3 d-flex justify-content-end">
+              <button id="btnLaunch" class="btn btn-sm btn-primary me-2" title="Lançar novo lançamento">
+                <i class="iconly-Add icli svg-color"></i> Lançar
+              </button>
+              <button id="reloadTable" class="btn btn-sm btn-secondary" title="Recarregar tabela">
+                <i class="iconly-Refresh icli svg-color"></i> Recarregar
+              </button>
+            </div>
             <div id="tableContainer" class="table-responsive">
-              <table id="lancamentosTable" class="display table table-bordered table-striped">
+              <table id="lancamentosTable" class="display table table-bordered table-striped table-hover align-middle">
                 <thead>
                   <tr>
                     <th>Ações</th>
@@ -89,8 +96,25 @@ export async function renderVtcFinanceiroGestor() {
       </div>
     </div>
 
-    <!-- Modal de Edição (igual ao original) -->
-    <!-- ... TODO: copie aqui todo o HTML dos modais de edição e análise do arquivo original ... -->
+    <!-- Modal de Edição -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editModalLabel">Editar Lançamento</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          </div>
+          <div class="modal-body">
+            <!-- Container onde o Alpaca vai renderizar o formulário -->
+            <div id="editDadosForm"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            <button type="button" id="saveBtn" class="btn btn-primary">Salvar</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
   `;
 
@@ -163,6 +187,18 @@ export async function renderVtcFinanceiroGestor() {
     if (window.jQuery && $.fn.DataTable) {
       if (lancamentosTable) lancamentosTable.destroy();
       lancamentosTable = $('#lancamentosTable').DataTable({
+        pageLength: 25,
+        lengthMenu: [ [10, 25, 50, 100], [10, 25, 50, 100] ],
+        rowCallback: function(row, data) {
+          const status = (data.status || '').toLowerCase();
+          if (status === 'novo') {
+            $(row).addClass('table-success');
+          } else if (status.includes('devolvido')) {
+            $(row).addClass('table-warning');
+          } else if (status.includes('enviado')) {
+            $(row).addClass('table-primary');
+          }
+        },
         ajax: function(data, callback) {
           listLancamentos(AuthService)
             .then(lancs => {
@@ -179,6 +215,8 @@ export async function renderVtcFinanceiroGestor() {
                   ? l.anexos.anexos
                   : []
               }));
+              // Guarda os lançamentos para o modal de edição
+              lancamentosData = flattened;
               callback({ data: flattened });
             })
             .catch(err => {
@@ -300,7 +338,27 @@ export async function renderVtcFinanceiroGestor() {
   document.getElementById('reloadTable').addEventListener('click', () => {
     if (lancamentosTable) lancamentosTable.ajax.reload(null, false);
   });
+  document.getElementById('btnLaunch').addEventListener('click', () => {
+    window.location.hash = '#financeiro-lancamento-create-v3';
+  });
   // demais handlers iguais...
+
+  // Handler para abrir modal de edição com Alpaca
+  $('#lancamentosTable tbody').on('click', 'button[data-action="edit"]', function() {
+    const id = $(this).data('id');
+    const lanc = lancamentosData.find(l => l.id === id);
+    if (lanc) {
+      // Inicializa o Alpaca no container, destruindo instâncias anteriores
+      $('#editDadosForm').alpaca('destroy');
+      $('#editDadosForm').alpaca({
+        schema: schemaDados,
+        options: optionsDados,
+        data: lanc.dados
+      });
+      // Exibe o modal
+      editModal.show();
+    }
+  });
 }
 
 // Registra a nova rota

@@ -14,6 +14,8 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
+
+  <script src="../assets/js/status-indicator.js"></script>
   <!-- CSS Principal -->
   <link id="color" rel="stylesheet" href="../assets/css/color-1.css" media="screen" />
 
@@ -319,6 +321,7 @@
   <div id="sidebar-mini" class="hidden">
     <button id="mini-toggle" class="btn-icon" title="Mostrar conversas"><i class="bi bi-chevron-right"></i></button>
     <button id="mini-theme-toggle" class="btn-icon mt-3" title="Alternar tema"></button>
+    <span data-openai-status class="btn-icon mt-3" title="OpenAI API Status"></span>
     <button id="mini-explore" class="btn-icon mt-3" title="Explore GPTs" data-bs-toggle="modal" data-bs-target="#gptModal">
       <i class="bi bi-grid-3x3-gap"></i>
     </button>
@@ -347,7 +350,11 @@
     <nav id="chat-sidebar" class="d-flex flex-column">
       <div class="flex-grow-1 d-flex flex-column justify-content-start">
         <header class="sidebar-header">
-          <strong></strong>
+          <strong></strong><span data-openai-status class="btn-icon me-2" title="OpenAI API Status"></span>
+          <strong></strong><span data-gemini-status class="btn-icon me-2" title="OpenAI API Status"></span>
+          <strong></strong><span data-anthropic-status class="btn-icon me-2" title="OpenAI API Status"></span>
+          <strong></strong><span data-deepseek-status class="btn-icon me-2" title="OpenAI API Status"></span>
+          <strong></strong><span data-groq-status class="btn-icon me-2" title="OpenAI API Status"></span>
           <div class="ms-auto d-flex align-items-center">
             <button id="theme-toggle" class="btn-icon" title="Alternar tema"><i class="bi bi-moon-stars"></i></button>
             <button id="explore-btn" class="btn-icon" title="Explore GPTs" data-bs-toggle="modal" data-bs-target="#gptModal"><i class="bi bi-grid-3x3-gap"></i></button>

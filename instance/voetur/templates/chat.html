@@ -971,6 +971,22 @@
             </div>`;
         }).join('');
         document.getElementById('gpt-cards').innerHTML = cards;
+        // Make GPT cards clickable
+        document.querySelectorAll('#gpt-cards .col-12').forEach(col => {
+          col.style.cursor = 'pointer';
+          col.addEventListener('click', () => {
+            const name = col.querySelector('.card-title').textContent;
+            const gpt = gpts.find(g => g.name === name);
+            if (gpt) {
+              // Hide the modal
+              const modalEl = document.getElementById('gptModal');
+              const bsModal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+              bsModal.hide();
+              // Trigger GPT selection in the sidebar
+              document.getElementById(gpt.id).click();
+            }
+          });
+        });
         // Category filter buttons
         document.querySelectorAll('#gpt-categories button').forEach(btn => {
           btn.addEventListener('click', () => {

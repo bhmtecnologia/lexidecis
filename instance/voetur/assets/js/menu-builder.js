@@ -17,10 +17,7 @@ export const menuItems = [
         route: "#dashboard",
         // Subitens para o Dashboard:
         children: [
-          { label: "Financeiro", route: "#vtc-financeiro-gestor" },
-          { label: "Lançar pagamento - v2", route: "#financeiro-lancamento-create-v2" },
-          { label: "Lançar pagamento - v3", route: "#financeiro-lancamento-create-v3" },
-          { label: "Meus lançamentos", route: "#financeiro-lancamentos-list" },
+          { label: "Financeiro", route: "#vtc-financeiro-gestor" }
         ]
       },
     {

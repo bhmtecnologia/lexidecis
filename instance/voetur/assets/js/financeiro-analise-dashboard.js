@@ -55,36 +55,6 @@ async function loadLancamentosNoCache() {
   return await response.json();
 }
 
-function showLoading() {
-  let overlay = document.getElementById("loadingOverlay");
-  if (!overlay) {
-    overlay = document.createElement("div");
-    overlay.id = "loadingOverlay";
-    overlay.style.position = "fixed";
-    overlay.style.top = "0";
-    overlay.style.left = "0";
-    overlay.style.width = "100%";
-    overlay.style.height = "100%";
-    overlay.style.backgroundColor = "rgba(255, 255, 255, 0.8)";
-    overlay.style.display = "flex";
-    overlay.style.alignItems = "center";
-    overlay.style.justifyContent = "center";
-    overlay.style.zIndex = "10000";
-    overlay.innerHTML = `<div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Carregando...</span>
-    </div>`;
-    document.body.appendChild(overlay);
-  } else {
-    overlay.style.display = "flex";
-  }
-}
-
-function hideLoading() {
-  const overlay = document.getElementById("loadingOverlay");
-  if (overlay) {
-    overlay.style.display = "none";
-  }
-}
 
 export async function renderFinanceiroAnaliseDashboard() {
   const content = document.getElementById('content');
@@ -334,6 +304,95 @@ export async function renderFinanceiroAnaliseDashboard() {
           url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json",
           emptyTable: "Nenhum lançamento pendente para análise."
         },
+        ajax: function(_data, callback) {
+          Promise.all([
+            listFiliais(AuthService),
+            listFornecedores(AuthService),
+            listProjetos(AuthService),
+            listCentrosCustos(AuthService)
+          ])
+          .then(([filiais, fornecedores, projetos, centros]) => {
+            window.filiaisData = filiais;
+            window.fornecedoresData = fornecedores;
+            window.projetosData = projetos;
+            window.centrosData = centros;
+            return loadLancamentosNoCache();
+          })
+          .then(dados => {
+            const pendentes = dados.filter(l => {
+              if (!(l.dados && l.dados.status)) return false;
+              const s = l.dados.status.toLowerCase();
+              return s === 'pendente' || s === 'enviado controladoria';
+            });
+            // Atualiza cards de resumo
+            document.getElementById('total-pendentes').textContent = pendentes.length;
+            const totalAprovado = dados.filter(l => l.dados && l.dados.status && l.dados.status.toLowerCase() === 'aprovado')
+              .reduce((acc, cur) => acc + (parseFloat(cur.dados.valor) || 0), 0);
+            const totalRejeitado = dados.filter(l => l.dados && l.dados.status && l.dados.status.toLowerCase() === 'rejeitado')
+              .reduce((acc, cur) => acc + (parseFloat(cur.dados.valor) || 0), 0);
+            document.getElementById('total-aprovado').textContent = 'R$ ' + totalAprovado.toFixed(2);
+            document.getElementById('total-rejeitado').textContent = 'R$ ' + totalRejeitado.toFixed(2);
+            // Monta arrays de dados para cada linha
+            const rows = pendentes.map(lancamento => {
+              const dadosLanc = lancamento.dados || {};
+              const nested = dadosLanc.dados || {};
+              const parcelas = Array.isArray(nested.parcelas) ? nested.parcelas : [];
+              const vencimentos = parcelas.map(p => p.data_vencimento).filter(Boolean);
+              const vencHtml = vencimentos.length ? vencimentos.map(d => formatDate(d)).join('<br>') : '-';
+              // Resolve nomes
+              const filObj = window.filiaisData.find(f => f.uuid === (dadosLanc.filial || dadosLanc.filial_uuid));
+              const fornObj = window.fornecedoresData.find(f => f.uuid === (dadosLanc.fornecedor || dadosLanc.fornecedor_uuid));
+              const centObj = window.centrosData.find(c => c.uuid === dadosLanc.centro_custo);
+              const projObj = window.projetosData.find(p => p.uuid === dadosLanc.projeto);
+              const filialName = filObj?.nome || dadosLanc.filial_nome || '-';
+              const fornecedorName = fornObj?.nome || dadosLanc.fornecedor_nome || '-';
+              const centroName = centObj?.nome || '-';
+              const projetoName = projObj?.nome || '-';
+              return [
+                `<div style="display:inline-flex;gap:4px;">
+                  <button class="btn btn-sm btn-aprovar" data-id="${lancamento.id}" title="Aprovar" style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724;">
+                    <i class="bi bi-check-lg"></i>
+                  </button>
+                  <button class="btn btn-sm btn-rejeitar" data-id="${lancamento.id}" title="Rejeitar" style="background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24;">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                  <button class="btn btn-sm btn-editar" data-id="${lancamento.id}" title="Editar" style="background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404;">
+                    <i class="bi bi-pencil-square"></i>
+                  </button>
+                </div>`,
+                dadosLanc.status || '-',
+                formatAnexos(lancamento.anexos),
+                filialName,
+                dadosLanc.data_inclusao ? formatDate(dadosLanc.data_inclusao) : '-',
+                lancamento.data_emissao ? formatDate(lancamento.data_emissao)
+                  : (dadosLanc.dataEmissao || dadosLanc.data_emissao)
+                    ? formatDate(dadosLanc.dataEmissao || dadosLanc.data_emissao)
+                    : '-',
+                vencHtml,
+                fornecedorName,
+                dadosLanc.numeroDocumento || dadosLanc.numero_documento || '-',
+                dadosLanc.valor ? formatCurrency(dadosLanc.valor) : '-',
+                dadosLanc.justificativa || '-',
+                dadosLanc.tipoDocumento || dadosLanc.tipo_documento || '-',
+                dadosLanc.forma_pagamento || '-',
+                centroName,
+                projetoName,
+                dadosLanc.email || '-',
+                lancamento.created_at ? formatDate(lancamento.created_at) : '-',
+                lancamento.created_by || '-',
+                lancamento.updated_at ? formatDate(lancamento.updated_at) : '-',
+                lancamento.updated_by || '-'
+              ];
+            });
+            callback({ data: rows });
+          })
+          .catch(error => {
+            console.error("Erro no AJAX do DataTable:", error);
+            callback({ data: [] });
+          });
+        },
+        destroy: true,
+        // Remova ou mantenha columnDefs conforme desejar
         columnDefs: [
           {
             // Estiliza e define valor padrão para Filial (coluna 2) e Fornecedor (coluna 6)
@@ -362,7 +421,28 @@ export async function renderFinanceiroAnaliseDashboard() {
         ],
         // Removido botão de recarregar tabela duplicado do length (agora está apenas no header)
         initComplete: function() {
-          // Nada aqui para reloadTable
+          const tableApi = this.api();
+          $('#analiseTable tbody').on('click', 'button.btn-aprovar', function() {
+            const id = $(this).data('id');
+            listLancamentos(AuthService).then(dados => {
+              const lanc = dados.find(l => l.id === id);
+              if (lanc) processImmediateDecision('aprovar', lanc);
+            });
+          });
+          $('#analiseTable tbody').on('click', 'button.btn-rejeitar', function() {
+            const id = $(this).data('id');
+            listLancamentos(AuthService).then(dados => {
+              const lanc = dados.find(l => l.id === id);
+              if (lanc) processImmediateDecision('rejeitar', lanc);
+            });
+          });
+          $('#analiseTable tbody').on('click', 'button.btn-editar', function() {
+            const id = $(this).data('id');
+            listLancamentos(AuthService).then(dados => {
+              const lanc = dados.find(l => l.id === id);
+              if (lanc) openModal(lanc);
+            });
+          });
         },
       });
     } else {
@@ -370,154 +450,7 @@ export async function renderFinanceiroAnaliseDashboard() {
     }
   }
 
-  async function loadDashboardData() {
-    showLoading();
-    try {
-      const [filiais, fornecedores, projetos, centros] = await Promise.all([
-        listFiliais(AuthService),
-        listFornecedores(AuthService),
-        listProjetos(AuthService),
-        listCentrosCustos(AuthService)
-      ]);
-      window.filiaisData = filiais;
-      window.fornecedoresData = fornecedores;
-      window.projetosData = projetos;
-      window.centrosData = centros;
-
-      const datalistFilialEdit = document.getElementById('filialOptionsEdit');
-      if (datalistFilialEdit) {
-        datalistFilialEdit.innerHTML = '<option value="">Selecione</option>';
-        window.filiaisData.forEach(fil => {
-          const option = document.createElement('option');
-          option.value = fil.nome;
-          datalistFilialEdit.appendChild(option);
-        });
-      }
-      const datalistCentroEdit = document.getElementById('centroCustoOptionsEdit');
-      if (datalistCentroEdit) {
-        datalistCentroEdit.innerHTML = '<option value="">Selecione</option>';
-        window.centrosData.forEach(centro => {
-          const option = document.createElement('option');
-          option.value = centro.nome;
-          datalistCentroEdit.appendChild(option);
-        });
-      }
-      const datalistProjetoEdit = document.getElementById('projetoOptionsEdit');
-      if (datalistProjetoEdit) {
-        datalistProjetoEdit.innerHTML = '<option value="">Selecione</option>';
-        window.projetosData.forEach(proj => {
-          const option = document.createElement('option');
-          option.value = proj.nome;
-          datalistProjetoEdit.appendChild(option);
-        });
-      }
-
-      const tbody = document.getElementById('analise-tabela');
-      tbody.innerHTML = '';
-
-      const dados = await loadLancamentosNoCache();
-      const pendentes = dados.filter(l => {
-        if (!(l.dados && l.dados.status)) return false;
-        const statusLower = l.dados.status.toLowerCase();
-        return statusLower === 'pendente' || statusLower === 'enviado controladoria';
-      });
-
-      const totalPendentes = pendentes.length;
-      const totalAprovado = dados.filter(l => l.dados && l.dados.status && l.dados.status.toLowerCase() === 'aprovado')
-        .reduce((acc, cur) => acc + (parseFloat(cur.dados.valor) || 0), 0);
-      const totalRejeitado = dados.filter(l => l.dados && l.dados.status && l.dados.status.toLowerCase() === 'rejeitado')
-        .reduce((acc, cur) => acc + (parseFloat(cur.dados.valor) || 0), 0);
-
-      document.getElementById('total-pendentes').textContent = totalPendentes;
-      document.getElementById('total-aprovado').textContent = 'R$ ' + totalAprovado.toFixed(2);
-      document.getElementById('total-rejeitado').textContent = 'R$ ' + totalRejeitado.toFixed(2);
-
-      pendentes.forEach(lancamento => {
-        const dadosLanc = lancamento.dados || {};
-        // Extrai datas de vencimento das parcelas
-        const nestedDados = dadosLanc.dados || {};
-        const parcelasArray = Array.isArray(nestedDados.parcelas) ? nestedDados.parcelas : [];
-        const vencimentoDates = parcelasArray
-          .map(p => p.data_vencimento)
-          .filter(Boolean);
-        const vencimentoHtml = vencimentoDates.length
-          ? vencimentoDates.map(d => formatDate(d)).join('<br>')
-          : '-';
-        // Derive filial name from dadosLanc
-        const filialName = dadosLanc.filial_nome || (() => {
-          const key = dadosLanc.filial || dadosLanc.filial_uuid;
-          const obj = window.filiaisData.find(f => f.uuid === key);
-          return obj ? obj.nome : key || '-';
-        })();
-        // Derive fornecedor name from dadosLanc
-        const fornecedorName = dadosLanc.fornecedor_nome || (() => {
-          const key = dadosLanc.fornecedor || dadosLanc.fornecedor_uuid;
-          const obj = window.fornecedoresData.find(f => f.uuid === key);
-          return obj ? obj.nome : key || '-';
-        })();
-        // Derive centro de custo name from dadosLanc
-        const centroName = dadosLanc.centro_custo_nome || (() => {
-          const obj = window.centrosData.find(c => c.uuid === dadosLanc.centro_custo);
-          return obj ? obj.nome : dadosLanc.centro_custo || '-';
-        })();
-        // Derive projeto name from dadosLanc
-        const projetoName = dadosLanc.projeto_nome || (() => {
-          const obj = window.projetosData.find(p => p.uuid === dadosLanc.projeto);
-          return obj ? obj.nome : dadosLanc.projeto || '-';
-        })();
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>
-            <div style="display: inline-flex; gap: 4px;">
-              <button class="btn btn-sm btn-aprovar" data-id="${lancamento.id}" title="Aprovar" style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724;">
-                <i class="bi bi-check-lg"></i>
-              </button>
-              <button class="btn btn-sm btn-rejeitar" data-id="${lancamento.id}" title="Rejeitar" style="background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24;">
-                <i class="bi bi-x-lg"></i>
-              </button>
-              <button class="btn btn-sm btn-editar" data-id="${lancamento.id}" title="Editar" style="background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404;">
-                <i class="bi bi-pencil-square"></i>
-              </button>
-            </div>
-          </td>
-          <td>${dadosLanc.status || '-'}</td>
-          <td>${formatAnexos(lancamento.anexos)}</td>
-          <td>${filialName}</td>
-          <td>${dadosLanc.data_inclusao ? formatDate(dadosLanc.data_inclusao) : '-'}</td>
-          <td>${
-            lancamento.data_emissao
-              ? formatDate(lancamento.data_emissao)
-              : (dadosLanc.dataEmissao || dadosLanc.data_emissao)
-                ? formatDate(dadosLanc.dataEmissao || dadosLanc.data_emissao)
-                : '-'
-          }</td>
-          <td>${vencimentoHtml}</td>
-          <td>${fornecedorName}</td>
-          <td>${dadosLanc.numeroDocumento || dadosLanc.numero_documento || '-'}</td>
-          <td>${dadosLanc.valor ? formatCurrency(dadosLanc.valor) : '-'}</td>
-          <td>${dadosLanc.justificativa || '-'}</td>
-          <td>${dadosLanc.tipoDocumento || dadosLanc.tipo_documento || '-'}</td>
-          <td>${dadosLanc.forma_pagamento || '-'}</td>
-          <td>${centroName}</td>
-          <td>${projetoName}</td>
-          <td>${dadosLanc.email || '-'}</td>
-          <td>${lancamento.created_at ? formatDate(lancamento.created_at) : '-'}</td>
-          <td>${lancamento.created_by || '-'}</td>
-          <td>${lancamento.updated_at ? formatDate(lancamento.updated_at) : '-'}</td>
-          <td>${lancamento.updated_by || '-'}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      initializeDataTable();
-      hideLoading();
-    } catch (error) {
-      console.error("Erro ao carregar dados para análise:", error);
-      hideLoading();
-      document.getElementById('analise-tabela').innerHTML = '<tr><td colspan="20">Erro ao carregar os dados.</td></tr>';
-    }
-  }
+  // loadDashboardData is no longer used for table population, but may be kept for select population if needed
 
   function extrairDadosFormulario() {
     let errors = [];
@@ -600,7 +533,6 @@ export async function renderFinanceiroAnaliseDashboard() {
     const { dadosAtualizados, errors } = extrairDadosFormulario();
     if (errors.length > 0) {
       alert("Por favor, corrija os seguintes erros: " + errors.join(", "));
-      hideLoading();
       return;
     }
     dadosAtualizados.status = status;
@@ -617,17 +549,14 @@ export async function renderFinanceiroAnaliseDashboard() {
   }
 
   async function processModalApprove() {
-    showLoading();
     await processModalUpdate("Aprovado");
   }
 
   async function processModalReject() {
-    showLoading();
     await processModalUpdate("Devolvido Controladoria");
   }
 
   async function processModalSave() {
-    showLoading();
     await processModalUpdate("Pendente");
   }
 
@@ -673,7 +602,6 @@ export async function renderFinanceiroAnaliseDashboard() {
       alert("Usuário não autenticado. Por favor, faça login novamente.");
       return;
     }
-    showLoading();
     const dadosLanc = lancamento.dados || {};
     const atualizacoes = {
       ...dadosLanc,
@@ -686,26 +614,9 @@ export async function renderFinanceiroAnaliseDashboard() {
     } catch (error) {
       console.error("Erro ao processar a decisão imediata:", error);
       alert("Erro ao processar a decisão: " + error.message);
-      hideLoading();
     }
   }
 
-  document.getElementById('analise-tabela').addEventListener('click', (e) => {
-    const button = e.target.closest('button');
-    if (!button) return;
-    const lancamentoId = button.getAttribute('data-id');
-    listLancamentos(AuthService).then(dados => {
-      const lancamento = dados.find(l => l.id === lancamentoId);
-      if (!lancamento) return;
-      if (button.classList.contains('btn-aprovar')) {
-        processImmediateDecision('aprovar', lancamento);
-      } else if (button.classList.contains('btn-rejeitar')) {
-        processImmediateDecision('rejeitar', lancamento);
-      } else if (button.classList.contains('btn-editar')) {
-        openModal(lancamento);
-      }
-    });
-  });
 
   document.getElementById('btnAprovarModal').addEventListener('click', processModalApprove);
   document.getElementById('btnRejeitarModal').addEventListener('click', processModalReject);
@@ -714,14 +625,14 @@ export async function renderFinanceiroAnaliseDashboard() {
   const headerReloadBtn = document.getElementById('reloadTable');
   if (headerReloadBtn) {
     headerReloadBtn.addEventListener('click', () => {
-      loadDashboardData();
+      $("#analiseTable").DataTable().ajax.reload(null, false);
     });
   }
   // O botão Cancelar utiliza o atributo data-bs-dismiss="modal"
 
   AuthService.onAuthChange((user) => {
     if (user) {
-      loadDashboardData();
+      initializeDataTable();
     } else {
       content.innerHTML = `
         <div class="container-fluid">

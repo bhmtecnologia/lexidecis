@@ -438,6 +438,46 @@ export function injectChatHistory(chatflowId, sessionId, history) {
 }
 
 /**
+ * Salva uma mensagem de chat no histórico externo.
+ *
+ * @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
+ * @param {string} chatflowId - Identificador do chatflow.
+ * @param {string} sessionId - Identificador da sessão de chat.
+ * @param {string} role - Papel da mensagem ('user' ou 'assistant').
+ * @param {string} content - Texto da mensagem.
+ * @returns {Promise<Object>} - Objeto JSON com a resposta da API.
+ * @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro na API.
+ */
+export async function createChatMessage(AuthService, chatflowId, sessionId, role, content) {
+  const user = AuthService.user;
+  if (!user) throw new Error("Usuário não autenticado");
+  const token = await user.getIdToken();
+
+  const payload = {
+    chatflowId,
+    sessionId,
+    role,
+    content
+  };
+
+  const response = await fetch('https://n8n.power.tec.br/webhook/lexidecis/v2/chatmessage', {
+    method: "POST",
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error("Erro ao salvar mensagem de chat: " + errorText);
+  }
+
+  return await response.json();
+}
+
+/**
  * Lista os GPTs disponíveis.
  *
  * @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.

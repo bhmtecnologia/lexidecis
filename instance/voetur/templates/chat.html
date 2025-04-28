@@ -494,7 +494,7 @@
       }
     };
     import AuthService from '../assets/js/auth.js';
-    import { listChats, listGpts, getGptConfig } from "../assets/js/api.js";
+    import { listChats, listGpts, getGptConfig, createChatMessage } from "../assets/js/api.js";
 
     // === Flowise chatflowId mapping helper ===
     const chatflowIdMap = {
@@ -578,8 +578,6 @@
             localStorage.setItem(newExtKey, JSON.stringify({ chatHistory: [], chatId: override.sessionId }));
             localStorage.setItem(newFlagKey, 'true');
           }
-          // Track actual send/loading events to avoid initial load logs
-          let loadingTriggered = false;
           // Build config with chatflowConfig nested
           const cfg = {
             chatflowid: baseFlowise.chatflowId,
@@ -589,20 +587,29 @@
               'x-user-email': AuthService.user.email,
               'x-user-uuid':  AuthService.user.uid,
               'x-gpt-id':  1,
-              
-
               'x-user-jwt':   AuthService.token
             },
             theme:            window.flowiseConfig.theme,
             observersConfig: {
-              // Log to console simulating API call when chatflow loading begins/ends
-              observeLoading: (loading) => {
+              observeLoading: async (loading) => {
                 if (loading) {
-                  loadingTriggered = true;
-                  console.log('Simulando chamada de API: enviando mensagem...');
-                } else if (loadingTriggered) {
-                  console.log('Simulando API: mensagem enviada.');
-                  loadingTriggered = false;
+                  // Capture user input from the chatbot's textarea
+                  try {
+                    const userInput = document
+                      .querySelector('flowise-fullchatbot')
+                      .shadowRoot
+                      .querySelector('textarea').value;
+                    await createChatMessage(
+                      AuthService,
+                      cfg.chatflowid,
+                      override.sessionId,
+                      'user',
+                      userInput
+                    );
+                    console.log('Chat message created successfully');
+                  } catch (err) {
+                    console.error('Failed to create chat message', err);
+                  }
                 }
               }
             },
@@ -755,7 +762,7 @@
     })();
     AuthService.onAuthChange(user => {
       if (!user) {
-        window.location.href = './login.html';
+        window.location.href = './login.html?redirect=chat.html';
       } else {
         document.getElementById('user-name').textContent = user.email;
       }

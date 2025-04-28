@@ -90,8 +90,6 @@ export async function renderFinanceiroAnaliseDashboard() {
   const content = document.getElementById('content');
   content.innerHTML = `
     <div class="container-fluid">
-      <!-- Overlay de Carregamento -->
-      <div id="loadingOverlay" style="display: none;"></div>
       <!-- Título e Breadcrumb -->
       <div class="page-title">
         <div class="row">
@@ -143,14 +141,18 @@ export async function renderFinanceiroAnaliseDashboard() {
       
       <!-- Tabela de Lançamentos para Análise -->
       <div class="card">
-        <div class="card-header">
+        <div class="card-header d-flex justify-content-between align-items-center">
           <h5>Lançamentos Pendentes para Análise</h5>
+          <button id="reloadTable" class="btn btn-sm btn-secondary" title="Recarregar tabela">
+            <i class="iconly-Refresh icli svg-color"></i> Recarregar
+          </button>
         </div>
         <div class="card-body table-responsive">
           <table id="analiseTable" class="table table-striped table-bordered">
             <thead>
               <tr>
                 <th>Ações</th>
+                <th>Status</th>
                 <th>Anexo(s)</th>
                 <th>Filial</th>
                 <th>Data de Inclusão</th>
@@ -159,7 +161,6 @@ export async function renderFinanceiroAnaliseDashboard() {
                 <th>Fornecedor</th>
                 <th>N do documento</th>
                 <th>Valor</th>
-                <th>Status</th>
                 <th>Justificativa</th>
                 <th>Tipo de Documento</th>
                 <th>Forma de Pagamento</th>
@@ -322,6 +323,7 @@ export async function renderFinanceiroAnaliseDashboard() {
         $("#analiseTable").DataTable().destroy();
       }
       $("#analiseTable").DataTable({
+        processing: true,
         responsive: true,
         autoWidth: false,
         ordering: true,
@@ -331,7 +333,37 @@ export async function renderFinanceiroAnaliseDashboard() {
         language: {
           url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json",
           emptyTable: "Nenhum lançamento pendente para análise."
-        }
+        },
+        columnDefs: [
+          {
+            // Estiliza e define valor padrão para Filial (coluna 2) e Fornecedor (coluna 6)
+            targets: [2, 6],
+            className: 'text-start',
+            defaultContent: '-'
+          },
+          {
+            // Data de Inclusão, Emissão, Vencimento, Data criação, Data alteração
+            targets: [3, 4, 5, 16, 18],
+            render: function(data) {
+              return data ? formatDate(data) : '-';
+            }
+          },
+          {
+            // Valor column (index 8: 0-Ações,1-Anexo,2-Filial,3-DataInclusao,4-DataEmissao,5-Vencimento,6-Fornecedor,7-NumeroDocumento,8-Valor)
+            targets: 8,
+            render: function(data) {
+              // Remove non-numeric characters and parse
+              const raw = String(data).replace(/[^0-9\-,\.]/g, '').replace(',', '.');
+              const num = parseFloat(raw);
+              return isNaN(num) ? '-' : formatCurrency(num);
+            },
+            className: 'text-end'
+          }
+        ],
+        // Removido botão de recarregar tabela duplicado do length (agora está apenas no header)
+        initComplete: function() {
+          // Nada aqui para reloadTable
+        },
       });
     } else {
       console.error("DataTables não está carregado.");
@@ -340,7 +372,6 @@ export async function renderFinanceiroAnaliseDashboard() {
 
   async function loadDashboardData() {
     try {
-      showLoading();
       const [filiais, fornecedores, projetos, centros] = await Promise.all([
         listFiliais(AuthService),
         listFornecedores(AuthService),
@@ -402,14 +433,37 @@ export async function renderFinanceiroAnaliseDashboard() {
 
       pendentes.forEach(lancamento => {
         const dadosLanc = lancamento.dados || {};
-        const filialObj = window.filiaisData.find(f => f.uuid === dadosLanc.filial);
-        const filialName = filialObj ? filialObj.nome : dadosLanc.filial || '-';
-        const fornecedorObj = window.fornecedoresData.find(f => f.uuid === dadosLanc.fornecedor);
-        const fornecedorName = fornecedorObj ? fornecedorObj.nome : dadosLanc.fornecedores || '-';
-        const centroObj = window.centrosData.find(c => c.uuid === dadosLanc.centro_custo);
-        const centroName = centroObj ? centroObj.nome : dadosLanc.centro_custo || '-';
-        const projetoObj = window.projetosData.find(p => p.uuid === dadosLanc.projeto);
-        const projetoName = projetoObj ? projetoObj.nome : dadosLanc.projeto || '-';
+        // Extrai datas de vencimento das parcelas
+        const nestedDados = dadosLanc.dados || {};
+        const parcelasArray = Array.isArray(nestedDados.parcelas) ? nestedDados.parcelas : [];
+        const vencimentoDates = parcelasArray
+          .map(p => p.data_vencimento)
+          .filter(Boolean);
+        const vencimentoHtml = vencimentoDates.length
+          ? vencimentoDates.map(d => formatDate(d)).join('<br>')
+          : '-';
+        // Derive filial name from dadosLanc
+        const filialName = dadosLanc.filial_nome || (() => {
+          const key = dadosLanc.filial || dadosLanc.filial_uuid;
+          const obj = window.filiaisData.find(f => f.uuid === key);
+          return obj ? obj.nome : key || '-';
+        })();
+        // Derive fornecedor name from dadosLanc
+        const fornecedorName = dadosLanc.fornecedor_nome || (() => {
+          const key = dadosLanc.fornecedor || dadosLanc.fornecedor_uuid;
+          const obj = window.fornecedoresData.find(f => f.uuid === key);
+          return obj ? obj.nome : key || '-';
+        })();
+        // Derive centro de custo name from dadosLanc
+        const centroName = dadosLanc.centro_custo_nome || (() => {
+          const obj = window.centrosData.find(c => c.uuid === dadosLanc.centro_custo);
+          return obj ? obj.nome : dadosLanc.centro_custo || '-';
+        })();
+        // Derive projeto name from dadosLanc
+        const projetoName = dadosLanc.projeto_nome || (() => {
+          const obj = window.projetosData.find(p => p.uuid === dadosLanc.projeto);
+          return obj ? obj.nome : dadosLanc.projeto || '-';
+        })();
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -426,17 +480,23 @@ export async function renderFinanceiroAnaliseDashboard() {
               </button>
             </div>
           </td>
+          <td>${dadosLanc.status || '-'}</td>
           <td>${formatAnexos(lancamento.anexos)}</td>
           <td>${filialName}</td>
           <td>${dadosLanc.data_inclusao ? formatDate(dadosLanc.data_inclusao) : '-'}</td>
-          <td>${dadosLanc.dataEmissao ? formatDate(dadosLanc.dataEmissao) : '-'}</td>
-          <td>${dadosLanc.vencimento ? formatDate(dadosLanc.vencimento) : '-'}</td>
+          <td>${
+            lancamento.data_emissao
+              ? formatDate(lancamento.data_emissao)
+              : (dadosLanc.dataEmissao || dadosLanc.data_emissao)
+                ? formatDate(dadosLanc.dataEmissao || dadosLanc.data_emissao)
+                : '-'
+          }</td>
+          <td>${vencimentoHtml}</td>
           <td>${fornecedorName}</td>
-          <td>${dadosLanc.numeroDocumento || '-'}</td>
+          <td>${dadosLanc.numeroDocumento || dadosLanc.numero_documento || '-'}</td>
           <td>${dadosLanc.valor ? formatCurrency(dadosLanc.valor) : '-'}</td>
-          <td>${dadosLanc.status || '-'}</td>
           <td>${dadosLanc.justificativa || '-'}</td>
-          <td>${dadosLanc.tipoDocumento || '-'}</td>
+          <td>${dadosLanc.tipoDocumento || dadosLanc.tipo_documento || '-'}</td>
           <td>${dadosLanc.forma_pagamento || '-'}</td>
           <td>${centroName}</td>
           <td>${projetoName}</td>
@@ -450,11 +510,9 @@ export async function renderFinanceiroAnaliseDashboard() {
       });
 
       initializeDataTable();
-      hideLoading();
     } catch (error) {
       console.error("Erro ao carregar dados para análise:", error);
       document.getElementById('analise-tabela').innerHTML = '<tr><td colspan="20">Erro ao carregar os dados.</td></tr>';
-      hideLoading();
     }
   }
 
@@ -649,6 +707,13 @@ export async function renderFinanceiroAnaliseDashboard() {
   document.getElementById('btnAprovarModal').addEventListener('click', processModalApprove);
   document.getElementById('btnRejeitarModal').addEventListener('click', processModalReject);
   document.getElementById('btnSalvarModal').addEventListener('click', processModalSave);
+  // Botão de recarregar tabela no cabeçalho de análise
+  const headerReloadBtn = document.getElementById('reloadTable');
+  if (headerReloadBtn) {
+    headerReloadBtn.addEventListener('click', () => {
+      loadDashboardData();
+    });
+  }
   // O botão Cancelar utiliza o atributo data-bs-dismiss="modal"
 
   AuthService.onAuthChange((user) => {

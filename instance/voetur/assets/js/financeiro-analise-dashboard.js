@@ -384,7 +384,11 @@ export async function renderFinanceiroAnaliseDashboard() {
       tbody.innerHTML = '';
 
       const dados = await loadLancamentosNoCache();
-      const pendentes = dados.filter(l => l.dados && l.dados.status && l.dados.status.toLowerCase() === 'pendente');
+      const pendentes = dados.filter(l => {
+        if (!(l.dados && l.dados.status)) return false;
+        const statusLower = l.dados.status.toLowerCase();
+        return statusLower === 'pendente' || statusLower === 'enviado controladoria';
+      });
 
       const totalPendentes = pendentes.length;
       const totalAprovado = dados.filter(l => l.dados && l.dados.status && l.dados.status.toLowerCase() === 'aprovado')

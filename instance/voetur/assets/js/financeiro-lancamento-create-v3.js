@@ -581,6 +581,7 @@ export async function renderFinanceiroLancamentoCreateV3() {
           if (unlockNumero) {
             unlockNumero.checked = !info.numero_nota;
             numeroEl.disabled = !unlockNumero.checked;
+            unlockNumero.disabled = false;
           }
         }
 
@@ -631,6 +632,7 @@ export async function renderFinanceiroLancamentoCreateV3() {
           if (unlockValor) {
             unlockValor.checked = !info.valor_total_nota;
             valorEl.disabled = !unlockValor.checked;
+            unlockValor.disabled = false;
           }
         }
 
@@ -676,6 +678,7 @@ export async function renderFinanceiroLancamentoCreateV3() {
           if (unlockFornecedor) {
             unlockFornecedor.checked = !info.cnpj_fornecedor;
             fornecedorSelect.disabled = !unlockFornecedor.checked;
+            unlockFornecedor.disabled = false;
             if (window.$ && $.fn.select2) $("#fornecedorSelect").trigger("change");
           }
           // Preenche filial com o tomador (sua filial que contratou)
@@ -688,6 +691,7 @@ export async function renderFinanceiroLancamentoCreateV3() {
             if (unlockFilial) {
               unlockFilial.checked = !info.cnpj_tomador;
               filialSelect.disabled = !unlockFilial.checked;
+              unlockFilial.disabled = false;
               if (window.$ && $.fn.select2) $("#filialSelect").trigger("change");
             }
           }
@@ -746,17 +750,36 @@ export async function renderFinanceiroLancamentoCreateV3() {
               }
               if (window.$ && $.fn.select2) $("#fornecedorSelect").trigger("change");
 
-              // Força marcação manual e bloqueia o switch de Filial
+              // Desabilita o switch Manual (campo preenchido) mas mantém o campo editável com estilo cinza
               const unlockFilial = document.getElementById("unlockFilial");
               if (unlockFilial) {
-                unlockFilial.checked = true;
-                unlockFilial.disabled = true;
+                unlockFilial.checked = false;
+                unlockFilial.disabled = false;
               }
-              // Habilita o select de Filial para edição manual
+
+              // Preenche manualmente a Filial com base na classificação da API
               const filialSelect = document.getElementById("filialSelect");
+              const classification = window.classificationResult || {};
+              const tomadorCnpj = classification.cnpj_tomador;
+              const filialMatchManual = (window.filiaisData || []).find(f => f.cnpj === tomadorCnpj);
+              if (filialMatchManual) {
+                filialSelect.value = filialMatchManual.id || filialMatchManual.uuid || filialMatchManual.nome;
+              }
+
+              // Habilita o select de Filial para edição manual
               if (filialSelect) {
                 filialSelect.disabled = false;
-                if (window.$ && $.fn.select2) $("#filialSelect").trigger("change");
+                // Remove a linha que adiciona bg-light diretamente
+                // filialSelect.classList.add("bg-light");
+                // Em vez disso, aplica o estilo bg-light no container Select2
+                if (window.$ && $.fn.select2) {
+                  const $filial = $("#filialSelect");
+                  $filial.trigger("change");
+                  const sel2 = $filial.data("select2");
+                  if (sel2 && sel2.$selection) {
+                    sel2.$selection.addClass("bg-light");
+                  }
+                }
               }
             });
           }
@@ -799,6 +822,7 @@ export async function renderFinanceiroLancamentoCreateV3() {
           if (unlockValor) {
             unlockValor.checked = !info.valor_total_nota;
             valorEl.disabled = !unlockValor.checked;
+            unlockValor.disabled = false;
           }
         }
 

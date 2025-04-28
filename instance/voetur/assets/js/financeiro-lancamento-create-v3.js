@@ -120,31 +120,68 @@ export async function renderFinanceiroLancamentoCreateV3() {
   content.innerHTML = `
     <style>
       @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
-      /* Removed spin animation for loader logo */
-      .bhm-loader-logo { width: 100px; height: 100px; }
-      .loader-text { color: var(--black); font-size: 1.2rem; margin-top: 1rem; animation: pulse 1.5s ease-in-out infinite; }
-      .loader-bar-container { width: 50%; margin-top: 1rem; }
-      .loader-percent { font-size: 1.2rem; margin-top: 0.5rem; }
-    </style>
-    <div class="container-fluid" style="background-color: var(--body-color); color: var(--body-font-color);">
-      <!-- Loading Overlay -->
-      <div id="loadingOverlay" class="d-none" style="
+      .loader-text {
+        font-family: var(--font-family, "Inter", sans-serif);
+        font-size: 1.2rem;
+        margin-top: 1rem;
+        animation: pulse 1.5s ease-in-out infinite;
+        color: var(--body-font-color);
+      }
+      #loadingOverlay {
         position: fixed;
         top: 0; left: 0;
         width: 100%; height: 100%;
-        background: rgba(255,255,255,0.9);
+        background: var(--overlay-background, rgba(0,0,0,0.05));
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        z-index: 1050;">
-        <img src="https://www.bhm.tec.br/images/152x152/10788698/favicon.png" alt="Carregando" class="bhm-loader-logo">
-        <div class="loader-text">Processando com LexiDecis AI...</div>
-        <div class="loader-bar-container">
-          <div class="progress">
-            <div id="loaderBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
-          </div>
+        z-index: 1050;
+      }
+      .skeleton-rect {
+        width: 80%;
+        height: 1rem;
+        background: var(--skeleton-bg, rgba(0,0,0,0.05));
+        margin: 0.5rem 0;
+        border-radius: 4px;
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+      .dropzone {
+        width: 100%;
+        min-height: 150px;
+        border: 2px dashed var(--border-color);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 1rem;
+        color: var(--body-font-color);
+        background: var(--overlay-background, rgba(0,0,0,0.05));
+        transition: background 0.3s, border-color 0.3s;
+      }
+      .dropzone-hover {
+        background: var(--overlay-hover, rgba(0,0,0,0.1));
+        border-color: var(--theme-primary);
+      }
+      .dropzone p {
+        margin: 0;
+      }
+      .dropzone span {
+        text-decoration: underline;
+        cursor: pointer;
+      }
+    </style>
+    <div class="container-fluid" style="background-color: var(--body-color); color: var(--body-font-color);" aria-busy="false">
+      <!-- Loading Overlay -->
+      <div id="loadingOverlay" class="d-none">
+        <div class="spinner-border" role="status">
+          <span class="visually-hidden">Loading...</span>
         </div>
+        <div class="skeleton-rect"></div>
+        <div class="skeleton-rect" style="width: 60%;"></div>
+        <div class="skeleton-rect" style="width: 40%;"></div>
+        <div class="loader-text">Classificando documento...</div>
       </div>
       <div class="page-title" style="padding: 1rem;">
         <div class="row">
@@ -164,11 +201,18 @@ export async function renderFinanceiroLancamentoCreateV3() {
       <div id="classification-section" class="mt-4">
         <div class="card" style="border:1px solid var(--border-color);background:var(--white);color:var(--black);">
           <div class="card-body">
-            <h3 style="color: var(--black);">Classifique o Documento</h3>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h3 class="mb-0" style="color: var(--black);">Classifique o Documento</h3>
+              <button type="button" id="backBtnClassify" class="btn btn-outline-secondary btn-sm">Voltar</button>
+            </div>
             <div class="mb-3">
-              <label for="arquivoClassify" class="form-label">Upload do Documento <span style="color:red">*</span></label>
-              <input type="file" class="form-control" id="arquivoClassify" accept="image/png,image/jpeg">
-              <small class="form-text text-muted">Envie uma imagem para classificação inicial.</small>
+              <label class="form-label">Upload do Documento <span style="color:red">*</span></label>
+              <div id="dropZone" class="dropzone">
+                <p>Arraste e solte o arquivo aqui ou <span id="browseBtn">toque para selecionar</span></p>
+                <input type="file" id="arquivoClassify" accept="image/png,image/jpeg" class="d-none">
+              </div>
+              <small class="form-text text-muted">PNG/JPEG. Tamanho máximo 4MB.</small>
+              <small class="form-text text-danger">Apenas documentos do tipo Nota Fiscal ou Conta a pagar são aceitos.</small>
             </div>
             <div id="classificationError" class="text-danger"></div>
             <pre id="classificationResult" class="mt-2" style="background:#f8f9fa; padding:1rem; white-space: pre-wrap;"></pre>
@@ -330,6 +374,7 @@ export async function renderFinanceiroLancamentoCreateV3() {
                 <textarea class="form-control" id="justificativa" rows="3" required placeholder="Justifique o lançamento conforme PR-001."></textarea>
               </div>
               <button type="submit" class="btn btn-primary">Criar Lançamento v3</button>
+              <button type="button" id="cancelBtn" class="btn btn-secondary ms-2">Cancelar</button>
             </form>
             <div id="formError" class="mt-2 text-danger" role="alert"></div>
           </div>
@@ -473,6 +518,7 @@ export async function renderFinanceiroLancamentoCreateV3() {
     const overlay = document.getElementById("loadingOverlay");
     submitBtn.disabled = true;
     if (overlay) overlay.classList.remove("d-none");
+    document.querySelector(".container-fluid").setAttribute("aria-busy", "true");
     startLoaderAnimation();
     try {
       // Esconde a área de classificação
@@ -773,6 +819,7 @@ export async function renderFinanceiroLancamentoCreateV3() {
     } finally {
       submitBtn.disabled = false;
       // Oculta overlay de carregamento
+      document.querySelector(".container-fluid").setAttribute("aria-busy", "false");
       if (overlay) overlay.classList.add("d-none");
       stopLoaderAnimation();
       // Exibe o formulário após classificação
@@ -1106,6 +1153,24 @@ export async function renderFinanceiroLancamentoCreateV3() {
       await showAlert("Lançamento criado com sucesso! ID: " + result.id, "success");
       lancForm.reset();
       resetFormFields();
+      // Reinicia fluxo: volta para upload de anexo
+      const formSection = document.getElementById("form-section");
+      const supplierSection = document.getElementById("supplier-registration-section");
+      const classificationSection = document.getElementById("classification-section");
+      if (formSection) formSection.classList.add("d-none");
+      if (supplierSection) supplierSection.classList.add("d-none");
+      if (classificationSection) classificationSection.classList.remove("d-none");
+      // Limpa logs e resultados
+      window.logEntries = [];
+      const logField = document.getElementById("logField");
+      if (logField) logField.value = "";
+      const classificationResult = document.getElementById("classificationResult");
+      if (classificationResult) classificationResult.textContent = "";
+      const attachmentLink = document.getElementById("attachmentLink");
+      if (attachmentLink) attachmentLink.innerHTML = "";
+      // Restaura título da página
+      const pageTitleEl = document.querySelector(".page-title h2");
+      if (pageTitleEl) pageTitleEl.textContent = "Financeiro - Lançamento Create V3";
     } catch (err) {
       formError.innerHTML = `Erro ao criar lançamento: ${handleError(err, "CreateLancamentoV3")}`;
     } finally {
@@ -1113,6 +1178,48 @@ export async function renderFinanceiroLancamentoCreateV3() {
       btn.innerHTML = original;
     }
   });
+
+  // Cancelar ação - volta para tela anterior
+  const cancelBtn = document.getElementById("cancelBtn");
+  if (cancelBtn) {
+    cancelBtn.addEventListener("click", () => {
+      location.hash = "#vtc-financeiro-gestor";
+    });
+  }
+
+  // Voltar na classificação
+  const backBtnClassify = document.getElementById("backBtnClassify");
+  if (backBtnClassify) {
+    backBtnClassify.addEventListener("click", () => {
+      location.hash = "#vtc-financeiro-gestor";
+    });
+  }
+
+  // Dropzone for mobile-friendly file upload
+  const dropZone = document.getElementById('dropZone');
+  const arquivoInput = document.getElementById('arquivoClassify');
+  if (dropZone && arquivoInput) {
+    dropZone.addEventListener('click', () => arquivoInput.click());
+    dropZone.addEventListener('dragover', e => {
+      e.preventDefault();
+      dropZone.classList.add('dropzone-hover');
+    });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dropzone-hover'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('dropzone-hover');
+      arquivoInput.files = e.dataTransfer.files;
+      arquivoInput.dispatchEvent(new Event('change'));
+    });
+    // Also open file picker when tapping the text
+    const browseBtn = document.getElementById('browseBtn');
+    if (browseBtn) {
+      browseBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        arquivoInput.click();
+      });
+    }
+  }
 }
 
 // Registra a rota v3

@@ -300,7 +300,7 @@ export async function renderFinanceiroAnaliseDashboard() {
         paging: true,
         colReorder: true,
         dom: 'lBfrtip',
-        buttons: ['copy', 'excel', 'csv', 'pdf'],
+        buttons: ['copy', 'excel'],
         language: {
           url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json",
           emptyTable: "Nenhum lançamento pendente para análise."

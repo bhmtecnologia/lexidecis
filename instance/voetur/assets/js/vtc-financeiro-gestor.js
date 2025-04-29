@@ -235,17 +235,25 @@ export async function renderVtcFinanceiroGestor() {
             render: data => {
               const statusLC = (data.status || '').toLowerCase();
               const isEditable = statusLC === 'novo' || statusLC === 'salvo' || statusLC.includes('devolvido');
-              const iconClass = isEditable ? 'iconly-Edit' : 'iconly-Show';
-              let html =
-                `<button class="btn btn-sm" data-action="edit" data-id="${data.id}"` +
-                ` style="background-color: var(--theme-default); border-color: var(--theme-default); color: #fff;">` +
-                `<i class="${iconClass} icli svg-color"></i></button>`;
+              let html = `<div style="display:inline-flex; gap:4px;">`;
               if (isEditable) {
-                html +=
-                  ` <button class="btn btn-sm" data-action="send" data-id="${data.id}"` +
-                  ` style="background-color: var(--theme-default); border-color: var(--theme-default); color: #fff;">` +
-                  `<i class="iconly-Send icli svg-color"></i></button>`;
+                html += `
+      <button class="btn btn-sm btn-aprovar" data-action="send" data-id="${data.id}" title="Enviar"
+              style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724;">
+        <i class="iconly-Send icli svg-color"></i>
+      </button>
+      <button class="btn btn-sm btn-editar" data-action="edit" data-id="${data.id}" title="Editar"
+              style="background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404;">
+        <i class="iconly-Edit icli svg-color"></i>
+      </button>`;
+              } else {
+                html += `
+      <button class="btn btn-sm btn-editar" data-action="view" data-id="${data.id}" title="Visualizar"
+              style="background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404;">
+        <i class="iconly-Show icli svg-color"></i>
+      </button>`;
               }
+              html += `</div>`;
               return html;
             }
           },
@@ -339,37 +347,48 @@ export async function renderVtcFinanceiroGestor() {
   });
   // Handler para enviar lançamento
   $('#lancamentosTable tbody').on('click', 'button[data-action="send"]', function() {
-    const id = $(this).data('id');
+    // Disable button and show loading spinner
+    const btn = $(this);
+    const originalHtml = btn.html();
+    btn.prop('disabled', true)
+       .html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
+    
+    const id = btn.data('id');
     const lanc = lancamentosData.find(l => l.id === id);
     if (!lanc) {
       console.error('Lançamento não encontrado para envio:', id);
+      // Restore button state if no lanc found
+      btn.prop('disabled', false).html(originalHtml);
       return;
     }
     const now = new Date();
-    const isoString = now.toISOString(); // ISO 8601 format
+    const isoString = now.toISOString();
     const userEmail = AuthService.user.email;
     console.log(`Enviado para a controladoria pelo usuário: ${userEmail}`);
     console.log(`Data: ${isoString}`);
-    // Remove campos internos e prepara novo array de log
     const { id: _, created_at, updated_at, created_by, updated_by, analise_ia, ocr_ia, ...dados } = lanc;
     const logEntry = `${now.toLocaleString('pt-BR', { hour12: false })} - Enviado para a controladoria pelo usuário: ${userEmail}`;
     const dadosComLog = {
       ...dados,
       log: Array.isArray(dados.log) ? [...dados.log, logEntry] : [logEntry]
     };
-    // Prepara o payload completo
     const payload = {
       ...dadosComLog,
       status: 'Enviado Controladoria',
       enviado_por: userEmail,
       data_envio: isoString
     };
+    
     updateLancamento(AuthService, id, payload)
       .then(() => {
         if (lancamentosTable) lancamentosTable.ajax.reload(null, false);
       })
       .catch(err => {
         console.error('Erro ao enviar lançamento:', err);
+      })
+      .finally(() => {
+        // Restore button state
+        btn.prop('disabled', false).html(originalHtml);
       });
   });
 

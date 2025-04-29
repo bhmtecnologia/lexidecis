@@ -424,14 +424,14 @@ export async function renderFinanceiroAnaliseDashboard() {
           const tableApi = this.api();
           $('#analiseTable tbody').on('click', 'button.btn-aprovar', function() {
             const id = $(this).data('id');
-            listLancamentos(AuthService).then(dados => {
+            loadLancamentosNoCache().then(dados => {
               const lanc = dados.find(l => l.id === id);
               if (lanc) processImmediateDecision('aprovar', lanc);
             });
           });
           $('#analiseTable tbody').on('click', 'button.btn-rejeitar', function() {
             const id = $(this).data('id');
-            listLancamentos(AuthService).then(dados => {
+            loadLancamentosNoCache().then(dados => {
               const lanc = dados.find(l => l.id === id);
               if (lanc) processImmediateDecision('rejeitar', lanc);
             });
@@ -540,7 +540,8 @@ export async function renderFinanceiroAnaliseDashboard() {
       await updateLancamento(AuthService, lancamentoId, dadosAtualizados);
       const modal = bootstrap.Modal.getInstance(document.getElementById('analiseModal'));
       modal.hide();
-      await loadDashboardData();
+      // Recarrega a tabela após atualização de modal sem chamar função inexistente
+      $("#analiseTable").DataTable().ajax.reload(null, false);
     } catch (error) {
       console.error("Erro ao processar atualização no modal:", error);
       alert("Erro ao processar a atualização: " + error.message);
@@ -610,7 +611,8 @@ export async function renderFinanceiroAnaliseDashboard() {
     };
     try {
       await updateLancamento(AuthService, lancamento.id, atualizacoes);
-      await loadDashboardData();
+      // Recarrega a tabela após decisão imediata sem chamar função inexistente
+      $("#analiseTable").DataTable().ajax.reload(null, false);
     } catch (error) {
       console.error("Erro ao processar a decisão imediata:", error);
       alert("Erro ao processar a decisão: " + error.message);
@@ -620,7 +622,34 @@ export async function renderFinanceiroAnaliseDashboard() {
 
   document.getElementById('btnAprovarModal').addEventListener('click', processModalApprove);
   document.getElementById('btnRejeitarModal').addEventListener('click', processModalReject);
-  document.getElementById('btnSalvarModal').addEventListener('click', processModalSave);
+  $('#btnSalvarModal').on('click', function() {
+    const btn = $(this);
+    const originalHtml = btn.html();
+    // Show spinner and disable button
+    btn.prop('disabled', true)
+       .html(originalHtml + ' <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
+    const lancamentoId = document.getElementById('lancamentoId').value;
+    const { dadosAtualizados, errors } = extrairDadosFormulario();
+    if (errors.length > 0) {
+      alert("Por favor, corrija os seguintes erros: " + errors.join(", "));
+      btn.prop('disabled', false).html(originalHtml);
+      return;
+    }
+    dadosAtualizados.status = "Pendente";
+    updateLancamento(AuthService, lancamentoId, dadosAtualizados)
+      .then(() => {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('analiseModal'));
+        modal.hide();
+        $("#analiseTable").DataTable().ajax.reload(null, false);
+      })
+      .catch(error => {
+        console.error("Erro ao salvar modal:", error);
+        alert("Erro ao salvar: " + error.message);
+      })
+      .finally(() => {
+        btn.prop('disabled', false).html(originalHtml);
+      });
+  });
   // Botão de recarregar tabela no cabeçalho de análise
   const headerReloadBtn = document.getElementById('reloadTable');
   if (headerReloadBtn) {

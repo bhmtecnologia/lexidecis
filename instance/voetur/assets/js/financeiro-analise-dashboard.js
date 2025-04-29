@@ -430,11 +430,26 @@ export async function renderFinanceiroAnaliseDashboard() {
             });
           });
           $('#analiseTable tbody').on('click', 'button.btn-rejeitar', function() {
-            const id = $(this).data('id');
-            loadLancamentosNoCache().then(dados => {
-              const lanc = dados.find(l => l.id === id);
-              if (lanc) processImmediateDecision('rejeitar', lanc);
-            });
+            const btn = $(this);
+            const originalHtml = btn.html();
+            // Show spinner and disable button
+            btn.prop('disabled', true)
+               .html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
+            const id = btn.data('id');
+            loadLancamentosNoCache()
+              .then(dados => {
+                const lanc = dados.find(l => l.id === id);
+                if (lanc) {
+                  return processImmediateDecision('rejeitar', lanc);
+                }
+              })
+              .catch(error => {
+                console.error("Erro ao carregar lançamentos para rejeição:", error);
+              })
+              .finally(() => {
+                // Restore original button state
+                btn.prop('disabled', false).html(originalHtml);
+              });
           });
           $('#analiseTable tbody').on('click', 'button.btn-editar', function() {
             const id = $(this).data('id');
@@ -627,26 +642,11 @@ export async function renderFinanceiroAnaliseDashboard() {
     const originalHtml = btn.html();
     // Show spinner and disable button
     btn.prop('disabled', true)
-       .html(originalHtml + ' <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
-    const lancamentoId = document.getElementById('lancamentoId').value;
-    const { dadosAtualizados, errors } = extrairDadosFormulario();
-    if (errors.length > 0) {
-      alert("Por favor, corrija os seguintes erros: " + errors.join(", "));
-      btn.prop('disabled', false).html(originalHtml);
-      return;
-    }
-    dadosAtualizados.status = "Pendente";
-    updateLancamento(AuthService, lancamentoId, dadosAtualizados)
-      .then(() => {
-        const modal = bootstrap.Modal.getInstance(document.getElementById('analiseModal'));
-        modal.hide();
-        $("#analiseTable").DataTable().ajax.reload(null, false);
-      })
-      .catch(error => {
-        console.error("Erro ao salvar modal:", error);
-        alert("Erro ao salvar: " + error.message);
-      })
+       .html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
+    processModalSave()
+      .catch(error => console.error("Erro ao salvar modal:", error))
       .finally(() => {
+        // Restore original button state
         btn.prop('disabled', false).html(originalHtml);
       });
   });

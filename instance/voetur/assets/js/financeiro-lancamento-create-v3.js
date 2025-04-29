@@ -1079,21 +1079,18 @@ export async function renderFinanceiroLancamentoCreateV3() {
       uid: AuthService.user.uid
     };
 
-    // Inclui auditoria e histórico de log nos dados
-    payload.dados = {
-      auditoria: window.auditInfo || {},
-      log: window.logEntries || []
-    };
+    // Inclui auditoria, histórico de log e parcelas diretamente no payload
+    payload.log = window.logEntries || [];
+    payload.auditoria = window.auditInfo || {};
     // Parcelas de vencimento e valor
-    payload.dados.parcelas = [];
+    payload.parcelas = [];
     document.querySelectorAll('.parcela-item').forEach(item => {
       const dateEl = item.querySelector('.parcela-data');
       const valorEl = item.querySelector('.parcela-valor');
       if (dateEl && valorEl && dateEl.value) {
-        // Converte string pt-BR para número
         const raw = valorEl.value.replace(/\./g, '').replace(',', '.');
         const numVal = Number(raw);
-        payload.dados.parcelas.push({ data_vencimento: dateEl.value, valor: numVal });
+        payload.parcelas.push({ data_vencimento: dateEl.value, valor: numVal });
       }
     });
 

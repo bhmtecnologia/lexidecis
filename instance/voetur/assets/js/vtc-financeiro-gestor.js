@@ -101,6 +101,23 @@ export async function renderVtcFinanceiroGestor() {
       </div>
     </div>
 
+    <!-- Modal de Log -->
+    <div class="modal fade" id="logModal" tabindex="-1" aria-labelledby="logModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="logModalLabel">Log do Lançamento</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          </div>
+          <div class="modal-body">
+            <ul id="logList" class="list-group"></ul>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+          </div>
+        </div>
+      </div>
+    </div>
   `;
 
   /**
@@ -232,7 +249,13 @@ export async function renderVtcFinanceiroGestor() {
               return html;
             }
           },
-          { data: 'status',            title: 'Status',            defaultContent: '-' },
+          {
+            data: 'status',
+            title: 'Status',
+            defaultContent: '-',
+            render: (data, type, row) =>
+              `<span class="status-clickable" data-id="${row.id}" style="cursor:pointer; color: var(--theme-default);">${data}</span>`
+          },
           { data: 'filial_nome',       title: 'Filial',            defaultContent: '-' },
           { data: 'fornecedor_nome',   title: 'Fornecedor',        defaultContent: '-' },
           { data: 'valor',             title: 'Valor',             defaultContent: '-', render: v => isNaN(v) ? '-' : parseFloat(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) },
@@ -322,9 +345,25 @@ export async function renderVtcFinanceiroGestor() {
       console.error('Lançamento não encontrado para envio:', id);
       return;
     }
-    // Remove internal fields and prepare payload with full data plus updated status
+    const now = new Date();
+    const isoString = now.toISOString(); // ISO 8601 format
+    const userEmail = AuthService.user.email;
+    console.log(`Enviado para a controladoria pelo usuário: ${userEmail}`);
+    console.log(`Data: ${isoString}`);
+    // Remove campos internos e prepara novo array de log
     const { id: _, created_at, updated_at, created_by, updated_by, analise_ia, ocr_ia, ...dados } = lanc;
-    const payload = { ...dados, status: 'Enviado Controladoria' };
+    const logEntry = `${now.toLocaleString('pt-BR', { hour12: false })} - Enviado para a controladoria pelo usuário: ${userEmail}`;
+    const dadosComLog = {
+      ...dados,
+      log: Array.isArray(dados.log) ? [...dados.log, logEntry] : [logEntry]
+    };
+    // Prepara o payload completo
+    const payload = {
+      ...dadosComLog,
+      status: 'Enviado Controladoria',
+      enviado_por: userEmail,
+      data_envio: isoString
+    };
     updateLancamento(AuthService, id, payload)
       .then(() => {
         if (lancamentosTable) lancamentosTable.ajax.reload(null, false);
@@ -351,6 +390,34 @@ export async function renderVtcFinanceiroGestor() {
         editModal.hide();
       })
       .catch(err => console.error('Erro ao salvar edição:', err));
+  });
+
+  // Inicializa modal de log
+  const logModalEl = document.getElementById('logModal');
+  const logModal = logModalEl ? new bootstrap.Modal(logModalEl) : null;
+  $('#lancamentosTable tbody').on('click', 'span.status-clickable', function() {
+    const id = $(this).data('id');
+    const lanc = lancamentosData.find(l => l.id === id);
+    if (!lanc) {
+      console.error('Lançamento não encontrado para exibir log:', id);
+      return;
+    }
+    const logList = document.getElementById('logList');
+    logList.innerHTML = '';
+    if (Array.isArray(lanc.log) && lanc.log.length) {
+      lanc.log.forEach(entry => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item';
+        li.textContent = entry;
+        logList.appendChild(li);
+      });
+    } else {
+      const li = document.createElement('li');
+      li.className = 'list-group-item';
+      li.textContent = 'Nenhum log disponível.';
+      logList.appendChild(li);
+    }
+    if (logModal) logModal.show();
   });
 }
 

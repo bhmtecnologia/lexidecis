@@ -60,23 +60,6 @@ export async function renderFinanceiroAnaliseDashboard() {
   const content = document.getElementById('content');
   content.innerHTML = `
     <div class="container-fluid">
-      <style>
-        .btn-rejeitar {
-          background: linear-gradient(45deg, #ff5f6d, #ffc371);
-          color: #fff !important;
-          box-shadow: 0 0 10px rgba(255,95,109,0.7), 0 0 20px rgba(255,197,113,0.5);
-          animation: glow 1.5s infinite;
-          transition: transform 0.2s;
-        }
-        @keyframes glow {
-          0% { box-shadow: 0 0 5px rgba(255,95,109,0.5), 0 0 10px rgba(255,197,113,0.3); }
-          50% { box-shadow: 0 0 20px rgba(255,95,109,0.9), 0 0 30px rgba(255,197,113,0.7); }
-          100% { box-shadow: 0 0 5px rgba(255,95,109,0.5), 0 0 10px rgba(255,197,113,0.3); }
-        }
-        .btn-rejeitar:hover {
-          transform: scale(1.1);
-        }
-      </style>
       <!-- Título e Breadcrumb -->
       <div class="page-title">
         <div class="row">
@@ -288,7 +271,9 @@ export async function renderFinanceiroAnaliseDashboard() {
               <button id="btnAprovarModal" type="button" class="btn btn-sm btn-aprovar" style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724;" title="Aprovar">
                 Aprovar
               </button>
-              <button id="btnRejeitarModal" type="button" class="btn btn-sm btn-rejeitar" title="Rejeitar">Rejeitar</button>
+              <button id="btnRejeitarModal" type="button" class="btn btn-sm btn-rejeitar" style="background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24;" title="Rejeitar">
+                Rejeitar
+              </button>
               <button id="btnSalvarModal" type="button" class="btn btn-sm btn-editar" style="background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404;" title="Salvar Alterações">
                 Salvar
               </button>
@@ -313,6 +298,7 @@ export async function renderFinanceiroAnaliseDashboard() {
         autoWidth: false,
         ordering: true,
         paging: true,
+        colReorder: true,
         dom: 'lBfrtip',
         buttons: ['copy', 'excel', 'csv', 'pdf'],
         language: {
@@ -368,7 +354,7 @@ export async function renderFinanceiroAnaliseDashboard() {
                   <button class="btn btn-sm btn-aprovar" data-id="${lancamento.id}" title="Aprovar" style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724;">
                     <i class="bi bi-check-lg"></i>
                   </button>
-                  <button class="btn btn-sm btn-rejeitar" data-id="${lancamento.id}" title="Rejeitar">
+                  <button class="btn btn-sm btn-rejeitar" data-id="${lancamento.id}" title="Rejeitar" style="background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24;">
                     <i class="bi bi-x-lg"></i>
                   </button>
                   <button class="btn btn-sm btn-editar" data-id="${lancamento.id}" title="Editar" style="background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404;">

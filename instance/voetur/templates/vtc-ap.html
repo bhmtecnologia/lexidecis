@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Download e Descompactação de PDF</title>
+  <!-- Importa pako.js para descompactação GZIP -->
+  <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; }
+    label { font-weight: bold; margin-right: 0.5rem; }
+    #debugOutput { white-space: pre-wrap; background: #f0f0f0; padding: 1rem; border-radius: 4px; margin-top: 1rem; max-height: 300px; overflow-y: auto; }
+    input, button { padding: 0.5rem; font-size: 1rem; margin-right: 0.5rem; }
+    table.parcelas-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    table.parcelas-table th,
+    table.parcelas-table td {
+      border: 1px solid #ccc;
+      padding: 0.5rem;
+      text-align: left;
+    }
+    .parcelas-card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-top: 1rem;
+      padding: 1rem;
+      position: relative;
+      border-left: 6px solid #8bdb74;
+    }
+    .parcelas-card .card-header {
+      font-size: 0.85rem;
+      color: #666;
+      margin-top: 0.5rem;
+    }
+    .parcelas-card .card-header div {
+      font-size: 1rem;
+      color: #333;
+      font-weight: bold;
+    }
+    .parcelas-card .card-row {
+      display: flex;
+      margin-top: 0.5rem;
+    }
+    .parcelas-card .card-item {
+      flex: 1;
+      padding: 0.5rem;
+      border-top: 1px solid #eee;
+      border-right: 1px solid #eee;
+    }
+    .parcelas-card .card-item:last-child {
+      border-right: none;
+    }
+    .parcelas-card .card-item-full {
+      flex: 1;
+      padding: 0.5rem;
+      border-top: 1px solid #eee;
+    }
+    .parcelas-card .card-row .card-icon {
+      width: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-top: 1px solid #eee;
+    }
+    /* Modal de anexos */
+    #anexosModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:flex; justify-content:center; align-items:center; }
+    .modal-content { background:#fff; padding:1rem; border-radius:8px; max-width:600px; width:90%; }
+    .anexo-card { display:flex; justify-content:space-between; align-items:center; margin:0.5rem 0; }
+    .anexo-card .anexo-name { flex:1; margin-left:0.5rem; }
+    .anexo-card .icon-btn { font-size:1.5rem; cursor:pointer; margin-left:0.5rem; }
+    .icon-btn.loading {
+      width: 1em;
+      height: 1em;
+      border: 2px solid #ccc;
+      border-top-color: #333;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      margin-left: 0.5rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div style="margin-top: 2rem;">
+    <h2>Parcelas</h2>
+    <div id="parcelasContainer"></div>
+  </div>
+  <!-- Modal de Anexos -->
+  <div id="anexosModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center;">
+    <div class="modal-content" style="background:#fff; padding:1rem; border-radius:8px; max-width:600px; width:90%;">
+      <h2>Anexos</h2>
+      <div id="anexosContainer"></div>
+      <button id="closeModal" style="margin-top:1rem;">Fechar</button>
+    </div>
+  </div>
+  <!-- Modal de Detalhes da Parcela -->
+  <div id="detalhesModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;">
+    <div class="modal-content" style="max-width:500px;width:90%;background:#fff;padding:1rem;border-radius:8px;position:relative;">
+      <button id="closeDetalhes" style="position:absolute;top:8px;right:8px;font-size:1.5rem;background:none;border:none;cursor:pointer;">&times;</button>
+      <h2>Aprovação liberação de AP <span id="detalhesNumero"></span> &gt; Detalhes</h2>
+      <div style="margin-top:1rem;">
+        <div><small>Filial</small><div id="detalhesFilial"></div></div>
+        <div><small>Documento</small><div id="detalhesDocumento"></div></div>
+        <div><small>Fornecedor</small><div id="detalhesFornecedor"></div></div>
+        <div><small>CPF/CNPJ</small><div id="detalhesCpfCnpj"></div></div>
+        <div style="display:flex; gap:1rem;">
+          <div><small>Data de emissão</small><div id="detalhesDataEmissao"></div></div>
+          <div><small>Data entrada</small><div id="detalhesDataEntrada"></div></div>
+        </div>
+        <div><small>Operação</small><div id="detalhesOperacao"></div></div>
+        <div><small>Histórico</small><div id="detalhesHistorico"></div></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:1.5rem;">
+        <button id="btnReprovar" style="padding:0.75rem 1.5rem;background:#c30000;color:#fff;border:none;border-radius:4px;cursor:pointer;">Reprovar</button>
+        <button id="btnAprovar" style="padding:0.75rem 1.5rem;background:#004f8c;color:#fff;border:none;border-radius:4px;cursor:pointer;">Aprovar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function listParcelas() {
+      const container = document.getElementById('parcelasContainer');
+      container.innerHTML = '';
+      try {
+        const resp = await fetch('https://webhook.power.tec.br/webhook/voetur/v1/Decisor/LiberacaoAp/ListarParcelas');
+        if (!resp.ok) throw new Error('Erro HTTP: ' + resp.status);
+        const resJson = await resp.json();
+        // Ajuste para lidar com resposta que é array no root
+        const root = Array.isArray(resJson) ? resJson[0] : resJson;
+        const parcelas = Array.isArray(root.Data) ? root.Data : [];
+        if (!parcelas || parcelas.length === 0) {
+          container.textContent = 'Nenhuma parcela encontrada.';
+          return;
+        }
+        // Gera cards para cada parcela
+        const cards = parcelas.map(p => {
+          return `
+            <div class="parcelas-card">
+              <div class="card-header"><span>Filial</span><div>${p.DescricaoFilial}</div></div>
+              <div class="card-header"><span>Grupo Assinaturas</span><div>${p.GrupoDeAssinaturas}</div></div>
+              <div class="card-row">
+                <div class="card-item"><span>Documento</span><div>${p.Documento}</div></div>
+                <div class="card-item"><span>AP</span><div>${p.AP}</div></div>
+                <div class="card-item"><span>Parcela</span><div>${p.NroParcela}</div></div>
+              </div>
+              <div class="card-row">
+                <div class="card-item-full"><span>Fornecedor</span><div>${p.Fornecedor}</div></div>
+              </div>
+              <div class="card-row">
+                <div class="card-item"><span>Vlr Nominal</span><div>${p.ValorNominal.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</div></div>
+                <div class="card-item"><span>Vlr Líquido</span><div>${p.ValorLiquido.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</div></div>
+                <div class="card-item"><span>Vencimento</span><div>${new Date(p.DataVencimento).toLocaleDateString('pt-BR')}</div></div>
+              </div>
+              <div class="card-row">
+                <div class="card-item-full"><span>Histórico</span><div>${p.HistoricoParcela}</div></div>
+                <div class="card-icon">📎</div>
+              </div>
+            </div>`;
+        });
+        container.innerHTML = cards.join('');
+        // Associa click para abrir modal de anexos
+        const icons = container.querySelectorAll('.card-icon');
+        icons.forEach((icon, idx) => {
+          icon.style.cursor = 'pointer';
+          icon.addEventListener('click', () => {
+          const anexos = parcelas[idx].ListaAnexos || [];
+          const anexosContainer = document.getElementById('anexosContainer');
+          anexosContainer.innerHTML = anexos.map(a => `
+            <div class="anexo-card">
+              <div class="anexo-name">${a.Descricao}</div>
+              <div class="icon-btn" title="Compartilhar" data-id="${a.IdRegistro}" data-action="share">🔗</div>
+              <div class="icon-btn" title="Baixar" data-id="${a.IdRegistro}" data-action="download">⬇️</div>
+              <div class="icon-btn" title="Excluir" data-id="${a.IdRegistro}" data-action="delete">🗑️</div>
+            </div>
+          `).join('');
+          document.getElementById('anexosModal').style.display = 'flex';
+          // Agora associa funções aos botões de anexos
+          anexosContainer.querySelectorAll('.icon-btn').forEach(btn => {
+            const action = btn.getAttribute('data-action');
+            const idAnexo = btn.getAttribute('data-id');
+            if (action === 'download') {
+              btn.addEventListener('click', async () => {
+                // Exibe indicador de loading
+                btn.textContent = '';
+                btn.classList.add('loading');
+                btn.style.pointerEvents = 'none';
+                try {
+                  const resp = await fetch(`https://n8n.power.tec.br/webhook/download?idRegistro=${encodeURIComponent(idAnexo)}`);
+                  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                  const jsonAnexo = await resp.json();
+                  // Extrai base64 gzip
+                  const raw = Array.isArray(jsonAnexo) ? jsonAnexo[0].Data.Content : jsonAnexo.Data.Content;
+                  const clean = String(raw).trim().replace(/\s+/g, '');
+                  const binary = Uint8Array.from(atob(clean), c => c.charCodeAt(0));
+                  const pdfBytes = pako.ungzip(binary);
+                  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                  const url = URL.createObjectURL(blob);
+                  window.open(url, '_blank');
+                } catch (e) {
+                  alert('Erro ao baixar o anexo: ' + e.message);
+                } finally {
+                  // Remove indicador de loading e restaura ícone
+                  btn.classList.remove('loading');
+                  btn.textContent = '⬇️';
+                  btn.style.pointerEvents = '';
+                }
+              });
+            }
+            // TODO: implementar share/delete se necessário
+          });
+          });
+        });
+        // Abrir modal de detalhes ao clicar na parcela (exceto no clique de anexos)
+        container.querySelectorAll('.parcelas-card').forEach((card, idx) => {
+          card.addEventListener('click', (e) => {
+            if (e.target.closest('.icon-btn')) return;
+            const p = parcelas[idx];
+            document.getElementById('detalhesNumero').textContent = p.NroParcela;
+            document.getElementById('detalhesFilial').textContent = p.DescricaoFilial;
+            document.getElementById('detalhesDocumento').textContent = p.Documento;
+            document.getElementById('detalhesFornecedor').textContent = p.Fornecedor;
+            document.getElementById('detalhesCpfCnpj').textContent = p.CpfCnpj;
+            document.getElementById('detalhesDataEmissao').textContent = p.DataEmissao
+              ? new Date(p.DataEmissao).toLocaleDateString('pt-BR')
+              : '';
+            document.getElementById('detalhesDataEntrada').textContent = p.DataEntrada
+              ? new Date(p.DataEntrada).toLocaleDateString('pt-BR')
+              : '';
+            document.getElementById('detalhesOperacao').textContent = p.GrupoDeAssinaturas || '';
+            document.getElementById('detalhesHistorico').textContent = p.HistoricoParcela || '';
+            document.getElementById('detalhesModal').style.display = 'flex';
+          });
+        });
+        // Fechar modal
+        document.getElementById('closeModal').addEventListener('click', () => {
+          document.getElementById('anexosModal').style.display = 'none';
+        });
+        // Fechar modal de detalhes
+        document.getElementById('closeDetalhes').addEventListener('click', () => {
+          document.getElementById('detalhesModal').style.display = 'none';
+        });
+        // Ações de reprovar/aprovar (implementar chamadas conforme necessidade)
+        document.getElementById('btnReprovar').addEventListener('click', () => {
+          // TODO: lógica de reprovação
+          alert('Reprovado parcela ' + document.getElementById('detalhesNumero').textContent);
+        });
+        document.getElementById('btnAprovar').addEventListener('click', () => {
+          // TODO: lógica de aprovação
+          alert('Aprovado parcela ' + document.getElementById('detalhesNumero').textContent);
+        });
+      } catch (err) {
+        container.textContent = 'Erro ao listar parcelas: ' + err.message;
+      }
+    }
+    document.addEventListener('DOMContentLoaded', listParcelas);
+  </script>
+</body>
+</html>

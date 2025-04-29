@@ -1,269 +1,81 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <title>Edição de JSON com Alpaca</title>
-  <!-- Bootstrap CSS -->
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-  />
-  <!-- jQuery UI CSS for datepicker -->
-  <link
-    rel="stylesheet"
-    href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css"
-  />
-  <!-- Alpaca CSS -->
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/alpaca@1.5.27/dist/alpaca/bootstrap/alpaca.min.css"
-  />
+  <meta charset="UTF-8">
+  <title>API com Firebase Auth</title>
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css">
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
 </head>
 <body>
-  <div class="container py-4">
-    <h1 class="mb-4">Editar Payload JSON com Alpaca</h1>
+  <div id="swagger-ui"></div>
 
-    <!-- Aqui mostramos o JSON original -->
-    <pre id="rawJson" class="bg-light p-3 border"></pre>
-
-    <!-- Container do formulário Alpaca -->
-    <div id="editForm"></div>
-
-    <button id="saveBtn" class="btn btn-primary mt-3">Salvar Alterações</button>
-  </div>
-
-  <!-- Dependências -->
-  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
-  <!-- jQuery UI for datepicker -->
-  <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/underscore@1.13.6/underscore-min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/handlebars@4.7.7/dist/handlebars.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/alpaca@1.5.27/dist/alpaca/bootstrap/alpaca.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
 
   <script>
-    // --- 1. Payload JSON completo definido "na mão" ---
-    const payload = {
-      uid: "SkIDNDYwvFSutsnNTOls7ZvRrHn2",
-      anexo: [
-        {
-          url: "https://.../1745760413816-eueq6p4ue.png",
-          categoria: "Nota Fiscal"
-        }
-      ],
-      dados: {
-        log: [
-          "27/04/2025, 10:28:37 - Valor Bruto definido como Manual",
-          "27/04/2025, 10:27:01 - Anexo carregado"
-        ],
-        parcelas: [
-          { valor: 6000, data_vencimento: "2025-04-30" }
-        ],
-        auditoria: {
-          usuario: "brunohiroshi@gmail.com",
-          data_hora: "27/04/2025, 10:27:01",
-          url_anexo: "...png",
-          nome_anexo: "ed47d43a.jpeg",
-          status_imagem: "Imagem legível",
-          tipo_documento: "Nota Fiscal"
-        }
-      },
-      itens: [
-        { descricao: "Pneu", quantidade: 1, valor_unitario: 150 }
-      ],
-      valor: 5868.8,
-      app_id: "empresa_vtc_log",
-      status: "Novo",
-      filial_id: "7eaa9884-831d-45f0-838d-07f0831fcd93",
-      filial_nome: "VTCLOG_GUARULHOS",
-      data_emissao: "2025-04-11",
-      data_inclusao: "2025-04-27 10:29:45",
-      fornecedor_id: "6a553391-fa82-47ca-b403-803bc315a61c",
-      justificativa: "Ddds",
-      tipo_documento: "Nota Fiscal",
-      centro_custo_id: "083361cb-1f65-4f11-b46a-ce5167fb49dd",
-      forma_pagamento: "Depósito",
-      fornecedor_cnpj: "24.893.687/0011-71",
-      fornecedor_nome: "PNEULANDIA COMERCIAL LTDA-PAL",
-      numero_documento: "43.645",
-      usuario_inclusao: "brunohiroshi@gmail.com",
-      centro_custo_nome: "Sistemas"
+    // Inicializa o Firebase
+    const firebaseConfig = {
+      apiKey: "SUA_API_KEY",
+      authDomain: "SEU_DOMINIO.firebaseapp.com",
+      projectId: "SEU_PROJECT_ID",
     };
+    firebase.initializeApp(firebaseConfig);
 
-    // Exibe o JSON original na tela
-    document.getElementById("rawJson").textContent = JSON.stringify(payload, null, 2);
-
-    // --- 2. Schema completo para todo o payload ---
-    const schemaCompleto = {
-      type: "object",
-      title: "Payload Completo",
-      properties: {
-        uid: { type: "string", title: "UID" },
-        anexo: {
-          type: "array",
-          title: "Anexos",
-          items: {
-            type: "object",
-            properties: {
-              url: { type: "string", format: "uri", title: "URL" },
-              categoria: { type: "string", title: "Categoria" }
-            }
-          }
-        },
-        dados: {
-          type: "object",
-          title: "Dados do Lançamento",
-          properties: {
-            log: {
-              type: "array",
-              title: "Log de Eventos",
-              items: { type: "string" }
-            },
-            parcelas: {
-              type: "array",
-              title: "Parcelas",
-              items: {
-                type: "object",
-                properties: {
-                  valor: { type: "number", title: "Valor (R$)" },
-                  data_vencimento: { type: "string", format: "date", title: "Data de Vencimento" }
-                }
-              }
-            },
-            auditoria: {
-              type: "object",
-              title: "Auditoria",
-              properties: {
-                usuario: { type: "string", title: "Usuário" },
-                data_hora: { type: "string", title: "Data/Hora" },
-                url_anexo: { type: "string", format: "uri", title: "URL do Anexo" },
-                nome_anexo: { type: "string", title: "Nome do Anexo" },
-                status_imagem: { type: "string", title: "Status da Imagem" },
-                tipo_documento: { type: "string", title: "Tipo de Documento" }
+    window.onload = function() {
+      const ui = SwaggerUIBundle({
+        spec: {
+          openapi: "3.0.0",
+          info: { title: "Minha API com Firebase", version: "1.0.0" },
+          paths: { "/usuarios": { get: { summary: "Lista de usuários", responses: { "200": { description: "OK" } } } } },
+          components: {
+            securitySchemes: {
+              bearerAuth: {
+                type: "http",
+                scheme: "bearer",
+                bearerFormat: "JWT"
               }
             }
-          }
+          },
+          security: [{ bearerAuth: [] }]
         },
-        itens: {
-          type: "array",
-          title: "Itens",
-          items: {
-            type: "object",
-            properties: {
-              descricao: { type: "string", title: "Descrição" },
-              quantidade: { type: "number", title: "Quantidade" },
-              valor_unitario: { type: "number", title: "Valor Unitário (R$)" }
-            }
-          }
-        },
-        valor: { type: "number", title: "Valor Total (R$)" },
-        app_id: { type: "string", title: "App ID" },
-        status: { type: "string", title: "Status" },
-        filial_id: { type: "string", title: "Filial ID" },
-        filial_nome: { type: "string", title: "Filial Nome" },
-        data_emissao: { type: "string", format: "date", title: "Data de Emissão" },
-        data_inclusao: { type: "string", title: "Data de Inclusão" },
-        fornecedor_id: { type: "string", title: "Fornecedor ID" },
-        justificativa: { type: "string", title: "Justificativa" },
-        tipo_documento: { type: "string", title: "Tipo de Documento" },
-        centro_custo_id: { type: "string", title: "Centro de Custo ID" },
-        forma_pagamento: { type: "string", title: "Forma de Pagamento" },
-        fornecedor_cnpj: { type: "string", title: "Fornecedor CNPJ" },
-        fornecedor_nome: { type: "string", title: "Fornecedor Nome" },
-        numero_documento: { type: "string", title: "Número do Documento" },
-        usuario_inclusao: { type: "string", title: "Usuário de Inclusão" },
-        centro_custo_nome: { type: "string", title: "Centro de Custo Nome" }
-      }
-    };
-
-    const optionsCompleto = {
-      fields: {
-        uid: { label: "UID" },
-        anexo: {
-          label: "Anexos",
-          items: {
-            fields: {
-              url: { type: "text", label: "URL" },
-              categoria: { label: "Categoria" }
-            }
-          }
-        },
-        dados: {
-          label: "Dados do Lançamento",
-          fields: {
-            log: { type: "array", items: { type: "text" }, label: "Log de Eventos" },
-            parcelas: {
-              items: {
-                fields: {
-                  valor: { label: "Valor (R$)" },
-                  data_vencimento: { type: "date", label: "Data de Vencimento" }
-                }
-              }
-            },
-            auditoria: {
-              fields: {
-                usuario: { label: "Usuário" },
-                data_hora: { label: "Data/Hora" },
-                url_anexo: { type: "text", label: "URL do Anexo" },
-                nome_anexo: { label: "Nome do Anexo" },
-                status_imagem: { label: "Status da Imagem" },
-                tipo_documento: { label: "Tipo de Documento" }
-              }
-            }
-          }
-        },
-        itens: {
-          label: "Itens",
-          items: {
-            fields: {
-              descricao: { label: "Descrição" },
-              quantidade: { label: "Quantidade" },
-              valor_unitario: { label: "Valor Unitário (R$)" }
-            }
-          }
-        },
-        valor: { label: "Valor Total (R$)" },
-        app_id: { label: "App ID" },
-        status: { label: "Status" },
-        filial_id: { label: "Filial ID" },
-        filial_nome: { label: "Filial Nome" },
-        data_emissao: {
-          type: "date",
-          label: "Data de Emissão",
-          picker: {
-            changeMonth: true,
-            changeYear: true,
-            dateFormat: "yy-mm-dd"
-          }
-        },
-        data_inclusao: { label: "Data de Inclusão" },
-        fornecedor_id: { label: "Fornecedor ID" },
-        justificativa: { type: "text", label: "Justificativa" },
-        tipo_documento: { label: "Tipo de Documento" },
-        centro_custo_id: { label: "Centro de Custo ID" },
-        forma_pagamento: { label: "Forma de Pagamento" },
-        fornecedor_cnpj: { label: "Fornecedor CNPJ" },
-        fornecedor_nome: { label: "Fornecedor Nome" },
-        numero_documento: { label: "Número do Documento" },
-        usuario_inclusao: { label: "Usuário de Inclusão" },
-        centro_custo_nome: { label: "Centro de Custo Nome" }
-      }
-    };
-
-    // --- 3. Inicializa o Alpaca para editar todo o payload ---
-    $(function() {
-      $("#editForm").alpaca({
-        schema: schemaCompleto,
-        options: optionsCompleto,
-        data: payload
+        dom_id: '#swagger-ui',
+        presets: [SwaggerUIBundle.presets.apis],
+        layout: "BaseLayout",
+        docExpansion: "none"
       });
 
-      $("#saveBtn").click(function() {
-        const updatedPayload = $("#editForm").alpaca("get").getValue();
-        console.log("Payload atualizado:", updatedPayload);
-        document.getElementById("rawJson").textContent = JSON.stringify(updatedPayload, null, 2);
-      });
-    });
+      // Função de login manual
+      async function loginAndAuthorize() {
+        const email = prompt("Digite seu e-mail:");
+        const password = prompt("Digite sua senha:");
+
+        try {
+          const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+          const token = await userCredential.user.getIdToken();
+
+          const authData = {
+            bearerAuth: "Bearer " + token
+          };
+          
+          ui.preauthorizeApiKey('bearerAuth', token);
+          
+          alert("Login feito! Token injetado no Swagger.");
+        } catch (error) {
+          console.error("Erro ao fazer login:", error);
+          alert("Erro no login: " + error.message);
+        }
+      }
+
+      // Cria botão de login extra
+      const button = document.createElement('button');
+      button.innerText = "Login Firebase";
+      button.style.position = 'fixed';
+      button.style.top = '10px';
+      button.style.right = '10px';
+      button.style.zIndex = '9999';
+      button.onclick = loginAndAuthorize;
+      document.body.appendChild(button);
+    };
   </script>
 </body>
 </html>

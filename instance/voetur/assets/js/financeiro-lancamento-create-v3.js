@@ -832,6 +832,14 @@ export async function renderFinanceiroLancamentoCreateV3() {
         document.getElementById("form-section").classList.remove("d-none");
 
         showAlert("Documento classificado como Conta a pagar. Campos preenchidos.", "info");
+
+        // Hide items section for Conta a pagar
+        const itensSec = document.getElementById("itensSection");
+        if (itensSec) itensSec.classList.add("d-none");
+
+        // Use the first parcela date as the due date
+        const firstParcelaDateInput = document.querySelector("#parcelasContainer .parcela-data");
+        if (firstParcelaDateInput) firstParcelaDateInput.id = "vencimentoParcela1";
       } else {
         showAlert("Documento não reconhecido ou ilegível. Preencha manualmente.", "warning");
       }
@@ -1055,7 +1063,7 @@ export async function renderFinanceiroLancamentoCreateV3() {
       data_emissao: classification.data_emissao || document.getElementById("dataEmissao").value,
       // somente para contas a pagar
       data_vencimento: classification.tipo_documento === "Conta a pagar"
-        ? document.getElementById("vencimentoParcela1").value
+        ? document.querySelector("#parcelasContainer .parcela-data").value
         : null,
       // Converte valor total da nota (classification.valor_total_nota) para número pt-BR
       valor: (() => {

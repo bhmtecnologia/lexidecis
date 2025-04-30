@@ -826,6 +826,75 @@ export async function renderFinanceiroLancamentoCreateV3() {
           }
         }
 
+        // ===================== Campos adicionais para Conta a pagar =====================
+        // Preenche Filial com base no tomador (Conta a pagar)
+        const filialMatch = (window.filiaisData || []).find(f => f.cnpj === info.cnpj_tomador);
+        if (filialMatch) {
+          const filialSelect = document.getElementById("filialSelect");
+          const unlockFilial = document.getElementById("unlockFilial");
+          filialSelect.value = filialMatch.id || filialMatch.uuid || filialMatch.nome;
+          filialSelect.disabled = true;
+          if (unlockFilial) {
+            unlockFilial.checked = false;
+            unlockFilial.disabled = false;
+          }
+          if (window.$ && $.fn.select2) $("#filialSelect").trigger("change");
+        }
+
+        // Preenche Fornecedor
+        const fornecedorSelect = document.getElementById("fornecedorSelect");
+        const unlockFornecedor = document.getElementById("unlockFornecedor");
+        if (fornecedorSelect) {
+          // Adiciona opção e seleciona o fornecedor extraído
+          const option = new Option(info.fornecedor || "", info.fornecedor || "", true, true);
+          fornecedorSelect.appendChild(option);
+          fornecedorSelect.value = info.fornecedor || "";
+          fornecedorSelect.disabled = true;
+          if (unlockFornecedor) {
+            unlockFornecedor.checked = false;
+            unlockFornecedor.disabled = false;
+          }
+          if (window.$ && $.fn.select2) $("#fornecedorSelect").trigger("change");
+        }
+
+        // Preenche Número do Documento
+        const numeroEl = document.getElementById("numeroDocumento");
+        const unlockNumero = document.getElementById("unlockNumero");
+        if (numeroEl) {
+          numeroEl.value = info.numero_nota || "";
+          numeroEl.disabled = true;
+          if (unlockNumero) {
+            unlockNumero.checked = false;
+            unlockNumero.disabled = false;
+          }
+        }
+
+        // Preenche Data de Emissão
+        const dataEl = document.getElementById("dataEmissao");
+        const unlockData = document.getElementById("unlockData");
+        if (dataEl) {
+          dataEl.value = info.data_emissao || "";
+          dataEl.disabled = true;
+          if (unlockData) {
+            unlockData.checked = false;
+            unlockData.disabled = false;
+          }
+        }
+
+        // Ajusta data e valor da primeira parcela
+        const firstParcela = document.querySelector("#parcelasContainer .parcela-data");
+        if (firstParcela) {
+          // Data de vencimento
+          firstParcela.value = info.data_vencimento || "";
+          // Valor da parcela igual ao Valor Bruto
+          const valorParcelaInput = firstParcela.closest(".parcela-item").querySelector(".parcela-valor");
+          const valorEl = document.getElementById("valor");
+          if (valorParcelaInput && valorEl) {
+            valorParcelaInput.value = valorEl.value;
+          }
+        }
+        // ===================== Fim dos campos adicionais =====================
+
         // Hide classification-section before toggling others
         document.getElementById("classification-section").classList.add("d-none");
         // Exibe o formulário
@@ -836,6 +905,11 @@ export async function renderFinanceiroLancamentoCreateV3() {
         // Hide items section for Conta a pagar
         const itensSec = document.getElementById("itensSection");
         if (itensSec) itensSec.classList.add("d-none");
+        // Disable and remove required from item inputs to bypass HTML5 validation
+        document.querySelectorAll('#itensContainer input').forEach(el => {
+          el.disabled = true;
+          el.required = false;
+        });
 
         // Use the first parcela date as the due date
         const firstParcelaDateInput = document.querySelector("#parcelasContainer .parcela-data");

@@ -130,7 +130,7 @@ export async function deleteLancamento(AuthService, id) {
   if (!user) throw new Error("Usuário não autenticado");
   const token = await user.getIdToken();
 
-  const response = await fetch(`https://n8n.power.tec.br/webhook-test/voetur/v1/lancamentos/${id}`, {
+  const response = await fetch(`https://webhook.power.tec.br/webhook-test/voetur/v1/lancamentos/${id}`, {
     method: "DELETE",
     headers: { 
       "Content-Type": "application/json",
@@ -162,7 +162,7 @@ export async function uploadArquivo(AuthService, file) {
   const formData = new FormData();
   formData.append('file', file);
 
-  const response = await fetch('https://n8n.power.tec.br/webhook/voetur/v2/upload', {
+  const response = await fetch('https://webhook.power.tec.br/webhook/voetur/v2/upload', {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${token}`
@@ -460,7 +460,7 @@ export async function createChatMessage(AuthService, chatflowId, sessionId, role
     content
   };
 
-  const response = await fetch('https://n8n.power.tec.br/webhook/lexidecis/v2/chatmessage', {
+  const response = await fetch('https://webhook.power.tec.br/webhook/lexidecis/v2/chatmessage', {
     method: "POST",
     headers: { 
       "Content-Type": "application/json",

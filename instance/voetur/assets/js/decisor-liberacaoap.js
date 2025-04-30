@@ -27,8 +27,26 @@ export async function renderDecisorLiberacaoAp() {
       .icon-btn.loading { width: 1em; height: 1em; border: 2px solid #ccc; border-top-color: #333; border-radius: 50%; animation: spin 1s linear infinite; display: inline-block; margin-left: 0.5rem; }
       @keyframes spin { to { transform: rotate(360deg); } }
     </style>
+    <div class="page-title">
+      <div class="row">
+        <div class="col-sm-6 col-12">
+          <h2>Liberação AP</h2>
+          <p class="mb-0 text-title-gray">Aprovação de parcelas a pagar</p>
+        </div>
+        <div class="col-sm-6 col-12">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+              <a href="index.html">
+                <i class="iconly-Home icli svg-color"></i>
+              </a>
+            </li>
+            <li class="breadcrumb-item">Decisor</li>
+            <li class="breadcrumb-item active">Liberação AP</li>
+          </ol>
+        </div>
+      </div>
+    </div>
     <div style="margin-top: 2rem;">
-      <h2>Parcelas</h2>
       <div id="parcelasContainer"></div>
     </div>
     <div id="anexosModal">

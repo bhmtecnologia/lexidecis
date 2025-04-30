@@ -97,14 +97,104 @@ export async function renderDecisorLiberacaoAp() {
           </div>
         </div>
       `).join('');
-      // Evento de ícones e modais (copiar lógica do HTML)
-      // ...
+      // Evento de ícones e modais
+      const icons = container.querySelectorAll('.card-icon');
+      icons.forEach(icon => {
+        icon.style.cursor = 'pointer';
+        icon.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const idx = icon.getAttribute('data-idx');
+          const anexos = parcelas[idx].ListaAnexos || [];
+          const anexosContainer = document.getElementById('anexosContainer');
+          anexosContainer.innerHTML = anexos.map(a => `
+            <div class="anexo-card">
+              <div class="anexo-name">${a.Descricao}</div>
+              <div class="icon-btn" title="Compartilhar" data-id="${a.IdRegistro}" data-action="share">🔗</div>
+              <div class="icon-btn" title="Baixar" data-id="${a.IdRegistro}" data-action="download">⬇️</div>
+              <div class="icon-btn" title="Excluir" data-id="${a.IdRegistro}" data-action="delete">🗑️</div>
+            </div>
+          `).join('');
+          document.getElementById('anexosModal').style.display = 'flex';
+          anexosContainer.querySelectorAll('.icon-btn').forEach(btn => {
+            const action = btn.getAttribute('data-action');
+            const idAnexo = btn.getAttribute('data-id');
+            if (action === 'download') {
+              btn.addEventListener('click', async () => {
+                btn.textContent = '';
+                btn.classList.add('loading');
+                btn.style.pointerEvents = 'none';
+                try {
+                  const resp = await fetch(`https://n8n.power.tec.br/webhook/download?idRegistro=${encodeURIComponent(idAnexo)}`);
+                  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                  const jsonAnexo = await resp.json();
+                  const raw = Array.isArray(jsonAnexo) ? jsonAnexo[0].Data.Content : jsonAnexo.Data.Content;
+                  const clean = String(raw).trim().replace(/\s+/g, '');
+                  const binary = Uint8Array.from(atob(clean), c => c.charCodeAt(0));
+                  const pdfBytes = pako.ungzip(binary);
+                  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                  window.open(URL.createObjectURL(blob), '_blank');
+                } catch (e) {
+                  alert('Erro ao baixar o anexo: ' + e.message);
+                } finally {
+                  btn.classList.remove('loading');
+                  btn.textContent = '⬇️';
+                  btn.style.pointerEvents = '';
+                }
+              });
+            }
+            // Outros actions podem ser implementados aqui...
+          });
+        });
+      });
+      // Abrir modal de detalhes ao clicar na parcela (exceto no clique de anexos)
+      container.querySelectorAll('.parcelas-card').forEach((card, idx) => {
+        card.addEventListener('click', (e) => {
+          if (e.target.closest('.icon-btn') || e.target.closest('.card-icon')) return;
+          const p = parcelas[idx];
+          document.getElementById('detalhesNumero').textContent = p.NroParcela;
+          document.getElementById('detalhesFilial').textContent = p.DescricaoFilial;
+          document.getElementById('detalhesDocumento').textContent = p.Documento;
+          document.getElementById('detalhesFornecedor').textContent = p.Fornecedor || '';
+          document.getElementById('detalhesCpfCnpj').textContent = p.CpfCnpj || '';
+          document.getElementById('detalhesDataEmissao').textContent = p.DataEmissao
+            ? new Date(p.DataEmissao).toLocaleDateString('pt-BR') : '';
+          document.getElementById('detalhesDataEntrada').textContent = p.DataEntrada
+            ? new Date(p.DataEntrada).toLocaleDateString('pt-BR') : '';
+          document.getElementById('detalhesOperacao').textContent = p.GrupoDeAssinaturas || '';
+          document.getElementById('detalhesHistorico').textContent = p.HistoricoParcela || '';
+          document.getElementById('detalhesModal').style.display = 'flex';
+        });
+      });
     } catch (err) {
       container.textContent = 'Erro ao listar parcelas: ' + err.message;
     }
   }
 
   await listParcelas();
+
+  // Configura botões de fechar modal de anexos
+  const closeAnexosBtn = document.getElementById('closeModal');
+  closeAnexosBtn.addEventListener('click', () => {
+    document.getElementById('anexosModal').style.display = 'none';
+  });
+  // Fecha modal de anexos ao clicar fora
+  document.getElementById('anexosModal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('anexosModal')) {
+      document.getElementById('anexosModal').style.display = 'none';
+    }
+  });
+
+  // Configura botão de fechar modal de detalhes
+  const closeDetalhesBtn = document.getElementById('closeDetalhes');
+  closeDetalhesBtn.addEventListener('click', () => {
+    document.getElementById('detalhesModal').style.display = 'none';
+  });
+  // Fecha modal de detalhes ao clicar fora
+  document.getElementById('detalhesModal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('detalhesModal')) {
+      document.getElementById('detalhesModal').style.display = 'none';
+    }
+  });
 }
 
 registerRoute('#decisor-liberacaoap', renderDecisorLiberacaoAp);

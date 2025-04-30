@@ -827,34 +827,64 @@ export async function renderFinanceiroLancamentoCreateV3() {
         }
 
         // ===================== Campos adicionais para Conta a pagar =====================
-        // Preenche Filial com base no tomador (Conta a pagar)
-        const filialMatch = (window.filiaisData || []).find(f => f.cnpj === info.cnpj_tomador);
-        if (filialMatch) {
-          const filialSelect = document.getElementById("filialSelect");
-          const unlockFilial = document.getElementById("unlockFilial");
-          filialSelect.value = filialMatch.id || filialMatch.uuid || filialMatch.nome;
-          filialSelect.disabled = true;
-          if (unlockFilial) {
-            unlockFilial.checked = false;
-            unlockFilial.disabled = false;
+        // Preenche Filial apenas se existir na lista de filiais (Conta a pagar)
+        const filialSelect = document.getElementById("filialSelect");
+        const unlockFilial = document.getElementById("unlockFilial");
+        if (filialSelect) {
+          const filiais = window.filiaisData || [];
+          const matchFilial = filiais.find(f =>
+            (info.cnpj_tomador && f.cnpj === info.cnpj_tomador) ||
+            f.nome === info.tomador
+          );
+          if (matchFilial) {
+            // Seleciona filial existente e bloqueia o campo
+            filialSelect.value = matchFilial.id || matchFilial.uuid || matchFilial.nome;
+            filialSelect.disabled = true;
+            if (unlockFilial) {
+              unlockFilial.checked = false;
+              unlockFilial.disabled = false;
+            }
+          } else {
+            // Nenhuma filial encontrada: mantém campo em branco para seleção manual
+            filialSelect.value = "";
+            filialSelect.disabled = false;
+            if (unlockFilial) {
+              unlockFilial.checked = true;
+              // Mantém modo manual e não permite desmarcar
+              unlockFilial.disabled = true;
+            }
           }
           if (window.$ && $.fn.select2) $("#filialSelect").trigger("change");
         }
 
-        // Preenche Fornecedor
+        // Preenche Fornecedor apenas se existir na lista de fornecedores
         const fornecedorSelect = document.getElementById("fornecedorSelect");
         const unlockFornecedor = document.getElementById("unlockFornecedor");
         if (fornecedorSelect) {
-          // Adiciona opção e seleciona o fornecedor extraído
-          const option = new Option(info.fornecedor || "", info.fornecedor || "", true, true);
-          fornecedorSelect.appendChild(option);
-          fornecedorSelect.value = info.fornecedor || "";
-          fornecedorSelect.disabled = true;
-          if (unlockFornecedor) {
-            unlockFornecedor.checked = false;
-            unlockFornecedor.disabled = false;
+          const fornecedores = window.fornecedoresData || [];
+          const match = fornecedores.find(f =>
+            (info.cnpj_fornecedor && f.cnpj === info.cnpj_fornecedor) ||
+            f.nome === info.fornecedor
+          );
+          if (match) {
+            // Seleciona fornecedor existente e bloqueia o campo
+            fornecedorSelect.value = match.id || match.uuid || match.nome;
+            fornecedorSelect.disabled = true;
+            if (unlockFornecedor) {
+              unlockFornecedor.checked = false;
+              unlockFornecedor.disabled = false;
+            }
+            if (window.$ && $.fn.select2) $("#fornecedorSelect").trigger("change");
+          } else {
+            // Nenhum fornecedor encontrado: mantém campo em branco para seleção manual
+            fornecedorSelect.value = "";
+            fornecedorSelect.disabled = false;
+            if (unlockFornecedor) {
+              unlockFornecedor.checked = true;
+              // Mantém modo manual e não permite desmarcar
+              unlockFornecedor.disabled = true;
+            }
           }
-          if (window.$ && $.fn.select2) $("#fornecedorSelect").trigger("change");
         }
 
         // Preenche Número do Documento
@@ -1225,11 +1255,13 @@ export async function renderFinanceiroLancamentoCreateV3() {
       }
     });
 
-    // Anexos: Nota Fiscal e Comprovantes de Boleto
+    // Anexos: documento classificado (Nota Fiscal ou Conta a pagar) e comprovantes de boleto
     payload.anexo = [];
-    // Anexo da Nota Fiscal
+    // Anexo do documento classificado (Nota Fiscal ou Conta a pagar)
     if (classification.filename) {
-      payload.anexo.push({ url: classification.filename, categoria: "Nota Fiscal" });
+      // Usa o tipo de documento como categoria do anexo
+      const docCategory = classification.tipo_documento || "Anexo";
+      payload.anexo.push({ url: classification.filename, categoria: docCategory });
     }
     // Usa URLs pré-carregadas dos boletos
     if (window.boletoUrls && window.boletoUrls.length) {

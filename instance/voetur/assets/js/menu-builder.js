@@ -17,7 +17,8 @@ export const menuItems = [
         route: "#dashboard",
         // Subitens para o Dashboard:
         children: [
-          { label: "Financeiro", route: "#vtc-financeiro-gestor" }
+          { label: "Financeiro", route: "#vtc-financeiro-gestor" },
+          { label: "Liberacao AP", route: "#decisor-liberacaoap" },
         ]
       },
     {

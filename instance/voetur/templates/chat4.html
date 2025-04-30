@@ -1,172 +1,1226 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Chat4 – Histórico Reutilizando api.js</title>
-  <style>
-    :root {
-      --theme-default: #20703b;
-      --active-bg-color: #d9e8e5;
-      --body-font-color: #292929;
-      --light-color: #f5f5f5;
-    }
-    body { font-family: sans-serif; margin: 0; padding: 0; }
-    #welcome-screen {
-      padding: 2rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-    input, button { font-size: 1rem; padding: 0.5rem; }
-    .d-none { display: none !important; }
-    #chatbot-container {
-      display: none;
-    }
-    #chatbot-container.active {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      margin: 0;
-      padding: 0;
-      z-index: 9999;
-      display: block;
-    }
-    flowise-fullchatbot {
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
-    #historyLog {
-      margin-top: 1rem;
-      white-space: pre-wrap;
-      background: #f5f5f5;
-      padding: 1rem;
-      border-radius: 4px;
-      max-height: 200px;
-      overflow: auto;
-    }
-  </style>
-</head>
-<body>
-
-  <div id="welcome-screen">
-    <h1>Chat4 – Histórico com api.js</h1>
-
-    <div>
-      <label for="sessionId">Session ID:</label>
-      <input id="sessionId" type="text" placeholder="Cole aqui o sessionId" size="40" />
-      <button id="btnFetch">Buscar e Injetar Histórico</button>
-    </div>
-
-    <div id="historyLog">O histórico aparecerá aqui.</div>
-  </div>
-
-  <div id="chatbot-container" class="d-none"></div>
-
-  <script type="module">
-    import { fetchChatHistory, injectChatHistory } from '../assets/js/api.js';
-
-    // Configuração do proxy
-    const config = {
-      chatflowId: "FLOW1_CHAT",
-      apiHost:    "https://proxy-5cun.onrender.com"
-    };
-
-    // AuthService dummy
-    const AuthService = {
-      user: {
-        async getIdToken() { return; }
-      }
-    };
-
-    const btn             = document.getElementById('btnFetch');
-    const historyLog      = document.getElementById('historyLog');
-    const welcomeScreen   = document.getElementById('welcome-screen');
-    const chatbotContainer= document.getElementById('chatbot-container');
-
-    btn.addEventListener('click', async () => {
-      const sessionId = document.getElementById('sessionId').value.trim();
-      if (!sessionId) {
-        historyLog.textContent = 'Informe um sessionId válido.';
-        return;
-      }
-
-      // Esconde o form e mostra mensagem de carregando
-      welcomeScreen.classList.add('d-none');
-      historyLog.textContent = 'Buscando histórico…';
-
-      try {
-        // 1) Busca e formata histórico
-        const history = await fetchChatHistory(
-          AuthService,
-          sessionId,
-          config.chatflowId,
-          config.apiHost,
-          ''  // sem token no proxy
-        );
-
-        // 2) Mostra no log para debug
-        historyLog.textContent = JSON.stringify(history, null, 2);
-
-        // 3) Injeta no localStorage
-        injectChatHistory(config.chatflowId, sessionId, history);
-
-        // 4) Monta o componente full-screen
-        chatbotContainer.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
-        chatbotContainer.classList.add('active');
-        chatbotContainer.classList.remove('d-none');
-
-        // 5) Carrega e inicializa o Flowise Embed via proxy
-        import('https://proxy-5cun.onrender.com/web.js')
-          .then(({ default: Chatbot }) => {
-            window.flowiseConfig = {
-              chatflowid: config.chatflowId,
-              apiHost:    config.apiHost,
-              theme: {
-                chatWindow: {
-                  showTitle: true,
-                  titleBackgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--theme-default').trim(),
-                  welcomeMessage: 'Bem-vindo ao Chat4 via proxy!',
-                  errorMessage: 'Erro, tente novamente.',
-                  backgroundColor: 'transparent',
-                  userMessage: {
-                    backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--active-bg-color').trim(),
-                    textColor: getComputedStyle(document.documentElement).getPropertyValue('--body-font-color').trim(),
-                    showAvatar: false
-                  },
-                  textInput: {
-                    placeholder: 'Digite sua mensagem…',
-                    backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--light-color').trim(),
-                    textColor: getComputedStyle(document.documentElement).getPropertyValue('--body-font-color').trim(),
-                    sendButtonColor: getComputedStyle(document.documentElement).getPropertyValue('--theme-default').trim(),
-                    autoFocus: true
-                  },
-                  dateTimeToggle: { date: true, time: true },
-                  footer: {
-                    textColor: getComputedStyle(document.documentElement).getPropertyValue('--theme-default').trim(),
-                    text: '— Proxy Chat4',
-                    company: 'LexiDecis',
-                    companyLink: 'https://lexidecis.com.br'
-                  }
+<html lang="en">
+    <head>
+        <title>BHM - Soluções em Inteligência Artificial</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <meta name="keywords" content="Inteligência Artificial, Soluções em IA, Automação com IA, Tecnologia de IA, Machine Learning, Processamento de dados, Transformação digital, Inovação em tecnologia, Análise de dados, Soluções tecnológicas para empresas, Automação de processos, Assistente virtual inteligente, Desenvolvimento de IA personalizada"/>
+        <meta name="description" content="A BHM é uma empresa de tecnologia especializada em soluções inovadoras em Inteligência Artificial. Oferecemos automação inteligente, machine learning, e análise avançada de dados para impulsionar a transformação digital de empresas em diversos setores. Nossa equipe de especialistas desenvolve soluções personalizadas para otimizar processos e aumentar a eficiência com o uso das mais modernas tecnologias de IA."/>
+        <meta property="og:description" content="A BHM é uma empresa de tecnologia especializada em soluções inovadoras em Inteligência Artificial. Oferecemos automação inteligente, machine learning, e análise avançada de dados para impulsionar a transformação digital de empresas em diversos setores. Nossa equipe de especialistas desenvolve soluções personalizadas para otimizar processos e aumentar a eficiência com o uso das mais modernas tecnologias de IA."/>
+        <meta name="icbm" content="-15.7975154,-47.8918874"/>
+        <meta name="geo.position" content="-15.7975154;-47.8918874"/>
+        <meta name="geo.placename" content="Brasília"/>
+        <meta property="og:title" content="BHM - Soluções em Inteligência Artificial"/>
+        <meta property="og:type" content="website"/>
+        <meta property="og:locale" content="en"/>
+        <meta property="og:url" content="https://bhm.tec.br"/>
+        <meta name="robots" content="index,follow"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <link rel="icon" type="image/png" href="/images/16x16/10788698/favicon.png" sizes="16x16">
+        <link rel="icon" type="image/png" href="/images/32x32/10788698/favicon.png" sizes="32x32">
+        <link rel="icon" type="image/png" href="/images/96x96/10788698/favicon.png" sizes="96x96">
+        <link rel="apple-touch-icon-precomposed" sizes="152x152" href="/images/152x152/10788698/favicon.png">
+        <link rel="preconnect" href=""/>
+        <link rel="stylesheet" type="text/css" media="screen" href="/webcard/static/app.min.1726225176.css"/>
+        <link rel="stylesheet" type="text/css" media="screen" href="/css/custom.240913224350.css" id="customcss"/>
+        <link rel="canonical" href="https://bhm.tec.br"/>
+        <script>
+            if (!webcard)
+                var webcard = {};
+            webcard.id = 875587;
+            webcard.moduleId = 7719788;
+            webcard.culture = "en";
+            webcard.type = 2;
+            webcard.isEdit = false;
+            webcard.isPreview = true;
+            webcard.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.userAgent);
+            webcard.isTouch = 'ontouchstart'in window || navigator.msMaxTouchPoints > 0;
+            webcard.googleMapsEmbedApiKey = 'AIzaSyDoOLq_ts27g3vEog9sGYB0GJSyWBDK9gs';
+            webcard.googleMapsApiKey = '';
+            webcard.apiHost = location.host + '/api.php';
+            var extraPath = '';
+        </script>
+        <link rel="preload" as="style" href="/g/fonts.css?family=Poppins:300,regular,700&amp;subset=latin&amp;display=swap"/>
+        <link rel="stylesheet" media="print" onload="this.media='all'" href="/g/fonts.css?family=Poppins:300,regular,700&amp;subset=latin&amp;display=swap"/>
+        <style>
+            @media screen and (max-width: 975px) {
+                #ed-380103572 > .background-image-holder:not(.ed-lazyload) {
+                    background-image: url("/images/976/5283903/pexels-photo-860379.jpeg") !important;
                 }
-              }
-            };
-            Chatbot.initFull(window.flowiseConfig);
-          })
-          .catch(err => {
-            console.error('Erro carregando Embed via proxy:', err);
-            historyLog.textContent = 'Erro ao carregar o chat.';
-          });
+            }
 
-      } catch (err) {
-        console.error(err);
-        historyLog.textContent = 'Erro: ' + err.message;
-      }
-    });
-  </script>
+            #ed-380103578 img {
+                width: 218px;
+            }
 
-</body>
+            #ed-380103578 {
+                flex-basis: auto;
+            }
+
+            @media screen and (max-width: 575px) {
+                #ed-380103578 img {
+                    width: 180px;
+                }
+            }
+
+            #ed-380103581 {
+                flex-basis: auto;
+                flex-grow: 1;
+            }
+
+            #ed-380103587 {
+                margin: auto 1rem auto auto;
+            }
+
+            #ed-380103584 > .inner {
+                place-content: center flex-end;
+                align-items: center;
+            }
+
+            #ed-380103584 {
+                flex-grow: 1;
+                flex-basis: auto;
+            }
+
+            #ed-380103575 > .inner {
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            #ed-380103596 {
+                opacity: 1;
+            }
+
+            #ed-380103599 {
+                opacity: 1;
+            }
+
+            #ed-380103602 {
+                opacity: 1;
+            }
+
+            #ed-380103593 > .inner {
+                align-content: center;
+                flex-flow: row wrap;
+            }
+
+            #ed-380103593 {
+                flex-basis: auto;
+                order: 0;
+                flex-grow: 1;
+            }
+
+            #ed-380103569 {
+                min-height: 100vh;
+            }
+
+            #ed-380103569 > .inner {
+                align-content: stretch;
+                flex-direction: column;
+            }
+
+            #ed-380103974 > .inner {
+                align-items: center;
+                align-content: center;
+            }
+
+            @media screen and (max-width: 575px) {
+                #ed-380103620 > .background-image-holder:not(.ed-lazyload) {
+                    background-image: url("/images/576/5283929/photo-1519636125090-67a506cc7c74.jpg.jpeg") !important;
+                }
+            }
+
+            @media screen and (max-width: 975px) {
+                #ed-380103620 > .background-image-holder:not(.ed-lazyload) {
+                    background-image: url("/images/976/5283929/photo-1519636125090-67a506cc7c74.jpg.jpeg") !important;
+                }
+            }
+
+            #ed-380103632 h2 {
+                text-align: center;
+            }
+
+            #ed-380103644 > .inner {
+                place-content: flex-start center;
+                align-items: stretch;
+            }
+
+            #ed-380103659 > .inner {
+                place-content: flex-start center;
+                align-items: stretch;
+            }
+
+            #ed-380103659 {
+                box-shadow: rgba(0, 0, 0, 0.13) 5px 5px 20px 0px;
+                border-style: solid;
+                border-width: 0px 0px 2px;
+            }
+
+            #ed-380103674 > .inner {
+                place-content: flex-start center;
+                align-items: stretch;
+            }
+
+            @media screen and (max-width: 575px) {
+                #ed-380103692 > .background-image-holder:not(.ed-lazyload) {
+                    background-image: url("/images/576/5284071/pexels-photo-196644.jpeg") !important;
+                }
+            }
+
+            @media screen and (max-width: 975px) {
+                #ed-380103692 > .background-image-holder:not(.ed-lazyload) {
+                    background-image: url("/images/976/5284071/pexels-photo-196644.jpeg") !important;
+                }
+            }
+
+            #ed-380103704 h2 {
+                text-align: center;
+            }
+
+            #ed-380103806 img {
+                width: 100%;
+            }
+
+            #ed-380103809 {
+                flex: 1 0 0px;
+            }
+
+            #ed-380103803 {
+                box-shadow: rgba(0, 0, 0, 0.2) 5px 5px 20px 0px;
+            }
+
+            #ed-380103821 {
+                flex: 1 0 0px;
+            }
+
+            #ed-380103830 img {
+                width: 100%;
+            }
+
+            @media screen and (max-width: 575px) {
+                #ed-380103830 {
+                    order: -1;
+                }
+            }
+
+            #ed-380103818 {
+                box-shadow: rgba(0, 0, 0, 0.2) 5px 5px 20px 0px;
+                margin: 2rem 0px 0px;
+            }
+
+            #ed-380103836 img {
+                width: 100%;
+            }
+
+            #ed-380103839 {
+                flex: 1 0 0px;
+            }
+
+            #ed-380103833 {
+                box-shadow: rgba(0, 0, 0, 0.2) 5px 5px 20px 0px;
+                margin: 2rem 0px 0px;
+            }
+
+            #ed-380103851 {
+                flex: 1 0 0px;
+            }
+
+            #ed-380103860 img {
+                width: 100%;
+            }
+
+            @media screen and (max-width: 575px) {
+                #ed-380103860 {
+                    order: -1;
+                }
+            }
+
+            #ed-380103848 {
+                box-shadow: rgba(0, 0, 0, 0.2) 5px 5px 20px 0px;
+                margin: 2rem 0px 0px;
+            }
+
+            @media screen and (max-width: 975px) {
+                #ed-380103716 > .background-image-holder:not(.ed-lazyload) {
+                    background-image: url("/images/976/5284074/photo-1530610920702-2d58afcaaf5a.jpg.jpeg") !important;
+                }
+            }
+
+            @media screen and (max-width: 575px) {
+                #ed-380103716 > .background-image-holder:not(.ed-lazyload) {
+                    background-image: url("/images/576/5284074/photo-1530610920702-2d58afcaaf5a.jpg.jpeg") !important;
+                }
+            }
+
+            #ed-380103728 h2 {
+                text-align: center;
+            }
+
+            #ed-380103767 img {
+                width: 100%;
+            }
+
+            #ed-380103779 img {
+                width: 100%;
+            }
+
+            #ed-380103791 img {
+                width: 100%;
+            }
+
+            @media screen and (max-width: 575px) {
+                #ed-380103740 > .background-image-holder:not(.ed-lazyload) {
+                    background-image: url("/images/576/5284077/pexels-photo-1061588.jpeg") !important;
+                }
+            }
+
+            @media screen and (max-width: 975px) {
+                #ed-380103740 > .background-image-holder:not(.ed-lazyload) {
+                    background-image: url("/images/976/5284077/pexels-photo-1061588.jpeg") !important;
+                }
+            }
+
+            #ed-380103752 h2 {
+                text-align: center;
+            }
+
+            #ed-380103887 {
+                flex-basis: 100%;
+            }
+
+            #ed-380103869 > .inner {
+                justify-content: space-between;
+            }
+
+            #ed-380103896 > .inner {
+                align-items: stretch;
+                place-content: space-between;
+            }
+
+            @media screen and (max-width: 575px) {
+                #ed-380103896 {
+                    min-height: 30rem;
+                }
+            }
+
+            #ed-380103908 .space {
+                height: 10px;
+            }
+
+            #ed-380103905 > .inner {
+                justify-content: center;
+            }
+
+            #ed-380103935 {
+                flex-basis: auto;
+                flex-grow: 1;
+            }
+
+            #ed-380103926 > .inner {
+                justify-content: center;
+            }
+
+            #ed-380103947 svg {
+                padding: 0px;
+            }
+
+            #ed-380103950 {
+                flex-grow: 1;
+            }
+
+            #ed-380103953 svg {
+                padding: 0px;
+            }
+
+            #ed-380103956 {
+                flex-grow: 1;
+            }
+
+            #ed-380103959 svg {
+                padding: 0px;
+            }
+
+            #ed-380103962 {
+                flex-grow: 1;
+            }
+
+            #ed-380103938 > .inner {
+                justify-content: center;
+            }
+
+            #ed-380103902 > .inner {
+                align-items: flex-start;
+                justify-content: space-between;
+            }
+
+            @media screen and (max-width: 975px) {
+                #ed-380103902 > .inner {
+                    justify-content: flex-start;
+                }
+            }
+        </style>
+    </head>
+    <body class="page-7719788 pagelayout-1 index slogan culture-en">
+        <div class="ed-element ed-container banner preset-banner-v3-default parallax" id="ed-380103569">
+            <div class="background">
+                <div class="ed-element ed-image wv-bg" id="ed-380103572">
+                    <div class="background-image-holder ed-lazyload" data-background="url(&quot;/images/1920/5283903/pexels-photo-860379.jpeg&quot;)" style="background-image: none;"></div>
+                </div>
+            </div>
+            <div class="overlay" style="background-color: rgba(0, 0, 0, 0.51);"></div>
+            <div class="inner" data-parallax-amount="50">
+                <div class="ed-element ed-container flex-justify-content-space-between flex-align-items-center wv-boxed menu-wrapper wv-overflow_visible preset-menu-v2-default" id="ed-380103575">
+                    <div class="inner">
+                        <div class="ed-element ed-logo logo" id="ed-380103578">
+                            <a href="/">
+                                <img src="/images/218/10788669/logo_bhm_horizontal_b.png" alt="bhm.tec.br">
+                            </a>
+                        </div>
+                        <div class="ed-element ed-menu wv-custom" id="ed-380103581">
+                            <ul class="menu-level-0">
+                                <li class="first">
+                                    <a href="/#ed-380103569" class="wv-link-elm first">Início</a>
+                                </li>
+                                <li>
+                                    <a href="/#ed-380103971" class="wv-link-elm">Sobre nós</a>
+                                </li>
+                                <li>
+                                    <a href="/#ed-380103629" class="wv-link-elm">Serviços</a>
+                                </li>
+                                <li>
+                                    <a href="/#ed-380103701" class="wv-link-elm">Projetos</a>
+                                </li>
+                                <li class="end">
+                                    <a href="/#ed-380103749" class="wv-link-elm last">Contatos</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="ed-element ed-container mobile-cont wv-overflow_visible" id="ed-380103584">
+                            <div class="inner">
+                                <div class="ed-element ed-icon" id="ed-380103587">
+                                    <a href="tel:+1-123-456-7890">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="170 -787 659 875" data-icon="ico-phone" preserveAspectRatio="xMidYMid">
+                                            <path d="M390.7 -496.7C270.4 -427.2 453.9 -83.1 585.6 -159.1L707.7 52.3C652.1 84.4 605.2 104.6 540.8 67.8 362 -34.4 165.2 -375.1 170.8 -578.3c1.9 -70.6 43.6 -98.3 97.9 -129.7 23.3 40.4 98.6 170.8 122 211.3zm50.4 -5.7c-13 7.5 -29.7 3.1 -37.3 -10l-115 -199.3c-7.5 -13 -3.1 -29.7 10 -37.3l60.5 -34.9c13 -7.5 29.7 -3.1 37.3 10L511.7 -574.6c7.5 13 3.1 29.7 -10 37.2l-60.6 35zM755.5 42.1c-13 7.5 -29.7 3.1 -37.3 -10l-115 -199.3c-7.5 -13 -3.1 -29.7 10 -37.3l60.5 -34.9c13 -7.5 29.7 -3.1 37.3 10L826.1 -30.1c7.5 13 3.1 29.7 -10 37.3l-60.6 34.9z"></path>
+                                        </svg>
+                                    </a>
+                                </div>
+                                <div class="ed-element ed-html menu-trigger" id="ed-380103590">
+                                    <div class="menu-trigger-box">
+                                        <div class="menu-trigger-inner"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="ed-element ed-container banner-content wv-boxed wv-spacer" id="ed-380103593">
+                    <div class="inner" data-parallax-amount="40">
+                        <div class="ed-element ed-headline custom-theme animation-initial" id="ed-380103596" data-animation="{&quot;type&quot;:&quot;move-right-to-left&quot;,&quot;initial&quot;:&quot;hide&quot;,&quot;keepHeight&quot;:true,&quot;duration&quot;:&quot;1.5s&quot;,&quot;delay&quot;:&quot;0.3s&quot;,&quot;overlay&quot;:{&quot;width&quot;:&quot;auto&quot;},&quot;trigger&quot;:&quot;scroll&quot;,&quot;group&quot;:{&quot;name&quot;:&quot;&quot;,&quot;behavior&quot;:{&quot;show&quot;:&quot;&quot;,&quot;hide&quot;:&quot;&quot;}}}">
+                            <h1 class="left ">
+                                <span class="color-primary">d</span>
+                                <span class="color-background">emocratização de ia</span>
+                            </h1>
+                        </div>
+                        <div class="ed-element ed-headline custom-theme animation-initial" id="ed-380103599" data-animation="{&quot;type&quot;:&quot;move-right-to-left&quot;,&quot;initial&quot;:&quot;hide&quot;,&quot;keepHeight&quot;:true,&quot;duration&quot;:&quot;1.5s&quot;,&quot;delay&quot;:&quot;0.6s&quot;,&quot;overlay&quot;:{&quot;width&quot;:&quot;auto&quot;},&quot;trigger&quot;:&quot;scroll&quot;,&quot;group&quot;:{&quot;name&quot;:&quot;&quot;,&quot;behavior&quot;:{&quot;show&quot;:&quot;&quot;,&quot;hide&quot;:&quot;&quot;}}}">
+                            <h1 class="left ">
+                                <span class="color-primary">s</span>
+                                <span class="color-background">oluções em ia</span>
+                            </h1>
+                        </div>
+                        <div class="ed-element ed-headline custom-theme animation-initial" id="ed-380103602" data-animation="{&quot;type&quot;:&quot;move-right-to-left&quot;,&quot;initial&quot;:&quot;hide&quot;,&quot;keepHeight&quot;:true,&quot;duration&quot;:&quot;1.5s&quot;,&quot;delay&quot;:&quot;1.2s&quot;,&quot;overlay&quot;:{&quot;width&quot;:&quot;auto&quot;},&quot;trigger&quot;:&quot;scroll&quot;,&quot;group&quot;:{&quot;name&quot;:&quot;&quot;,&quot;behavior&quot;:{&quot;show&quot;:&quot;&quot;,&quot;hide&quot;:&quot;&quot;}}}">
+                            <h1 class="left ">
+                                <span class="color-primary">a</span>
+                                <span class="color-background">gência de ia</span>
+                            </h1>
+                        </div>
+                        <div class="ed-element ed-spacer" id="ed-380103605">
+                            <div style="height: 25px;" class="space"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="ed-element ed-container preset-separator-v3-diagonal full-width" id="ed-380103611">
+                    <div class="inner" data-parallax-amount="50">
+                        <div class="ed-element ed-html separator-container" id="ed-380103614">
+                            <svg class="double-triangle" xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                <path class="path1" d="M0 0 L50 100 L100 0 Z"></path>
+                                <path class="path2" d="M50 100 L100 40 L100 0 Z"></path>
+                                <path class="path3" d="M0 40 L50 100 L0 0 Z"></path>
+                            </svg>
+                            <svg class="circle" xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                <path class="path1" d="M0 100 C40 0 60 0 100 100 Z"></path>
+                            </svg>
+                            <svg class="polygon1" width="100%" height="100%" viewBox="0 0 1280 140" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                                <path class="path1" d="M0 70.35l320-49.24 640 98.49 320-49.25V140H0V70.35z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="ed-element ed-container preset-columns-two-v2-default wv-boxed wv-spacer" id="ed-380103971">
+            <div class="inner">
+                <div class="ed-element ed-container columns-box" id="ed-380103974">
+                    <div class="inner">
+                        <div class="ed-element ed-headline custom-theme" id="ed-380103977">
+                            <h3>
+                                <span class="color-primary">S</span>
+                                omos uma equipe dinâmica<br>
+                                composta de pessoas criativas e<br>experientes em inteligência artificial
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="ed-element ed-container columns-box" id="ed-380103980">
+                    <div class="inner">
+                        <div class="ed-element ed-text custom-theme" id="ed-380103983">
+                            <p>A BHM é uma empresa de tecnologia especializada em soluções inovadoras em Inteligência Artificial. Oferecemos automação inteligente, machine learning, e análise avançada de dados para impulsionar a transformação digital de empresas em diversos setores. </p>
+                            <p>
+                                <br>
+                            </p>
+                            <p>Nossa equipe de especialistas desenvolve soluções personalizadas para otimizar processos e aumentar a eficiência com o uso das mais modernas tecnologias de IA.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="ed-element ed-container full-width" id="ed-380103617">
+            <div class="background">
+                <div class="ed-element ed-image wv-bg" id="ed-380103620">
+                    <div class="background-image-holder ed-lazyload" data-background="url(&quot;/images/1920/5283929/photo-1519636125090-67a506cc7c74.jpg.jpeg&quot;)" style="background-image: none;"></div>
+                </div>
+            </div>
+            <div class="overlay" style="background-color: rgba(0, 0, 0, 0.506);"></div>
+            <div class="inner">
+                <div class="ed-element ed-container preset-separator-v3-reverse full-width" id="ed-380103623">
+                    <div class="inner" data-parallax-amount="50">
+                        <div class="ed-element ed-html separator-container" id="ed-380103626">
+                            <svg class="double-triangle" xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                <path class="path1" d="M0 0 L50 100 L100 0 Z"></path>
+                                <path class="path2" d="M50 100 L100 40 L100 0 Z"></path>
+                                <path class="path3" d="M0 40 L50 100 L0 0 Z"></path>
+                            </svg>
+                            <svg class="circle" xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                <path class="path1" d="M0 100 C40 0 60 0 100 100 Z"></path>
+                            </svg>
+                            <svg class="polygon1" width="100%" height="100%" viewBox="0 0 1280 140" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                                <path class="path1" d="M0 70.35l320-49.24 640 98.49 320-49.25V140H0V70.35z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="ed-element ed-container wv-boxed wv-spacer" id="ed-380103629">
+                    <div class="inner">
+                        <div class="ed-element ed-headline custom-theme" id="ed-380103632">
+                            <h2>
+                                <span class="color-primary">n</span>
+                                <span class="color-background">ossos Serviços</span>
+                            </h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="ed-element ed-container full-width preset-separator-v3-diagonal" id="ed-380103635">
+                    <div class="inner" data-parallax-amount="50">
+                        <div class="ed-element ed-html separator-container" id="ed-380103638">
+                            <svg class="double-triangle" xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                <path class="path1" d="M0 0 L50 100 L100 0 Z"></path>
+                                <path class="path2" d="M50 100 L100 40 L100 0 Z"></path>
+                                <path class="path3" d="M0 40 L50 100 L0 0 Z"></path>
+                            </svg>
+                            <svg class="circle" xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                <path class="path1" d="M0 100 C40 0 60 0 100 100 Z"></path>
+                            </svg>
+                            <svg class="polygon1" width="100%" height="100%" viewBox="0 0 1280 140" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                                <path class="path1" d="M0 70.35l320-49.24 640 98.49 320-49.25V140H0V70.35z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="ed-element ed-container wv-boxed wv-spacer wv-overflow_hidden preset-boxes-v3-default" id="ed-380103641">
+            <div class="inner">
+                <div class="ed-element ed-container boxes-box wv-overflow_visible" id="ed-380103644">
+                    <div class="inner">
+                        <div class="ed-element ed-icon boxes-icon center" id="ed-380103647">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -384 383 384" data-icon="ion-social-buffer-outline" preserveAspectRatio="xMidYMid">
+                                <path d="M7 -284c-9 -4 -9 -11 0 -15l169 -82c4 -2 10 -3 16 -3s12 1 16 3l169 82c9 4 9 11 0 15l-169 82c-4 2 -10 3 -16 3s-12 -1 -16 -3zM183 -366l-156 75l156 75c2 1 5 1 9 1s7 -0 9 -1l156 -75l-156 -75c-2 -1 -5 -2 -9 -2s-7 1 -9 2zM377 -200c9 4 9 12 0 16l-169 81c-4 2 -10 4 -16 4s-12 -2 -16 -4l-169 -81c-9 -4 -9 -12 0 -16c0 -0 27 -13 33 -16c5 -3 7 -3 13 -0s123 60 123 60c4 2 10 3 16 3s12 -1 16 -3c0 -0 121 -59 125 -61s5 -2 9 -0s35 17 35 17zM201 -117l156 -75l-19 -9l-123 59c-6 3 -15 5 -23 5s-17 -2 -23 -5l-123 -59l-19 9l156 75c2 1 5 2 9 2s7 -1 9 -2zM377 -100c9 4 9 11 0 15l-169 82c-4 2 -10 3 -16 3s-12 -1 -16 -3l-169 -82c-9 -4 -9 -11 0 -15c0 -0 27 -14 33 -17c5 -3 7 -2 13 1s123 59 123 59c4 2 10 3 16 3s12 -1 16 -3c0 -0 121 -58 125 -60s5 -2 9 -0s35 17 35 17zM201 -18l156 -75l-19 -9l-123 60c-6 3 -15 4 -23 4s-17 -1 -23 -4l-123 -60l-19 9l156 75c2 1 5 2 9 2s7 -1 9 -2z"></path>
+                            </svg>
+                        </div>
+                        <div class="ed-element ed-container boxes-box-inner" id="ed-380103650">
+                            <div class="inner">
+                                <div class="ed-element ed-headline custom-theme" id="ed-380103653">
+                                    <h3>auditoria</h3>
+                                </div>
+                                <div class="ed-element ed-text custom-theme" id="ed-380103656">
+                                    <p>Utilizamos IA para auditorias precisas e automáticas</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="ed-element ed-container boxes-box wv-overflow_visible border-color-primary" id="ed-380103659">
+                    <div class="inner">
+                        <div class="ed-element ed-icon boxes-icon center" id="ed-380103662">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -384 418 384" data-icon="ion-ios-bookmarks-outline" preserveAspectRatio="xMidYMid">
+                                <path d="M385 -384c19 -0 33 13 33 32v286c0 19 -14 34 -33 34h-143s-25 4 -25 19v13h-8h-8v-13c0 -15 -11 -19 -25 -19h-143c-19 -0 -33 -15 -33 -34v-286c0 -19 14 -32 33 -32h150c10 -0 20 5 26 12v-0v-0c6 -7 16 -12 26 -12h150zM201 -37v-309c0 -9 -12 -22 -25 -22h-143c-9 -0 -16 7 -16 16v286c0 9 7 18 16 18h144c10 -0 19 3 24 11zM273 -368v100l23 -14l9 -6l9 6l23 14v-100h-64zM401 -66v-286c0 -9 -7 -16 -16 -16h-32v131l-48 -32l-48 32v-131h-15c-13 -0 -25 13 -25 22v309c5 -9 14 -11 24 -11h144c9 -0 16 -9 16 -18z"></path>
+                            </svg>
+                        </div>
+                        <div class="ed-element ed-container boxes-box-inner" id="ed-380103665">
+                            <div class="inner">
+                                <div class="ed-element ed-headline custom-theme" id="ed-380103668">
+                                    <h3>estratégia</h3>
+                                </div>
+                                <div class="ed-element ed-text custom-theme" id="ed-380103671">
+                                    <p>Nossas soluções de IA impulsionam estratégias digitais eficazes</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="ed-element ed-container boxes-box wv-overflow_visible" id="ed-380103674">
+                    <div class="inner">
+                        <div class="ed-element ed-icon boxes-icon center" id="ed-380103677">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -416 288 448" data-icon="ion-ios-lightbulb-outline" preserveAspectRatio="xMidYMid">
+                                <path d="M288 -275c0 31 -13 59 -30 83v-0c-11 15 -22 28 -32 45c-22 38 -18 73 -18 82v1h-128v-1c0 -7 3 -44 -19 -82c-10 -17 -20 -30 -31 -45v-0c-17 -24 -30 -52 -30 -83c0 -78 66 -141 144 -141s144 63 144 141zM239 -194l6 -8c16 -22 27 -47 27 -73c0 -33 -16 -65 -40 -89s-55 -36 -88 -36s-64 12 -88 36s-40 56 -40 89c0 26 11 51 27 73l19 26v-0c5 6 9 13 13 21c17 29 21 58 21 75h16v-112l-32 -64h17l31 64v112h32v-112l31 -64h17l-32 64v112h16c0 -17 4 -45 21 -75c8 -14 16 -25 24 -36c1 -1 1 -2 2 -3zM112 32v-16h64v16h-64zM96 -0v-16h96v16h-96zM96 -32v-16h96v16h-96z"></path>
+                            </svg>
+                        </div>
+                        <div class="ed-element ed-container boxes-box-inner" id="ed-380103680">
+                            <div class="inner">
+                                <div class="ed-element ed-headline custom-theme" id="ed-380103683">
+                                    <h3>grandes resultados</h3>
+                                </div>
+                                <div class="ed-element ed-text custom-theme" id="ed-380103686">
+                                    <p>Transformamos dados em resultados tangíveis e rápidos</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="ed-element ed-container full-width" id="ed-380103689">
+            <div class="background">
+                <div class="ed-element ed-image wv-bg" id="ed-380103692">
+                    <div class="background-image-holder ed-lazyload" data-background="url(&quot;/images/1920/5284071/pexels-photo-196644.jpeg&quot;)" style="background-image: none;"></div>
+                </div>
+            </div>
+            <div class="overlay" style="background-color: rgba(0, 0, 0, 0.506);"></div>
+            <div class="inner">
+                <div class="ed-element ed-container preset-separator-v3-reverse full-width" id="ed-380103695">
+                    <div class="inner" data-parallax-amount="50">
+                        <div class="ed-element ed-html separator-container" id="ed-380103698">
+                            <svg class="double-triangle" xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                <path class="path1" d="M0 0 L50 100 L100 0 Z"></path>
+                                <path class="path2" d="M50 100 L100 40 L100 0 Z"></path>
+                                <path class="path3" d="M0 40 L50 100 L0 0 Z"></path>
+                            </svg>
+                            <svg class="circle" xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                <path class="path1" d="M0 100 C40 0 60 0 100 100 Z"></path>
+                            </svg>
+                            <svg class="polygon1" width="100%" height="100%" viewBox="0 0 1280 140" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                                <path class="path1" d="M0 70.35l320-49.24 640 98.49 320-49.25V140H0V70.35z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="ed-element ed-container wv-boxed wv-spacer" id="ed-380103701">
+                    <div class="inner">
+                        <div class="ed-element ed-headline custom-theme" id="ed-380103704">
+                            <h2>
+                                <span class="color-primary">n</span>
+                                <span class="color-background">ossos projetos</span>
+                            </h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="ed-element ed-container full-width preset-separator-v3-diagonal" id="ed-380103707">
+                    <div class="inner" data-parallax-amount="50">
+                        <div class="ed-element ed-html separator-container" id="ed-380103710">
+                            <svg class="double-triangle" xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                <path class="path1" d="M0 0 L50 100 L100 0 Z"></path>
+                                <path class="path2" d="M50 100 L100 40 L100 0 Z"></path>
+                                <path class="path3" d="M0 40 L50 100 L0 0 Z"></path>
+                            </svg>
+                            <svg class="circle" xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                <path class="path1" d="M0 100 C40 0 60 0 100 100 Z"></path>
+                            </svg>
+                            <svg class="polygon1" width="100%" height="100%" viewBox="0 0 1280 140" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                                <path class="path1" d="M0 70.35l320-49.24 640 98.49 320-49.25V140H0V70.35z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="ed-element ed-container wv-boxed wv-spacer" id="ed-380103800">
+            <div class="inner">
+                <div class="ed-element ed-container wv-boxed wv-spacer preset-text-with-image-v3-boxed" id="ed-380103803">
+                    <div class="inner">
+                        <div class="ed-element ed-image text-with-image-image" style="
+  /* text-align: center; */
+  width: 30%;
+" id="ed-380103806">
+                            <img src="data:image/svg+xml,%3Csvg%20width='100'%20viewBox='0%200%20100%20Infinity'%20xmlns='http://www.w3.org/2000/svg'%3E%3Crect%20width='100'%20height='Infinity'%20style='fill:%20%23F7F7F7'%20/%3E%3C/svg%3E" alt="" style="object-fit: cover;" data-src="/images/0/3007023/pexels-photo-860379.jpeg" class="ed-lazyload" srcset="/images/0/3007023/pexels-photo-860379.jpeg 0w, /images/0/3007023/pexels-photo-860379.jpeg 2x" data-srcset="/images/0/3007023/pexels-photo-860379.jpeg 0w, /images/0/3007023/pexels-photo-860379.jpeg 2x">
+                        </div>
+                        <div class="ed-element ed-container text-with-image-box" id="ed-380103809">
+                            <div class="inner">
+                                <div class="ed-element ed-headline custom-theme" id="ed-380103812">
+                                    <h3>
+                                        <span class="color-primary">L</span>
+                                        exi decis
+                                    </h3>
+                                </div>
+                                <div class="ed-element ed-text custom-theme" id="ed-380103815">
+                                    <p>
+                                        <span style="color: rgb(41, 50, 71); font-family: &quot;Encode Sans Semi Condensed&quot;; font-size: 16px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: normal; background-color: rgb(255, 255, 255); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial; display: inline !important; float: none;" id="isPasted">A &nbsp;</span>
+                                        <strong style="box-sizing: inherit; font-weight: 600; color: rgb(41, 50, 71); font-family: &quot;Encode Sans Semi Condensed&quot;; font-size: 16px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: normal; background-color: rgb(255, 255, 255); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial;">Lexidecis &nbsp;</strong>
+                                        <span style="color: rgb(41, 50, 71); font-family: &quot;Encode Sans Semi Condensed&quot;; font-size: 16px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: normal; background-color: rgb(255, 255, 255); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial; display: inline !important; float: none;">é uma solução de inteligência artificial desenvolvida especificamente para o setor jurídico. Ela automatiza tarefas repetitivas, como a análise de documentos e a pesquisa jurisprudencial, permitindo que você e sua equipe se concentrem em atividades mais estratégicas e de alto valor, aumentando a eficiência e reduzindo erros.</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="ed-element ed-container wv-boxed wv-spacer preset-text-with-image-v3-boxed hide-lg hide-md hide-sm" id="ed-380103818">
+                    <div class="inner">
+                        <div class="ed-element ed-container text-with-image-box" id="ed-380103821">
+                            <div class="inner">
+                                <div class="ed-element ed-headline custom-theme" id="ed-380103824">
+                                    <h3>
+                                        <span class="color-primary">L</span>
+                                        atest Project
+                                    </h3>
+                                </div>
+                                <div class="ed-element ed-text custom-theme" id="ed-380103827">
+                                    <p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Lorem ipsum dolor sit amet, consectetuer adipiscing elit leget dolor. Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Lorem ipsum dolor sit amet, consectetuer adipiscing elit dolor consectetuer adipiscing elit leget dolor. Lorem elit saget ipsum dolor sit amet, consectetuer.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ed-element ed-image text-with-image-image" style="
+  /* text-align: center; */
+  width: 30%;
+" id="ed-380103830">
+                            <img src="data:image/svg+xml,%3Csvg%20width='100'%20viewBox='0%200%20100%20Infinity'%20xmlns='http://www.w3.org/2000/svg'%3E%3Crect%20width='100'%20height='Infinity'%20style='fill:%20%23F7F7F7'%20/%3E%3C/svg%3E" alt="" style="object-fit: cover;" data-src="/images/1024/5284089/people-coffee-tea-meeting.jpg.jpeg" class="ed-lazyload" data-srcset="/images/576/5284089/people-coffee-tea-meeting.jpg.jpeg 576w, /images/976/5284089/people-coffee-tea-meeting.jpg.jpeg 976w, /images/1024/5284089/people-coffee-tea-meeting.jpg.jpeg 1024w" srcset="/images/576/5284089/people-coffee-tea-meeting.jpg.jpeg 576w, /images/976/5284089/people-coffee-tea-meeting.jpg.jpeg 976w, /images/1024/5284089/people-coffee-tea-meeting.jpg.jpeg 1024w">
+                        </div>
+                    </div>
+                </div>
+                <div class="ed-element ed-container wv-boxed wv-spacer preset-text-with-image-v3-boxed hide-lg hide-md hide-sm" id="ed-380103833">
+                    <div class="inner">
+                        <div class="ed-element ed-image text-with-image-image" style="
+  /* text-align: center; */
+  width: 30%;
+" id="ed-380103836">
+                            <img src="data:image/svg+xml,%3Csvg%20width='800'%20viewBox='0%200%20800%20Infinity'%20xmlns='http://www.w3.org/2000/svg'%3E%3Crect%20width='800'%20height='Infinity'%20style='fill:%20%23F7F7F7'%20/%3E%3C/svg%3E" alt="" style="object-fit: cover;" data-src="/images/1024/5284086/pexels-photo.jpg.jpeg" class="ed-lazyload" srcset="data:image/svg+xml,%3Csvg%20width='800'%20viewBox='0%200%20800%20Infinity'%20xmlns='http://www.w3.org/2000/svg'%3E%3Crect%20width='800'%20height='Infinity'%20style='fill:%20%23F7F7F7'%20/%3E%3C/svg%3E 1w" data-srcset="/images/0/5284086/pexels-photo.jpg.jpeg 2x">
+                        </div>
+                        <div class="ed-element ed-container text-with-image-box" id="ed-380103839">
+                            <div class="inner">
+                                <div class="ed-element ed-headline custom-theme" id="ed-380103842">
+                                    <h3>
+                                        <span class="color-primary">L</span>
+                                        atest Project
+                                    </h3>
+                                </div>
+                                <div class="ed-element ed-text custom-theme" id="ed-380103845">
+                                    <p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Lorem ipsum dolor sit amet, consectetuer adipiscing elit leget dolor. Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Lorem ipsum dolor sit amet, consectetuer adipiscing elit dolor consectetuer adipiscing elit leget dolor. Lorem elit saget ipsum dolor sit amet, consectetuer.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="ed-element ed-container wv-boxed wv-spacer preset-text-with-image-v3-boxed hide-lg hide-md hide-sm" id="ed-380103848">
+                    <div class="inner">
+                        <div class="ed-element ed-container text-with-image-box" id="ed-380103851">
+                            <div class="inner">
+                                <div class="ed-element ed-headline custom-theme" id="ed-380103854">
+                                    <h3>
+                                        <span class="color-primary">L</span>
+                                        atest Project
+                                    </h3>
+                                </div>
+                                <div class="ed-element ed-text custom-theme" id="ed-380103857">
+                                    <p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Lorem ipsum dolor sit amet, consectetuer adipiscing elit leget dolor. Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Lorem ipsum dolor sit amet, consectetuer adipiscing elit dolor consectetuer adipiscing elit leget dolor. Lorem elit saget ipsum dolor sit amet, consectetuer.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ed-element ed-image text-with-image-image" style="
+  /* text-align: center; */
+  width: 30%;
+" id="ed-380103860">
+                            <img src="data:image/svg+xml,%3Csvg%20width='100'%20viewBox='0%200%20100%20Infinity'%20xmlns='http://www.w3.org/2000/svg'%3E%3Crect%20width='100'%20height='Infinity'%20style='fill:%20%23F7F7F7'%20/%3E%3C/svg%3E" alt="" style="object-fit: cover;" data-src="/images/1024/5284077/pexels-photo-1061588.jpeg" class="ed-lazyload" data-srcset="/images/576/5284077/pexels-photo-1061588.jpeg 576w, /images/976/5284077/pexels-photo-1061588.jpeg 976w, /images/1024/5284077/pexels-photo-1061588.jpeg 1024w" srcset="/images/576/5284077/pexels-photo-1061588.jpeg 576w, /images/976/5284077/pexels-photo-1061588.jpeg 976w, /images/1024/5284077/pexels-photo-1061588.jpeg 1024w">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="ed-element ed-container full-width hide-lg hide-md hide-sm" id="ed-380103713">
+            <div class="background">
+                <div class="ed-element ed-image wv-bg" id="ed-380103716">
+                    <div class="background-image-holder ed-lazyload" data-background="url(&quot;/images/1920/5284074/photo-1530610920702-2d58afcaaf5a.jpg.jpeg&quot;)" style="background-image: none;"></div>
+                </div>
+            </div>
+            <div class="overlay" style="background-color: rgba(0, 0, 0, 0.506);"></div>
+            <div class="inner">
+                <div class="ed-element ed-container preset-separator-v3-reverse full-width" id="ed-380103719">
+                    <div class="inner" data-parallax-amount="50">
+                        <div class="ed-element ed-html separator-container" id="ed-380103722">
+                            <svg class="double-triangle" xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                <path class="path1" d="M0 0 L50 100 L100 0 Z"></path>
+                                <path class="path2" d="M50 100 L100 40 L100 0 Z"></path>
+                                <path class="path3" d="M0 40 L50 100 L0 0 Z"></path>
+                            </svg>
+                            <svg class="circle" xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                <path class="path1" d="M0 100 C40 0 60 0 100 100 Z"></path>
+                            </svg>
+                            <svg class="polygon1" width="100%" height="100%" viewBox="0 0 1280 140" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                                <path class="path1" d="M0 70.35l320-49.24 640 98.49 320-49.25V140H0V70.35z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="ed-element ed-container wv-boxed wv-spacer" id="ed-380103725">
+                    <div class="inner">
+                        <div class="ed-element ed-headline custom-theme" id="ed-380103728">
+                            <h2>
+                                <span class="color-primary">O</span>
+                                <span class="color-background">ur Team</span>
+                            </h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="ed-element ed-container full-width preset-separator-v3-diagonal" id="ed-380103731">
+                    <div class="inner" data-parallax-amount="50">
+                        <div class="ed-element ed-html separator-container" id="ed-380103734">
+                            <svg class="double-triangle" xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                <path class="path1" d="M0 0 L50 100 L100 0 Z"></path>
+                                <path class="path2" d="M50 100 L100 40 L100 0 Z"></path>
+                                <path class="path3" d="M0 40 L50 100 L0 0 Z"></path>
+                            </svg>
+                            <svg class="circle" xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                <path class="path1" d="M0 100 C40 0 60 0 100 100 Z"></path>
+                            </svg>
+                            <svg class="polygon1" width="100%" height="100%" viewBox="0 0 1280 140" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                                <path class="path1" d="M0 70.35l320-49.24 640 98.49 320-49.25V140H0V70.35z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="ed-element ed-container wv-boxed wv-spacer wv-overflow_hidden preset-image-boxes-v3-default hide-lg hide-md hide-sm" id="ed-380103761">
+            <div class="inner">
+                <div class="ed-element ed-container image-boxes-box wv-overflow_hidden" id="ed-380103764">
+                    <div class="inner">
+                        <div class="ed-element ed-image" id="ed-380103767">
+                            <img src="data:image/svg+xml,%3Csvg%20width='100'%20viewBox='0%200%20100%2086.41358641358642'%20xmlns='http://www.w3.org/2000/svg'%3E%3Crect%20width='100'%20height='86.41358641358642'%20style='fill:%20%23F7F7F7'%20/%3E%3C/svg%3E" alt="" data-src="/images/1024%2C2002x1730%2B0%2B0/3007032/photo-1505503693641-1926193e8d57.jpg" class="ed-lazyload" srcset="/images/576%2C2002x1730%2B0%2B0/3007032/photo-1505503693641-1926193e8d57.jpg 576w, /images/976%2C2002x1730%2B0%2B0/3007032/photo-1505503693641-1926193e8d57.jpg 976w, /images/1024%2C2002x1730%2B0%2B0/3007032/photo-1505503693641-1926193e8d57.jpg 1024w" data-srcset="/images/576%2C2002x1730%2B0%2B0/3007032/photo-1505503693641-1926193e8d57.jpg 576w, /images/976%2C2002x1730%2B0%2B0/3007032/photo-1505503693641-1926193e8d57.jpg 976w, /images/1024%2C2002x1730%2B0%2B0/3007032/photo-1505503693641-1926193e8d57.jpg 1024w">
+                        </div>
+                        <div class="ed-element ed-headline custom-theme" id="ed-380103770">
+                            <h3 class="center">Thomas Green</h3>
+                        </div>
+                        <div class="ed-element ed-text custom-theme" id="ed-380103773">
+                            <p style="text-align: center;">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Veritatis, dolorem!</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="ed-element ed-container image-boxes-box wv-overflow_hidden" id="ed-380103776">
+                    <div class="inner">
+                        <div class="ed-element ed-image" id="ed-380103779">
+                            <img src="data:image/svg+xml,%3Csvg%20width='100'%20viewBox='0%200%20100%20Infinity'%20xmlns='http://www.w3.org/2000/svg'%3E%3Crect%20width='100'%20height='Infinity'%20style='fill:%20%23F7F7F7'%20/%3E%3C/svg%3E" alt="" data-src="/images/1024/3007026/photo-1494790108377-be9c29b29330.jpg" class="ed-lazyload" srcset="/images/576/3007026/photo-1494790108377-be9c29b29330.jpg 576w, /images/976/3007026/photo-1494790108377-be9c29b29330.jpg 976w, /images/1024/3007026/photo-1494790108377-be9c29b29330.jpg 1024w" data-srcset="/images/576/3007026/photo-1494790108377-be9c29b29330.jpg 576w, /images/976/3007026/photo-1494790108377-be9c29b29330.jpg 976w, /images/1024/3007026/photo-1494790108377-be9c29b29330.jpg 1024w">
+                        </div>
+                        <div class="ed-element ed-headline custom-theme" id="ed-380103782">
+                            <h3 class="center">Melissa Doe</h3>
+                        </div>
+                        <div class="ed-element ed-text custom-theme" id="ed-380103785">
+                            <p style="text-align: center;">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Veritatis, dolorem!</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="ed-element ed-container image-boxes-box wv-overflow_hidden" id="ed-380103788">
+                    <div class="inner">
+                        <div class="ed-element ed-image" id="ed-380103791">
+                            <img src="data:image/svg+xml,%3Csvg%20width='100'%20viewBox='0%200%20100%20Infinity'%20xmlns='http://www.w3.org/2000/svg'%3E%3Crect%20width='100'%20height='Infinity'%20style='fill:%20%23F7F7F7'%20/%3E%3C/svg%3E" alt="" data-src="/images/1024/3007029/photo-1507003211169-0a1dd7228f2d.jpg" class="ed-lazyload" srcset="/images/576/3007029/photo-1507003211169-0a1dd7228f2d.jpg 576w, /images/976/3007029/photo-1507003211169-0a1dd7228f2d.jpg 976w, /images/1024/3007029/photo-1507003211169-0a1dd7228f2d.jpg 1024w" data-srcset="/images/576/3007029/photo-1507003211169-0a1dd7228f2d.jpg 576w, /images/976/3007029/photo-1507003211169-0a1dd7228f2d.jpg 976w, /images/1024/3007029/photo-1507003211169-0a1dd7228f2d.jpg 1024w">
+                        </div>
+                        <div class="ed-element ed-headline custom-theme" id="ed-380103794">
+                            <h3 class="center">Alex Samok</h3>
+                        </div>
+                        <div class="ed-element ed-text custom-theme" id="ed-380103797">
+                            <p style="text-align: center;">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Veritatis, dolorem!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="ed-element ed-container full-width" id="ed-380103737">
+            <div class="background">
+                <div class="ed-element ed-image wv-bg" id="ed-380103740">
+                    <div class="background-image-holder ed-lazyload" data-background="url(&quot;/images/1920/5284077/pexels-photo-1061588.jpeg&quot;)" style="background-image: none;"></div>
+                </div>
+            </div>
+            <div class="overlay" style="background-color: rgba(0, 0, 0, 0.506);"></div>
+            <div class="inner">
+                <div class="ed-element ed-container preset-separator-v3-reverse full-width" id="ed-380103743">
+                    <div class="inner" data-parallax-amount="50">
+                        <div class="ed-element ed-html separator-container" id="ed-380103746">
+                            <svg class="double-triangle" xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                <path class="path1" d="M0 0 L50 100 L100 0 Z"></path>
+                                <path class="path2" d="M50 100 L100 40 L100 0 Z"></path>
+                                <path class="path3" d="M0 40 L50 100 L0 0 Z"></path>
+                            </svg>
+                            <svg class="circle" xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                <path class="path1" d="M0 100 C40 0 60 0 100 100 Z"></path>
+                            </svg>
+                            <svg class="polygon1" width="100%" height="100%" viewBox="0 0 1280 140" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                                <path class="path1" d="M0 70.35l320-49.24 640 98.49 320-49.25V140H0V70.35z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="ed-element ed-container wv-boxed wv-spacer" id="ed-380103749">
+                    <div class="inner">
+                        <div class="ed-element ed-headline custom-theme" id="ed-380103752">
+                            <h2>
+                                <span class="color-primary">C</span>
+                                <span class="color-background">ontatos</span>
+                            </h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="ed-element ed-container full-width preset-separator-v3-diagonal" id="ed-380103755">
+                    <div class="inner" data-parallax-amount="50">
+                        <div class="ed-element ed-html separator-container" id="ed-380103758">
+                            <svg class="double-triangle" xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                <path class="path1" d="M0 0 L50 100 L100 0 Z"></path>
+                                <path class="path2" d="M50 100 L100 40 L100 0 Z"></path>
+                                <path class="path3" d="M0 40 L50 100 L0 0 Z"></path>
+                            </svg>
+                            <svg class="circle" xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                <path class="path1" d="M0 100 C40 0 60 0 100 100 Z"></path>
+                            </svg>
+                            <svg class="polygon1" width="100%" height="100%" viewBox="0 0 1280 140" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                                <path class="path1" d="M0 70.35l320-49.24 640 98.49 320-49.25V140H0V70.35z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="ed-element ed-container wv-boxed wv-spacer preset-columns-two-v2-default" id="ed-380103863">
+            <div class="inner">
+                <div class="ed-element ed-container columns-box" id="ed-380103866">
+                    <div class="inner">
+                        <div class="ed-element ed-container wv-overflow_visible preset-contact-form-v3-row" id="ed-380103869">
+                            <div class="inner">
+                                <div class="ed-element ed-form-container" id="ed-380103872">
+                                    <form method="POST" action="">
+                                        <div class="ed-element ed-form-input" id="ed-380103875">
+                                            <input placeholder="Nome" type="text" name="form_380103872[ed-f-380103875]" value="" id="form_380103872_ed-f-380103875">
+                                        </div>
+                                        <div class="ed-element ed-form-input" id="ed-380103878">
+                                            <input placeholder="Telefone" type="text" name="form_380103872[ed-f-380103878]" value="" id="form_380103872_ed-f-380103878">
+                                        </div>
+                                        <div class="ed-element ed-form-email" id="ed-380103881">
+                                            <input placeholder="E-mail" type="email" name="form_380103872[ed-f-380103881]" value="" id="form_380103872_ed-f-380103881">
+                                        </div>
+                                        <div class="ed-element ed-form-textarea" style="
+    width:  100% !important;
+" id="ed-380103884">
+                                            <textarea rows="4" cols="30" placeholder="Mensagem" name="form_380103872[ed-f-380103884]" id="form_380103872_ed-f-380103884"></textarea>
+                                        </div>
+                                        <div class="ed-element ed-form-checkbox" id="ed-380103887">
+                                            <ul class="checkbox_list">
+                                                <li>
+                                                    <input name="form_380103872[ed-f-380103887][]" type="checkbox" value="0" id="form_380103872_ed-f-380103887_0" required="required">
+                                                    &nbsp;
+                                                    <label for="form_380103872_ed-f-380103887_0">
+                                                        <p>
+                                                            <a href="/privacy" title="">Eu li e concordos com os termos de privacidade.</a>
+                                                        </p>
+                                                    </label>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <div class="ed-element ed-form-captcha" id="ed-380103890">
+                                            <div class="image">
+                                                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIwAAAAoCAYAAAAsTRLGAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAALElEQVR4nO3BAQEAAACCIP+vbkhAAQAAAAAAAAAAAAAAAAAAAAAAAAAAwK8BV6gAAdX6zPcAAAAASUVORK5CYII=" alt="">
+                                            </div>
+                                            <div class="input">
+                                                <input placeholder="Captcha" required="required" type="text" name="form_380103872[ed-f-380103890][text]" value="" id="form_380103872_ed-f-380103890_text">
+                                                <input type="hidden" name="form_380103872[ed-f-380103890][hash]" id="form_380103872_ed-f-380103890_hash" value="e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855">
+                                            </div>
+                                            <div class="regenerate">
+                                                <a href="#" class="regenerate">Nicht lesbar? Neu generieren</a>
+                                            </div>
+                                        </div>
+                                        <div class="ed-element ed-form-button custom-theme" id="ed-380103893">
+                                            <button id="form_3476085_ed-f-7313037" name="form_3476085[ed-f-7313037]" type="submit" value="Absenden">Enviar</button>
+                                        </div>
+                                        <input type="checkbox" name="news" checked="checked" value="1" style="display: none;">
+                                        <input type="checkbox" name="tos" value="1" style="display: none;">
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="ed-element ed-container columns-box full-width" id="ed-380103896">
+                    <div class="background">
+                        <div class="ed-element ed-map wv-bg" id="ed-380103899">
+                            <div class="map-canvas" style="height: 360px; position: relative; overflow: hidden;" data-parameters="{&quot;markers&quot;:[{&quot;query&quot;:&quot;Brasília&quot;,&quot;open&quot;:false,&quot;title&quot;:&quot;Marketer&quot;,&quot;description&quot;:&quot;&quot;,&quot;info&quot;:false,&quot;icon&quot;:false,&quot;lat&quot;:-15.7975154,&quot;lng&quot;:-47.89188739999999}],&quot;center&quot;:{&quot;query&quot;:&quot;1119 Geary Blvd, CA 94109 San Francisco&quot;,&quot;lat&quot;:37.785484,&quot;lng&quot;:-122.4223159,&quot;markers&quot;:&quot;center&quot;},&quot;zoom&quot;:13,&quot;type&quot;:&quot;roadmap&quot;,&quot;style&quot;:{&quot;name&quot;:&quot;default&quot;,&quot;configuration&quot;:null,&quot;color&quot;:&quot;#999999&quot;},&quot;controls&quot;:{&quot;zoom&quot;:true,&quot;mousewheel&quot;:true,&quot;scale&quot;:false}}"></div>
+                        </div>
+                    </div>
+                    <div class="inner">&nbsp;</div>
+                </div>
+            </div>
+        </div>
+        <div class="ed-element ed-container bg-text preset-separator-v3-reverse" id="ed-380103965">
+            <div class="inner" data-parallax-amount="50">
+                <div class="ed-element ed-html separator-container" id="ed-380103968">
+                    <svg class="double-triangle" xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100" viewBox="0 0 100 100" preserveAspectRatio="none">
+                        <path class="path1" d="M0 0 L50 100 L100 0 Z"></path>
+                        <path class="path2" d="M50 100 L100 40 L100 0 Z"></path>
+                        <path class="path3" d="M0 40 L50 100 L0 0 Z"></path>
+                    </svg>
+                    <svg class="circle" xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100" viewBox="0 0 100 100" preserveAspectRatio="none">
+                        <path class="path1" d="M0 100 C40 0 60 0 100 100 Z"></path>
+                    </svg>
+                    <svg class="polygon1" width="100%" height="100%" viewBox="0 0 1280 140" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                        <path class="path1" d="M0 70.35l320-49.24 640 98.49 320-49.25V140H0V70.35z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        <div class="ed-element ed-container wv-boxed wv-spacer full-width footer-saga-content footer preset-footer-saga-v3-default bg-text" id="ed-380103902">
+            <div class="inner">
+                <div class="ed-element ed-container footer-saga-box" id="ed-380103905">
+                    <div class="inner">
+                        <div class="ed-element ed-spacer" id="ed-380103908">
+                            <div class="space"></div>
+                        </div>
+                        <div class="ed-element ed-image logo left" id="ed-380103911">
+                            <img src="data:image/svg+xml,%3Csvg%20width='250'%20viewBox='0%200%20250%2096'%20xmlns='http://www.w3.org/2000/svg'%3E%3Crect%20width='250'%20height='96'%20style='fill:%20%23F7F7F7'%20/%3E%3C/svg%3E" data-src="/images/250/10788669/logo_bhm_horizontal_b.png" class="ed-lazyload">
+                        </div>
+                        <div class="ed-element ed-spacer" id="ed-380103914">
+                            <div style="height: 16px;" class="space"></div>
+                        </div>
+                        <div class="ed-element ed-text custom-theme hide-lg hide-md hide-sm" id="ed-380103917">
+                            <p>
+                                <span class="fr-deletable" data-bind="customer.street" contenteditable="false">Bras &iacute;lia</span>
+                            </p>
+                            <p>
+                                <span class="fr-deletable" data-bind="customer.city" contenteditable="false">Bras &iacute;lia</span>
+                            </p>
+                            <p>
+                                <span class="fr-deletable" data-bind="customer.zip" contenteditable="false">70000-000</span>
+                            </p>
+                        </div>
+                        <div class="ed-element ed-spacer" id="ed-380103920">
+                            <div style="height: 16px;" class="space"></div>
+                        </div>
+                        <div class="ed-element ed-text custom-theme hide-lg hide-md hide-sm" id="ed-380103923">
+                            <ul>
+                                <li>
+                                    <a href="/legal-notice" title="">Legal Notice</a>
+                                </li>
+                                <li>
+                                    <a href="/privacy" title="">Privacy Policy</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="ed-element ed-container footer-saga-box wv-overflow_hidden hide-lg hide-md hide-sm" id="ed-380103926">
+                    <div class="inner">
+                        <div class="ed-element ed-headline custom-theme" id="ed-380103929">
+                            <h3>Navigation</h3>
+                        </div>
+                        <div class="ed-element ed-spacer" id="ed-380103932">
+                            <div style="height: 16px;" class="space"></div>
+                        </div>
+                        <div class="ed-element ed-menu wv-custom" id="ed-380103935">
+                            <ul class="menu-level-0">
+                                <li class="first">
+                                    <a href="/2136746#ed-380103569" class="wv-link-elm first">Home</a>
+                                </li>
+                                <li>
+                                    <a href="/2136746#ed-58620615" class="wv-link-elm">About us</a>
+                                </li>
+                                <li>
+                                    <a href="/2136746#ed-380103629" class="wv-link-elm">Services</a>
+                                </li>
+                                <li>
+                                    <a href="/2136746#ed-380103701" class="wv-link-elm">Projects</a>
+                                </li>
+                                <li>
+                                    <a href="/2136746#ed-380103725" class="wv-link-elm">Team</a>
+                                </li>
+                                <li class="end">
+                                    <a href="/2136746#ed-380103749" class="wv-link-elm last">Contact</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="ed-element ed-container footer-saga-box hide-lg hide-md hide-sm" id="ed-380103938">
+                    <div class="inner">
+                        <div class="ed-element ed-headline custom-theme" id="ed-380103941">
+                            <h3>Social Media</h3>
+                        </div>
+                        <div class="ed-element ed-spacer" id="ed-380103944">
+                            <div style="height: 16px;" class="space"></div>
+                        </div>
+                        <div class="ed-element ed-icon" id="ed-380103947">
+                            <a href="#!next" class="wv-link-elm">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -416 448 448" data-icon="fa-brands-facebook-square" preserveAspectRatio="xMidYMid" style="overflow: hidden;">
+                                    <path d="M448 -368V-16C448 10.5 426.5 32 400 32H314.7V-145.2H375.3L384 -212.8H314.7V-256C314.7 -275.6 320.1 -288.9 348.2 -288.9H384V-349.3C377.8 -350.1 356.6 -352 331.8 -352C280.2 -352 244.8 -320.5 244.8 -262.6V-212.7H184V-145.1H244.9V32H48C21.5 32 0 10.5 0 -16V-368C0 -394.5 21.5 -416 48 -416H400C426.5 -416 448 -394.5 448 -368z" style="stroke-width: 0px;"></path>
+                                </svg>
+                            </a>
+                        </div>
+                        <div class="ed-element ed-text custom-theme" id="ed-380103950">
+                            <p>
+                                <a href="https://www.facebook.com/" rel="noopener noreferrer" target="_blank" title="">Facebook</a>
+                            </p>
+                        </div>
+                        <div class="ed-element ed-icon" id="ed-380103953">
+                            <a href="#!next" class="wv-link-elm">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="62 -705 875 711" data-icon="ico-social-twitter" preserveAspectRatio="xMidYMid" style="overflow: hidden;">
+                                    <path d="M937.5 -621.5C905.3 -607.2 870.7 -597.6 834.4 -593.2c37.1 -22.2 65.5 -57.4 78.9 -99.3C878.6 -671.9 840.1 -657 799.3 -648.9c-32.7 -34.9 -79.4 -56.7 -131 -56.7 -99.2 -0 -179.6 80.3 -179.6 179.5 0 14.1 1.6 27.8 4.6 40.9 -149.2 -7.5 -281.5 -78.9 -370 -187.6C107.9 -646.3 99 -615.4 99 -582.5c0 62.3 31.7 117.2 79.8 149.4 -29.4 -0.9 -57.1 -9 -81.3 -22.5v2.3c0 87 61.9 159.5 144 176 -15 4.1 -30.9 6.3 -47.3 6.3 -11.6 -0 -22.8 -1.1 -33.7 -3.2C183.3 -202.9 249.6 -151 328.1 -149.5 266.7 -101.4 189.4 -72.7 105.2 -72.7c-14.5 -0 -28.7 -0.8 -42.8 -2.5C141.9 -24.3 236.2 5.4 337.6 5.4c330.2 -0 510.8 -273.5 510.8 -510.7 0 -7.8 -0.2 -15.5 -0.5 -23.2 35.1 -25.4 65.6 -57 89.6 -93z" style="stroke-width: 0px;"></path>
+                                </svg>
+                            </a>
+                        </div>
+                        <div class="ed-element ed-text custom-theme" id="ed-380103956">
+                            <p>
+                                <a href="https://twitter.com/" rel="noopener noreferrer" target="_blank" title="">Twitter</a>
+                            </p>
+                        </div>
+                        <div class="ed-element ed-icon" id="ed-380103959">
+                            <a href="#!next" class="wv-link-elm">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -384 384 384" data-icon="ion-social-instagram" preserveAspectRatio="xMidYMid" style="overflow: hidden;">
+                                    <path d="M112 -192c0 -53 27 -80 80 -80s80 27 80 80s-27 80 -80 80s-80 -27 -80 -80zM113 -271c-14 14 -23 29 -28 47h-85v-112c0 -13 4 -25 14 -34s22 -14 35 -14h288c13 -0 24 5 33 14s14 21 14 34v112h-84c-5 -18 -14 -33 -28 -47c-22 -22 -49 -33 -80 -33s-57 11 -79 33zM352 -300v-39c0 -4 -2 -7 -4 -9s-5 -4 -9 -4h-38c-4 -0 -7 2 -9 4s-4 5 -4 9v39c0 4 2 7 4 9s5 3 9 3h38c4 -0 7 -1 9 -3s4 -5 4 -9zM272 -113c22 -22 32 -48 32 -79h80v144c0 13 -5 24 -14 34s-20 14 -33 14h-288c-13 -0 -24 -4 -34 -14s-15 -21 -15 -34v-144h81c0 31 10 57 32 79s48 33 79 33s58 -11 80 -33z" style="stroke-width: 0px;"></path>
+                                </svg>
+                            </a>
+                        </div>
+                        <div class="ed-element ed-text custom-theme" id="ed-380103962">
+                            <p>
+                                <a href="https://www.instagram.com/" rel="noopener noreferrer" target="_blank" title="">Instagram</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script src="/webcard/static/app.bundle.1726225181.js"></script>
+        <script src="/js/custom.240913220700.js"></script>
+    </body>
+    <script type="module">
+        import Chatbot from 'https://cdn.jsdelivr.net/npm/flowise-embed@1.3.14/dist/web.js';
+        Chatbot.init({
+            chatflowid: 'bcd16f78-a988-4ba9-a804-0d8e80084e22',
+            apiHost: 'https://flowise.prod.bhm.tec.br',
+            chatflowConfig: {// topK: 2
+            },
+            observersConfig: {
+                // (optional) Allows you to execute code in parent based upon signal observations within the chatbot.
+                // The userinput field submitted to bot ("" when reset by bot)
+                observeUserInput: (userInput) => {
+                    console.log({
+                        userInput
+                    });
+                }
+                ,
+                // The bot message stack has changed
+                observeMessages: (messages) => {
+                    console.log({
+                        messages
+                    });
+                }
+                ,
+                // The bot loading signal changed
+                observeLoading: (loading) => {
+                    console.log({
+                        loading
+                    });
+                }
+                ,
+            },
+            theme: {
+                button: {
+                    backgroundColor: '#3B81F6',
+                    right: 20,
+                    bottom: 20,
+                    size: 48,
+                    // small | medium | large | number
+                    dragAndDrop: true,
+                    iconColor: 'white',
+                    customIconSrc: 'https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/google-messages.svg',
+                    autoWindowOpen: {
+                        autoOpen: true,
+                        //parameter to control automatic window opening
+                        openDelay: 2,
+                        // Optional parameter for delay time in seconds
+                        autoOpenOnMobile: false,
+                        //parameter to control automatic window opening in mobile
+                    },
+                },
+                tooltip: {
+                    showTooltip: true,
+                    tooltipMessage: 'Posso ajudar? 👋!',
+                    tooltipBackgroundColor: 'black',
+                    tooltipTextColor: 'white',
+                    tooltipFontSize: 16,
+                },
+                chatWindow: {
+                    showTitle: true,
+                    showAgentMessages: true,
+                    title: 'Bot inteligente',
+                    titleAvatarSrc: 'https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/google-messages.svg',
+                    welcomeMessage: 'Olá! Em que posso ajudar?',
+                    errorMessage: 'Ops, erro identificado',
+                    backgroundColor: '#ffffff',
+                    backgroundImage: 'enter image path or link',
+                    // If set, this will overlap the background color of the chat window.
+                    height: 700,
+                    width: 400,
+                    fontSize: 16,
+                    starterPrompts: ['O que você faz?', 'Quem é você?'],
+                    // It overrides the starter prompts set by the chat flow passed
+                    starterPromptFontSize: 15,
+                    clearChatOnReload: false,
+                    // If set to true, the chat will be cleared when the page reloads.
+                    botMessage: {
+                        backgroundColor: '#f7f8ff',
+                        textColor: '#303235',
+                        showAvatar: true,
+                        avatarSrc: 'https://www.bhm.tec.br/images/152x152/10788698/favicon.png',
+                    },
+                    userMessage: {
+                        backgroundColor: '#3B81F6',
+                        textColor: '#ffffff',
+                        showAvatar: true,
+                        avatarSrc: 'https://raw.githubusercontent.com/zahidkhawaja/langchain-chat-nextjs/main/public/usericon.png',
+                    },
+                    textInput: {
+                        placeholder: 'Digite sua pergunta',
+                        backgroundColor: '#ffffff',
+                        textColor: '#303235',
+                        sendButtonColor: '#3B81F6',
+                        maxChars: 50,
+                        maxCharsWarningMessage: 'You exceeded the characters limit. Please input less than 50 characters.',
+                        autoFocus: true,
+                        // If not used, autofocus is disabled on mobile and enabled on desktop. true enables it on both, false disables it on both.
+                        sendMessageSound: true,
+                        // sendSoundLocation: "send_message.mp3", // If this is not used, the default sound effect will be played if sendSoundMessage is true.
+                        receiveMessageSound: true,
+                        // receiveSoundLocation: "receive_message.mp3", // If this is not used, the default sound effect will be played if receiveSoundMessage is true.
+                    },
+                    feedback: {
+                        color: '#303235',
+                    },
+                    footer: {
+                        textColor: '#303235',
+                        text: 'Powered by',
+                        company: 'BHM',
+                        companyLink: 'https://www.bhm.tec.br',
+                    },
+                },
+            },
+        });
+    </script>
 </html>

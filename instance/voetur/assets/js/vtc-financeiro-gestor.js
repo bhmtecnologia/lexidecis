@@ -266,7 +266,7 @@ export async function renderVtcFinanceiroGestor() {
           },
           { data: 'filial_nome',       title: 'Filial',            defaultContent: '-' },
           { data: 'fornecedor_nome',   title: 'Fornecedor',        defaultContent: '-' },
-          { data: 'valor',             title: 'Valor',             defaultContent: '-', render: v => isNaN(v) ? '-' : parseFloat(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) },
+          { data: 'valor_nominal',     title: 'Valor',             defaultContent: '-', render: v => isNaN(v) ? '-' : parseFloat(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) },
           { data: 'data_emissao',      title: 'Data Emissão',      defaultContent: '-', render: d => d ? new Date(d).toLocaleDateString('pt-BR') : '-' },
           { data: 'updated_at',        title: 'Atualizado Em',     defaultContent: '-', render: u => u ? new Date(u).toLocaleString('pt-BR') : '-' },
           { data: 'forma_pagamento',   title: 'Forma de Pagamento', defaultContent: '-' },
@@ -328,7 +328,7 @@ export async function renderVtcFinanceiroGestor() {
     if (lanc) {
       currentLanc = lanc;
       // Gera formulário editável com campos principais
-      const fields = ['justificativa', 'data_emissao', 'valor', 'forma_pagamento'];
+      const fields = ['justificativa', 'data_emissao', 'valor_nominal', 'forma_pagamento'];
       let formHtml = '';
       fields.forEach(key => {
         const value = lanc[key] !== null && lanc[key] !== undefined ? lanc[key] : '';
@@ -396,7 +396,7 @@ export async function renderVtcFinanceiroGestor() {
   document.getElementById('saveBtn').addEventListener('click', () => {
     const form = document.getElementById('editFormContainer');
     const updated = {};
-    ['justificativa', 'data_emissao', 'valor', 'forma_pagamento'].forEach(key => {
+    ['justificativa', 'data_emissao', 'valor_nominal', 'forma_pagamento'].forEach(key => {
       const el = form.querySelector(`[name="${key}"]`);
       if (el) {
         updated[key] = el.value;

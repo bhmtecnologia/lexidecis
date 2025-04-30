@@ -1066,7 +1066,7 @@ export async function renderFinanceiroLancamentoCreateV3() {
         ? document.querySelector("#parcelasContainer .parcela-data").value
         : null,
       // Converte valor total da nota (classification.valor_total_nota) para número pt-BR
-      valor: (() => {
+      valor_nominal: (() => {
         const rawVal = classification.valor_total_nota;
         if (!rawVal) return 0;
         let numVal;
@@ -1082,23 +1082,23 @@ export async function renderFinanceiroLancamentoCreateV3() {
         }
         return numVal;
       })(),
-      data_inclusao: dataInclusao,
+      data_entrada: dataInclusao,
       usuario_inclusao: AuthService.user.email,
       uid: AuthService.user.uid
     };
 
-    // Inclui auditoria, histórico de log e parcelas diretamente no payload
+    // Inclui auditoria, histórico de log e parcelas_financeiras diretamente no payload
     payload.log = window.logEntries || [];
     payload.auditoria = window.auditInfo || {};
-    // Parcelas de vencimento e valor
-    payload.parcelas = [];
+    // Parcelas financeiras de vencimento e valor
+    payload.parcelas_financeiras = [];
     document.querySelectorAll('.parcela-item').forEach(item => {
       const dateEl = item.querySelector('.parcela-data');
       const valorEl = item.querySelector('.parcela-valor');
       if (dateEl && valorEl && dateEl.value) {
         const raw = valorEl.value.replace(/\./g, '').replace(',', '.');
         const numVal = Number(raw);
-        payload.parcelas.push({ data_vencimento: dateEl.value, valor: numVal });
+        payload.parcelas_financeiras.push({ data_vencimento: dateEl.value, valor: numVal });
       }
     });
 
@@ -1106,6 +1106,12 @@ export async function renderFinanceiroLancamentoCreateV3() {
     const filEl = document.getElementById("filialSelect");
     payload.filial_id = filEl ? filEl.value : null;
     payload.filial_nome = filEl ? filEl.options[filEl.selectedIndex].text : null;
+    if (filEl) {
+      const filData = (window.filiaisData || []).find(f => (f.id || f.uuid || f.nome) == filEl.value);
+      payload.filial_cnpj = filData ? filData.cnpj : null;
+    } else {
+      payload.filial_cnpj = null;
+    }
 
     // Centro de Custo
     const ctrEl = document.getElementById("centroCustoSelect");
@@ -1174,6 +1180,8 @@ export async function renderFinanceiroLancamentoCreateV3() {
 
 
     try {
+      // Debug: output the assembled payload to console
+      console.log("Payload v3:", JSON.stringify(payload, null, 2));
       // **Aqui** chame createLancamento para o endpoint v3
       const result = await createLancamento(AuthService, payload, { apiVersion: "v3" });
       if (!result.id) throw new Error("Resposta inesperada da API.");

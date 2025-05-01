@@ -339,6 +339,14 @@ export async function renderFinanceiroLancamentoCreateV3() {
                   <option value="Depósito">Depósito</option>
                 </select>
               </div>
+              <!-- Moeda -->
+              <div class="mb-3">
+                <label for="moedaSelect" class="form-label">Moeda <span style="color:red">*</span></label>
+                <select class="form-select" id="moedaSelect" required>
+                  <option value="BRL">BRL</option>
+                  <option value="USD">USD</option>
+                </select>
+              </div>
               <!-- Anexo(s) -->
               <div class="mb-3 d-none">
                 <label for="arquivo" class="form-label">Inserir Anexo(s) <span style="color:red">*</span></label>

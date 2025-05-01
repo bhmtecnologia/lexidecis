@@ -13,7 +13,7 @@ export const menuItems = [
     },
     {
         label: "Área do Gestor",
-        icon: "Document",
+        icon: "Profile",
         route: "#dashboard",
         // Subitens para o Dashboard:
         children: [

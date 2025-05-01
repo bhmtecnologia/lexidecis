@@ -1393,6 +1393,7 @@ document.addEventListener('click', event => {
       <input type="text" name="itemDescricao[]" class="form-control item-descricao mb-1" placeholder="Descrição do Item" required>
       <input type="text" name="itemQuantidade[]" class="form-control item-quantidade mb-1" placeholder="Quantidade" required>
       <input type="text" name="itemValorUnitario[]" class="form-control item-valor-unitario" placeholder="Valor Unitário" required>
+      <button type="button" class="btn btn-danger btn-sm remove-item-btn ms-2">- Item</button>
     `;
     container.appendChild(item);
   }
@@ -1404,6 +1405,17 @@ document.addEventListener('click', event => {
     if (item) {
       item.remove();
       if (typeof updateParcelaIndices === "function") updateParcelaIndices();
+    }
+  }
+});
+
+// Remove item when '-' button clicked
+document.addEventListener('click', event => {
+  if (event.target && event.target.classList.contains('remove-item-btn')) {
+    const item = event.target.closest('.item-row');
+    if (item) {
+      item.remove();
+      if (typeof updateItemIndices === "function") updateItemIndices();
     }
   }
 });

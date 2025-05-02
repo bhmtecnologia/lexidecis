@@ -673,6 +673,14 @@ export async function renderFinanceiroLancamentoCreateV3() {
         const match = (window.fornecedoresData || []).find(f => f.cnpj === info.cnpj_fornecedor);
         // Hide classification-section before toggling others
         document.getElementById("classification-section").classList.add("d-none");
+        // Hide Moeda for Nota Fiscal
+        const moedaSelectEl = document.getElementById("moedaSelect");
+        if (moedaSelectEl) {
+          const moedaGroup = moedaSelectEl.closest(".mb-3");
+          if (moedaGroup) moedaGroup.classList.add("d-none");
+          moedaSelectEl.required = false;
+          moedaSelectEl.disabled = true;
+        }
         if (match) {
           // Oculta seção de cadastro e exibe formulário normal
           document.getElementById("supplier-registration-section").classList.add("d-none");

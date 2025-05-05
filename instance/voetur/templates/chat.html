@@ -678,6 +678,9 @@
             const sessionId = chat.id;
             // Load GPT-specific override config (if not proxy)
             const gptKey = chat.fk_gpt_id || chat.gpt_id;
+            // Debug logs for GPT config retrieval
+            console.log('Debug: chat object has fk_gpt_id =', chat.fk_gpt_id, 'gpt_id =', chat.gpt_id);
+            console.log('Debug: available GPT configs in cache:', Object.keys(configCache));
             let override = configCache[gptKey];
             if (!override) {
               override = await getGptConfig(AuthService, gptKey);
@@ -686,6 +689,8 @@
             // Ensure sessionId is included first in the override
             override = { sessionId, ...override };
             configCache[gptKey] = override;
+            // Debug log after setting override
+            console.log('Debug: override for GPT key', gptKey, '=', override);
             try {
             // Determine the actual Flowise chatflowId for this GPT
             const gpt = gptMap[gptKey];
@@ -741,27 +746,24 @@
                 console.log('🤖 Resposta:', answer);
               }
             }
-            // === Configure and initialize embed ===
-            window.flowiseConfig = {
-              chatflowid: proxyFlowId,
-              apiHost:    apiHost,
-              token:      gpt.flowiseConfig.flowise.token,
+            // === Build and initialize embed using a fresh cfg object ===
+            const cfg = {
+              chatflowid:  realFlowId,
+              apiHost:     apiHost,
+              token:       gpt.flowiseConfig.flowise.token,
               headers: {
                 'x-user-email': AuthService.user.email,
                 'x-user-uuid':  AuthService.user.uid,
-                'x-user-jwt':   AuthService.token
+                'x-user-jwt':   AuthService.token,
+                'x-gpt-id':     1
               },
               chatflowConfig: override,
-              theme:      window.flowiseConfig.theme,
+              theme:           window.flowiseConfig.theme,
               observersConfig: window.flowiseConfig.observersConfig
             };
-
-              // Monta o componente full‑screen
-              const chatArea = document.getElementById('chat-area');
-              chatArea.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
-
-              // Inicializa em full‑screen com histórico injetado
-              window.flowiseChatbot.initFull(window.flowiseConfig);
+            const chatArea = document.getElementById('chat-area');
+            chatArea.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
+            Chatbot.initFull(cfg);
             } catch (err) {
               console.error('Erro ao carregar histórico:', err);
             }

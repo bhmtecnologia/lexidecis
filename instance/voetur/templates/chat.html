@@ -698,9 +698,9 @@
               ? gpt.flowiseConfig.flowise.apiHost
               : window.flowiseConfig.apiHost;
             const flowId = `${proxyFlowId}_${sessionId}`;
-            // Use the real flowise ID combined with sessionId for storage keys
-            const extKey = `${realFlowId}__${sessionId}_EXTERNAL`;
-            const flagKey = `${realFlowId}__${sessionId}_historyInjected`;
+            // Use the proxyFlowId only for storage keys (to match web.js expectations)
+            const extKey = `${proxyFlowId}_EXTERNAL`;
+            const flagKey = `${proxyFlowId}_historyInjected`;
             // Inject history only if not already stored for this session
             if (!localStorage.getItem(flagKey)) {
               // Fetch history directly from Flowise API with proper token
@@ -713,8 +713,16 @@
                 }
               );
               if (!response.ok) throw new Error(`Status ${response.status}`);
-              const history = await response.json();
-              localStorage.setItem(extKey, JSON.stringify({ chatHistory: history, chatId: sessionId }));
+              const apiHistory = await response.json();
+              // Format messages for Flowise
+              const formattedHistory = apiHistory.map(msg => ({
+                message: msg.content,
+                type: msg.role === 'userMessage' ? 'userMessage' : 'apiMessage',
+                dateTime: msg.createdDate || new Date().toISOString(),
+                messageId: msg.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substr(2, 9)),
+                fileUploads: msg.fileUploads || []
+              }));
+              localStorage.setItem(extKey, JSON.stringify({ chatHistory: formattedHistory, chatId: sessionId }));
               localStorage.setItem(flagKey, 'true');
               // Present the last question and answer
               console.log('Gravado em localStorage:', extKey, flagKey);
@@ -723,10 +731,10 @@
               if (stored && Array.isArray(stored.chatHistory) && stored.chatHistory.length >= 2) {
                 const history = stored.chatHistory;
                 // Find the last user message and the following assistant message
-                const lastUserIndex = history.map(m => m.role).lastIndexOf('userMessage');
-                const question = history[lastUserIndex].content;
-                const answer = history[lastUserIndex + 1] && history[lastUserIndex + 1].role === 'apiMessage'
-                  ? history[lastUserIndex + 1].content
+                const lastUserIndex = history.map(m => m.type).lastIndexOf('userMessage');
+                const question = history[lastUserIndex].message;
+                const answer = history[lastUserIndex + 1] && history[lastUserIndex + 1].type === 'apiMessage'
+                  ? history[lastUserIndex + 1].message
                   : '<sem resposta encontrada>';
                 console.log('📄 Pergunta:', question);
                 console.log('🤖 Resposta:', answer);

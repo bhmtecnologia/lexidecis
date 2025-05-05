@@ -501,7 +501,7 @@
 
     // === Flowise chatflowId mapping helper ===
     const chatflowIdMap = {
-      'efe59701-afe2-4f4c-8448-bb8e3a32161a': 'FLOW1_CHAT'
+      'FLOW1_CHAT': 'FLOW1_CHAT'
     };
     function mapChatflowId(id) {
       return chatflowIdMap[id] || id;
@@ -602,6 +602,12 @@
                       .querySelector('flowise-fullchatbot')
                       .shadowRoot
                       .querySelector('textarea').value;
+                    console.log('Sending chatmessage payload:', {
+                      chatflowid: cfg.chatflowid,
+                      sessionId: override.sessionId,
+                      role: 'user',
+                      message: userInput
+                    });
                     await createChatMessage(
                       AuthService,
                       cfg.chatflowid,
@@ -686,8 +692,19 @@
               override = await getGptConfig(AuthService, gptKey);
               configCache[gptKey] = override;
             }
-            // Ensure sessionId is included first in the override
-            override = { sessionId, ...override };
+            // If override is wrapped as an array with a JSON string under empty key, parse it
+            if (!Array.isArray(override) && override[0] && typeof override[0] === 'object' && override[0]['']) {
+              try {
+                const parsed = JSON.parse(override[0]['']);
+                override = parsed;
+                configCache[gptKey] = override;
+                console.log('Parsed wrapped override for GPT key', gptKey, '=', override);
+              } catch (err) {
+                console.error('Error parsing wrapped override for GPT key', gptKey, err);
+              }
+            }
+            // Ensure sessionId is updated in the override
+            override = { ...override, sessionId };
             configCache[gptKey] = override;
             // Debug log after setting override
             console.log('Debug: override for GPT key', gptKey, '=', override);
@@ -704,12 +721,13 @@
               ? gpt.flowiseConfig.flowise.apiHost
               : window.flowiseConfig.apiHost;
             const flowId = `${proxyFlowId}_${sessionId}`;
-            // Use the proxyFlowId only for storage keys (to match web.js expectations)
-            const extKey = `${proxyFlowId}_EXTERNAL`;
-            const flagKey = `${proxyFlowId}_historyInjected`;
-            // Inject history only if not already stored for this session
-            if (!localStorage.getItem(flagKey)) {
-              // Fetch history directly from Flowise API with proper token
+            // Session-specific storage keys
+            const sessionExtKey = `${proxyFlowId}__${sessionId}_EXTERNAL`;
+            const sessionFlagKey = `${proxyFlowId}__${sessionId}_historyInjected`;
+
+            // Inject session history only if not already stored
+            if (!localStorage.getItem(sessionFlagKey)) {
+              // Fetch history directly from Flowise API
               const response = await fetch(
                 `${apiHost}/api/v1/chatmessage/${realFlowId}?sessionId=${sessionId}`, {
                   headers: {
@@ -720,7 +738,6 @@
               );
               if (!response.ok) throw new Error(`Status ${response.status}`);
               const apiHistory = await response.json();
-              // Format messages for Flowise
               const formattedHistory = apiHistory.map(msg => ({
                 message: msg.content,
                 type: msg.role === 'userMessage' ? 'userMessage' : 'apiMessage',
@@ -728,23 +745,18 @@
                 messageId: msg.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substr(2, 9)),
                 fileUploads: msg.fileUploads || []
               }));
-              localStorage.setItem(extKey, JSON.stringify({ chatHistory: formattedHistory, chatId: sessionId }));
-              localStorage.setItem(flagKey, 'true');
-              // Present the last question and answer
-              console.log('Gravado em localStorage:', extKey, flagKey);
-              // Present the last question and answer
-              const stored = JSON.parse(localStorage.getItem(extKey));
-              if (stored && Array.isArray(stored.chatHistory) && stored.chatHistory.length >= 2) {
-                const history = stored.chatHistory;
-                // Find the last user message and the following assistant message
-                const lastUserIndex = history.map(m => m.type).lastIndexOf('userMessage');
-                const question = history[lastUserIndex].message;
-                const answer = history[lastUserIndex + 1] && history[lastUserIndex + 1].type === 'apiMessage'
-                  ? history[lastUserIndex + 1].message
-                  : '<sem resposta encontrada>';
-                console.log('📄 Pergunta:', question);
-                console.log('🤖 Resposta:', answer);
-              }
+              // Store under session-specific keys
+              localStorage.setItem(sessionExtKey, JSON.stringify({ chatHistory: formattedHistory, chatId: sessionId }));
+              localStorage.setItem(sessionFlagKey, 'true');
+            }
+
+            // Copy session history into the base key so web.js picks it up
+            const baseExtKey = `${proxyFlowId}_EXTERNAL`;
+            const baseFlagKey = `${proxyFlowId}_historyInjected`;
+            const sessionData = localStorage.getItem(sessionExtKey);
+            if (sessionData) {
+              localStorage.setItem(baseExtKey, sessionData);
+              localStorage.setItem(baseFlagKey, 'true');
             }
             // === Build and initialize embed using a fresh cfg object ===
             const cfg = {
@@ -759,7 +771,34 @@
               },
               chatflowConfig: override,
               theme:           window.flowiseConfig.theme,
-              observersConfig: window.flowiseConfig.observersConfig
+              observersConfig: {
+                observeLoading: async (loading) => {
+                  if (loading) {
+                    try {
+                      const userInput = document
+                        .querySelector('flowise-fullchatbot')
+                        .shadowRoot
+                        .querySelector('textarea').value;
+                      console.log('Sending chatmessage payload:', {
+                        chatflowid: cfg.chatflowid,
+                        sessionId: override.sessionId,
+                        role: 'user',
+                        message: userInput
+                      });
+                      await createChatMessage(
+                        AuthService,
+                        cfg.chatflowid,
+                        override.sessionId,
+                        'user',
+                        userInput
+                      );
+                      console.log('Chat message created successfully');
+                    } catch (err) {
+                      console.error('Failed to create chat message', err);
+                    }
+                  }
+                }
+              }
             };
             const chatArea = document.getElementById('chat-area');
             chatArea.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
@@ -861,7 +900,7 @@
       .then(({ default: Chatbot }) => {
         window.flowiseChatbot = Chatbot;
         // Default flow using proxy-based chatflow ID
-        const chatflowidPadrao = mapChatflowId('efe59701-afe2-4f4c-8448-bb8e3a32161a');
+        const chatflowidPadrao = mapChatflowId('FLOW1_CHAT');
         // Generate and inject default session history for proxy-based chat
         const defaultSessionId = crypto.randomUUID();
         const defaultExtKey = `${chatflowidPadrao}_EXTERNAL`;

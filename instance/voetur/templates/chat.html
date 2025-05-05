@@ -589,7 +589,7 @@
             headers: {
               'x-user-email': AuthService.user.email,
               'x-user-uuid':  AuthService.user.uid,
-              'x-gpt-id':  1,
+              'x-gpt-id':     gpt.id,
               'x-user-jwt':   AuthService.token
             },
             theme:            window.flowiseConfig.theme,
@@ -767,7 +767,7 @@
                 'x-user-email': AuthService.user.email,
                 'x-user-uuid':  AuthService.user.uid,
                 'x-user-jwt':   AuthService.token,
-                'x-gpt-id':     1
+                'x-gpt-id':     gpt.id
               },
               chatflowConfig: override,
               theme:           window.flowiseConfig.theme,

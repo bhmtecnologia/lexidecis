@@ -414,16 +414,9 @@
           <li id="explore-gpt-item" class="px-3 py-2 d-flex align-items-center" role="button" tabindex="0" data-bs-toggle="modal" data-bs-target="#gptModal"><i class="bi bi-grid-3x3-gap me-2"></i><span class="flex-grow-1">Explore GPTs</span></li>
         </ul>
         <hr class="mx-3 my-2" />
-        <div class="px-3 py-0 d-flex align-items-center">
-          <button class="btn btn-link p-0 me-2" data-bs-toggle="collapse" data-bs-target="#chats-collapse" aria-expanded="true" aria-controls="chats-collapse">
-            <i class="bi bi-chevron-down"></i>
-          </button>
-          <div class="text-muted small fw-semibold">Chats</div>
-        </div>
-        <div id="chats-collapse" class="collapse show">
-          <div class="flex-grow-1" data-simplebar style="overflow-y: auto; flex: 1; min-height: 0;">
-            <ul id="chat-list" class="mb-0 pt-0"><li id="chat-loading" class="px-3 py-2 text-muted">Carregando chats...</li></ul>
-          </div>
+        <div class="px-3 py-0 text-muted small fw-semibold">Chats</div>
+        <div class="flex-grow-1" data-simplebar style="overflow-y: auto; flex: 1; min-height: 0;">
+          <ul id="chat-list" class="mb-0 pt-0"><li id="chat-loading" class="px-3 py-2 text-muted">Carregando chats...</li></ul>
         </div>
       </div>
       <div class="sidebar-bottom" id="avatarBlock">
@@ -517,8 +510,8 @@
         // Stub: will be overridden per session
       }
     };
-import AuthService from '../assets/js/auth.js';
-import { listChats, listGpts, getGptConfig, createChatMessage, setFlowiseHost, fetchChatHistory as getChatHistory } from "../assets/js/api.js";
+    import AuthService from '../assets/js/auth.js';
+    import { listChats, listGpts, getGptConfig, createChatMessage } from "../assets/js/api.js";
 
     // === Flowise chatflowId mapping helper ===
     const chatflowIdMap = {
@@ -749,9 +742,24 @@ import { listChats, listGpts, getGptConfig, createChatMessage, setFlowiseHost, f
 
             // Inject session history only if not already stored
             if (!localStorage.getItem(sessionFlagKey)) {
-              // Use centralized API handler
-              setFlowiseHost(apiHost);
-              const formattedHistory = await getChatHistory(AuthService, realFlowId, sessionId);
+              // Fetch history directly from Flowise API
+              const response = await fetch(
+                `${apiHost}/api/v1/chatmessage/${realFlowId}?sessionId=${sessionId}`, {
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${gpt.flowiseConfig.flowise.token}`
+                  }
+                }
+              );
+              if (!response.ok) throw new Error(`Status ${response.status}`);
+              const apiHistory = await response.json();
+              const formattedHistory = apiHistory.map(msg => ({
+                message: msg.content,
+                type: msg.role === 'userMessage' ? 'userMessage' : 'apiMessage',
+                dateTime: msg.createdDate || new Date().toISOString(),
+                messageId: msg.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substr(2, 9)),
+                fileUploads: msg.fileUploads || []
+              }));
               // Store under session-specific keys
               localStorage.setItem(sessionExtKey, JSON.stringify({ chatHistory: formattedHistory, chatId: sessionId }));
               localStorage.setItem(sessionFlagKey, 'true');

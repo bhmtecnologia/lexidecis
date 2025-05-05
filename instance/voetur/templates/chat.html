@@ -368,8 +368,14 @@
           <select id="chat-search" style="width:100%"><option></option></select>
         </div>
         <hr class="mx-3 my-2" />
-        <div class="px-3 py-0 text-muted small fw-semibold">LLMs</div>
-        <ul class="list-unstyled m-0">
+        <div class="px-3 py-0 d-flex align-items-center">
+          <button class="btn btn-link p-0 me-2" data-bs-toggle="collapse" data-bs-target="#llms-collapse" aria-expanded="true" aria-controls="llms-collapse">
+            <i class="bi bi-chevron-down"></i>
+          </button>
+          <div class="text-muted small fw-semibold">LLMs</div>
+        </div>
+        <div id="llms-collapse" class="collapse show">
+          <ul class="list-unstyled m-0">
           <li id="lexi-ai-item" class="px-3 py-2 d-flex align-items-center" role="button" tabindex="0">
             <img src="../assets/svg/lexi-ai-item.svg" class="provider-icon" alt="ChatGPT icon"/>
             <span class="flex-grow-1">ChatGPT</span>
@@ -391,18 +397,33 @@
             <span class="flex-grow-1">Anthropic</span>
           </li>
         </ul>
+        </div>
         <hr class="mx-3 my-2" />
-        <div class="px-3 py-0 text-muted small fw-semibold">GPTs</div>
-        <div class="flex-grow-1" style="overflow-y: auto; max-height: 200px;">
+        <div class="px-3 py-0 d-flex align-items-center">
+          <button class="btn btn-link p-0 me-2" data-bs-toggle="collapse" data-bs-target="#gpts-collapse" aria-expanded="true" aria-controls="gpts-collapse">
+            <i class="bi bi-chevron-down"></i>
+          </button>
+          <div class="text-muted small fw-semibold">GPTs</div>
+        </div>
+        <div id="gpts-collapse" class="collapse">
+          <div class="flex-grow-1" style="overflow-y: auto; max-height: 200px;">
           <ul id="ai-providers-list" class="list-unstyled m-0"></ul>
+        </div>
         </div>
         <ul class="list-unstyled m-0">
           <li id="explore-gpt-item" class="px-3 py-2 d-flex align-items-center" role="button" tabindex="0" data-bs-toggle="modal" data-bs-target="#gptModal"><i class="bi bi-grid-3x3-gap me-2"></i><span class="flex-grow-1">Explore GPTs</span></li>
         </ul>
         <hr class="mx-3 my-2" />
-        <div class="px-3 py-0 text-muted small fw-semibold">Chats</div>
-        <div class="flex-grow-1" data-simplebar style="overflow-y: auto; flex: 1; min-height: 0;">
-          <ul id="chat-list" class="mb-0 pt-0"><li id="chat-loading" class="px-3 py-2 text-muted">Carregando chats...</li></ul>
+        <div class="px-3 py-0 d-flex align-items-center">
+          <button class="btn btn-link p-0 me-2" data-bs-toggle="collapse" data-bs-target="#chats-collapse" aria-expanded="true" aria-controls="chats-collapse">
+            <i class="bi bi-chevron-down"></i>
+          </button>
+          <div class="text-muted small fw-semibold">Chats</div>
+        </div>
+        <div id="chats-collapse" class="collapse show">
+          <div class="flex-grow-1" data-simplebar style="overflow-y: auto; flex: 1; min-height: 0;">
+            <ul id="chat-list" class="mb-0 pt-0"><li id="chat-loading" class="px-3 py-2 text-muted">Carregando chats...</li></ul>
+          </div>
         </div>
       </div>
       <div class="sidebar-bottom" id="avatarBlock">

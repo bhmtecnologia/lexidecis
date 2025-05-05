@@ -444,8 +444,10 @@
         }
         // Include the GPT ID header
         headers.set('x-gpt-id', '1');
-        // Include the user's JWT as a Bearer token
-        headers.set('Authorization', `Bearer ${jwt}`);
+        // Include the user's JWT as a Bearer token only if not already present
+        if (!headers.has('Authorization')) {
+          headers.set('Authorization', `Bearer ${jwt}`);
+        }
       }
       return _origFetch(resource, { ...init, headers });
     };
@@ -696,9 +698,9 @@
               ? gpt.flowiseConfig.flowise.apiHost
               : window.flowiseConfig.apiHost;
             const flowId = `${proxyFlowId}_${sessionId}`;
-            // Use proxyFlowId only (no sessionId) for localStorage keys, as expected by web.js
-            const extKey = `${proxyFlowId}_EXTERNAL`;
-            const flagKey = `${proxyFlowId}_historyInjected`;
+            // Use the real flowise ID combined with sessionId for storage keys
+            const extKey = `${realFlowId}__${sessionId}_EXTERNAL`;
+            const flagKey = `${realFlowId}__${sessionId}_historyInjected`;
             // Inject history only if not already stored for this session
             if (!localStorage.getItem(flagKey)) {
               // Fetch history directly from Flowise API with proper token
@@ -732,7 +734,7 @@
             }
             // === Configure and initialize embed ===
             window.flowiseConfig = {
-              chatflowid: `${realFlowId}__${sessionId}`,
+              chatflowid: proxyFlowId,
               apiHost:    apiHost,
               token:      gpt.flowiseConfig.flowise.token,
               headers: {

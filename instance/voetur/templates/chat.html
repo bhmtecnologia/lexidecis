@@ -517,8 +517,8 @@
         // Stub: will be overridden per session
       }
     };
-    import AuthService from '../assets/js/auth.js';
-    import { listChats, listGpts, getGptConfig, createChatMessage } from "../assets/js/api.js";
+import AuthService from '../assets/js/auth.js';
+import { listChats, listGpts, getGptConfig, createChatMessage, setFlowiseHost, fetchChatHistory as getChatHistory } from "../assets/js/api.js";
 
     // === Flowise chatflowId mapping helper ===
     const chatflowIdMap = {
@@ -749,24 +749,9 @@
 
             // Inject session history only if not already stored
             if (!localStorage.getItem(sessionFlagKey)) {
-              // Fetch history directly from Flowise API
-              const response = await fetch(
-                `${apiHost}/api/v1/chatmessage/${realFlowId}?sessionId=${sessionId}`, {
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${gpt.flowiseConfig.flowise.token}`
-                  }
-                }
-              );
-              if (!response.ok) throw new Error(`Status ${response.status}`);
-              const apiHistory = await response.json();
-              const formattedHistory = apiHistory.map(msg => ({
-                message: msg.content,
-                type: msg.role === 'userMessage' ? 'userMessage' : 'apiMessage',
-                dateTime: msg.createdDate || new Date().toISOString(),
-                messageId: msg.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substr(2, 9)),
-                fileUploads: msg.fileUploads || []
-              }));
+              // Use centralized API handler
+              setFlowiseHost(apiHost);
+              const formattedHistory = await getChatHistory(AuthService, realFlowId, sessionId);
               // Store under session-specific keys
               localStorage.setItem(sessionExtKey, JSON.stringify({ chatHistory: formattedHistory, chatId: sessionId }));
               localStorage.setItem(sessionFlagKey, 'true');

@@ -375,31 +375,41 @@ export async function listChats(AuthService) {
   return await response.json();
 }
 
+// Host base configurável para a API Flowise
+let flowiseHost = '';
+
+/**
+ * Define o host base para a API Flowise.
+ * @param {string} host - URL base da API (ex: https://proxy-5cun.onrender.com)
+ */
+export function setFlowiseHost(host) {
+  flowiseHost = host;
+}
+
 /**
  * Busca o histórico de mensagens de um chat específico.
  *
  * @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
- * @param {string} sessionId - Identificador da sessão do chat.
  * @param {string} chatflowId - Identificador do chatflow (configuração do fluxo).
- * @param {string} apiHost - URL base da API do Flowise (ex: https://proxy-5cun.onrender.com).
- * @param {string} token - Token de autenticação (caso necessário para acesso à API externa).
+ * @param {string} sessionId - Identificador da sessão do chat.
  * @returns {Promise<Array>} - Array com o histórico de mensagens do chat.
  * @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro na API.
  */
-export async function fetchChatHistory(AuthService, sessionId, chatflowId, apiHost, token) {
+export async function fetchChatHistory(AuthService, chatflowId, sessionId) {
   const user = AuthService.user;
   if (!user) throw new Error("Usuário não autenticado");
+  if (!flowiseHost) {
+    throw new Error('Flowise API host não configurado. Use setFlowiseHost(host) antes de chamar fetchChatHistory.');
+  }
   await user.getIdToken(); // Garantir autenticação (mesmo que não usado neste fetch)
 
-  const apiURL = `${apiHost}/api/v1/chatmessage/${chatflowId}?sessionId=${sessionId}`;
+  const apiURL = `${flowiseHost}/api/v1/chatmessage/${chatflowId}?sessionId=${sessionId}`;
   console.debug('Buscando histórico em:', apiURL);
 
   try {
+    // O token deve ser gerenciado externamente se necessário para a API do Flowise.
     const response = await fetch(apiURL, {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${token}`
-      }
+      method: "GET"
     });
 
     const responseBody = await response.text();
@@ -536,3 +546,4 @@ export async function getGptConfig(AuthService, gptId) {
 
   return await response.json();
 }
+

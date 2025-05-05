@@ -572,8 +572,8 @@
           // Use base Flowise config from the GPT metadata
           const baseFlowise = gpt.flowiseConfig.flowise;
           // === Initialize empty history in localStorage for new session ===
-          const newExtKey = `${baseFlowise.chatflowId}__${override.sessionId}_EXTERNAL`;
-          const newFlagKey = `${baseFlowise.chatflowId}__${override.sessionId}_historyInjected`;
+          const newExtKey = `${baseFlowise.chatflowId}_EXTERNAL`;
+          const newFlagKey = `${baseFlowise.chatflowId}_historyInjected`;
           if (!localStorage.getItem(newFlagKey)) {
             localStorage.setItem(newExtKey, JSON.stringify({ chatHistory: [], chatId: override.sessionId }));
             localStorage.setItem(newFlagKey, 'true');

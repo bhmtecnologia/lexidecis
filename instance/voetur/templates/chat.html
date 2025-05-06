@@ -639,6 +639,25 @@
             },
             chatflowConfig:   override
           };
+          // Definir título dinâmico no chat baseado no GPT selecionado
+          if (cfg.theme && cfg.theme.chatWindow) {
+            cfg.theme.chatWindow.title = gpt.name || 'Escolha um GPT';
+          }
+          // Definir mensagem de boas-vindas dinâmica
+          if (cfg.theme && cfg.theme.chatWindow) {
+            cfg.theme.chatWindow.welcomeMessage = gpt.description || 'Bem-vindo ao assistente';
+          }
+          // Definir prompts iniciais dinâmicos
+          if (cfg.theme && cfg.theme.chatWindow) {
+            cfg.theme.chatWindow.starterPrompts = (() => {
+              const prompts = gpt.starterPrompts;
+              if (!prompts) return ['Quem é você?'];
+              if (Array.isArray(prompts)) return prompts;
+              return prompts.includes(',')
+                ? prompts.split(',').map(p => p.trim())
+                : [prompts];
+            })();
+          }
           console.log('GPT Override for', gpt.id, override);
           console.log('Config object passed to Chatbot.initFull:', cfg);
           console.log('Full Chatbot.initFull payload (JSON):', JSON.stringify(cfg, null, 2));
@@ -841,13 +860,17 @@
     const miniToggle = document.getElementById('mini-toggle');
     const miniNew    = document.getElementById('mini-new');
     const miniUser   = document.getElementById('mini-user');
-    document.getElementById('new-chat').addEventListener('click', () => {
-      document.querySelectorAll('#chat-sidebar li').forEach(li => li.classList.remove('selected'));
-      const lexiItem = document.getElementById('lexi-ai-item'); lexiItem.classList.add('selected');
-      const chatArea = document.getElementById('chat-area');
-      chatArea.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
-      if (window.flowiseChatbot && window.flowiseConfig) window.flowiseChatbot.initFull(window.flowiseConfig);
-    });
+document.getElementById('new-chat').addEventListener('click', () => {
+  document.querySelectorAll('#chat-sidebar li').forEach(li => li.classList.remove('selected'));
+  const lexiItem = document.getElementById('lexi-ai-item'); lexiItem.classList.add('selected');
+  const chatArea = document.getElementById('chat-area');
+  chatArea.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
+  // Resetar título ao iniciar novo chat
+  window.flowiseConfig.theme.chatWindow.title = 'Escolha um GPT';
+  // Resetar mensagem de boas-vindas ao iniciar novo chat
+  window.flowiseConfig.theme.chatWindow.welcomeMessage = 'Bem-vindo ao assistente';
+  if (window.flowiseChatbot && window.flowiseConfig) window.flowiseChatbot.initFull(window.flowiseConfig);
+});
     document.getElementById('logout-btn').addEventListener('click', () => AuthService.logout());
     const SIDEBAR_KEY = 'chatSidebarHidden';
     function refreshSearchOptions() {

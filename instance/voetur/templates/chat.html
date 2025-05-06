@@ -555,12 +555,15 @@
       gptList.forEach(gpt => {
         const li = document.createElement('li');
         li.id = gpt.id;
-        li.className = 'px-3 py-2 d-flex align-items-center';
+        li.className = 'px-3 py-2 d-flex align-items-center justify-content-between';
         li.setAttribute('role', 'button');
         li.tabIndex = 0;
         li.innerHTML = `
-          <img src="${gpt.imageUrl}" class="provider-icon" alt="${gpt.name} icon"/>
-          <span class="flex-grow-1">${gpt.name}</span>
+          <div class="d-flex align-items-center">
+            <img src="${gpt.imageUrl}" class="provider-icon" alt="${gpt.name} icon"/>
+            <span class="ms-2">${gpt.name}</span>
+          </div>
+          <span class="badge small bg-light text-dark">${gpt.category || 'Sem categoria'}</span>
         `;
         li.addEventListener('click', async () => {
           let override = configCache[gpt.id];
@@ -588,6 +591,9 @@
           }
           // Use base Flowise config from the GPT metadata
           const baseFlowise = gpt.flowiseConfig.flowise;
+          // Normalize API host to avoid double slashes
+          const rawApiHost = baseFlowise.apiHost || '';
+          const apiHost = rawApiHost.replace(/\/$/, '');
           // === Initialize empty history in localStorage for new session ===
           const newExtKey = `${baseFlowise.chatflowId}_EXTERNAL`;
           const newFlagKey = `${baseFlowise.chatflowId}_historyInjected`;
@@ -599,7 +605,7 @@
           // Build config with chatflowConfig nested
           const cfg = {
             chatflowid: baseFlowise.chatflowId,
-            apiHost:          baseFlowise.apiHost,
+            apiHost:          apiHost,
             token:            baseFlowise.token,
             headers: {
               'x-user-email': AuthService.user.email,
@@ -751,9 +757,10 @@
             // Use proxy-mapped chatflow ID only, without sessionId
             const proxyFlowId = mapChatflowId(realFlowId);
             // Determine API host for this GPT
-            const apiHost = gpt && gpt.flowiseConfig && gpt.flowiseConfig.flowise
+            const rawApiHost = gpt && gpt.flowiseConfig && gpt.flowiseConfig.flowise
               ? gpt.flowiseConfig.flowise.apiHost
               : window.flowiseConfig.apiHost;
+            const apiHost = rawApiHost.replace(/\/$/, '');
             const flowId = `${proxyFlowId}_${sessionId}`;
             // Session-specific storage keys
             const sessionExtKey = `${proxyFlowId}__${sessionId}_EXTERNAL`;

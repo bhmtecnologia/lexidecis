@@ -545,7 +545,11 @@
           const baseFlowise = gpt.flowiseConfig.flowise;
           // Normalize API host to avoid double slashes
           const rawApiHost = baseFlowise.apiHost || '';
-          const apiHost = rawApiHost.replace(/\/$/, '');
+          let apiHost = rawApiHost.replace(/\/$/, '');
+          // Normalize apiHost: if missing protocol (e.g., ":3000" or "localhost:3000"), prepend current origin protocol and host
+          if (!/^https?:\/\//.test(apiHost)) {
+            apiHost = window.location.protocol + '//' + apiHost;
+          }
           // === Initialize empty history in localStorage for new session ===
           const newExtKey = `${baseFlowise.chatflowId}_EXTERNAL`;
           const newFlagKey = `${baseFlowise.chatflowId}_historyInjected`;
@@ -719,7 +723,11 @@
             const rawApiHost = gpt && gpt.flowiseConfig && gpt.flowiseConfig.flowise
               ? gpt.flowiseConfig.flowise.apiHost
               : window.flowiseConfig.apiHost;
-            const apiHost = rawApiHost.replace(/\/$/, '');
+            let apiHost = rawApiHost.replace(/\/$/, '');
+            // Normalize apiHost: if missing protocol (e.g., ":3000" or "localhost:3000"), prepend current origin protocol and host
+            if (!/^https?:\/\//.test(apiHost)) {
+              apiHost = window.location.protocol + '//' + apiHost;
+            }
             const flowId = `${proxyFlowId}_${sessionId}`;
             // Session-specific storage keys
             const sessionExtKey = `${proxyFlowId}__${sessionId}_EXTERNAL`;
@@ -833,15 +841,13 @@
     const miniNew    = document.getElementById('mini-new');
     const miniUser   = document.getElementById('mini-user');
 document.getElementById('new-chat').addEventListener('click', () => {
+  // Clear current selection
   document.querySelectorAll('#chat-sidebar li').forEach(li => li.classList.remove('selected'));
-  const lexiItem = document.getElementById('lexi-ai-item'); lexiItem.classList.add('selected');
-  const chatArea = document.getElementById('chat-area');
-  chatArea.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
-  // Resetar título ao iniciar novo chat
-  window.flowiseConfig.theme.chatWindow.title = 'Escolha um GPT';
-  // Resetar mensagem de boas-vindas ao iniciar novo chat
-  window.flowiseConfig.theme.chatWindow.welcomeMessage = 'Bem-vindo ao assistente';
-  if (window.flowiseChatbot && window.flowiseConfig) window.flowiseChatbot.initFull(window.flowiseConfig);
+  // Trigger default GPT selection to initialize via its own click handler
+  const defaultEl = document.getElementById(defaultGptId);
+  if (defaultEl) {
+    defaultEl.click();
+  }
 });
     document.getElementById('logout-btn').addEventListener('click', () => AuthService.logout());
     const SIDEBAR_KEY = 'chatSidebarHidden';
@@ -934,7 +940,11 @@ document.getElementById('new-chat').addEventListener('click', () => {
         // Base Flowise config
         const baseFlowise = gpt.flowiseConfig.flowise;
         const rawApiHost = baseFlowise.apiHost || '';
-        const apiHost = rawApiHost.replace(/\/$/, '');
+        let apiHost = rawApiHost.replace(/\/$/, '');
+        // Normalize apiHost: if missing protocol (e.g., ":3000" or "localhost:3000"), prepend current origin protocol and host
+        if (!/^https?:\/\//.test(apiHost)) {
+          apiHost = window.location.protocol + '//' + apiHost;
+        }
         // Initialize empty history
         const extKey = `${baseFlowise.chatflowId}_EXTERNAL`;
         const flagKey = `${baseFlowise.chatflowId}_historyInjected`;

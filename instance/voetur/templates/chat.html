@@ -941,37 +941,107 @@ document.getElementById('new-chat').addEventListener('click', () => {
       updateUI();
     });
     updateUI();
-    import('https://proxy-5cun.onrender.com/web.js')
-      .then(({ default: Chatbot }) => {
-        window.flowiseChatbot = Chatbot;
-        // Default flow using proxy-based chatflow ID
-        const chatflowidPadrao = mapChatflowId('FLOW1_CHAT');
-        // Generate and inject default session history for proxy-based chat
-        const defaultSessionId = crypto.randomUUID();
-        const defaultExtKey = `${chatflowidPadrao}_EXTERNAL`;
-        const defaultFlagKey = `${chatflowidPadrao}_historyInjected`;
-        if (!localStorage.getItem(defaultFlagKey)) {
-          localStorage.setItem(defaultExtKey, JSON.stringify({ chatHistory: [], chatId: defaultSessionId }));
-          localStorage.setItem(defaultFlagKey, 'true');
+    // Default GPT override ID (replace with the GPT ID from your API)
+    const defaultGptId = 'ed2af5a7-a9f0-4882-9dbc-a7f9dbb9b1e4';
+    // Initialize default GPT chat using its own API host
+    (async () => {
+      // Wait for AuthService to be ready
+      await new Promise(resolve => {
+        const checkAuth = setInterval(() => {
+          if (AuthService.user) {
+            clearInterval(checkAuth);
+            resolve();
+          }
+        }, 100);
+      });
+      // Wait for gptMap to be populated
+      await new Promise(resolve => {
+        const checkMap = setInterval(() => {
+          if (gptMap[defaultGptId]) {
+            clearInterval(checkMap);
+            resolve();
+          }
+        }, 100);
+      });
+      try {
+        const gpt = gptMap[defaultGptId];
+        // Fetch override config
+        let override = await getGptConfig(AuthService, defaultGptId);
+        // Handle array wrapper
+        if (Array.isArray(override) && override.length > 0 && override[0] && typeof override[0] === 'object' && Object.prototype.hasOwnProperty.call(override[0], '')) {
+          try {
+            override = JSON.parse(override[0]['']);
+          } catch {}
         }
-        // Preserve any existing config (e.g., theme, observers) if set
-        const baseConfig = window.flowiseConfig || {};
-        window.flowiseConfig = {
-          ...baseConfig,
-          chatflowid:     chatflowidPadrao,
-          apiHost:        'https://proxy-5cun.onrender.com',
-          headers: {
-            'x-user-email': AuthService.user?.email || '',
-            'x-user-uuid':  AuthService.user?.uid   || '',
-            'x-user-jwt':   AuthService.token       || '',
-            'x-gpt-id':     '1'
+        // Ensure sessionId
+        if (!override.sessionId) {
+          override.sessionId = crypto.randomUUID();
+        }
+        // Base Flowise config
+        const baseFlowise = gpt.flowiseConfig.flowise;
+        const rawApiHost = baseFlowise.apiHost || '';
+        const apiHost = rawApiHost.replace(/\/$/, '');
+        // Initialize empty history
+        const extKey = `${baseFlowise.chatflowId}_EXTERNAL`;
+        const flagKey = `${baseFlowise.chatflowId}_historyInjected`;
+        localStorage.removeItem(extKey);
+        localStorage.removeItem(flagKey);
+        localStorage.setItem(extKey, JSON.stringify({ chatHistory: [], chatId: override.sessionId }));
+        localStorage.setItem(flagKey, 'true');
+        // Build config object
+        const cfg = {
+          chatflowid:    baseFlowise.chatflowId,
+          apiHost:       apiHost,
+          token:         baseFlowise.token,
+          headers:       {
+            'x-user-email': AuthService.user.email,
+            'x-user-uuid':  AuthService.user.uid,
+            'x-user-jwt':   AuthService.token,
+            'x-gpt-id':     defaultGptId
           },
-          chatflowConfig: { sessionId: defaultSessionId }
+          theme:         window.flowiseConfig.theme,
+          observersConfig: {
+            observeLoading: async (loading) => {
+              if (loading) {
+                try {
+                  const userInput = document
+                    .querySelector('flowise-fullchatbot')
+                    .shadowRoot
+                    .querySelector('textarea').value;
+                  console.log('Sending chatmessage payload:', {
+                    chatflowid: cfg.chatflowid,
+                    sessionId: override.sessionId,
+                    role: 'user',
+                    message: userInput
+                  });
+                  await createChatMessage(AuthService, cfg.chatflowid, override.sessionId, 'user', userInput);
+                  console.log('Chat message created successfully');
+                } catch (err) {
+                  console.error('Failed to create chat message', err);
+                }
+              }
+            }
+          },
+          chatflowConfig: override
         };
-        // Initialize embed with preserved theme and observers if available
-        Chatbot.initFull(window.flowiseConfig);
-      })
-      .catch(err => console.error('Erro carregando Flowise:', err));
+        // Dynamic UI texts
+        cfg.theme.chatWindow.title           = gpt.name || 'Escolha um GPT';
+        cfg.theme.chatWindow.welcomeMessage  = gpt.description || 'Bem-vindo ao assistente';
+        cfg.theme.chatWindow.starterPrompts  = (() => {
+          const prompts = gpt.starterPrompts;
+          if (!prompts) return ['Quem é você?'];
+          if (Array.isArray(prompts)) return prompts;
+          return prompts.includes(',') ? prompts.split(',').map(p => p.trim()) : [prompts];
+        })();
+        // Replace chat container and init
+        const chatArea = document.getElementById('chat-area');
+        chatArea.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
+        // Launch chat
+        await import(`${apiHost}/web.js`).then(mod => mod.default.initFull(cfg));
+      } catch (err) {
+        console.error('Erro inicializando chat padrão:', err);
+      }
+    })();
     const avatarBlock = document.getElementById('avatarBlock');
     const userMenu    = document.getElementById('userMenu');
     const userBtn     = document.getElementById('userMenuBtn');

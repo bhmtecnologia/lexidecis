@@ -669,13 +669,19 @@
           });
           // Clique para carregar histórico usando chatflowId mapping
           li.addEventListener('click', async () => {
+            // Show loading spinner on selected chat
+            const spinner = document.createElement('div');
+            spinner.className = 'spinner-border spinner-border-sm text-primary me-2';
+            spinner.setAttribute('role', 'status');
+            spinner.innerHTML = '<span class="visually-hidden">Loading...</span>';
+            li.insertBefore(spinner, li.firstChild);
             // Marca visualmente o item selecionado
             document.querySelectorAll('#chat-sidebar li').forEach(elem => elem.classList.remove('selected'));
             li.classList.add('selected');
 
             const sessionId = chat.id;
-            // Load GPT-specific override config (if not proxy)
-            const gptKey = chat.fk_gpt_id || chat.gpt_id;
+            // Use the GPT ID from the chat object (support different naming)
+            const gptKey = chat.fk_gpt_id || chat.gpt_id || chat.gptId;
             // Debug logs for GPT config retrieval
             console.log('Debug: chat object has fk_gpt_id =', chat.fk_gpt_id, 'gpt_id =', chat.gpt_id);
             console.log('Debug: available GPT configs in cache:', Object.keys(configCache));
@@ -703,9 +709,10 @@
             try {
             // Determine the actual Flowise chatflowId for this GPT
             const gpt = gptMap[gptKey];
-            const realFlowId = gpt && gpt.flowiseConfig && gpt.flowiseConfig.flowise
-              ? gpt.flowiseConfig.flowise.chatflowId
-              : (chat.fk_gpt_id || chat.gpt_id);
+            // Respect the chat's own flowiseConfig.chatflowId if provided, otherwise fallback to the GPT metadata
+            const realFlowId = chat.chatflowId
+              || (gpt && gpt.flowiseConfig && gpt.flowiseConfig.flowise && gpt.flowiseConfig.flowise.chatflowId)
+              || gptKey;
             // Use proxy-mapped chatflow ID only, without sessionId
             const proxyFlowId = mapChatflowId(realFlowId);
             // Determine API host for this GPT
@@ -793,11 +800,17 @@
                 }
               }
             };
+            // Atualiza título do chat com o nome do GPT
+            if (cfg.theme && cfg.theme.chatWindow) {
+              cfg.theme.chatWindow.title = gpt.name || cfg.theme.chatWindow.title;
+            }
             const chatArea = document.getElementById('chat-area');
             chatArea.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
             Chatbot.initFull(cfg);
+            spinner.remove();
             } catch (err) {
               console.error('Erro ao carregar histórico:', err);
+              spinner.remove();
             }
           });
         });

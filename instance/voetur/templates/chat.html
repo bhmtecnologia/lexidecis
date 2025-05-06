@@ -265,7 +265,7 @@
     /* Override Lexi AI and Explore GPTs button to match theme text-only style */
     #lexi-ai-item,
     #explore-gpt-item {
-      color: var(--theme-default);
+      color: var(--theme-body-font-color);
       background: none;
       border: none;
       background-color: transparent;
@@ -421,12 +421,30 @@
     // Initialize Flowise embed configuration with LexiDecis theme and observers stub
     window.flowiseConfig = {
       theme: {
+        disclaimer: {
+          title: 'Disclaimer',
+          message: 'By using this chatbot, you agree to the <a target="_blank" href="https://flowiseai.com/terms">Terms & Condition</a>',
+          textColor: 'black',
+          buttonColor: '#3b82f6',
+          buttonText: 'Start Chatting',
+          buttonTextColor: 'white',
+          blurredBackgroundColor: 'rgba(0, 0, 0, 0.4)', //The color of the blurred background that overlays the chat interface
+          backgroundColor: 'white',
+          denyButtonText: 'Cancel',
+          denyButtonBgColor: '#ef4444',
+        },
         chatWindow: {
           showTitle: true,
           titleBackgroundColor: "var(--theme-default)",
           welcomeMessage: "Sou a Lexi AI, com tecnologia ChatGPT 4o da OpenAI. Ideal para responder perguntas, gerar ideias e ajudar com clareza e rapidez. O que deseja saber?",
           errorMessage: "Ops, reduza sua pergunta e tente novamente.",
           backgroundColor: "transparent",
+          botMessage: {
+          backgroundColor: '#f7f8ff',
+          textColor: '#303235',
+          showAvatar: false,
+          //avatarSrc: 'https://raw.githubusercontent.com/zahidkhawaja/langchain-chat-nextjs/main/public/parroticon.png',
+        },
           userMessage: {
             backgroundColor: "#d9e8e5",
             textColor: "#292929",
@@ -434,9 +452,9 @@
           },
           textInput: {
             placeholder: "Mensagem...",
-            backgroundColor: "#f5f5f5",
+            backgroundColor: "var(--theme-default)",
             textColor: "#292929",
-            sendButtonColor: "var(--theme-default)",
+            sendButtonColor: "#ffffff",
             maxChars: 100000,
             maxCharsWarningMessage: "Você excedeu o limite de caracteres. Insira menos de 100000 caracteres.",
             autoFocus: true,
@@ -518,6 +536,12 @@
           <span class="badge small bg-light text-dark">${gpt.category || 'Sem categoria'}</span>
         `;
         li.addEventListener('click', async () => {
+          // Show loading spinner on GPT selection
+          const spinner = document.createElement('div');
+          spinner.className = 'spinner-border spinner-border-sm text-primary me-2';
+          spinner.setAttribute('role', 'status');
+          spinner.innerHTML = '<span class="visually-hidden">Loading...</span>';
+          li.insertBefore(spinner, li.firstChild);
           let override = configCache[gpt.id];
           if (!override) {
             override = await getGptConfig(AuthService, gpt.id);
@@ -628,6 +652,8 @@
           chatArea.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
           // Initialize with new config
           Chatbot.initFull(cfg);
+          // Remove loading spinner after initialization
+          spinner.remove();
         });
         aiList.appendChild(li);
       });

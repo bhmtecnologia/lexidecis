@@ -6,8 +6,8 @@
     --shape-border: #e5e5e5;
     --scrollbar-color: #aeaeae;
     --light-border: #dceee6;
-    --theme-default: #d907c4;
-    --theme-secondary: #f39159;
+    --theme-default: #363839;
+    --theme-secondary: #2a2726;
     --body-color: #f9f7f6;
     --primary-color: #770707;
     --secondary-color: #f39159;
@@ -99,14 +99,14 @@
     --shape-border: #474545;
     --span-color: #1D1D1D;
     --scrollbar-color: #eee;
-    --body-color: #0e0f0f;
+    --body-color: #363839;
     --light-border: #474545;
     --light-gray: #474545;
     --sub-title: #B6B0B0;
     --border-color: #474545;
     --gray-200: #313131;
     --active-bg-color: #1D1D1D;
-    --bg-light: #0e0f0f;
+    --bg-light: #363839;
     --light-semi-gray: #0e0f0f;
     --alert-light-light: #181919;
     --theme-body-font-color: #B6B0B0;

@@ -315,6 +315,7 @@ export async function renderFinanceiroAnaliseDashboard() {
         autoWidth: false,
         ordering: true,
         paging: true,
+        order: [[18, 'desc']],
         colReorder: true,
         dom: 'lBfrtip',
         buttons: ['copy', 'excel'],
@@ -340,7 +341,7 @@ export async function renderFinanceiroAnaliseDashboard() {
             const pendentes = dados.filter(l => {
               if (!(l.dados && l.dados.status)) return false;
               const s = l.dados.status.toLowerCase();
-              return s === 'pendente'
+              return s === 'integrado benner'
                   || s === 'enviado controladoria'
                   || s === 'enviado integração benner';
             });
@@ -371,8 +372,18 @@ export async function renderFinanceiroAnaliseDashboard() {
               const projetoName = projObj?.nome || '-';
               // Determine action buttons based on status
               let actionsHtml;
-              if (dadosLanc.status === 'Enviado Integração Benner') {
-                actionsHtml = `<button class="btn btn-sm btn-visualizar-log" data-id="${lancamento.id}" title="Visualizar Log" style="background-color: transparent; border: none; color: #0d6efd;"><i class="bi bi-eye"></i></button>`;
+              if (dadosLanc.status === 'Enviado Integração Benner' || dadosLanc.status === 'Integrado Benner') {
+                actionsHtml = `
+    <button
+      class="btn btn-sm btn-editar"
+      data-action="view"
+      data-id="${lancamento.id}"
+      title="Visualizar"
+      style="background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404;"
+    >
+      <i class="iconly-Show icli svg-color"></i>
+    </button>
+  `;
               } else {
                 actionsHtml = `<div style="display:inline-flex;gap:4px;">
       <button class="btn btn-sm btn-aprovar" data-id="${lancamento.id}" title="Aprovar" style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724;">

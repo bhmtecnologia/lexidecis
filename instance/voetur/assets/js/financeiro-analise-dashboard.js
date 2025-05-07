@@ -11,9 +11,26 @@ import { listLancamentos, updateLancamento, listFiliais, listFornecedores, listP
 // Funções utilitárias para formatação
 function formatDate(dateStr) {
   if (!dateStr) return '-';
-  const date = new Date(dateStr);
-  if (isNaN(date.getTime())) return dateStr;
-  return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+  // Determine separator ('T' or space) and extract date portion YYYY-MM-DD
+  let datePart = dateStr.split('T')[0];
+  if (datePart.includes(' ')) {
+    datePart = datePart.split(' ')[0];
+  }
+  const [year, month, day] = datePart.split('-');
+  // Return in DD/MM/YYYY format
+  if (!year || !month || !day) return dateStr;
+  return `${day}/${month}/${year}`;
+}
+
+function formatDateTime(dateStr) {
+  if (!dateStr) return '-';
+  // Split on 'T' or space to separate date and time
+  let [datePart, timePart] = dateStr.includes('T') ? dateStr.split('T') : dateStr.split(' ');
+  // Remove milliseconds if present
+  timePart = timePart ? timePart.split('.')[0] : '';
+  const [year, month, day] = datePart.split('-');
+  if (!year || !month || !day) return dateStr;
+  return `${day}/${month}/${year} ${timePart}`;
 }
 
 function formatCurrency(value) {
@@ -323,7 +340,9 @@ export async function renderFinanceiroAnaliseDashboard() {
             const pendentes = dados.filter(l => {
               if (!(l.dados && l.dados.status)) return false;
               const s = l.dados.status.toLowerCase();
-              return s === 'pendente' || s === 'enviado controladoria';
+              return s === 'pendente'
+                  || s === 'enviado controladoria'
+                  || s === 'enviado integração benner';
             });
             // Atualiza cards de resumo
             document.getElementById('total-pendentes').textContent = pendentes.length;
@@ -338,50 +357,74 @@ export async function renderFinanceiroAnaliseDashboard() {
               const dadosLanc = lancamento.dados || {};
               const nested = dadosLanc.dados || {};
               const parcelas = Array.isArray(nested.parcelas) ? nested.parcelas : [];
-              const vencimentos = parcelas.map(p => p.data_vencimento).filter(Boolean);
-              const vencHtml = vencimentos.length ? vencimentos.map(d => formatDate(d)).join('<br>') : '-';
               // Resolve nomes
               const filObj = window.filiaisData.find(f => f.uuid === (dadosLanc.filial || dadosLanc.filial_uuid));
               const fornObj = window.fornecedoresData.find(f => f.uuid === (dadosLanc.fornecedor || dadosLanc.fornecedor_uuid));
-              const centObj = window.centrosData.find(c => c.uuid === dadosLanc.centro_custo);
+              // Resolve Centro de Custo (fallback to centro_custo_id)
+              const centObj = window.centrosData.find(c => 
+                c.uuid === dadosLanc.centro_custo || c.uuid === dadosLanc.centro_custo_id
+              );
               const projObj = window.projetosData.find(p => p.uuid === dadosLanc.projeto);
               const filialName = filObj?.nome || dadosLanc.filial_nome || '-';
               const fornecedorName = fornObj?.nome || dadosLanc.fornecedor_nome || '-';
               const centroName = centObj?.nome || '-';
               const projetoName = projObj?.nome || '-';
+              // Determine action buttons based on status
+              let actionsHtml;
+              if (dadosLanc.status === 'Enviado Integração Benner') {
+                actionsHtml = `<button class="btn btn-sm btn-visualizar-log" data-id="${lancamento.id}" title="Visualizar Log" style="background-color: transparent; border: none; color: #0d6efd;"><i class="bi bi-eye"></i></button>`;
+              } else {
+                actionsHtml = `<div style="display:inline-flex;gap:4px;">
+      <button class="btn btn-sm btn-aprovar" data-id="${lancamento.id}" title="Aprovar" style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724;">
+        <i class="bi bi-check-lg"></i>
+      </button>
+      <button class="btn btn-sm btn-rejeitar" data-id="${lancamento.id}" title="Rejeitar" style="background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24;">
+        <i class="bi bi-x-lg"></i>
+      </button>
+      <button class="btn btn-sm btn-editar" data-id="${lancamento.id}" title="Editar" style="background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404;">
+        <i class="bi bi-pencil-square"></i>
+      </button>
+    </div>`;
+              }
               return [
-                `<div style="display:inline-flex;gap:4px;">
-                  <button class="btn btn-sm btn-aprovar" data-id="${lancamento.id}" title="Aprovar" style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724;">
-                    <i class="bi bi-check-lg"></i>
-                  </button>
-                  <button class="btn btn-sm btn-rejeitar" data-id="${lancamento.id}" title="Rejeitar" style="background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24;">
-                    <i class="bi bi-x-lg"></i>
-                  </button>
-                  <button class="btn btn-sm btn-editar" data-id="${lancamento.id}" title="Editar" style="background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404;">
-                    <i class="bi bi-pencil-square"></i>
-                  </button>
-                </div>`,
-                dadosLanc.status || '-',
+                actionsHtml,
+                `<span class="status-clickable text-primary" data-id="${lancamento.id}" style="cursor:pointer;">${dadosLanc.status||'-'}</span>`,
                 formatAnexos(lancamento.anexos),
+                // Filial (index 3)
                 filialName,
-                dadosLanc.data_inclusao ? formatDate(dadosLanc.data_inclusao) : '-',
-                lancamento.data_emissao ? formatDate(lancamento.data_emissao)
-                  : (dadosLanc.dataEmissao || dadosLanc.data_emissao)
-                    ? formatDate(dadosLanc.dataEmissao || dadosLanc.data_emissao)
-                    : '-',
-                vencHtml,
+                // Data de Inclusão (index 4)
+                (dadosLanc.data_entrada || dadosLanc.data_inclusao)
+                  ? formatDate(dadosLanc.data_entrada || dadosLanc.data_inclusao)
+                  : '-',
+                // Data de Emissão (index 5)
+                dadosLanc.data_emissao ? formatDate(dadosLanc.data_emissao) 
+                  : (dadosLanc.dataEmissao ? formatDate(dadosLanc.dataEmissao) : '-'),
+                // Data de Vencimento (index 6) – primeiro valor de parcelas_financeiras
+                Array.isArray(dadosLanc.parcelas_financeiras) && dadosLanc.parcelas_financeiras.length
+                  ? formatDate(dadosLanc.parcelas_financeiras[0].data_vencimento)
+                  : (dadosLanc.data_vencimento 
+                      ? formatDate(dadosLanc.data_vencimento) 
+                      : '-'),
+                // Fornecedor (index 7)
                 fornecedorName,
-                dadosLanc.numeroDocumento || dadosLanc.numero_documento || '-',
-                dadosLanc.valor ? formatCurrency(dadosLanc.valor) : '-',
+                // Nº documento (index 8)
+                dadosLanc.numero_documento || dadosLanc.numeroDocumento || '-',
+                // Valor (index 9)
+                (dadosLanc.valor_nominal !== undefined && dadosLanc.valor_nominal !== null) 
+                  ? formatCurrency(dadosLanc.valor_nominal) 
+                  : ((dadosLanc.valor !== undefined && dadosLanc.valor !== null) 
+                      ? formatCurrency(dadosLanc.valor) 
+                      : '-'),
                 dadosLanc.justificativa || '-',
                 dadosLanc.tipoDocumento || dadosLanc.tipo_documento || '-',
                 dadosLanc.forma_pagamento || '-',
                 centroName,
-                projetoName,
-                dadosLanc.email || '-',
-                lancamento.created_at ? formatDate(lancamento.created_at) : '-',
+                dadosLanc.projeto_nome || projetoName || '-',
+                // Email do usuário que incluiu (fallback to usuario_inclusao)
+                dadosLanc.email || dadosLanc.usuario_inclusao || '-',
+                lancamento.created_at ? formatDateTime(lancamento.created_at) : '-',
                 lancamento.created_by || '-',
-                lancamento.updated_at ? formatDate(lancamento.updated_at) : '-',
+                lancamento.updated_at ? formatDateTime(lancamento.updated_at) : '-',
                 lancamento.updated_by || '-'
               ];
             });
@@ -396,24 +439,26 @@ export async function renderFinanceiroAnaliseDashboard() {
         // Remova ou mantenha columnDefs conforme desejar
         columnDefs: [
           {
-            // Estiliza e define valor padrão para Filial (coluna 2) e Fornecedor (coluna 6)
-            targets: [2, 6],
+            // Estiliza e define valor padrão para Filial (coluna 3) e Fornecedor (coluna 7)
+            targets: [3, 7],
             className: 'text-start',
             defaultContent: '-'
           },
           {
             // Data de Inclusão, Emissão, Vencimento, Data criação, Data alteração
-            targets: [3, 4, 5, 16, 18],
+            targets: [4, 5, 6, 16, 18],
             render: function(data) {
               return data ? formatDate(data) : '-';
             }
           },
           {
-            // Valor column (index 8: 0-Ações,1-Anexo,2-Filial,3-DataInclusao,4-DataEmissao,5-Vencimento,6-Fornecedor,7-NumeroDocumento,8-Valor)
-            targets: 8,
+            // Valor column (index 9: 0-Ações,1-Anexo,2-Filial,3-DataInclusao,4-DataEmissao,5-Vencimento,6-Fornecedor,7-NumeroDocumento,8-Valor,9-Valor)
+            targets: 9,
             render: function(data) {
-              // Remove non-numeric characters and parse
-              const raw = String(data).replace(/[^0-9\-,\.]/g, '').replace(',', '.');
+              // Remove non-numeric characters but keep dots and commas
+              let raw = String(data).replace(/[^0-9\-,\.]/g, '');
+              // Remove thousand separators (dots), convert decimal comma to dot
+              raw = raw.replace(/\./g, '').replace(',', '.');
               const num = parseFloat(raw);
               return isNaN(num) ? '-' : formatCurrency(num);
             },
@@ -424,11 +469,24 @@ export async function renderFinanceiroAnaliseDashboard() {
         initComplete: function() {
           const tableApi = this.api();
           $('#analiseTable tbody').on('click', 'button.btn-aprovar', function() {
-            const id = $(this).data('id');
-            loadLancamentosNoCache().then(dados => {
-              const lanc = dados.find(l => l.id === id);
-              if (lanc) processImmediateDecision('aprovar', lanc);
-            });
+            const btn = $(this);
+            const originalHtml = btn.html();
+            // Show spinner and disable button
+            btn.prop('disabled', true)
+               .html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
+            const id = btn.data('id');
+            loadLancamentosNoCache()
+              .then(dados => {
+                const lanc = dados.find(l => l.id === id);
+                if (lanc) return processImmediateDecision('aprovar', lanc);
+              })
+              .catch(error => {
+                console.error("Erro ao carregar lançamentos para aprovação:", error);
+              })
+              .finally(() => {
+                // Restore original button state
+                btn.prop('disabled', false).html(originalHtml);
+              });
           });
           $('#analiseTable tbody').on('click', 'button.btn-rejeitar', function() {
             const btn = $(this);
@@ -458,6 +516,74 @@ export async function renderFinanceiroAnaliseDashboard() {
               const lanc = dados.find(l => l.id === id);
               if (lanc) openModal(lanc);
             });
+          });
+          // Update the status cell click handler to use the new class
+          $('#analiseTable tbody').on('click', 'span.status-clickable', function() {
+            const id = $(this).data('id');
+            loadLancamentosNoCache()
+              .then(dados => {
+                const lanc = dados.find(l => l.id === id);
+                if (!lanc) return;
+                // Combine logs from top level and nested
+                const topLog = Array.isArray(lanc.log) ? lanc.log : [];
+                const nestedLog = Array.isArray(lanc.dados?.log) ? lanc.dados.log : [];
+                const combined = [...topLog, ...nestedLog];
+                // Build list items
+                const items = combined.map(entry =>
+                  `<li class="list-group-item">${entry}</li>`
+                ).join('');
+                // Ensure modal exists or remove existing
+                $('#logModal').remove();
+                // Append modal HTML
+                const modalHtml = `
+                  <div class="modal fade" id="logModal" tabindex="-1" aria-labelledby="logModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title" id="logModalLabel">Histórico de Log</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                        </div>
+                        <div class="modal-body">
+                          <ul class="list-group">${items || '<li class="list-group-item">Sem histórico de log.</li>'}</ul>
+                        </div>
+                      </div>
+                    </div>
+                  </div>`;
+                $('body').append(modalHtml);
+                const modal = new bootstrap.Modal($('#logModal'));
+                modal.show();
+              })
+              .catch(err => console.error('Erro ao carregar log:', err));
+          });
+          // Handler for visualize-log button
+          $('#analiseTable tbody').on('click', 'button.btn-visualizar-log', function() {
+            const id = $(this).data('id');
+            loadLancamentosNoCache()
+              .then(dados => {
+                const lanc = dados.find(l => l.id === id);
+                if (!lanc) return;
+                const payload = lanc.dados || {};
+                const prettyJson = JSON.stringify(payload, null, 2);
+                $('#logModal').remove();
+                const modalHtml = `
+                  <div class="modal fade" id="logModal" tabindex="-1" aria-labelledby="logModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title" id="logModalLabel">Payload JSONB</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                        </div>
+                        <div class="modal-body">
+                          <pre class="bg-light p-3" style="white-space: pre-wrap; word-break: break-all;">${prettyJson}</pre>
+                        </div>
+                      </div>
+                    </div>
+                  </div>`;
+                $('body').append(modalHtml);
+                const modal = new bootstrap.Modal($('#logModal'));
+                modal.show();
+              })
+              .catch(err => console.error('Erro ao carregar payload:', err));
           });
         },
       });
@@ -566,7 +692,7 @@ export async function renderFinanceiroAnaliseDashboard() {
   }
 
   async function processModalApprove() {
-    await processModalUpdate("Aprovado");
+    await processModalUpdate("Enviado Integração Benner");
   }
 
   async function processModalReject() {
@@ -622,9 +748,19 @@ export async function renderFinanceiroAnaliseDashboard() {
     const dadosLanc = lancamento.dados || {};
     const atualizacoes = {
       ...dadosLanc,
-      status: decision === 'aprovar' ? 'Aprovado' : 'Devolvido Controladoria',
+      status: decision === 'aprovar' ? 'Enviado Integração Benner' : 'Devolvido Controladoria',
       data_analise: new Date().toISOString()
     };
+    // Preserve full existing log from top-level or nested in dados
+    let existingLog = [];
+    if (Array.isArray(lancamento.log)) {
+      existingLog = lancamento.log;
+    } else if (lancamento.dados && Array.isArray(lancamento.dados.log)) {
+      existingLog = lancamento.dados.log;
+    }
+    const actionText = decision === 'aprovar' ? 'Aprovado' : 'Rejeitado';
+    const newLogEntry = `${new Date().toLocaleString('pt-BR')} - ${actionText} pelo usuário: ${AuthService.user.email}`;
+    atualizacoes.log = [...existingLog, newLogEntry];
     try {
       await updateLancamento(AuthService, lancamento.id, atualizacoes);
       // Recarrega a tabela após decisão imediata sem chamar função inexistente

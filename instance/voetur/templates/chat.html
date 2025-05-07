@@ -272,13 +272,13 @@
     }
     #lexi-ai-item:hover,
     #explore-gpt-item:hover {
-      background-color: var(--theme-default) !important;
+      background-color: var(--theme-secondary) !important;
       color: var(--body-color) !important;
     }
 
     /* Hover style for chat list items - updated to only set background, and set inner text/icons to theme-body-font-color */
     #chat-list li:hover {
-      background-color: var(--theme-default) !important;
+      background-color: var(--theme-secondary) !important;
     }
     #chat-list li:hover * {
       color: var(--theme-body-font-color) !important;
@@ -433,6 +433,7 @@
           denyButtonText: 'Cancel',
           denyButtonBgColor: '#ef4444',
         },
+
         chatWindow: {
           showTitle: true,
           titleBackgroundColor: "var(--theme-default)",
@@ -446,7 +447,7 @@
           //avatarSrc: 'https://raw.githubusercontent.com/zahidkhawaja/langchain-chat-nextjs/main/public/parroticon.png',
         },
           userMessage: {
-            backgroundColor: "#d9e8e5",
+            backgroundColor: "var(--body-color)",
             textColor: "#292929",
             showAvatar: false
           },
@@ -536,12 +537,6 @@
           <span class="badge small bg-light text-dark">${gpt.category || 'Sem categoria'}</span>
         `;
         li.addEventListener('click', async () => {
-          // Show loading spinner on GPT selection
-          const spinner = document.createElement('div');
-          spinner.className = 'spinner-border spinner-border-sm text-primary me-2';
-          spinner.setAttribute('role', 'status');
-          spinner.innerHTML = '<span class="visually-hidden">Loading...</span>';
-          li.insertBefore(spinner, li.firstChild);
           let override = configCache[gpt.id];
           if (!override) {
             override = await getGptConfig(AuthService, gpt.id);
@@ -652,8 +647,6 @@
           chatArea.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
           // Initialize with new config
           Chatbot.initFull(cfg);
-          // Remove loading spinner after initialization
-          spinner.remove();
         });
         aiList.appendChild(li);
       });
@@ -680,6 +673,41 @@
           const span = document.createElement('span');
           span.textContent = chat.name || chat.id;
           li.appendChild(span);
+          // Fetch and display message count
+          (async () => {
+            try {
+              const gptKey = chat.fk_gpt_id || chat.gpt_id || chat.gptId;
+              const gpt = gptMap[gptKey];
+              const baseFlowise = gpt?.flowiseConfig?.flowise;
+              let apiHost = baseFlowise?.apiHost || window.flowiseConfig.apiHost;
+              apiHost = apiHost.replace(/\/$/, '');
+              if (!/^https?:\/\//.test(apiHost)) {
+                apiHost = window.location.protocol + '//' + apiHost;
+              }
+              const flowId = baseFlowise?.chatflowId || gptKey;
+              const res = await fetch(
+                `${apiHost}/api/v1/chatmessage/${flowId}?sessionId=${chat.id}`,
+                {
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${baseFlowise?.token}`
+                  }
+                }
+              );
+              if (res.ok) {
+                const history = await res.json();
+                const count = Array.isArray(history)
+                  ? history.length
+                  : (history.data?.length || 0);
+                const countBadge = document.createElement('span');
+                countBadge.className = 'badge bg-secondary ms-2';
+                countBadge.textContent = count;
+                span.appendChild(countBadge);
+              }
+            } catch (err) {
+              console.error('Failed to fetch message count', err);
+            }
+          })();
           const actions = document.createElement('div');
           actions.innerHTML = `<button class="chat-options-btn btn-icon" title="Opções"><i class="bi bi-three-dots"></i></button>`;
           li.appendChild(actions);

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Agro - CEO</title>
+</head>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Alpine.js for interactivity -->
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x/dist/cdn.min.js" defer></script>
+  <!-- Leaflet.js for climate map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <!-- Chart.js for price trends -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+</head>
+<body x-data="{ darkMode: false }" :class="{ 'dark bg-gray-900 text-gray-100': darkMode }" class="bg-gray-50 text-gray-800">
+  <!-- Header -->
+  <header class="bg-white shadow p-6 mb-6">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+      <div>
+        <h1 class="text-3xl font-bold">Bom dia, Sr. CEO!</h1>
+        <p class="mt-2 text-lg text-gray-600">Mercado de grãos em alta; previsão de chuva favorável nesta semana.</p>
+      </div>
+      <div class="flex items-center space-x-4">
+        <!-- Date range picker -->
+        <input type="date" class="border rounded p-1" x-model="startDate" />
+        <input type="date" class="border rounded p-1" x-model="endDate" />
+        <!-- Theme toggle -->
+        <button @click="darkMode = !darkMode"
+                class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-2xl shadow hover:opacity-80 transition">
+          <span x-show="!darkMode">🌙 Dark</span>
+          <span x-show="darkMode">☀️ Light</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Grid de Cards -->
+  <main class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <!-- Card 1: Preço da Soja -->
+    <div class="bg-white rounded-2xl shadow p-6 transition hover:shadow-md">
+      <h2 class="text-xl font-semibold mb-4">Preço da Soja</h2>
+      <p class="text-4xl font-bold">R$ 1500<span class="text-green-500"> +2.3%</span></p>
+    </div>
+    <!-- Card 2: Índice de Clima -->
+    <div class="bg-white rounded-2xl shadow p-6 transition hover:shadow-md">
+      <h2 class="text-xl font-semibold mb-4">Índice de Clima</h2>
+      <p class="text-4xl font-bold">Favorável</p>
+      <p class="text-gray-500 mt-1">Chuvas dentro da média</p>
+    </div>
+    <!-- Card 3: Principais Notícias -->
+    <div class="bg-white rounded-2xl shadow p-6 transition hover:shadow-md">
+      <h2 class="text-xl font-semibold mb-4">Principais Notícias</h2>
+      <ul class="list-disc list-inside text-gray-700">
+        <li><span class="font-bold">+:</span> Safra recorde de soja prevista.</li>
+        <li><span class="font-bold">-:</span> Atrasos nos embarques via porto.</li>
+      </ul>
+    </div>
+    <!-- Card 4: Saldo da Carteira Agro -->
+    <div class="bg-white rounded-2xl shadow p-6 transition hover:shadow-md">
+      <h2 class="text-xl font-semibold mb-4">Saldo da Carteira</h2>
+      <p class="text-4xl font-bold">R$ 12.5M</p>
+    </div>
+    <!-- Card 5: Tendência Política -->
+    <div class="bg-white rounded-2xl shadow p-6 transition hover:shadow-md">
+      <h2 class="text-xl font-semibold mb-4">Tendência Política</h2>
+      <p class="text-4xl font-bold">Neutra</p>
+    </div>
+    <!-- Card 6: Exportações e Logística -->
+    <div class="bg-white rounded-2xl shadow p-6 transition hover:shadow-md">
+      <h2 class="text-xl font-semibold mb-4">Exportações (toneladas)</h2>
+      <p class="text-4xl font-bold">250K</p>
+      <p class="text-gray-500 mt-1">Última semana</p>
+    </div>
+  </main>
+
+</main>
+
+  <!-- Price Trend Chart -->
+  <section class="max-w-7xl mx-auto mt-8 p-6 bg-white dark:bg-gray-800 rounded-2xl shadow">
+    <h2 class="text-2xl font-semibold mb-4">Tendência de Preços de Soja (30 dias)</h2>
+    <canvas id="priceChart" height="100"></canvas>
+  </section>
+
+  <!-- Climate Map -->
+  <section class="max-w-7xl mx-auto mt-8 p-6 bg-white dark:bg-gray-800 rounded-2xl shadow">
+    <h2 class="text-2xl font-semibold mb-4">Mapa Climático</h2>
+    <div id="climateMap" class="w-full h-64 rounded-lg"></div>
+  </section>
+
+  <!-- Footer Assistente GPT & Feedback -->
+  <footer class="fixed bottom-0 w-full bg-white shadow-inner p-4 flex justify-between items-center">
+    <button class="bg-green-600 text-white px-4 py-2 rounded-full shadow hover:bg-green-700 transition">Assistente GPT</button>
+    <div class="space-x-2">
+      <button class="text-gray-500 hover:text-gray-800 text-2xl">👍</button>
+      <button class="text-gray-500 hover:text-gray-800 text-2xl">👎</button>
+    </div>
+  </footer>
+
+  <script>
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('dashboard', () => ({
+        startDate: new Date().toISOString().substr(0,10),
+        endDate: new Date().toISOString().substr(0,10),
+      }));
+    });
+
+    // Sample Chart.js configuration
+    const ctx = document.getElementById('priceChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: Array.from({ length: 30 }, (_, i) => `Dia ${i+1}`),
+        datasets: [{
+          label: 'R$ / tonelada',
+          data: Array.from({ length: 30 }, () => Math.random() * (1600 - 1400) + 1400),
+          tension: 0.3,
+        }]
+      },
+      options: { responsive: true }
+    });
+
+    // Initialize Leaflet map
+    const map = L.map('climateMap').setView([-15.7801, -47.9292], 4);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+  </script>
+</body>
+</html>

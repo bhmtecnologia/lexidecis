@@ -345,7 +345,9 @@ export async function renderFinanceiroAnaliseDashboard() {
               // Determine action buttons based on status
               let actionsHtml;
               if (dadosLanc.status === 'Enviado Integração Benner' || dadosLanc.status === 'Integrado Benner') {
-                actionsHtml = `<button class="btn btn-sm btn-visualizar-log" data-id="${lancamento.id}" title="Visualizar Log" style="background-color: transparent; border: none; color: #0d6efd;"><i class="bi bi-eye"></i></button>`;
+                actionsHtml = `<button class="btn btn-sm btn-visualizar" data-id="${lancamento.id}" title="Visualizar" style="background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404;">
+    <i class="iconly-Show icli svg-color"></i>
+  </button>`;
               } else {
                 actionsHtml = `<div style="display:inline-flex;gap:4px;">
       <button class="btn btn-sm btn-aprovar" data-id="${lancamento.id}" title="Aprovar" style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724;">
@@ -510,7 +512,7 @@ export async function renderFinanceiroAnaliseDashboard() {
                 // Append modal HTML
                 const modalHtml = `
                   <div class="modal fade" id="logModal" tabindex="-1" aria-labelledby="logModalLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-lg">
+                    <div class="modal-dialog modal-lg modal-dialog-scrollable">
                       <div class="modal-content">
                         <div class="modal-header">
                           <h5 class="modal-title" id="logModalLabel">Histórico de Log</h5>
@@ -518,6 +520,9 @@ export async function renderFinanceiroAnaliseDashboard() {
                         </div>
                         <div class="modal-body">
                           <ul class="list-group">${items || '<li class="list-group-item">Sem histórico de log.</li>'}</ul>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
                         </div>
                       </div>
                     </div>
@@ -540,7 +545,7 @@ export async function renderFinanceiroAnaliseDashboard() {
                 $('#logModal').remove();
                 const modalHtml = `
                   <div class="modal fade" id="logModal" tabindex="-1" aria-labelledby="logModalLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-lg">
+                    <div class="modal-dialog modal-lg modal-dialog-scrollable">
                       <div class="modal-content">
                         <div class="modal-header">
                           <h5 class="modal-title" id="logModalLabel">Payload JSONB</h5>
@@ -548,6 +553,9 @@ export async function renderFinanceiroAnaliseDashboard() {
                         </div>
                         <div class="modal-body">
                           <pre class="bg-light p-3" style="white-space: pre-wrap; word-break: break-all;">${prettyJson}</pre>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
                         </div>
                       </div>
                     </div>

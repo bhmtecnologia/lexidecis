@@ -201,8 +201,7 @@
           // Redireciona para a página de login se o usuário não estiver autenticado
           window.location.href = 'login.html';
         } else {
-          // Exibe o conteúdo principal e atualiza o email do usuário no header
-          if (pageWrapper) pageWrapper.style.display = 'block';
+          // Atualiza o email do usuário no header
           if (userEmailDropdown) userEmailDropdown.textContent = user.email;
         }
       });
@@ -495,6 +494,10 @@
             window.userProfile = profile;
             buildSidebarMenu(profile);
             router();
+            const pageWrapper = document.getElementById('pageWrapper');
+            if (pageWrapper) pageWrapper.style.display = 'block';
+            const loaderWrapper = document.querySelector('.loader-wrapper');
+            if (loaderWrapper) loaderWrapper.style.display = 'none';
           } catch (err) {
             console.error("Erro ao carregar perfil/menu:", err);
             const simpleBar = document.getElementById("simple-bar");

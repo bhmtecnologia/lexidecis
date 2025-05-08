@@ -98,34 +98,6 @@ export async function renderFinanceiroAnaliseDashboard() {
         </div>
       </div>
       
-      <!-- Cards Resumo -->
-      <div class="row mb-4">
-        <div class="col-md-4 col-sm-6">
-          <div class="card">
-            <div class="card-body">
-              <h5 class="card-title">Total de Lançamentos Pendentes</h5>
-              <h3 id="total-pendentes">--</h3>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-4 col-sm-6">
-          <div class="card">
-            <div class="card-body">
-              <h5 class="card-title">Total Aprovado</h5>
-              <h3 id="total-aprovado">--</h3>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-4 col-sm-6">
-          <div class="card">
-            <div class="card-body">
-              <h5 class="card-title">Total Rejeitado</h5>
-              <h3 id="total-rejeitado">--</h3>
-            </div>
-          </div>
-        </div>
-      </div>
-      
       <!-- Tabela de Lançamentos para Análise -->
       <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
@@ -346,13 +318,13 @@ export async function renderFinanceiroAnaliseDashboard() {
                   || s === 'enviado integração benner';
             });
             // Atualiza cards de resumo
-            document.getElementById('total-pendentes').textContent = pendentes.length;
+            // document.getElementById('total-pendentes').textContent = pendentes.length;
             const totalAprovado = dados.filter(l => l.dados && l.dados.status && l.dados.status.toLowerCase() === 'aprovado')
               .reduce((acc, cur) => acc + (parseFloat(cur.dados.valor) || 0), 0);
             const totalRejeitado = dados.filter(l => l.dados && l.dados.status && l.dados.status.toLowerCase() === 'rejeitado')
               .reduce((acc, cur) => acc + (parseFloat(cur.dados.valor) || 0), 0);
-            document.getElementById('total-aprovado').textContent = 'R$ ' + totalAprovado.toFixed(2);
-            document.getElementById('total-rejeitado').textContent = 'R$ ' + totalRejeitado.toFixed(2);
+            // document.getElementById('total-aprovado').textContent = 'R$ ' + totalAprovado.toFixed(2);
+            // document.getElementById('total-rejeitado').textContent = 'R$ ' + totalRejeitado.toFixed(2);
             // Monta arrays de dados para cada linha
             const rows = pendentes.map(lancamento => {
               const dadosLanc = lancamento.dados || {};
@@ -373,17 +345,7 @@ export async function renderFinanceiroAnaliseDashboard() {
               // Determine action buttons based on status
               let actionsHtml;
               if (dadosLanc.status === 'Enviado Integração Benner' || dadosLanc.status === 'Integrado Benner') {
-                actionsHtml = `
-    <button
-      class="btn btn-sm btn-editar"
-      data-action="view"
-      data-id="${lancamento.id}"
-      title="Visualizar"
-      style="background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404;"
-    >
-      <i class="iconly-Show icli svg-color"></i>
-    </button>
-  `;
+                actionsHtml = `<button class="btn btn-sm btn-visualizar-log" data-id="${lancamento.id}" title="Visualizar Log" style="background-color: transparent; border: none; color: #0d6efd;"><i class="bi bi-eye"></i></button>`;
               } else {
                 actionsHtml = `<div style="display:inline-flex;gap:4px;">
       <button class="btn btn-sm btn-aprovar" data-id="${lancamento.id}" title="Aprovar" style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724;">

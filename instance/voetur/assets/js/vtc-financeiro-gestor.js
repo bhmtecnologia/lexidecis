@@ -44,7 +44,6 @@ export async function renderVtcFinanceiroGestor() {
           </div>
         </div>
       </div>
-      
       <!-- Área da Tabela -->
       <div id="table-section" class="mt-4">
         <div class="card">
@@ -80,7 +79,6 @@ export async function renderVtcFinanceiroGestor() {
         </div>
       </div>
     </div>
-
     <!-- Modal de Edição -->
     <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-xl modal-dialog-scrollable">
@@ -100,7 +98,6 @@ export async function renderVtcFinanceiroGestor() {
         </div>
       </div>
     </div>
-
     <!-- Modal de Log -->
     <div class="modal fade" id="logModal" tabindex="-1" aria-labelledby="logModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-lg modal-dialog-scrollable">

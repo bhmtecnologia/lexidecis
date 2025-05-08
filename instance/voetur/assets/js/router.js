@@ -105,6 +105,5 @@ async function router() {
 
 // Escuta mudanças de hash e carregamento inicial
 window.addEventListener("hashchange", router);
-window.addEventListener("load", router);
 
 export { router };

@@ -480,6 +480,7 @@
 
     <!-- Script para montar o menu dinâmico baseado nas permissões do usuário -->
     <script type="module">
+      import { router } from "../assets/js/router.js";
       import AuthService from "../assets/js/auth.js";
       import { getUserProfile } from "../assets/js/api.js";
       import { buildSidebarMenu } from "../assets/js/menu-builder.js";
@@ -493,6 +494,7 @@
             console.log("Perfil retornado da API (ajustado):", profile);
             window.userProfile = profile;
             buildSidebarMenu(profile);
+            router();
           } catch (err) {
             console.error("Erro ao carregar perfil/menu:", err);
             const simpleBar = document.getElementById("simple-bar");

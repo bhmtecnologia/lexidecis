@@ -485,12 +485,103 @@ export async function renderFinanceiroAnaliseDashboard() {
                 btn.prop('disabled', false).html(originalHtml);
               });
           });
+          // Ao clicar em editar, mostra formulário dinâmico para editar JSONB 'dados'
           $('#analiseTable tbody').on('click', 'button.btn-editar', function() {
             const id = $(this).data('id');
-            listLancamentos(AuthService).then(dados => {
-              const lanc = dados.find(l => l.id === id);
-              if (lanc) openModal(lanc);
-            });
+            loadLancamentosNoCache()
+              .then(dados => {
+                const lanc = dados.find(l => l.id === id);
+                if (!lanc) return;
+                const payload = lanc.dados || {};
+                // Build form fields dynamically, skipping "log" and handling "anexos" as links
+                let formFields = '';
+                Object.keys(payload).forEach(key => {
+                  if (key === 'log') return;
+                  // Special case for "anexos"
+                  if (key === 'anexos') {
+                    const links = Array.isArray(payload.anexos)
+                      ? payload.anexos.map(a => `<a href="${a.url}" target="_blank">${a.categoria || 'Anexo'}</a>`).join('<br>')
+                      : '-';
+                    formFields += `
+                      <div class="mb-3">
+                        <label class="form-label">Anexos</label>
+                        <div>${links}</div>
+                      </div>`;
+                    return;
+                  }
+                  const value = payload[key];
+                  const stringValue = typeof value === 'object' ? JSON.stringify(value, null, 2) : value;
+                  const isMultiline = (typeof value === 'object' || String(stringValue).length > 100);
+                  formFields += `
+                    <div class="mb-3">
+                      <label for="field_${key}" class="form-label">${key}</label>
+                      ${isMultiline
+                        ? `<textarea class="form-control" id="field_${key}" rows="3">${stringValue}</textarea>`
+                        : `<input type="text" class="form-control" id="field_${key}" value="${stringValue}">`}
+                    </div>`;
+                });
+                // Append log section last, read-only (show newest first)
+                const logEntries = Array.isArray(payload.log)
+                  ? payload.log.slice().reverse().join('\n')
+                  : '';
+                formFields += `
+                  <div class="mb-3">
+                    <label for="field_log" class="form-label">Log</label>
+                    <textarea class="form-control" id="field_log" rows="5" readonly>${logEntries}</textarea>
+                  </div>`;
+                // Modal HTML with dynamic form
+                $('#logModal').remove();
+                const modalHtml = `
+                  <div class="modal fade" id="logModal" tabindex="-1" aria-labelledby="logModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title" id="logModalLabel">Editar Payload JSONB</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                        </div>
+                        <div class="modal-body">
+                          <form id="jsonbForm">
+                            ${formFields}
+                          </form>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" id="saveJsonbBtn" class="btn btn-primary">Salvar</button>
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>`;
+                $('body').append(modalHtml);
+                const modalEl = document.getElementById('logModal');
+                const modal = new bootstrap.Modal(modalEl);
+                modal.show();
+                // On save, collect form data and call updateLancamento
+                document.getElementById('saveJsonbBtn').addEventListener('click', () => {
+                  const updated = {};
+                  // If you ever change preferredOrder, apply skip logic here as well
+                  Object.keys(payload).forEach(key => {
+                    if (key === 'log' || key === 'anexos') return;
+                    const field = document.getElementById(`field_${key}`);
+                    let val = field.value;
+                    // Attempt to parse JSON for multiline fields
+                    if (field.tagName.toLowerCase() === 'textarea') {
+                      try { val = JSON.parse(val); } catch {}
+                    }
+                    updated[key] = val;
+                  });
+                  // Preserve the log field as-is
+                  updated['log'] = Array.isArray(payload.log) ? payload.log.slice() : payload.log;
+                  // Preserve the original anexos (attachments) as-is
+                  updated['anexos'] = Array.isArray(payload.anexos) ? payload.anexos.slice() : payload.anexos;
+                  updateLancamento(AuthService, lanc.id, { dados: updated })
+                    .then(() => {
+                      modal.hide();
+                      $("#analiseTable").DataTable().ajax.reload(null, false);
+                    })
+                    .catch(err => alert('Erro ao salvar JSONB: ' + err.message));
+                });
+              })
+              .catch(err => console.error('Erro ao carregar dados JSONB:', err));
           });
           // Update the status cell click handler to use the new class
           $('#analiseTable tbody').on('click', 'span.status-clickable', function() {

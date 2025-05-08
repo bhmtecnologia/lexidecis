@@ -1,6 +1,6 @@
 /**
  * @file vtc-financeiro-gestor.js
- * @description Responsável por renderizar a página de "VT&C Financeiro - Visão Gestor",
+ * @description Responsável por renderizar a página de "VTC Financeiro - Visão Gestor",
  *             idêntica à Listagem de Lançamentos, mas sob a rota "#vtc-financeiro-gestor".
  */
 
@@ -28,7 +28,7 @@ export async function renderVtcFinanceiroGestor() {
       <div class="page-title">
         <div class="row">
           <div class="col-sm-6 col-12">
-            <h2>VT&C Financeiro – Visão Gestor</h2>
+            <h2>VTC Financeiro – Visão Gestor</h2>
             <p class="mb-0 text-title-gray">Visão de gestor com todos os lançamentos e detalhes</p>
           </div>
           <div class="col-sm-6 col-12">

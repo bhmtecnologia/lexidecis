@@ -607,6 +607,9 @@ export async function renderVtcFinanceiroLancamentoCreateV4() {
               filial_cnpj: info.cnpj_tomador || null,
               anexo: [{ url: info.filename, categoria: "Nota Fiscal" }]
             };
+            // Inclui auditoria e log
+            payloadAuto.log = window.logEntries || [];
+            payloadAuto.auditoria = window.auditInfo || {};
             // Enriquecer payload com IDs e nomes de filial, fornecedor, centro de custo e projeto, se disponíveis
             // Filial
             const filMatch = (window.filiaisData || []).find(f => f.cnpj === info.cnpj_tomador);
@@ -620,7 +623,7 @@ export async function renderVtcFinanceiroLancamentoCreateV4() {
               payloadAuto.fornecedor_id = fornMatch.id || fornMatch.uuid || null;
               payloadAuto.fornecedor_nome = fornMatch.nome;
             }
-            // Centro de Custo: se houver apenas um ou se vier no info (ex: info.centro_custo)
+            // Centro de Custo
             const ccMatch = (window.centrosData || []).find(c => c.nome === info.tipo_conta || c.id === info.centro_custo_id);
             if (ccMatch) {
               payloadAuto.centro_custo_id = ccMatch.id || ccMatch.uuid || null;
@@ -646,9 +649,6 @@ export async function renderVtcFinanceiroLancamentoCreateV4() {
                 })()
               }));
             }
-            // Inclui log de ações e auditoria no payload
-            payloadAuto.log = window.logEntries || [];
-            payloadAuto.auditoria = window.auditInfo || {};
             // Parcelas financeiras: mesmo cálculo do formulário (data hoje+3 dias, valor principal)
             payloadAuto.parcelas_financeiras = [];
             document.querySelectorAll('.parcela-item').forEach(item => {
@@ -662,6 +662,10 @@ export async function renderVtcFinanceiroLancamentoCreateV4() {
                 });
               }
             });
+            // Garante que numero_documento está preenchido corretamente
+            payloadAuto.numero_documento = info.numero_nota || "";
+            // Remove redundâncias e mantém apenas campos essenciais no payloadAuto
+            // (log, auditoria, filial_id, filial_nome, fornecedor_id, fornecedor_nome, centro_custo_id, centro_custo_nome, itens, parcelas_financeiras)
             const resultAuto = await createLancamento(AuthService, payloadAuto, { apiVersion: "v4" });
             addLog(`Lançamento importado por lote criado automaticamente. ID: ${resultAuto.id}`);
             await showAlert("Lançamento importado por lote criado com ID: " + resultAuto.id, "success");
@@ -669,9 +673,79 @@ export async function renderVtcFinanceiroLancamentoCreateV4() {
             showAlert("Erro ao criar lançamento automático: " + handleError(errAuto), "danger");
           }
         } else if (info.tipo_documento === "Conta a pagar") {
-          // Auto-criação para Conta a pagar pode ser implementada similarmente se desejado
-          // (No código original só exibe form, mas aqui pode-se implementar lógica análoga se necessário)
-          showAlert("Conta a pagar detectada. Preencha manualmente no formulário.", "info");
+          // Auto-criação de Conta a pagar com status Importado por lote
+          try {
+            const payloadAuto = {
+              app_id: "empresa_vtc_log",
+              status: "Importado por lote",
+              tipo_documento: "Conta a pagar",
+              // Use numero_nota como numero_documento
+              numero_documento: info.numero_nota || "",
+              data_emissao: info.data_emissao || "",
+              valor_nominal: (() => {
+                const raw = info.valor_total_nota || "";
+                let num = raw.includes(',') && raw.includes('.')
+                  ? Number(raw.replace(/\./g, '').replace(',', '.'))
+                  : raw.includes(',')
+                    ? Number(raw.replace(',', '.'))
+                    : Number(raw) || 0;
+                return num;
+              })(),
+              data_entrada: formatDateISO(new Date()),
+              usuario_inclusao: AuthService.user.email,
+              filial_cnpj: info.cnpj_tomador || null,
+              anexo: [{ url: info.filename, categoria: "Conta a pagar" }]
+            };
+            // Enriquecer IDs e nomes de filial, fornecedor e centro de custo
+            const filMatch = (window.filiaisData || []).find(f => f.cnpj === info.cnpj_tomador);
+            if (filMatch) {
+              payloadAuto.filial_id = filMatch.id || filMatch.uuid;
+              payloadAuto.filial_nome = filMatch.nome;
+            }
+            const fornMatch = (window.fornecedoresData || []).find(f => f.cnpj === info.cnpj_fornecedor);
+            if (fornMatch) {
+              payloadAuto.fornecedor_id = fornMatch.id || fornMatch.uuid;
+              payloadAuto.fornecedor_nome = fornMatch.nome;
+            }
+            const ccMatch = (window.centrosData || []).find(c => c.nome === info.tipo_conta || c.id === info.centro_custo_id);
+            if (ccMatch) {
+              payloadAuto.centro_custo_id = ccMatch.id || ccMatch.uuid;
+              payloadAuto.centro_custo_nome = ccMatch.nome;
+            }
+            // Itens da Conta a pagar
+            if (info.itens && Array.isArray(info.itens)) {
+              payloadAuto.itens = info.itens.map(item => ({
+                descricao: item.descricao,
+                quantidade: Number(item.quantidade) || null,
+                valor_unitario: (() => {
+                  const raw = item.valor_unitario;
+                  return raw && typeof raw === "string"
+                    ? Number(raw.replace(/\./g, "").replace(",", "."))
+                    : Number(raw) || 0;
+                })()
+              }));
+            }
+            // Parcelas financeiras, se retornadas em info.parcelas
+            payloadAuto.parcelas_financeiras = [];
+            if (Array.isArray(info.parcelas)) {
+              info.parcelas.forEach(p => {
+                if (p.data_vencimento && p.valor) {
+                  const rawVal = p.valor.toString().replace(/\./g, '').replace(',', '.');
+                  payloadAuto.parcelas_financeiras.push({
+                    data_vencimento: p.data_vencimento,
+                    valor: Number(rawVal)
+                  });
+                }
+              });
+            }
+            payloadAuto.log = window.logEntries || [];
+            payloadAuto.auditoria = window.auditInfo || {};
+            const resultAuto = await createLancamento(AuthService, payloadAuto, { apiVersion: "v4" });
+            addLog(`Lançamento de Conta a pagar importado por lote criado automaticamente. ID: ${resultAuto.id}`);
+            await showAlert("Lançamento de Conta a pagar criado com sucesso! ID: " + resultAuto.id, "success");
+          } catch (errAuto) {
+            showAlert("Erro ao criar lançamento de Conta a pagar: " + handleError(errAuto), "danger");
+          }
         } else {
           showAlert("Documento não reconhecido ou ilegível. Preencha manualmente.", "warning");
         }

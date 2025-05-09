@@ -253,7 +253,7 @@ export async function renderVtcFinanceiroGestor() {
               } else {
                 html += `
       <button class="btn btn-sm btn-editar" data-action="view" data-id="${data.id}" title="Visualizar"
-              style="background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404;">
+              style="background-color: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460;">
         <i class="iconly-Show icli svg-color"></i>
       </button>`;
               }
@@ -322,6 +322,9 @@ export async function renderVtcFinanceiroGestor() {
   });
   document.getElementById('btnLaunch').addEventListener('click', () => {
     window.location.hash = '#financeiro-lancamento-create-v3';
+  });
+  document.getElementById('btnLote').addEventListener('click', () => {
+    window.location.hash = '#vtc-financeiro-lancamento-create-v4';
   });
   // demais handlers iguais...
 

@@ -52,6 +52,9 @@ export async function renderVtcFinanceiroGestor() {
               <button id="btnLaunch" class="btn btn-sm btn-primary me-2" title="Lançar novo lançamento">
                 <i class="iconly-Add icli svg-color"></i> Lançar
               </button>
+              <button id="btnLote" class="btn btn-sm btn-success me-2" title="Lote">
+                <i class="iconly-Bulk icli svg-color"></i> Lote
+              </button>
               <button id="reloadTable" class="btn btn-sm btn-secondary" title="Recarregar tabela">
                 <i class="iconly-Refresh icli svg-color"></i> Recarregar
               </button>
@@ -199,6 +202,7 @@ export async function renderVtcFinanceiroGestor() {
                 updated_by: l.updated_by,
                 analise_ia: l.analise_ia,
                 ocr_ia: l.ocr_ia,
+                dados: l.dados,
                 ...l.dados,
                 anexos: (l.anexos && Array.isArray(l.anexos.anexos))
                   ? l.anexos.anexos
@@ -231,7 +235,10 @@ export async function renderVtcFinanceiroGestor() {
             orderable: false,
             render: data => {
               const statusLC = (data.status || '').toLowerCase();
-              const isEditable = statusLC === 'novo' || statusLC === 'salvo' || statusLC.includes('devolvido');
+              const isEditable = statusLC === 'novo'
+                || statusLC === 'salvo'
+                || statusLC.includes('devolvido')
+                || statusLC === 'importado por lote';
               let html = `<div style="display:inline-flex; gap:4px;">`;
               if (isEditable) {
                 html += `
@@ -318,29 +325,37 @@ export async function renderVtcFinanceiroGestor() {
   });
   // demais handlers iguais...
 
-  // Handler para abrir modal de edição com Alpaca
+  // Handler para abrir modal de edição dinâmico
   $('#lancamentosTable tbody').on('click', 'button[data-action="edit"]', function() {
-    const id = $(this).data('id');
-    const lanc = lancamentosData.find(l => l.id === id);
-    if (lanc) {
-      currentLanc = lanc;
-      // Gera formulário editável com campos principais
-      const fields = ['justificativa', 'data_emissao', 'valor_nominal', 'forma_pagamento'];
-      let formHtml = '';
-      fields.forEach(key => {
-        const value = lanc[key] !== null && lanc[key] !== undefined ? lanc[key] : '';
-        // Escolhe tipo de input baseado na chave
-        const type = key === 'data_emissao' ? 'date' : key === 'valor' ? 'number' : 'text';
-        formHtml +=
-          `<div class="mb-3">
-             <label for="field_${key}" class="form-label">${key.replace('_', ' ').replace(/\b\w/g, l=>l.toUpperCase())}</label>
-             <input type="${type}" class="form-control" id="field_${key}" name="${key}" value="${value}">
-           </div>`;
-      });
-      $('#editFormContainer').html(formHtml);
-      // Exibe o modal
-      editModal.show();
-    }
+      const id = $(this).data('id');
+      const lanc = lancamentosData.find(l => l.id === id);
+      if (lanc) {
+        currentLanc = lanc;
+        $('#editFormContainer').empty();
+        const data = currentLanc.dados;
+        let formHtml = '';
+        Object.entries(data).forEach(([key, value]) => {
+          let inputHtml = '';
+          const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+          if (typeof value === 'number') {
+            inputHtml = `<input type="number" class="form-control" id="field_${key}" name="${key}" value="${value}">`;
+          } else if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) {
+            inputHtml = `<input type="date" class="form-control" id="field_${key}" name="${key}" value="${value.split('T')[0]}">`;
+          } else if (typeof value === 'string') {
+            inputHtml = `<input type="text" class="form-control" id="field_${key}" name="${key}" value="${value}">`;
+          } else {
+            const json = JSON.stringify(value, null, 2);
+            inputHtml = `<textarea class="form-control" id="field_${key}" name="${key}" rows="3">${json}</textarea>`;
+          }
+          formHtml += `
+            <div class="mb-3">
+              <label for="field_${key}" class="form-label">${label}</label>
+              ${inputHtml}
+            </div>`;
+        });
+        $('#editFormContainer').html(formHtml);
+        editModal.show();
+      }
   });
   // Handler para enviar lançamento
   $('#lancamentosTable tbody').on('click', 'button[data-action="send"]', function() {
@@ -392,15 +407,29 @@ export async function renderVtcFinanceiroGestor() {
   // Handler para salvar edição
   document.getElementById('saveBtn').addEventListener('click', () => {
     const form = document.getElementById('editFormContainer');
-    const updated = {};
-    ['justificativa', 'data_emissao', 'valor_nominal', 'forma_pagamento'].forEach(key => {
-      const el = form.querySelector(`[name="${key}"]`);
-      if (el) {
-        updated[key] = el.value;
+    // Clone original dados
+    const payload = { ...currentLanc.dados };
+    // Collect all inputs and textareas
+    form.querySelectorAll('[name]').forEach(el => {
+      let val = el.value;
+      // Parse numbers
+      if (el.type === 'number') {
+        val = el.value !== '' ? parseFloat(el.value) : null;
       }
+      // Parse JSON from textarea if value looks like JSON
+      if (el.tagName.toLowerCase() === 'textarea') {
+        try {
+          val = JSON.parse(el.value);
+        } catch (e) {
+          // keep original string if not valid JSON
+        }
+      }
+      payload[el.name] = val;
     });
-    // Envia atualização
-    updateLancamento(AuthService, currentLanc.id, updated)
+    // Update status
+    payload.status = 'Salvo';
+    // Send update with full payload
+    updateLancamento(AuthService, currentLanc.id, payload)
       .then(() => {
         if (lancamentosTable) lancamentosTable.ajax.reload(null, false);
         editModal.hide();

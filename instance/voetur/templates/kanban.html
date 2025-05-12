@@ -396,6 +396,8 @@
           renderByQuem(items);
         } else if (document.getElementById('calendar').style.display !== 'none') {
           renderCalendar(items);
+        } else if (document.getElementById('btn-table').classList.contains('active')) {
+          renderTable(items);
         } else {
           renderBoard(items);
         }

@@ -10,6 +10,7 @@
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -67,6 +68,7 @@
     <button id="btn-create" style="margin-left:10px;">Novo Item</button>
     <button id="btn-group-quem" style="margin-left:10px;">Por Quem</button>
     <button id="btn-table" style="margin-left:10px;">Tabela</button>
+    <button id="btn-chart" style="margin-left:10px;">Gráficos</button>
   </div>
   <div id="filters" style="margin-bottom: 20px;">
     <label style="margin-right:10px;">
@@ -108,6 +110,9 @@
       </thead>
       <tbody></tbody>
     </table>
+  </div>
+  <div id="chart-view" style="display:none; margin-top:20px;">
+    <canvas id="main-chart" height="200"></canvas>
   </div>
 
   <!-- Edit Item Modal -->
@@ -557,7 +562,7 @@
       });
       document.getElementById('btn-table').addEventListener('click', () => {
         // Manage active classes
-        ['btn-kanban','btn-calendar','btn-group-quem','btn-table'].forEach(id => {
+        ['btn-kanban','btn-calendar','btn-group-quem','btn-table','btn-chart'].forEach(id => {
           document.getElementById(id).classList.remove('active');
         });
         document.getElementById('btn-table').classList.add('active');
@@ -565,8 +570,20 @@
         document.getElementById('kanban').style.display = 'none';
         document.getElementById('calendar').style.display = 'none';
         document.getElementById('table-view').style.display = '';
+        document.getElementById('chart-view').style.display = 'none';
         // Render table
         renderTable(filtered || allItems);
+      });
+      document.getElementById('btn-chart').addEventListener('click', () => {
+        ['btn-kanban','btn-calendar','btn-group-quem','btn-table','btn-chart'].forEach(id => {
+          document.getElementById(id).classList.remove('active');
+        });
+        document.getElementById('btn-chart').classList.add('active');
+        document.getElementById('kanban').style.display = 'none';
+        document.getElementById('calendar').style.display = 'none';
+        document.getElementById('table-view').style.display = 'none';
+        document.getElementById('chart-view').style.display = '';
+        renderChart(filtered || allItems);
       });
 
       // Modal cancel handler
@@ -648,6 +665,41 @@
       console.error('Erro ao carregar dados do plano de ação:', error);
       document.getElementById('kanban').innerHTML = '<p>Falha ao carregar o plano de ação.</p>';
     });
+</script>
+  <script>
+  function renderChart(items) {
+    const ctx = document.getElementById('main-chart').getContext('2d');
+    const grouped = {};
+    items.forEach(i => {
+      const quem = i.quem || 'Não informado';
+      grouped[quem] = (grouped[quem] || 0) + 1;
+    });
+    const labels = Object.keys(grouped);
+    const values = Object.values(grouped);
+
+    if (window.chartInstance) window.chartInstance.destroy();
+    window.chartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Quantidade de Itens por Responsável (Quem)',
+          data: values,
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: true }
+        },
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+  }
 </script>
 </body>
 </html>

@@ -65,6 +65,7 @@
         <div><label>Por quê:<br><input type="text" id="modal-por-que" style="width:100%;"></label></div>
         <div><label>Início:<br><input type="datetime-local" id="modal-inicio" style="width:100%;"></label></div>
         <div><label>Fim:<br><input type="datetime-local" id="modal-fim" style="width:100%;"></label></div>
+        <div><label>Observações:<br><textarea id="modal-observacoes" style="width:100%; height:80px;"></textarea></label></div>
         <div style="margin-top:10px; text-align:right;">
           <button type="button" id="modal-cancel">Cancelar</button>
           <button type="button" id="modal-save">Salvar</button>
@@ -190,6 +191,7 @@
             document.getElementById('modal-por-que').value = item.por_que;
             document.getElementById('modal-inicio').value = item.inicio ? item.inicio.replace(' ', 'T') : '';
             document.getElementById('modal-fim').value    = item.fim    ? item.fim.replace(' ', 'T')    : '';
+            document.getElementById('modal-observacoes').value = item.observacoes || '';
             modal.style.display = 'flex';
           }
         });
@@ -239,6 +241,7 @@
           o_que: document.getElementById('modal-o-que').value,
           quem:  document.getElementById('modal-quem').value,
           por_que: document.getElementById('modal-por-que').value,
+          observacoes: document.getElementById('modal-observacoes').value,
           inicio: document.getElementById('modal-inicio').value.replace('T', ' ')+ '+00',
           fim:    document.getElementById('modal-fim').value.replace('T', ' ')+ '+00'
         };

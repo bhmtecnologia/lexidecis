@@ -356,7 +356,7 @@
           inicio: document.getElementById('modal-inicio').value.replace('T', ' ')+ '+00',
           fim:    document.getElementById('modal-fim').value.replace('T', ' ')+ '+00'
         };
-        const url = 'https://n8n.power.tec.br/webhook-test/lexidecis/v1/plano-de-acao' + (isNew ? '' : `?id=${id}`);
+        const url = 'https://n8n.power.tec.br/webhook/lexidecis/v1/plano-de-acao' + (isNew ? '' : `?id=${id}`);
         const method = isNew ? 'POST' : 'PUT';
         fetch(url, {
           method: method,

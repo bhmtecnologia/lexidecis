@@ -66,6 +66,10 @@
         <div><label>Início:<br><input type="datetime-local" id="modal-inicio" style="width:100%;"></label></div>
         <div><label>Fim:<br><input type="datetime-local" id="modal-fim" style="width:100%;"></label></div>
         <div><label>Observações:<br><textarea id="modal-observacoes" style="width:100%; height:80px;"></textarea></label></div>
+        <div><label>Quando:<br><input type="datetime-local" id="modal-quando" style="width:100%;"></label></div>
+        <div><label>Onde:<br><input type="text" id="modal-onde" style="width:100%;"></label></div>
+        <div><label>Como:<br><input type="text" id="modal-como" style="width:100%;"></label></div>
+        <div><label>Quanto:<br><input type="text" id="modal-quanto" style="width:100%;"></label></div>
         <div style="margin-top:10px; text-align:right;">
           <button type="button" id="modal-cancel">Cancelar</button>
           <button type="button" id="modal-save">Salvar</button>
@@ -192,6 +196,10 @@
             document.getElementById('modal-inicio').value = item.inicio ? item.inicio.replace(' ', 'T') : '';
             document.getElementById('modal-fim').value    = item.fim    ? item.fim.replace(' ', 'T')    : '';
             document.getElementById('modal-observacoes').value = item.observacoes || '';
+            document.getElementById('modal-quando').value = item.quando ? item.quando.replace(' ', 'T') : '';
+            document.getElementById('modal-onde').value   = item.onde || '';
+            document.getElementById('modal-como').value    = item.como || '';
+            document.getElementById('modal-quanto').value  = item.quanto || '';
             modal.style.display = 'flex';
           }
         });
@@ -242,6 +250,10 @@
           quem:  document.getElementById('modal-quem').value,
           por_que: document.getElementById('modal-por-que').value,
           observacoes: document.getElementById('modal-observacoes').value,
+          quando: document.getElementById('modal-quando').value.replace('T', ' ')+ '+00',
+          onde: document.getElementById('modal-onde').value,
+          como: document.getElementById('modal-como').value,
+          quanto: document.getElementById('modal-quanto').value,
           inicio: document.getElementById('modal-inicio').value.replace('T', ' ')+ '+00',
           fim:    document.getElementById('modal-fim').value.replace('T', ' ')+ '+00'
         };

@@ -29,6 +29,17 @@
     }
     .modal-overlay { display:flex; }
     .modal-content input { margin-bottom:10px; }
+    /* Freeze table header in table view */
+    #table-view {
+      height: calc(100vh - 200px); /* full height minus header/filters */
+      overflow-y: auto;
+    }
+    #items-table thead th {
+      position: sticky;
+      top: 0;
+      background: #f8f9fa; /* light gray background */
+      z-index: 2;
+    }
   </style>
 </head>
 <body>
@@ -59,7 +70,7 @@
   </div>
   <div id="kanban"></div>
   <div id="calendar" style="display:none;"></div>
-  <div id="table-view" style="display:none; margin-top:20px;">
+  <div id="table-view" style="display:none; margin-top:20px; overflow-y:auto;">
     <table id="items-table" style="width:100%; border-collapse: collapse;">
       <thead>
         <tr>

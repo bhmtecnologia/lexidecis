@@ -118,6 +118,16 @@
         <div><label>Número:<br><input type="text" id="modal-numero" style="width:100%;" readonly></label></div>
         <div><label>O que:<br><input type="text" id="modal-o-que" style="width:100%;"></label></div>
         <div><label>Quem:<br><input type="text" id="modal-quem" style="width:100%;"></label></div>
+        <div><label>Atribuído a:<br>
+          <select id="modal-atribuido" style="width:100%;">
+            <option value="">Selecione</option>
+            <option value="João Silva">João Silva</option>
+            <option value="Maria Oliveira">Maria Oliveira</option>
+            <option value="Carlos Santos">Carlos Santos</option>
+            <option value="Ana Paula">Ana Paula</option>
+            <option value="Rafael Costa">Rafael Costa</option>
+          </select>
+        </label></div>
         <div><label>Por quê:<br><input type="text" id="modal-por-que" style="width:100%;"></label></div>
         <div><label>Onde:<br><input type="text" id="modal-onde" style="width:100%;"></label></div>
         <div><label>Quando:<br><input type="datetime-local" id="modal-quando" style="width:100%;"></label></div>
@@ -166,6 +176,7 @@
         allowClear: true,
         minimumInputLength: 3
       });
+      $('#modal-atribuido').select2({ placeholder: 'Selecione um responsável' });
       $('#search-input').on('change', () => {
         searchTerms = $('#search-input').val() || [];
         applyAllFilters();
@@ -441,6 +452,8 @@
             document.getElementById('modal-como').value    = item.como || '';
             document.getElementById('modal-quanto').value  = item.quanto || '';
             document.getElementById('modal-observacoes').value = item.observacoes || '';
+            document.getElementById('modal-atribuido').value = item.atribuido || '';
+            $('#modal-atribuido').trigger('change');
             modal.style.display = 'flex';
           }
         });
@@ -580,6 +593,7 @@
           ...(isNew ? {} : allItems.find(i => i.id === id)),
           o_que: document.getElementById('modal-o-que').value,
           quem:  document.getElementById('modal-quem').value,
+          atribuido: document.getElementById('modal-atribuido').value,
           por_que: document.getElementById('modal-por-que').value,
           observacoes: document.getElementById('modal-observacoes').value,
           quando: document.getElementById('modal-quando').value.replace('T', ' ')+ '+00',

@@ -85,8 +85,8 @@
       const form = document.getElementById('edit-form');
 
       // Populate filter selects
-      const whoValues = [...new Set(allItems.map(i => i.who).filter(Boolean))];
-      const whyValues = [...new Set(allItems.map(i => i.why).filter(Boolean))];
+      const whoValues = [...new Set(allItems.map(i => i.quem).filter(Boolean))];
+      const whyValues = [...new Set(allItems.map(i => i.por_que).filter(Boolean))];
       whoValues.forEach(val => {
         $('#filter-who').append(new Option(val, val));
       });
@@ -202,8 +202,8 @@
         const whoFilter = $('#filter-who').val();
         const whyFilter = $('#filter-why').val();
         filtered = allItems.filter(item =>
-          (!whoFilter || (item.who && item.who.toLowerCase().includes(whoFilter.toLowerCase()))) &&
-          (!whyFilter || (item.why && item.why.toLowerCase().includes(whyFilter.toLowerCase())))
+          (!whoFilter || (item.quem && item.quem.toLowerCase().includes(whoFilter.toLowerCase()))) &&
+          (!whyFilter || (item.por_que && item.por_que.toLowerCase().includes(whyFilter.toLowerCase())))
         );
         renderBoard(filtered);
         renderCalendar(filtered);

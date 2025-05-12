@@ -148,7 +148,14 @@
               title: `
                 <div class="card-summary">
                   <strong>${item.numero}. ${item.o_que}</strong><br>
-                  <span class="status-tag" style="background:#007bff; color:#fff; padding:2px 6px; border-radius:4px; font-size:12px; margin-right:8px;">
+                  <span class="status-tag" style="
+                    background: ${item.status === 'em_execucao' ? '#fff3cd' : '#007bff'};
+                    color: ${item.status === 'em_execucao' ? '#856404' : '#fff'};
+                    padding:2px 6px;
+                    border-radius:4px;
+                    font-size:12px;
+                    margin-right:8px;
+                  ">
                     ${item.status.replace('_',' ').toUpperCase()}
                   </span>
                   <em>Quem:</em> ${item.quem}

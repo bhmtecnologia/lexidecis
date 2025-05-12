@@ -40,6 +40,9 @@
     <button id="btn-group-quem" style="margin-left:10px;">Por Quem</button>
   </div>
   <div id="filters" style="margin-bottom: 20px;">
+    <label style="margin-right:10px;">
+      Buscar: <select id="search-input" multiple="multiple" style="width:200px;"></select>
+    </label>
     <label style="margin-right: 10px;">Quem: 
       <select id="filter-who" style="width:200px;">
         <option value="">Todos</option>
@@ -89,6 +92,7 @@
     .then(data => {
       const allItems = data;
       let filtered = null;
+      let searchTerms = [];
       const modal = document.getElementById('edit-modal');
       const form = document.getElementById('edit-form');
 
@@ -104,6 +108,16 @@
       // Initialize Select2
       $('#filter-who').select2({ placeholder: 'Filtrar por responsável', allowClear: true });
       $('#filter-why').select2({ placeholder: 'Filtrar por motivo', allowClear: true });
+      $('#search-input').select2({
+        tags: true,
+        placeholder: 'Buscar...',
+        allowClear: true,
+        minimumInputLength: 3
+      });
+      $('#search-input').on('change', () => {
+        searchTerms = $('#search-input').val() || [];
+        applyAllFilters();
+      });
 
       function renderCalendar(items) {
         const calendarEl = document.getElementById('calendar');
@@ -280,35 +294,73 @@
       renderBoard(allItems);
       renderCalendar(allItems);
 
-      document.getElementById('apply-filters').addEventListener('click', () => {
+      function applyAllFilters() {
+        // Start from allItems
+        let items = allItems;
+        // Apply Quem/Por quê filters if any
         const whoFilter = $('#filter-who').val();
         const whyFilter = $('#filter-why').val();
-        filtered = allItems.filter(item =>
-          (!whoFilter || (item.quem && item.quem.toLowerCase().includes(whoFilter.toLowerCase()))) &&
-          (!whyFilter || (item.por_que && item.por_que.toLowerCase().includes(whyFilter.toLowerCase())))
-        );
-        renderBoard(filtered);
-        renderCalendar(filtered);
+        if (whoFilter || whyFilter) {
+          items = items.filter(item =>
+            (!whoFilter || (item.quem && item.quem.toLowerCase().includes(whoFilter.toLowerCase()))) &&
+            (!whyFilter || (item.por_que && item.por_que.toLowerCase().includes(whyFilter.toLowerCase())))
+          );
+        }
+        // Apply search terms
+        if (searchTerms.length) {
+          items = items.filter(item =>
+            searchTerms.some(term =>
+              (item.o_que && item.o_que.toLowerCase().includes(term.toLowerCase())) ||
+              (item.quem && item.quem.toLowerCase().includes(term.toLowerCase())) ||
+              (item.por_que && item.por_que.toLowerCase().includes(term.toLowerCase())) ||
+              (item.observacoes && item.observacoes.toLowerCase().includes(term.toLowerCase()))
+            )
+          );
+        }
+        // Render based on current view
+        if (document.getElementById('btn-group-quem').classList.contains('active')) {
+          renderByQuem(items);
+        } else if (document.getElementById('calendar').style.display !== 'none') {
+          renderCalendar(items);
+        } else {
+          renderBoard(items);
+        }
+        filtered = items;
+      }
+
+      document.getElementById('apply-filters').addEventListener('click', () => {
+        applyAllFilters();
       });
       document.getElementById('reset-filters').addEventListener('click', () => {
         $('#filter-who').val(null).trigger('change');
         $('#filter-why').val(null).trigger('change');
-        filtered = null;
-        renderBoard(allItems);
-        renderCalendar(allItems);
+        $('#search-input').val(null).trigger('change');
+        applyAllFilters();
       });
 
       document.getElementById('btn-kanban').addEventListener('click', () => {
+        // Manage active class
+        document.getElementById('btn-kanban').classList.add('active');
+        document.getElementById('btn-group-quem').classList.remove('active');
+        document.getElementById('btn-calendar').classList.remove('active');
         document.getElementById('kanban').style.display = '';
         document.getElementById('calendar').style.display = 'none';
         renderBoard(filtered || allItems);
       });
       document.getElementById('btn-calendar').addEventListener('click', () => {
+        // Manage active class
+        document.getElementById('btn-calendar').classList.add('active');
+        document.getElementById('btn-kanban').classList.remove('active');
+        document.getElementById('btn-group-quem').classList.remove('active');
         document.getElementById('kanban').style.display = 'none';
         document.getElementById('calendar').style.display = '';
         renderCalendar(filtered || allItems);
       });
       document.getElementById('btn-group-quem').addEventListener('click', () => {
+        // Manage active class
+        document.getElementById('btn-group-quem').classList.add('active');
+        document.getElementById('btn-kanban').classList.remove('active');
+        document.getElementById('btn-calendar').classList.remove('active');
         document.getElementById('kanban').style.display = '';
         document.getElementById('calendar').style.display = 'none';
         renderByQuem(filtered || allItems);

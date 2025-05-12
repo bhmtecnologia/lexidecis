@@ -7,6 +7,8 @@
   <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -28,7 +30,11 @@
   </style>
 </head>
 <body>
-  <h2>Plano de Ação - Reunião Geral (5W2H)</h2>
+  <div style="display:flex; align-items:center; margin-bottom:10px;">
+    <h2 style="margin-right:20px;">Plano de Ação - Reunião Geral (5W2H)</h2>
+    <button id="btn-kanban" style="margin-right:5px;">Kanban</button>
+    <button id="btn-calendar">Calendário</button>
+  </div>
   <div id="filters" style="margin-bottom: 20px;">
     <label style="margin-right: 10px;">Quem: 
       <select id="filter-who" style="width:200px;">
@@ -44,6 +50,7 @@
     <button id="reset-filters">Limpar filtros</button>
   </div>
   <div id="kanban"></div>
+  <div id="calendar" style="display:none;"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/jkanban@1.3.1/dist/jkanban.min.js"></script>
   <script>
@@ -52,6 +59,7 @@
     .then(response => response.json())
     .then(data => {
       const allItems = data;
+      let filtered = null;
 
       // Populate filter selects
       const whoValues = [...new Set(allItems.map(i => i.who).filter(Boolean))];
@@ -66,64 +74,106 @@
       $('#filter-who').select2({ placeholder: 'Filtrar por responsável', allowClear: true });
       $('#filter-why').select2({ placeholder: 'Filtrar por motivo', allowClear: true });
 
+      function renderCalendar(items) {
+        const calendarEl = document.getElementById('calendar');
+        calendarEl.innerHTML = '';
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+          initialView: 'dayGridMonth',
+          height: 'auto',
+          events: items.map(i => ({
+            title: `${i.numero}. ${i.o_que}`,
+            start: i.inicio,
+            end:   i.fim
+          }))
+        });
+        calendar.render();
+      }
+
       function renderBoard(items) {
         document.getElementById('kanban').innerHTML = '';
+        // Create buckets for each status
+        const buckets = {
+          planejado:    [],
+          em_execucao: [],
+          bloqueado:   [],
+          concluido:   []
+        };
+        items.forEach(item => {
+          const key = item.status || 'planejado';
+          buckets[key].push({
+            id: item.id,
+            'data-eid': item.id,
+            title: `
+              <strong>${item.numero}. ${item.o_que}</strong><br>
+              ${item.quem    ? `<em>Quem:</em> ${item.quem}<br>` : ''}
+              ${item.por_que ? `<em>Por quê:</em> ${item.por_que}<br>` : ''}
+              ${item.inicio  ? `<em>Início:</em> ${new Date(item.inicio).toLocaleString()}<br>` : ''}
+              ${item.fim     ? `<em>Fim:</em> ${new Date(item.fim).toLocaleString()}<br>` : ''}
+              ${item.como    ? `<em>Como:</em> ${item.como}<br>` : ''}
+              ${item.quanto  ? `<em>Quanto:</em> ${item.quanto}` : ''}
+            `.trim()
+          });
+        });
         new jKanban({
           element: '#kanban',
           boards: [
-            {
-              id: 'planned',
-              title: 'Planejados',
-              class: 'primary',
-              item: items.map(item => ({
-                title: `
-          <strong>${item.numero}. ${item.what}</strong><br>
-          ${item.who ? `<em>Quem:</em> ${item.who}<br>` : ''}
-          ${item.when ? `<em>Quando:</em> ${item.when}<br>` : ''}
-          ${item.why ? `<em>Por quê:</em> ${item.why}<br>` : ''}
-          ${item.where ? `<em>Onde:</em> ${item.where}<br>` : ''}
-          ${item.how ? `<em>Como:</em> ${item.how}<br>` : ''}
-          ${item.how_much ? `<em>Quanto:</em> ${item.how_much}` : ''}
-        `.trim()
-              }))
-            },
-            {
-              id: 'in_execution',
-              title: 'Em Execução',
-              class: 'warning',
-              item: []
-            },
-            {
-              id: 'blocked',
-              title: 'Bloqueados',
-              class: 'danger',
-              item: []
-            },
-            {
-              id: 'completed',
-              title: 'Concluídos',
-              class: 'success',
-              item: []
-            }
-          ]
+            { id: 'planejado',    title: 'Planejados',    class: 'primary',   item: buckets.planejado },
+            { id: 'em_execucao',   title: 'Em Execução',  class: 'warning',   item: buckets.em_execucao },
+            { id: 'bloqueado',    title: 'Bloqueados',    class: 'danger',    item: buckets.bloqueado },
+            { id: 'concluido',    title: 'Concluídos',    class: 'success',   item: buckets.concluido }
+          ],
+          dropEl(el, target, source, sibling) {
+            const itemId = el.getAttribute('data-eid') || el.getAttribute('data-id') || el.id;
+            const newStatus = target.parentElement.getAttribute('data-id');
+            fetch(`https://n8n.power.tec.br/webhook/lexidecis/v1/plano-de-acao?id=${itemId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: newStatus })
+            })
+            .then(response => {
+              if (!response.ok) throw new Error('Erro ao atualizar status');
+              return response.json();
+            })
+            .then(data => {
+              console.log('Status atualizado:', data);
+            })
+            .catch(err => {
+              console.error(err);
+              alert('Falha ao atualizar status do item');
+            });
+          }
         });
       }
-
+      // Initial render
       renderBoard(allItems);
+      renderCalendar(allItems);
 
       document.getElementById('apply-filters').addEventListener('click', () => {
         const whoFilter = $('#filter-who').val();
         const whyFilter = $('#filter-why').val();
-        const filtered = allItems.filter(item =>
+        filtered = allItems.filter(item =>
           (!whoFilter || (item.who && item.who.toLowerCase().includes(whoFilter.toLowerCase()))) &&
           (!whyFilter || (item.why && item.why.toLowerCase().includes(whyFilter.toLowerCase())))
         );
         renderBoard(filtered);
+        renderCalendar(filtered);
       });
       document.getElementById('reset-filters').addEventListener('click', () => {
         $('#filter-who').val(null).trigger('change');
         $('#filter-why').val(null).trigger('change');
+        filtered = null;
         renderBoard(allItems);
+        renderCalendar(allItems);
+      });
+
+      document.getElementById('btn-kanban').addEventListener('click', () => {
+        document.getElementById('kanban').style.display = '';
+        document.getElementById('calendar').style.display = 'none';
+      });
+      document.getElementById('btn-calendar').addEventListener('click', () => {
+        document.getElementById('kanban').style.display = 'none';
+        document.getElementById('calendar').style.display = '';
+        renderCalendar(filtered || allItems);
       });
     })
     .catch(error => {

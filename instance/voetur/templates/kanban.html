@@ -36,6 +36,8 @@
     <h2 style="margin-right:20px;">Plano de Ação - Reunião Geral (5W2H)</h2>
     <button id="btn-kanban" style="margin-right:5px;">Kanban</button>
     <button id="btn-calendar">Calendário</button>
+    <button id="btn-create" style="margin-left:10px;">Novo Item</button>
+    <button id="btn-group-quem" style="margin-left:10px;">Por Quem</button>
   </div>
   <div id="filters" style="margin-bottom: 20px;">
     <label style="margin-right: 10px;">Quem: 
@@ -60,16 +62,17 @@
       <h3>Editar Item</h3>
       <form id="edit-form">
         <input type="hidden" id="modal-id" />
+        <div><label>Número:<br><input type="text" id="modal-numero" style="width:100%;" readonly></label></div>
         <div><label>O que:<br><input type="text" id="modal-o-que" style="width:100%;"></label></div>
         <div><label>Quem:<br><input type="text" id="modal-quem" style="width:100%;"></label></div>
         <div><label>Por quê:<br><input type="text" id="modal-por-que" style="width:100%;"></label></div>
         <div><label>Início:<br><input type="datetime-local" id="modal-inicio" style="width:100%;"></label></div>
         <div><label>Fim:<br><input type="datetime-local" id="modal-fim" style="width:100%;"></label></div>
-        <div><label>Observações:<br><textarea id="modal-observacoes" style="width:100%; height:80px;"></textarea></label></div>
         <div><label>Quando:<br><input type="datetime-local" id="modal-quando" style="width:100%;"></label></div>
         <div><label>Onde:<br><input type="text" id="modal-onde" style="width:100%;"></label></div>
         <div><label>Como:<br><input type="text" id="modal-como" style="width:100%;"></label></div>
         <div><label>Quanto:<br><input type="text" id="modal-quanto" style="width:100%;"></label></div>
+        <div><label>Observações:<br><textarea id="modal-observacoes" style="width:100%; height:80px;"></textarea></label></div>
         <div style="margin-top:10px; text-align:right;">
           <button type="button" id="modal-cancel">Cancelar</button>
           <button type="button" id="modal-save">Salvar</button>
@@ -117,6 +120,43 @@
         calendar.render();
       }
 
+      function renderByQuem(items) {
+        document.getElementById('kanban').innerHTML = '';
+        const groups = [...new Set(items.map(i => i.quem).filter(Boolean))];
+        const boards = groups.map(quem => ({
+          id: `quem_${quem}`,
+          title: quem,
+          class: 'info',
+          item: items
+            .filter(i => i.quem === quem)
+            .map(item => ({
+              id: item.id,
+              title: `
+                <div class="card-summary">
+                  <strong>${item.numero}. ${item.o_que}</strong><br>
+                  <em>Quem:</em> ${item.quem}
+                  <a href="#" class="toggle-details" style="float:right;">Mais</a>
+                </div>
+                <div class="card-details" style="display:none; margin-top:8px;">
+                  ${item.por_que ? `<div><em>Por quê:</em> ${item.por_que}</div>` : ''}
+                  ${item.inicio  ? `<div><em>Início:</em> ${new Date(item.inicio).toLocaleString()}</div>` : ''}
+                  ${item.fim     ? `<div><em>Fim:</em> ${new Date(item.fim).toLocaleString()}</div>` : ''}
+                  ${item.quando  ? `<div><em>Quando:</em> ${new Date(item.quando).toLocaleString()}</div>` : ''}
+                  ${item.onde    ? `<div><em>Onde:</em> ${item.onde}</div>` : ''}
+                  ${item.como    ? `<div><em>Como:</em> ${item.como}</div>` : ''}
+                  ${item.quanto  ? `<div><em>Quanto:</em> ${item.quanto}</div>` : ''}
+                  ${item.observacoes ? `<div><em>Observações:</em> ${item.observacoes}</div>` : ''}
+                </div>
+              `.trim()
+            }))
+        }));
+        new jKanban({
+          element: '#kanban',
+          boards: boards,
+          dropEl: function() {}, // disable drag/drop here
+        });
+      }
+
       function renderBoard(items) {
         document.getElementById('kanban').innerHTML = '';
         // Create buckets for each status
@@ -131,13 +171,21 @@
           buckets[key].push({
             id: item.id,
             title: `
-              <strong>${item.numero}. ${item.o_que}</strong><br>
-              ${item.quem    ? `<em>Quem:</em> ${item.quem}<br>` : ''}
-              ${item.por_que ? `<em>Por quê:</em> ${item.por_que}<br>` : ''}
-              ${item.inicio  ? `<em>Início:</em> ${new Date(item.inicio).toLocaleString()}<br>` : ''}
-              ${item.fim     ? `<em>Fim:</em> ${new Date(item.fim).toLocaleString()}<br>` : ''}
-              ${item.como    ? `<em>Como:</em> ${item.como}<br>` : ''}
-              ${item.quanto  ? `<em>Quanto:</em> ${item.quanto}` : ''}
+              <div class="card-summary">
+                <strong>${item.numero}. ${item.o_que}</strong><br>
+                <em>Quem:</em> ${item.quem}
+                <a href="#" class="toggle-details" style="float:right;">Mais</a>
+              </div>
+              <div class="card-details" style="display:none; margin-top:8px;">
+                ${item.por_que ? `<div><em>Por quê:</em> ${item.por_que}</div>` : ''}
+                ${item.inicio  ? `<div><em>Início:</em> ${new Date(item.inicio).toLocaleString()}</div>` : ''}
+                ${item.fim     ? `<div><em>Fim:</em> ${new Date(item.fim).toLocaleString()}</div>` : ''}
+                ${item.quando  ? `<div><em>Quando:</em> ${new Date(item.quando).toLocaleString()}</div>` : ''}
+                ${item.onde    ? `<div><em>Onde:</em> ${item.onde}</div>` : ''}
+                ${item.como    ? `<div><em>Como:</em> ${item.como}</div>` : ''}
+                ${item.quanto  ? `<div><em>Quanto:</em> ${item.quanto}</div>` : ''}
+                ${item.observacoes ? `<div><em>Observações:</em> ${item.observacoes}</div>` : ''}
+              </div>
             `.trim()
           });
         });
@@ -184,22 +232,43 @@
               alert('Falha ao atualizar status do item');
             });
           },
-          click(el) {
-            const itemId = el.getAttribute('data-eid') || el.getAttribute('data-id') || el.id;
+        });
+        document.getElementById('kanban').addEventListener('click', function(e) {
+          if (e.target.classList.contains('toggle-details')) {
+            e.preventDefault();
+            e.stopPropagation();
+            const details = e.target.closest('.kanban-item').querySelector('.card-details');
+            if (details) {
+              details.style.display = details.style.display === 'none' ? 'block' : 'none';
+            }
+          }
+        });
+        // Open modal when clicking on card summary (excluding "Mais")
+        document.getElementById('kanban').addEventListener('click', function(e) {
+          if (e.target.classList.contains('toggle-details')) return;
+          const itemEl = e.target.closest('.kanban-item');
+          if (itemEl) {
+            const itemId = itemEl.getAttribute('data-id') || itemEl.getAttribute('data-eid') || itemEl.id;
             const item = allItems.find(i => i.id === itemId);
             if (!item) return;
+            // Helper to format date/time for datetime-local input
+            const formatForInput = dtStr => {
+              const d = new Date(dtStr);
+              return isNaN(d) ? '' : d.toISOString().slice(0,16);
+            };
             // Populate modal fields
             document.getElementById('modal-id').value = item.id;
+            document.getElementById('modal-numero').value = item.numero;
             document.getElementById('modal-o-que').value = item.o_que;
             document.getElementById('modal-quem').value = item.quem;
             document.getElementById('modal-por-que').value = item.por_que;
-            document.getElementById('modal-inicio').value = item.inicio ? item.inicio.replace(' ', 'T') : '';
-            document.getElementById('modal-fim').value    = item.fim    ? item.fim.replace(' ', 'T')    : '';
-            document.getElementById('modal-observacoes').value = item.observacoes || '';
-            document.getElementById('modal-quando').value = item.quando ? item.quando.replace(' ', 'T') : '';
+            document.getElementById('modal-inicio').value = formatForInput(item.inicio);
+            document.getElementById('modal-fim').value    = formatForInput(item.fim);
+            document.getElementById('modal-quando').value = formatForInput(item.quando);
             document.getElementById('modal-onde').value   = item.onde || '';
             document.getElementById('modal-como').value    = item.como || '';
             document.getElementById('modal-quanto').value  = item.quanto || '';
+            document.getElementById('modal-observacoes').value = item.observacoes || '';
             modal.style.display = 'flex';
           }
         });
@@ -229,23 +298,53 @@
       document.getElementById('btn-kanban').addEventListener('click', () => {
         document.getElementById('kanban').style.display = '';
         document.getElementById('calendar').style.display = 'none';
+        renderBoard(filtered || allItems);
       });
       document.getElementById('btn-calendar').addEventListener('click', () => {
         document.getElementById('kanban').style.display = 'none';
         document.getElementById('calendar').style.display = '';
         renderCalendar(filtered || allItems);
       });
+      document.getElementById('btn-group-quem').addEventListener('click', () => {
+        document.getElementById('kanban').style.display = '';
+        document.getElementById('calendar').style.display = 'none';
+        renderByQuem(filtered || allItems);
+      });
 
       // Modal cancel handler
       document.getElementById('modal-cancel').addEventListener('click', () => {
         modal.style.display = 'none';
       });
-      // Modal save handler
+
+      // Novo Item button opens modal in create mode
+      document.getElementById('btn-create').addEventListener('click', () => {
+        // Compute next number and set it in modal-numero
+        const maxNumero = allItems.length
+          ? Math.max(...allItems.map(i => Number(i.numero)))
+          : 0;
+        document.getElementById('modal-numero').value = maxNumero + 1;
+        // Clear other modal fields
+        document.getElementById('modal-id').value = '';
+        document.getElementById('modal-o-que').value = '';
+        document.getElementById('modal-quem').value = '';
+        document.getElementById('modal-por-que').value = '';
+        document.getElementById('modal-inicio').value = '';
+        document.getElementById('modal-fim').value = '';
+        document.getElementById('modal-quando').value = '';
+        document.getElementById('modal-onde').value = '';
+        document.getElementById('modal-como').value = '';
+        document.getElementById('modal-quanto').value = '';
+        document.getElementById('modal-observacoes').value = '';
+        modal.style.display = 'flex';
+      });
+
+      // Modal save handler (form submit)
       form.addEventListener('submit', (e) => {
         e.preventDefault();
         const id = document.getElementById('modal-id').value;
+        const isNew = !id;
         const updated = {
-          ...allItems.find(i => i.id === id),
+          ...(isNew ? {} : allItems.find(i => i.id === id)),
           o_que: document.getElementById('modal-o-que').value,
           quem:  document.getElementById('modal-quem').value,
           por_que: document.getElementById('modal-por-que').value,
@@ -257,17 +356,21 @@
           inicio: document.getElementById('modal-inicio').value.replace('T', ' ')+ '+00',
           fim:    document.getElementById('modal-fim').value.replace('T', ' ')+ '+00'
         };
-        // Send PUT update
-        fetch(`https://n8n.power.tec.br/webhook/lexidecis/v1/plano-de-acao?id=${id}`, {
-          method: 'PUT',
+        const url = 'https://n8n.power.tec.br/webhook-test/lexidecis/v1/plano-de-acao' + (isNew ? '' : `?id=${id}`);
+        const method = isNew ? 'POST' : 'PUT';
+        fetch(url, {
+          method: method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(updated)
         })
         .then(res => res.json())
         .then(data => {
-          // Update local item and rerender
-          const idx = allItems.findIndex(i => i.id === id);
-          allItems[idx] = updated;
+          if (isNew) {
+            allItems.push(data);
+          } else {
+            const idx = allItems.findIndex(i => i.id === id);
+            allItems[idx] = updated;
+          }
           renderBoard(filtered || allItems);
           renderCalendar(filtered || allItems);
           modal.style.display = 'none';

@@ -179,8 +179,8 @@
         .then(res => res.json())
         .then(usuarios => {
           usuarios.forEach(u => {
-            userMap.set(u.id, `${u.nome} (${u.email})`);
-            $('#modal-atribuido').append(new Option(`${u.nome} (${u.email})`, u.id));
+            userMap.set(u.id, u.email);
+            $('#modal-atribuido').append(new Option(u.email, u.id));
           });
         })
         .catch(err => console.error('Erro ao carregar usuários:', err));

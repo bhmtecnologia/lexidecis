@@ -103,6 +103,7 @@
           <th style="border:1px solid #ccc; padding:8px;">Como</th>
           <th style="border:1px solid #ccc; padding:8px;">Quanto</th>
           <th style="border:1px solid #ccc; padding:8px;">Observações</th>
+          <th style="border:1px solid #ccc; padding:8px;">Atribuído a</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -121,11 +122,6 @@
         <div><label>Atribuído a:<br>
           <select id="modal-atribuido" style="width:100%;">
             <option value="">Selecione</option>
-            <option value="João Silva">João Silva</option>
-            <option value="Maria Oliveira">Maria Oliveira</option>
-            <option value="Carlos Santos">Carlos Santos</option>
-            <option value="Ana Paula">Ana Paula</option>
-            <option value="Rafael Costa">Rafael Costa</option>
           </select>
         </label></div>
         <div><label>Por quê:<br><input type="text" id="modal-por-que" style="width:100%;"></label></div>
@@ -146,6 +142,8 @@
 
   <script src="https://cdn.jsdelivr.net/npm/jkanban@1.3.1/dist/jkanban.min.js"></script>
   <script>
+  // Map para armazenar os usuários
+  const userMap = new Map();
   // Fetch plano de ação items from API and render Kanban
   fetch('https://n8n.power.tec.br/webhook/lexidecis/v1/plano-de-acao')
     .then(response => response.json())
@@ -177,6 +175,19 @@
         minimumInputLength: 3
       });
       $('#modal-atribuido').select2({ placeholder: 'Selecione um responsável' });
+      fetch('https://webhook.power.tec.br/webhook/lexidecis/v1/usuario')
+        .then(res => res.json())
+        .then(usuarios => {
+          usuarios.forEach(u => {
+            userMap.set(u.id, `${u.nome} (${u.email})`);
+            $('#modal-atribuido').append(new Option(`${u.nome} (${u.email})`, u.id));
+          });
+        })
+        .catch(err => console.error('Erro ao carregar usuários:', err));
+      // Função utilitária para obter nome do usuário pelo id
+      function getUserName(id) {
+        return userMap.get(id) || '—';
+      }
       $('#search-input').on('change', () => {
         searchTerms = $('#search-input').val() || [];
         applyAllFilters();
@@ -297,7 +308,8 @@
             { key: 'onde', value: item.onde },
             { key: 'como', value: item.como },
             { key: 'quanto', value: item.quanto },
-            { key: 'observacoes', value: item.observacoes }
+            { key: 'observacoes', value: item.observacoes },
+            { key: 'atribuido', value: getUserName(item.atribuido) }
           ].forEach(({ value }) => {
             const td = document.createElement('td');
             td.style.border = '1px solid #ccc';
@@ -358,6 +370,7 @@
                 ${item.como    ? `<div><strong>Como:</strong> ${item.como}</div>` : ''}
                 ${item.quanto  ? `<div><strong>Quanto:</strong> ${item.quanto}</div>` : ''}
                 ${item.observacoes ? `<div><strong>Observações:</strong> ${item.observacoes}</div>` : ''}
+                ${item.atribuido ? `<div><strong>Atribuído a:</strong> ${getUserName(item.atribuido)}</div>` : ''}
               </div>
             `.trim()
           });
@@ -452,8 +465,7 @@
             document.getElementById('modal-como').value    = item.como || '';
             document.getElementById('modal-quanto').value  = item.quanto || '';
             document.getElementById('modal-observacoes').value = item.observacoes || '';
-            document.getElementById('modal-atribuido').value = item.atribuido || '';
-            $('#modal-atribuido').trigger('change');
+            $('#modal-atribuido').val(item.atribuido || '').trigger('change');
             modal.style.display = 'flex';
           }
         });
@@ -593,7 +605,7 @@
           ...(isNew ? {} : allItems.find(i => i.id === id)),
           o_que: document.getElementById('modal-o-que').value,
           quem:  document.getElementById('modal-quem').value,
-          atribuido: document.getElementById('modal-atribuido').value,
+          atribuido: $('#modal-atribuido').val(),
           por_que: document.getElementById('modal-por-que').value,
           observacoes: document.getElementById('modal-observacoes').value,
           quando: document.getElementById('modal-quando').value.replace('T', ' ')+ '+00',

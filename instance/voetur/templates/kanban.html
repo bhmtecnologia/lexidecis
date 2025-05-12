@@ -123,12 +123,27 @@
             { id: 'concluido',    title: 'Concluídos',    class: 'success',   item: buckets.concluido }
           ],
           dropEl(el, target, source, sibling) {
+            // Format dates to "YYYY-MM-DD HH:MM:SS.mmm+00"
+            function formatTimestamp(dateStr) {
+              const d = new Date(dateStr);
+              const pad = (n, z = 2) => `${n}`.padStart(z, '0');
+              const ms = String(d.getMilliseconds()).padStart(6, '0');
+              return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())} ` +
+                     `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}.` +
+                     `${ms}+00`;
+            }
             const itemId = el.getAttribute('data-eid') || el.getAttribute('data-id') || el.id;
+            const item = allItems.find(i => i.id === itemId);
+            if (!item) return;
             const newStatus = target.parentElement.getAttribute('data-id');
+            // Update status and format dates before sending
+            item.status = newStatus;
+            if (item.inicio) item.inicio = formatTimestamp(item.inicio);
+            if (item.fim)    item.fim    = formatTimestamp(item.fim);
             fetch(`https://n8n.power.tec.br/webhook/lexidecis/v1/plano-de-acao?id=${itemId}`, {
-              method: 'PATCH',
+              method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ status: newStatus })
+              body: JSON.stringify(item)
             })
             .then(response => {
               if (!response.ok) throw new Error('Erro ao atualizar status');

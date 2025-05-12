@@ -238,24 +238,24 @@
         tbody.innerHTML = '';
         items.forEach(item => {
           const row = document.createElement('tr');
-          Object.values({
-            numero: item.numero,
-            o_que: item.o_que,
-            quem: item.quem,
-            status: item.status,
-            por_que: item.por_que,
-            inicio: item.inicio,
-            fim: item.fim,
-            quando: item.quando,
-            onde: item.onde,
-            como: item.como,
-            quanto: item.quanto,
-            observacoes: item.observacoes
-          }).forEach(text => {
+          [
+            { key: 'numero', value: item.numero },
+            { key: 'o_que', value: item.o_que },
+            { key: 'quem', value: item.quem },
+            { key: 'status', value: item.status },
+            { key: 'por_que', value: item.por_que },
+            { key: 'inicio', value: item.inicio ? new Date(item.inicio).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : '' },
+            { key: 'fim', value: item.fim ? new Date(item.fim).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : '' },
+            { key: 'quando', value: item.quando ? new Date(item.quando).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : '' },
+            { key: 'onde', value: item.onde },
+            { key: 'como', value: item.como },
+            { key: 'quanto', value: item.quanto },
+            { key: 'observacoes', value: item.observacoes }
+          ].forEach(({ value }) => {
             const td = document.createElement('td');
             td.style.border = '1px solid #ccc';
             td.style.padding = '8px';
-            td.textContent = text || '';
+            td.textContent = value || '';
             row.appendChild(td);
           });
           tbody.appendChild(row);

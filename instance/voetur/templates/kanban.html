@@ -253,6 +253,18 @@
           bloqueado:   [],
           concluido:   []
         };
+        // Build a color map for 'quem'
+        const colorMap = {};
+        let colorIdx = 0;
+        const palette = [
+          '#17a2b8', '#007bff', '#28a745', '#ffc107', '#6f42c1', '#e83e8c', '#fd7e14', '#20c997', '#6610f2', '#dc3545'
+        ];
+        items.forEach(item => {
+          if (item.quem && !colorMap[item.quem]) {
+            colorMap[item.quem] = palette[colorIdx % palette.length];
+            colorIdx++;
+          }
+        });
         items.forEach(item => {
           const key = item.status || 'planejado';
           buckets[key].push({
@@ -260,7 +272,14 @@
             title: `
               <div class="card-summary">
                 <strong>${item.numero}. ${item.o_que}</strong><br>
-                <span class="quem-tag" style="background:#17a2b8; color:#fff; padding:2px 6px; border-radius:4px; font-size:12px; margin-right:8px;">
+                <span class="quem-tag" style="
+                  background-color: ${colorMap[item.quem]};
+                  color: #fff;
+                  padding:2px 6px;
+                  border-radius:4px;
+                  font-size:12px;
+                  margin-right:8px;
+                ">
                   ${item.quem}
                 </span>
                 <a href="#" class="toggle-details" style="float:right;">Mais</a>

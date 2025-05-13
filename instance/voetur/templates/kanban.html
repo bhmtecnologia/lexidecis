@@ -58,6 +58,23 @@
     .kanban-item .card-summary {
       margin-bottom: 12px;
     }
+    /* Style for planejado status tag */
+    .status-tag.planejado {
+      background: #cfe2ff !important; /* light blue background */
+      color: #084298 !important;      /* dark blue text */
+    }
+    .status-tag.bloqueado {
+      background: #f8d7da !important; /* light red background */
+      color: #721c24 !important;      /* dark red text */
+    }
+    .status-tag.concluido {
+      background: #e2f0d9 !important; /* lighter green background */
+      color: #155724 !important;      /* dark green text */
+    }
+    .status-tag.em_execucao {
+      background: #fff3cd !important; /* light yellow background */
+      color: #856404 !important;      /* dark yellow text */
+    }
   </style>
 </head>
 <body>
@@ -271,28 +288,62 @@
               .map(item => ({
                 id: item.id,
                 title: `
-                  <div class="card-summary">
-                    <strong>${item.numero}. ${item.o_que}</strong><br>
-                    <span class="status-tag" style="
-                      background: ${item.status === 'em_execucao' ? '#fff3cd' : '#007bff'};
-                      color: ${item.status === 'em_execucao' ? '#856404' : '#fff'};
-                      padding:2px 6px;
-                      border-radius:4px;
-                      font-size:12px;
-                      margin-right:8px;
-                    ">
-                      ${item.status.replace('_',' ').toUpperCase()}
-                    </span>
-                    <a href="#" class="toggle-details">Ver mais</a>
-                  </div>
-                `.trim()
+      <div class="card-summary">
+        <strong>${item.numero}. ${item.o_que}</strong><br>
+        <span class="status-tag ${item.status === 'concluido' ? 'concluido' : ''} ${item.status === 'planejado' ? 'planejado' : ''} ${item.status === 'bloqueado' ? 'bloqueado' : ''}" style="
+          background: ${item.status === 'em_execucao' ? '#fff3cd' : '#007bff'};
+          color: ${item.status === 'em_execucao' ? '#856404' : '#fff'};
+          padding:2px 6px;
+          border-radius:4px;
+          font-size:12px;
+          margin-right:8px;
+        ">
+          ${item.status.replace('_',' ').toUpperCase()}
+        </span>
+        <a href="#" class="toggle-details">Ver mais</a>
+      </div>
+      <div class="card-details" style="display:none; margin-top:8px;">
+        ${item.por_que ? `<div><strong>Por quê:</strong> ${item.por_que}</div>` : ''}
+        ${item.inicio  ? `<div><strong>Início:</strong> ${new Date(item.inicio).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</div>` : ''}
+        ${item.fim     ? `<div><strong>Fim:</strong> ${new Date(item.fim).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</div>` : ''}
+        ${item.quando  ? `<div><strong>Quando:</strong> ${new Date(item.quando).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</div>` : ''}
+        ${item.onde    ? `<div><strong>Onde:</strong> ${item.onde}</div>` : ''}
+        ${item.como    ? `<div><strong>Como:</strong> ${item.como}</div>` : ''}
+        ${item.quanto  ? `<div><strong>Quanto:</strong> ${item.quanto}</div>` : ''}
+        ${item.observacoes ? `<div><strong>Observações:</strong> ${item.observacoes}</div>` : ''}
+        ${item.atribuido ? `<div><strong>Atribuído a:</strong> ${userMap.get(item.atribuido) || item.atribuido}</div>` : ''}
+      </div>
+                  `.trim()
               }))
           };
         });
         new jKanban({
           element: '#kanban',
           boards: boards,
-          dropEl: function() { /* disable drag/drop for Por Quem view */ }
+          dropEl: function(el, target, source, sibling) {
+            // Get item ID and object
+            const itemId = el.getAttribute('data-eid') || el.getAttribute('data-id') || el.id;
+            const item = allItems.find(i => i.id === itemId);
+            if (!item) return;
+            // New 'quem' from target column id
+            const newQuem = target.parentElement.getAttribute('data-id').replace('quem_', '');
+            item.quem = newQuem;
+            // Persist change via API
+            fetch(`https://n8n.power.tec.br/webhook/lexidecis/v1/plano-de-acao?id=${itemId}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(item)
+            })
+            .then(response => {
+              if (!response.ok) throw new Error('Erro ao atualizar responsável');
+              return response.json();
+            })
+            .then(data => console.log('Responsável atualizado:', data))
+            .catch(err => {
+              console.error(err);
+              alert('Falha ao atualizar responsável do item');
+            });
+          },
         });
       }
 
@@ -310,21 +361,25 @@
               .map(item => ({
                 id: item.id,
                 title: `
-                  <div class="card-summary">
-                    <strong>${item.numero}. ${item.o_que}</strong><br>
-                    <span class="status-tag" style="
-                      background: ${item.status === 'em_execucao' ? '#fff3cd' : '#007bff'};
-                      color: ${item.status === 'em_execucao' ? '#856404' : '#fff'};
-                      padding:2px 6px;
-                      border-radius:4px;
-                      font-size:12px;
-                      margin-right:8px;
-                    ">
-                      ${item.status.replace('_',' ').toUpperCase()}
-                    </span>
-                    <a href="#" class="toggle-details">Ver mais</a>
-                  </div>
-                `.trim()
+      <div class="card-summary">
+        <strong>${item.numero}. ${item.o_que}</strong><br>
+        <span class="status-tag ${item.status === 'concluido' ? 'concluido' : ''} ${item.status === 'planejado' ? 'planejado' : ''} ${item.status === 'bloqueado' ? 'bloqueado' : ''} ${item.status === 'em_execucao' ? 'em_execucao' : ''}" style="padding:2px 6px; border-radius:4px; font-size:12px; margin-right:8px;">
+          ${item.status.replace('_',' ').toUpperCase()}
+        </span>
+        <a href="#" class="toggle-details">Ver mais</a>
+      </div>
+      <div class="card-details" style="display:none; margin-top:8px;">
+        ${item.por_que ? `<div><strong>Por quê:</strong> ${item.por_que}</div>` : ''}
+        ${item.inicio  ? `<div><strong>Início:</strong> ${new Date(item.inicio).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</div>` : ''}
+        ${item.fim     ? `<div><strong>Fim:</strong> ${new Date(item.fim).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</div>` : ''}
+        ${item.quando  ? `<div><strong>Quando:</strong> ${new Date(item.quando).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</div>` : ''}
+        ${item.onde    ? `<div><strong>Onde:</strong> ${item.onde}</div>` : ''}
+        ${item.como    ? `<div><strong>Como:</strong> ${item.como}</div>` : ''}
+        ${item.quanto  ? `<div><strong>Quanto:</strong> ${item.quanto}</div>` : ''}
+        ${item.observacoes ? `<div><strong>Observações:</strong> ${item.observacoes}</div>` : ''}
+        ${item.atribuido ? `<div><strong>Atribuído a:</strong> ${userMap.get(item.atribuido) || item.atribuido}</div>` : ''}
+      </div>
+                  `.trim()
               }))
           };
         });
@@ -402,7 +457,7 @@
                   margin-right:8px;
                 ">
                   ${item.quem}
-                </span><br>
+                </span>
                 <a href="#" class="toggle-details">Ver mais</a>
               </div>
               <div class="card-details" style="display:none; margin-top:8px;">
@@ -462,22 +517,6 @@
               alert('Falha ao atualizar status do item');
             });
           },
-        });
-        document.getElementById('kanban').addEventListener('click', function(e) {
-          if (e.target.classList.contains('toggle-details')) {
-            e.preventDefault();
-            e.stopPropagation();
-            const details = e.target.closest('.kanban-item').querySelector('.card-details');
-            if (details) {
-              if (details.style.display === 'none') {
-                details.style.display = 'block';
-                e.target.textContent = 'Ocultar';
-              } else {
-                details.style.display = 'none';
-                e.target.textContent = 'Ver mais';
-              }
-            }
-          }
         });
         // Open modal when clicking on card summary (excluding "Mais")
         document.getElementById('kanban').addEventListener('click', function(e) {
@@ -663,6 +702,31 @@
       document.getElementById('kanban').innerHTML = '<p>Falha ao carregar o plano de ação.</p>';
     });
 </script>
+  <script>
+    // Global toggle-details handler for all Kanban views
+    $('#kanban').off('click.globalToggle').on('click.globalToggle', '.toggle-details', function(e) {
+      e.preventDefault();
+      const itemEl = $(this).closest('.kanban-item');
+      const details = itemEl.find('.card-details');
+      if (details.length === 0) return;
+      if (details.is(':visible')) {
+        details.hide();
+        $(this).text('Ver mais');
+      } else {
+        details.show();
+        $(this).text('Ocultar');
+      }
+    });
+  </script>
+  <script>
+    // Close edit modal when clicking outside modal content
+    document.getElementById('edit-modal').addEventListener('click', function(event) {
+      // If the click target is the overlay itself (not inside .modal-content), close modal
+      if (event.target.id === 'edit-modal') {
+        this.style.display = 'none';
+      }
+    });
+  </script>
   <script>
   function renderChart(items) {
     const ctx = document.getElementById('main-chart').getContext('2d');

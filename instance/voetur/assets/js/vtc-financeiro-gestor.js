@@ -328,37 +328,282 @@ export async function renderVtcFinanceiroGestor() {
   });
   // demais handlers iguais...
 
-  // Handler para abrir modal de edição dinâmico
+  // Handler para abrir modal de edição com estrutura estática (igual create-v3)
   $('#lancamentosTable tbody').on('click', 'button[data-action="edit"]', function() {
-      const id = $(this).data('id');
-      const lanc = lancamentosData.find(l => l.id === id);
-      if (lanc) {
-        currentLanc = lanc;
-        $('#editFormContainer').empty();
-        const data = currentLanc.dados;
-        let formHtml = '';
-        Object.entries(data).forEach(([key, value]) => {
-          let inputHtml = '';
-          const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-          if (typeof value === 'number') {
-            inputHtml = `<input type="number" class="form-control" id="field_${key}" name="${key}" value="${value}">`;
-          } else if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) {
-            inputHtml = `<input type="date" class="form-control" id="field_${key}" name="${key}" value="${value.split('T')[0]}">`;
-          } else if (typeof value === 'string') {
-            inputHtml = `<input type="text" class="form-control" id="field_${key}" name="${key}" value="${value}">`;
-          } else {
-            const json = JSON.stringify(value, null, 2);
-            inputHtml = `<textarea class="form-control" id="field_${key}" name="${key}" rows="3">${json}</textarea>`;
-          }
-          formHtml += `
-            <div class="mb-3">
-              <label for="field_${key}" class="form-label">${label}</label>
-              ${inputHtml}
-            </div>`;
-        });
+    const id = $(this).data('id');
+    const lanc = lancamentosData.find(l => l.id === id);
+    if (lanc) {
+      currentLanc = lanc;
+      $('#editFormContainer').empty();
+      const data = currentLanc.dados;
+      // Build edit form based on document type
+      const isNF = data.tipo_documento === 'Nota Fiscal';
+      const isCP = data.tipo_documento === 'Conta a pagar';
+      const formHtml = `
+        <div class="mb-3">
+          <label for="tipoDocumento" class="form-label">Tipo de Documento</label>
+          <select id="tipoDocumento" name="tipo_documento" class="form-control" disabled>
+            <option>${data.tipo_documento}</option>
+          </select>
+        </div>
+        <!-- Link dos anexos -->
+        <div class="mb-3" id="attachmentLink">
+          ${Array.isArray(data.anexo) && data.anexo.length
+            ? data.anexo.map(a => `<a href="${a.url}" target="_blank">${a.categoria}</a>`).join('<br>')
+            : '-'}
+        </div>
+        <div class="mb-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <label for="filialSelect" class="form-label mb-0">Filial</label>
+            <button type="button" class="btn btn-sm btn-outline-secondary manual-toggle" data-target="#filialSelect">Manual</button>
+          </div>
+          <select id="filialSelect" name="filial_id" class="form-control select2"></select>
+        </div>
+        <div class="mb-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <label for="fornecedorSelect" class="form-label mb-0">Fornecedor</label>
+            <button type="button" class="btn btn-sm btn-outline-secondary manual-toggle" data-target="#fornecedorSelect">Manual</button>
+          </div>
+          <select id="fornecedorSelect" name="fornecedor_id" class="form-control select2"></select>
+        </div>
+        <div class="mb-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <label for="projetoSelect" class="form-label mb-0">Projeto</label>
+            <button type="button" class="btn btn-sm btn-outline-secondary manual-toggle" data-target="#projetoSelect">Manual</button>
+          </div>
+          <select id="projetoSelect" name="projeto_id" class="form-control select2"></select>
+        </div>
+        ${isCP ? `
+        <div class="mb-3">
+          <label for="moedaSelect" class="form-label">Moeda</label>
+          <select id="moedaSelect" name="moeda" class="form-control">
+            <option ${data.moeda === 'BRL' ? 'selected' : ''}>BRL</option>
+            <option ${data.moeda === 'USD' ? 'selected' : ''}>USD</option>
+          </select>
+        </div>` : ''}
+        ${isNF ? `
+        <div class="mb-3">
+          <label for="itensSection" class="form-label">Itens da Nota Fiscal</label>
+          <div id="itensSection">
+            ${Array.isArray(data.itens) ? data.itens.map(item => `
+              <div class="item-line">
+                <input name="itemDescricao[]" class="form-control mb-1" value="${item.descricao}" readonly>
+                <input name="itemQuantidade[]" class="form-control mb-1" value="${item.quantidade}" readonly>
+                <input name="itemValorUnitario[]" class="form-control mb-1" value="${item.valor_unitario}" readonly>
+              </div>`).join('') : ''}
+          </div>
+        </div>` : ''}
+        <div class="mb-3">
+          <label for="valorInput" class="form-label">Valor Nominal</label>
+          <input type="number" id="valorInput" name="valor_nominal" class="form-control" value="${data.valor_nominal ?? ''}" required>
+        </div>
+        <div class="mb-3">
+          <label for="dataEmissaoInput" class="form-label">Data Emissão</label>
+          <input type="date" id="dataEmissaoInput" name="data_emissao" class="form-control" value="${data.data_emissao ? data.data_emissao.split('T')[0] : ''}" required>
+        </div>
+        <div class="mb-3">
+          <label for="justificativaInput" class="form-label">Justificativa</label>
+          <textarea id="justificativaInput" name="justificativa" class="form-control" rows="3">${data.justificativa || ''}</textarea>
+        </div>
+        <!-- Log de ações -->
+        <div class="mb-3">
+          <label for="logTextarea" class="form-label">Log</label>
+          <textarea id="logTextarea" name="log" class="form-control" rows="5" readonly>${data.log ? data.log.join('\n') : ''}</textarea>
+        </div>
+        <!-- add other common fields as needed -->
+      `;
         $('#editFormContainer').html(formHtml);
-        editModal.show();
-      }
+        // Append hidden inputs for any data fields not explicitly in the form
+        const formContainer = $('#editFormContainer');
+        Object.entries(data).forEach(([key, value]) => {
+          // Skip fields already present as visible inputs
+          if (formContainer.find(`[name="${key}"]`).length === 0) {
+            // For arrays or objects, JSON-stringify; else, use value directly
+            const val = (typeof value === 'object') ? JSON.stringify(value) : value;
+            formContainer.append(`<input type="hidden" name="${key}" value='${val}'>`);
+          }
+        });
+
+      // --- Select2 initialization logic as in create-v3 ---
+      // Filial
+      listFiliais(AuthService).then(filiais => {
+        const select = $('#filialSelect');
+        select.empty();
+        if (data.filial_id && data.filial_nome) {
+          select.append(`<option value="${data.filial_id}" selected>${data.filial_nome}</option>`);
+        }
+        filiais.forEach(f => {
+          if (String(f.id) !== String(data.filial_id)) {
+            select.append(`<option value="${f.id}">${f.nome}</option>`);
+          }
+        });
+        select.val(data.filial_id).trigger('change');
+        select.select2({
+          placeholder: 'Selecione a filial',
+          allowClear: true,
+          width: '100%'
+        });
+      });
+      // Fornecedor
+      listFornecedores(AuthService).then(fornecedores => {
+        const select = $('#fornecedorSelect');
+        select.empty();
+        if (data.fornecedor_id && data.fornecedor_nome) {
+          select.append(`<option value="${data.fornecedor_id}" selected>${data.fornecedor_nome}</option>`);
+        }
+        fornecedores.forEach(f => {
+          if (String(f.id) !== String(data.fornecedor_id)) {
+            select.append(`<option value="${f.id}">${f.nome}</option>`);
+          }
+        });
+        select.val(data.fornecedor_id).trigger('change');
+        select.select2({
+          placeholder: 'Selecione o fornecedor',
+          allowClear: true,
+          width: '100%'
+        });
+      });
+      // Centro de Custo
+      listCentrosCustos(AuthService).then(centros => {
+        const select = $('#centroCustoSelect');
+        select.empty();
+        if (data.centro_custo_id && data.centro_custo_nome) {
+          select.append(`<option value="${data.centro_custo_id}" selected>${data.centro_custo_nome}</option>`);
+        }
+        centros.forEach(c => {
+          if (String(c.id) !== String(data.centro_custo_id)) {
+            select.append(`<option value="${c.id}">${c.nome}</option>`);
+          }
+        });
+        select.val(data.centro_custo_id).trigger('change');
+        select.select2({
+          placeholder: 'Selecione o centro de custo',
+          allowClear: true,
+          width: '100%'
+        });
+      });
+      // Projeto
+      listProjetos(AuthService).then(projetos => {
+        const select = $('#projetoSelect');
+        select.empty();
+        if (data.projeto_id && data.projeto_nome) {
+          select.append(`<option value="${data.projeto_id}" selected>${data.projeto_nome}</option>`);
+        }
+        projetos.forEach(p => {
+          if (String(p.id) !== String(data.projeto_id)) {
+            select.append(`<option value="${p.id}">${p.nome}</option>`);
+          }
+        });
+        select.val(data.projeto_id).trigger('change');
+        select.select2({
+          placeholder: 'Selecione o projeto',
+          allowClear: true,
+          width: '100%'
+        });
+      });
+
+      // Manual-toggle buttons: attach click handler as in create-v3
+      $('#editFormContainer').on('click', '.manual-toggle', function() {
+        const target = $($(this).data('target'));
+        if (target.prop('tagName') === 'SELECT') {
+          // Replace select with input text
+          const name = target.attr('name');
+          const val = target.find('option:selected').text() || '';
+          const input = $(`<input type="text" class="form-control manual-input" name="${name}" value="${val}" />`);
+          target.closest('.input-group').find('.select2-container').remove();
+          target.replaceWith(input);
+        } else if (target.prop('tagName') === 'INPUT') {
+          // Replace input text with select2 again
+          const name = target.attr('name');
+          let selectId = '';
+          if (name === 'filial_id') selectId = 'filialSelect';
+          if (name === 'fornecedor_id') selectId = 'fornecedorSelect';
+          if (name === 'centro_custo_id') selectId = 'centroCustoSelect';
+          if (name === 'projeto_id') selectId = 'projetoSelect';
+          const select = $(`<select id="${selectId}" name="${name}" class="form-control select2"></select>`);
+          target.replaceWith(select);
+          // Re-initialize select2 for the replaced element
+          if (name === 'filial_id') {
+            listFiliais(AuthService).then(filiais => {
+              select.empty();
+              if (data.filial_id && data.filial_nome) {
+                select.append(`<option value="${data.filial_id}" selected>${data.filial_nome}</option>`);
+              }
+              filiais.forEach(f => {
+                if (String(f.id) !== String(data.filial_id)) {
+                  select.append(`<option value="${f.id}">${f.nome}</option>`);
+                }
+              });
+              select.val(data.filial_id).trigger('change');
+              select.select2({
+                placeholder: 'Selecione a filial',
+                allowClear: true,
+                width: '100%'
+              });
+            });
+          }
+          if (name === 'fornecedor_id') {
+            listFornecedores(AuthService).then(fornecedores => {
+              select.empty();
+              if (data.fornecedor_id && data.fornecedor_nome) {
+                select.append(`<option value="${data.fornecedor_id}" selected>${data.fornecedor_nome}</option>`);
+              }
+              fornecedores.forEach(f => {
+                if (String(f.id) !== String(data.fornecedor_id)) {
+                  select.append(`<option value="${f.id}">${f.nome}</option>`);
+                }
+              });
+              select.val(data.fornecedor_id).trigger('change');
+              select.select2({
+                placeholder: 'Selecione o fornecedor',
+                allowClear: true,
+                width: '100%'
+              });
+            });
+          }
+          if (name === 'centro_custo_id') {
+            listCentrosCustos(AuthService).then(centros => {
+              select.empty();
+              if (data.centro_custo_id && data.centro_custo_nome) {
+                select.append(`<option value="${data.centro_custo_id}" selected>${data.centro_custo_nome}</option>`);
+              }
+              centros.forEach(c => {
+                if (String(c.id) !== String(data.centro_custo_id)) {
+                  select.append(`<option value="${c.id}">${c.nome}</option>`);
+                }
+              });
+              select.val(data.centro_custo_id).trigger('change');
+              select.select2({
+                placeholder: 'Selecione o centro de custo',
+                allowClear: true,
+                width: '100%'
+              });
+            });
+          }
+          if (name === 'projeto_id') {
+            listProjetos(AuthService).then(projetos => {
+              select.empty();
+              if (data.projeto_id && data.projeto_nome) {
+                select.append(`<option value="${data.projeto_id}" selected>${data.projeto_nome}</option>`);
+              }
+              projetos.forEach(p => {
+                if (String(p.id) !== String(data.projeto_id)) {
+                  select.append(`<option value="${p.id}">${p.nome}</option>`);
+                }
+              });
+              select.val(data.projeto_id).trigger('change');
+              select.select2({
+                placeholder: 'Selecione o projeto',
+                allowClear: true,
+                width: '100%'
+              });
+            });
+          }
+        }
+      });
+
+      editModal.show();
+    }
   });
   // Handler para enviar lançamento
   $('#lancamentosTable tbody').on('click', 'button[data-action="send"]', function() {

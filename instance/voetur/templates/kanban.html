@@ -615,6 +615,7 @@
       document.getElementById('reset-filters').addEventListener('click', () => {
         $('#filter-who').val(null).trigger('change');
         $('#search-input').val(null).trigger('change');
+        $('#filter-atribuido').val(null).trigger('change');
         applyAllFilters();
       });
       // Remove old view button event listeners: btn-kanban, btn-calendar, btn-group-quem, btn-table, btn-group-atribuido, btn-chart

@@ -312,10 +312,12 @@ export async function renderFinanceiroAnaliseDashboard() {
           .then(dados => {
             const pendentes = dados.filter(l => {
               if (!(l.dados && l.dados.status)) return false;
-              const s = l.dados.status.toLowerCase();
+              const s = l.dados.status.toLowerCase().trim();
               return s === 'integrado benner'
                   || s === 'enviado controladoria'
-                  || s === 'enviado integração benner';
+                  || s === 'enviado integração benner'
+                  || s === 'integrado benner - recebimento físico'
+                  || s === 'integrado benner - documento financeiro';
             });
             // Atualiza cards de resumo
             // document.getElementById('total-pendentes').textContent = pendentes.length;

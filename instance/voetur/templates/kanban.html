@@ -647,8 +647,7 @@
             const idx = allItems.findIndex(i => i.id === id);
             allItems[idx] = updated;
           }
-          renderBoard(filtered || allItems);
-          renderCalendar(filtered || allItems);
+          applyAllFilters();
           modal.style.display = 'none';
         })
         .catch(err => {

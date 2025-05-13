@@ -63,12 +63,17 @@
 <body>
   <div style="display:flex; align-items:center; margin-bottom:10px;">
     <h2 style="margin-right:20px;">Planos de Ação</h2>
-    <button id="btn-kanban" style="margin-right:5px;">Kanban</button>
-    <button id="btn-calendar">Calendário</button>
     <button id="btn-create" style="margin-left:10px;">Novo Item</button>
-    <button id="btn-group-quem" style="margin-left:10px;">Por Quem</button>
-    <button id="btn-table" style="margin-left:10px;">Tabela</button>
-    <button id="btn-chart" style="margin-left:10px;">Gráficos</button>
+    <label style="margin-left:10px;">Visualização:
+      <select id="view-mode" style="width:200px;">
+        <option value="kanban" selected>Kanban</option>
+        <option value="calendar">Calendário</option>
+        <option value="byQuem">Por Quem</option>
+        <option value="table">Tabela</option>
+        <option value="byAtribuido">Por Atribuído</option>
+        <option value="chart">Gráficos</option>
+      </select>
+    </label>
   </div>
   <div id="filters" style="margin-bottom: 20px;">
     <label style="margin-right:10px;">
@@ -79,8 +84,8 @@
         <option value="">Todos</option>
       </select>
     </label>
-    <label style="margin-right: 10px;">Por quê: 
-      <select id="filter-why" style="width:200px;">
+    <label style="margin-right: 10px;">Atribuído: 
+      <select id="filter-atribuido" style="width:200px;">
         <option value="">Todos</option>
       </select>
     </label>
@@ -113,6 +118,8 @@
   </div>
   <div id="chart-view" style="display:none; margin-top:20px;">
     <canvas id="main-chart" height="200"></canvas>
+    <canvas id="status-chart" height="200" style="margin-top:40px;"></canvas>
+    <canvas id="atribuido-chart" height="200" style="margin-top:40px;"></canvas>
   </div>
 
   <!-- Edit Item Modal -->
@@ -163,16 +170,11 @@
 
       // Populate filter selects
       const whoValues = [...new Set(allItems.map(i => i.quem).filter(Boolean))];
-      const whyValues = [...new Set(allItems.map(i => i.por_que).filter(Boolean))];
       whoValues.forEach(val => {
         $('#filter-who').append(new Option(val, val));
       });
-      whyValues.forEach(val => {
-        $('#filter-why').append(new Option(val, val));
-      });
       // Initialize Select2
       $('#filter-who').select2({ placeholder: 'Filtrar por responsável', allowClear: true });
-      $('#filter-why').select2({ placeholder: 'Filtrar por motivo', allowClear: true });
       $('#search-input').select2({
         tags: true,
         placeholder: 'Buscar...',
@@ -180,22 +182,62 @@
         minimumInputLength: 3
       });
       $('#modal-atribuido').select2({ placeholder: 'Selecione um responsável' });
+      $('#filter-atribuido').select2({ placeholder: 'Filtrar por atribuído', allowClear: true });
       fetch('https://webhook.power.tec.br/webhook/lexidecis/v1/usuario')
         .then(res => res.json())
         .then(usuarios => {
           usuarios.forEach(u => {
             userMap.set(u.id, u.email);
             $('#modal-atribuido').append(new Option(u.email, u.id));
+            $('#filter-atribuido').append(new Option(u.email, u.id));
           });
         })
         .catch(err => console.error('Erro ao carregar usuários:', err));
       // Função utilitária para obter nome do usuário pelo id
       function getUserName(id) {
-        return userMap.get(id) || '—';
+        return userMap.get(id) || id;
       }
       $('#search-input').on('change', () => {
         searchTerms = $('#search-input').val() || [];
         applyAllFilters();
+      });
+      // Initialize view-mode select2
+      $('#view-mode').select2({ minimumResultsForSearch: Infinity });
+      $('#view-mode').on('change', () => {
+        const mode = $('#view-mode').val();
+        // Hide all views
+        $('#kanban, #calendar, #table-view, #chart-view').hide();
+        // Remove active class from any buttons if still present
+        ['btn-kanban','btn-calendar','btn-group-quem','btn-table','btn-group-atribuido','btn-chart'].forEach(id => {
+          $('#' + id).removeClass('active');
+        });
+        // Show selected view and render
+        switch(mode) {
+          case 'kanban':
+            $('#kanban').show();
+            renderBoard(filtered || allItems);
+            break;
+          case 'calendar':
+            $('#calendar').show();
+            renderCalendar(filtered || allItems);
+            break;
+          case 'byQuem':
+            $('#kanban').show();
+            renderByQuem(filtered || allItems);
+            break;
+          case 'table':
+            $('#table-view').show();
+            renderTable(filtered || allItems);
+            break;
+          case 'byAtribuido':
+            $('#kanban').show();
+            renderByAtribuido(filtered || allItems);
+            break;
+          case 'chart':
+            $('#chart-view').show();
+            renderChart(filtered || allItems);
+            break;
+        }
       });
 
       function renderCalendar(items) {
@@ -216,83 +258,80 @@
 
       function renderByQuem(items) {
         document.getElementById('kanban').innerHTML = '';
+        // Group by quem
         const groups = [...new Set(items.map(i => i.quem).filter(Boolean))];
-        const boards = groups.map(quem => ({
-          id: `quem_${quem}`,
-          title: quem,
-          class: 'info',
-          item: items
-            .filter(i => i.quem === quem)
-            .map(item => ({
-              id: item.id,
-              title: `
-                <div class="card-summary">
-                  <strong>${item.numero}. ${item.o_que}</strong><br>
-                  <span class="status-tag" style="
-                    background: ${item.status === 'em_execucao' ? '#fff3cd' : '#007bff'};
-                    color: ${item.status === 'em_execucao' ? '#856404' : '#fff'};
-                    padding:2px 6px;
-                    border-radius:4px;
-                    font-size:12px;
-                    margin-right:8px;
-                  ">
-                    ${item.status.replace('_',' ').toUpperCase()}
-                  </span>
-                  <a href="#" class="toggle-details">Ver mais</a>
-                </div>
-                <div class="card-details" style="display:none; margin-top:8px;">
-                  ${item.por_que ? `<div><strong>Por quê:</strong> ${item.por_que}</div>` : ''}
-                  ${item.inicio  ? `<div><strong>Início:</strong> ${new Date(item.inicio).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })}</div>` : ''}
-                  ${item.fim     ? `<div><strong>Fim:</strong> ${new Date(item.fim).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })}</div>` : ''}
-                  ${item.quando  ? `<div><strong>Quando:</strong> ${new Date(item.quando).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })}</div>` : ''}
-                  ${item.onde    ? `<div><strong>Onde:</strong> ${item.onde}</div>` : ''}
-                  ${item.como    ? `<div><strong>Como:</strong> ${item.como}</div>` : ''}
-                  ${item.quanto  ? `<div><strong>Quanto:</strong> ${item.quanto}</div>` : ''}
-                  ${item.observacoes ? `<div><strong>Observações:</strong> ${item.observacoes}</div>` : ''}
-                </div>
-              `.trim()
-            }))
-        }));
+        const boards = groups.map(quem => {
+          const count = items.filter(i => i.quem === quem).length;
+          return {
+            id: `quem_${quem}`,
+            title: `${quem} (${count})`,
+            class: 'info',
+            item: items
+              .filter(i => i.quem === quem)
+              .map(item => ({
+                id: item.id,
+                title: `
+                  <div class="card-summary">
+                    <strong>${item.numero}. ${item.o_que}</strong><br>
+                    <span class="status-tag" style="
+                      background: ${item.status === 'em_execucao' ? '#fff3cd' : '#007bff'};
+                      color: ${item.status === 'em_execucao' ? '#856404' : '#fff'};
+                      padding:2px 6px;
+                      border-radius:4px;
+                      font-size:12px;
+                      margin-right:8px;
+                    ">
+                      ${item.status.replace('_',' ').toUpperCase()}
+                    </span>
+                    <a href="#" class="toggle-details">Ver mais</a>
+                  </div>
+                `.trim()
+              }))
+          };
+        });
         new jKanban({
           element: '#kanban',
           boards: boards,
-          dropEl(el, target, source, sibling) {
-            const itemId = el.getAttribute('data-eid') || el.getAttribute('data-id') || el.id;
-            const item = allItems.find(i => i.id === itemId);
-            if (!item) return;
-            const newQuem = target.parentElement.getAttribute('data-id').replace('quem_', '');
-            item.quem = newQuem;
+          dropEl: function() { /* disable drag/drop for Por Quem view */ }
+        });
+      }
 
-            // Format dates to "YYYY-MM-DD HH:MM:SS.mmm+00"
-            function formatTimestamp(dateStr) {
-              const d = new Date(dateStr);
-              const pad = (n, z = 2) => `${n}`.padStart(z, '0');
-              const ms = String(d.getMilliseconds()).padStart(6, '0');
-              return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())} ` +
-                     `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}.` +
-                     `${ms}+00`;
-            }
-            if (item.inicio) item.inicio = formatTimestamp(item.inicio);
-            if (item.fim) item.fim = formatTimestamp(item.fim);
-            if (item.quando) item.quando = formatTimestamp(item.quando);
-
-            fetch(`https://n8n.power.tec.br/webhook/lexidecis/v1/plano-de-acao?id=${itemId}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(item)
-            })
-            .then(response => {
-              if (!response.ok) throw new Error('Erro ao atualizar responsável');
-              return response.json();
-            })
-            .then(data => {
-              console.log('Responsável atualizado:', data);
-            })
-            .catch(err => {
-              console.error(err);
-              alert('Falha ao atualizar responsável do item');
-            });
-          },
+      function renderByAtribuido(items) {
+        document.getElementById('kanban').innerHTML = '';
+        const groups = [...new Set(items.map(i => i.atribuido).filter(Boolean))];
+        const boards = groups.map(atr => {
+          const count = items.filter(i => i.atribuido === atr).length;
+          return {
+            id: `atr_${atr}`,
+            title: `${userMap.get(atr) || atr} (${count})`,
+            class: 'info',
+            item: items
+              .filter(i => i.atribuido === atr)
+              .map(item => ({
+                id: item.id,
+                title: `
+                  <div class="card-summary">
+                    <strong>${item.numero}. ${item.o_que}</strong><br>
+                    <span class="status-tag" style="
+                      background: ${item.status === 'em_execucao' ? '#fff3cd' : '#007bff'};
+                      color: ${item.status === 'em_execucao' ? '#856404' : '#fff'};
+                      padding:2px 6px;
+                      border-radius:4px;
+                      font-size:12px;
+                      margin-right:8px;
+                    ">
+                      ${item.status.replace('_',' ').toUpperCase()}
+                    </span>
+                    <a href="#" class="toggle-details">Ver mais</a>
+                  </div>
+                `.trim()
+              }))
+          };
+        });
+        new jKanban({
+          element: '#kanban',
+          boards: boards,
+          dropEl: function() { /* disable drag/drop for atribuído view */ }
         });
       }
 
@@ -383,10 +422,10 @@
         new jKanban({
           element: '#kanban',
           boards: [
-            { id: 'planejado',    title: 'Planejados',    class: 'primary',   item: buckets.planejado },
-            { id: 'em_execucao',   title: 'Em Execução',  class: 'warning',   item: buckets.em_execucao },
-            { id: 'bloqueado',    title: 'Bloqueados',    class: 'danger',    item: buckets.bloqueado },
-            { id: 'concluido',    title: 'Concluídos',    class: 'success',   item: buckets.concluido }
+            { id: 'planejado',    title: `Planejados (${buckets.planejado.length})`,    class: 'primary',   item: buckets.planejado },
+            { id: 'em_execucao',   title: `Em Execução (${buckets.em_execucao.length})`,  class: 'warning',   item: buckets.em_execucao },
+            { id: 'bloqueado',    title: `Bloqueados (${buckets.bloqueado.length})`,    class: 'danger',    item: buckets.bloqueado },
+            { id: 'concluido',    title: `Concluídos (${buckets.concluido.length})`,    class: 'success',   item: buckets.concluido }
           ],
           dropEl(el, target, source, sibling) {
             // Format dates to "YYYY-MM-DD HH:MM:SS.mmm+00"
@@ -482,13 +521,13 @@
       function applyAllFilters() {
         // Start from allItems
         let items = allItems;
-        // Apply Quem/Por quê filters if any
+        // Apply Quem/Atribuído filters if any
         const whoFilter = $('#filter-who').val();
-        const whyFilter = $('#filter-why').val();
-        if (whoFilter || whyFilter) {
+        const atribFilter = $('#filter-atribuido').val();
+        if (whoFilter || atribFilter) {
           items = items.filter(item =>
             (!whoFilter || (item.quem && item.quem.toLowerCase().includes(whoFilter.toLowerCase()))) &&
-            (!whyFilter || (item.por_que && item.por_que.toLowerCase().includes(whyFilter.toLowerCase())))
+            (!atribFilter || (item.atribuido && item.atribuido.toLowerCase().includes(atribFilter.toLowerCase())))
           );
         }
         // Apply search terms
@@ -504,15 +543,29 @@
         }
         // Sort filtered items by numero ascending
         items.sort((a, b) => Number(a.numero) - Number(b.numero));
-        // Render based on current view
-        if (document.getElementById('btn-group-quem').classList.contains('active')) {
-          renderByQuem(items);
-        } else if (document.getElementById('calendar').style.display !== 'none') {
-          renderCalendar(items);
-        } else if (document.getElementById('btn-table').classList.contains('active')) {
-          renderTable(items);
-        } else {
-          renderBoard(items);
+        // Render based on current view-mode select
+        const mode = $('#view-mode').val();
+        switch (mode) {
+          case 'kanban':
+            renderBoard(items);
+            break;
+          case 'calendar':
+            renderCalendar(items);
+            break;
+          case 'byQuem':
+            renderByQuem(items);
+            break;
+          case 'table':
+            renderTable(items);
+            break;
+          case 'byAtribuido':
+            renderByAtribuido(items);
+            break;
+          case 'chart':
+            renderChart(items);
+            break;
+          default:
+            renderBoard(items);
         }
         filtered = items;
       }
@@ -522,69 +575,10 @@
       });
       document.getElementById('reset-filters').addEventListener('click', () => {
         $('#filter-who').val(null).trigger('change');
-        $('#filter-why').val(null).trigger('change');
         $('#search-input').val(null).trigger('change');
         applyAllFilters();
       });
-
-      document.getElementById('btn-kanban').addEventListener('click', () => {
-        document.getElementById('table-view').style.display = 'none';
-        // Manage active class
-        document.getElementById('btn-kanban').classList.add('active');
-        document.getElementById('btn-group-quem').classList.remove('active');
-        document.getElementById('btn-calendar').classList.remove('active');
-        document.getElementById('btn-table').classList.remove('active');
-        document.getElementById('kanban').style.display = '';
-        document.getElementById('calendar').style.display = 'none';
-        renderBoard(filtered || allItems);
-      });
-      document.getElementById('btn-calendar').addEventListener('click', () => {
-        document.getElementById('table-view').style.display = 'none';
-        // Manage active class
-        document.getElementById('btn-calendar').classList.add('active');
-        document.getElementById('btn-kanban').classList.remove('active');
-        document.getElementById('btn-group-quem').classList.remove('active');
-        document.getElementById('btn-table').classList.remove('active');
-        document.getElementById('kanban').style.display = 'none';
-        document.getElementById('calendar').style.display = '';
-        renderCalendar(filtered || allItems);
-      });
-      document.getElementById('btn-group-quem').addEventListener('click', () => {
-        document.getElementById('table-view').style.display = 'none';
-        // Manage active class
-        document.getElementById('btn-group-quem').classList.add('active');
-        document.getElementById('btn-kanban').classList.remove('active');
-        document.getElementById('btn-calendar').classList.remove('active');
-        document.getElementById('btn-table').classList.remove('active');
-        document.getElementById('kanban').style.display = '';
-        document.getElementById('calendar').style.display = 'none';
-        renderByQuem(filtered || allItems);
-      });
-      document.getElementById('btn-table').addEventListener('click', () => {
-        // Manage active classes
-        ['btn-kanban','btn-calendar','btn-group-quem','btn-table','btn-chart'].forEach(id => {
-          document.getElementById(id).classList.remove('active');
-        });
-        document.getElementById('btn-table').classList.add('active');
-        // Toggle views
-        document.getElementById('kanban').style.display = 'none';
-        document.getElementById('calendar').style.display = 'none';
-        document.getElementById('table-view').style.display = '';
-        document.getElementById('chart-view').style.display = 'none';
-        // Render table
-        renderTable(filtered || allItems);
-      });
-      document.getElementById('btn-chart').addEventListener('click', () => {
-        ['btn-kanban','btn-calendar','btn-group-quem','btn-table','btn-chart'].forEach(id => {
-          document.getElementById(id).classList.remove('active');
-        });
-        document.getElementById('btn-chart').classList.add('active');
-        document.getElementById('kanban').style.display = 'none';
-        document.getElementById('calendar').style.display = 'none';
-        document.getElementById('table-view').style.display = 'none';
-        document.getElementById('chart-view').style.display = '';
-        renderChart(filtered || allItems);
-      });
+      // Remove old view button event listeners: btn-kanban, btn-calendar, btn-group-quem, btn-table, btn-group-atribuido, btn-chart
 
       // Modal cancel handler
       document.getElementById('modal-cancel').addEventListener('click', () => {
@@ -659,6 +653,10 @@
       document.getElementById('modal-save').addEventListener('click', () => {
         form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
       });
+      // Ensure default view is Kanban on load
+      $('#kanban').show();
+      $('#calendar, #table-view, #chart-view').hide();
+      $('#view-mode').val('kanban').trigger('change.select2');
     })
     .catch(error => {
       console.error('Erro ao carregar dados do plano de ação:', error);
@@ -698,7 +696,81 @@
         }
       }
     });
+    // Status chart
+    const ctx2 = document.getElementById('status-chart').getContext('2d');
+    // Group by status
+    const statusGroups = {};
+    items.forEach(i => {
+      const st = i.status || 'planejado';
+      statusGroups[st] = (statusGroups[st] || 0) + 1;
+    });
+    const statusLabels = Object.keys(statusGroups).map(st => {
+      switch(st) {
+        case 'planejado': return 'Planejados';
+        case 'em_execucao': return 'Em Execução';
+        case 'bloqueado': return 'Bloqueados';
+        case 'concluido': return 'Concluídos';
+        default: return st;
+      }
+    });
+    const statusValues = Object.values(statusGroups);
+    // Destroy previous if exists
+    if (window.statusChartInstance) window.statusChartInstance.destroy();
+    window.statusChartInstance = new Chart(ctx2, {
+      type: 'bar',
+      data: {
+        labels: statusLabels,
+        datasets: [{
+          label: 'Itens por Status',
+          data: statusValues,
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: true }
+        },
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+    // Atribuído chart
+    const ctx3 = document.getElementById('atribuido-chart').getContext('2d');
+    // Group by atribuido
+    const atribGroups = {};
+    items.forEach(i => {
+      const at = i.atribuido || 'Não atribuído';
+      atribGroups[at] = (atribGroups[at] || 0) + 1;
+    });
+    // getUserName function is available in the main script
+    const atribLabels = Object.keys(atribGroups).map(at => (userMap.get(at) || at));
+    const atribValues = Object.values(atribGroups);
+    if (window.atribuidoChartInstance) window.atribuidoChartInstance.destroy();
+    window.atribuidoChartInstance = new Chart(ctx3, {
+      type: 'bar',
+      data: {
+        labels: atribLabels,
+        datasets: [{
+          label: 'Itens por Atribuído',
+          data: atribValues,
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: true }
+        },
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
   }
-</script>
+  </script>
 </body>
 </html>

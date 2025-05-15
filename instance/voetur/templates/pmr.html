@@ -128,10 +128,23 @@
       border-radius: 2px;
       margin-right: 0.5rem;
     }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .header img {
+      height: 40px;
+    }
   </style>
 </head>
 <body>
-  <h1>Prazo Médio de Recebimento (PMR)</h1>
+  <div class="header">
+    <img src="../assets/images/logo/logo-d.png" alt="BHM Tecnologia Logo" />
+    <h1>Prazo Médio de Recebimento (PMR)</h1>
+  </div>
   <div id="current-datetime" style="font-size:0.9rem; color:#555; margin-bottom:1rem;"></div>
   <div id="loading">Carregando dados...</div>
   <div class="year-card hidden">
@@ -328,5 +341,8 @@ ORDER BY mes DESC;</code></pre>
     // Inicializa ao carregar a página
     window.onload = initPMRGauge;
   </script>
+  <footer style="text-align:center; margin-top:2rem; font-size:0.85rem; color:#999;">
+    VTC Log 2025 - Desenvolvido por BHM Tecnologia
+  </footer>
 </body>
 </html>

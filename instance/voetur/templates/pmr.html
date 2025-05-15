@@ -207,11 +207,27 @@ ORDER BY mes DESC;</code></pre>
           throw new Error('Resposta inesperada: pmr não é um array ou está vazio');
         }
 
+        // Captura apenas os meses que vieram da API para cálculo de SLA
+        const dataMonths = pmrArray.slice();
+        const totalDataMonths = dataMonths.length;
+
+        // Garantir todos os meses de 01 a 12
+        const fullMonths = ['01','02','03','04','05','06','07','08','09','10','11','12'];
+        const year = new Date().getFullYear().toString();
+        const displayArray = fullMonths.map(m => {
+          const rec = pmrArray.find(r => r.MES === `${year}-${m}`);
+          return rec || { MES: `${year}-${m}`, PRAZO_MEDIO_RECEBIMENTO: 0 };
+        });
+        // substitui pmrArray pelo array completo
+        pmrArray = displayArray;
+
         // Definir SLA em dias
         const SLA = 29;
-        const totalMonths = pmrArray.length;
-        const compliant = pmrArray.filter(r => r.PRAZO_MEDIO_RECEBIMENTO <= SLA).length;
-        const percentage = Math.round((compliant / totalMonths) * 100);
+        // Filtra apenas meses com dados para compliance
+        const compliant = dataMonths.filter(r => r.PRAZO_MEDIO_RECEBIMENTO > 0 && r.PRAZO_MEDIO_RECEBIMENTO <= SLA).length;
+        const percentage = totalDataMonths > 0
+          ? Math.round((compliant / totalDataMonths) * 100)
+          : 0;
 
         // Criar barra de SLA
         const yearCard = document.querySelector('.year-card');
@@ -220,7 +236,7 @@ ORDER BY mes DESC;</code></pre>
         const slaFill = document.createElement('div');
         slaFill.classList.add('sla-fill');
         slaFill.style.width = percentage + '%';
-        slaFill.textContent = `SLA: ${percentage}% (${compliant}/${totalMonths})`;
+        slaFill.textContent = `SLA: ${percentage}% (${compliant}/${totalDataMonths})`;
         slaBar.appendChild(slaFill);
         // Inserir antes do container de gauges
         const gaugesContainer = document.getElementById('gauges-container');
@@ -266,7 +282,9 @@ ORDER BY mes DESC;</code></pre>
 
           // Definir cor do gauge conforme SLA mensal
           let gaugeColor;
-          if (record.PRAZO_MEDIO_RECEBIMENTO <= 26) {
+          if (record.PRAZO_MEDIO_RECEBIMENTO === 0) {
+            gaugeColor = '#ccc'; // cinza para meses sem dados
+          } else if (record.PRAZO_MEDIO_RECEBIMENTO <= 26) {
             gaugeColor = '#4caf50'; // verde
           } else if (record.PRAZO_MEDIO_RECEBIMENTO >= 30) {
             gaugeColor = '#f44336'; // vermelho

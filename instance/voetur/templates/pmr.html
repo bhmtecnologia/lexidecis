@@ -57,6 +57,44 @@
       font-size: 1rem;
       font-weight: bold;
     }
+    .sla-bar {
+      width: 100%;
+      background: #eee;
+      border-radius: 4px;
+      margin-bottom: 1rem;
+      height: 20px;
+      overflow: hidden;
+    }
+    .sla-fill {
+      height: 100%;
+      background: #4caf50;
+      text-align: center;
+      color: white;
+      line-height: 20px;
+      white-space: nowrap;
+    }
+    .description {
+      background: #f5f5f5;
+      border-left: 4px solid #2196f3;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      text-align: left;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .description p {
+      margin: 0 0 1rem;
+      font-size: 0.95rem;
+      color: #333;
+    }
+    .description pre {
+      background: #eee;
+      padding: 0.5rem;
+      overflow-x: auto;
+      font-size: 0.85rem;
+      line-height: 1.3;
+    }
   </style>
 </head>
 <body>
@@ -64,6 +102,31 @@
   <div class="year-card">
     <h2>2025</h2>
     <div id="gauges-container"></div>
+  </div>
+  <div class="description">
+    <p><strong>Relatório PMR (Prazo Médio de Recebimento)</strong>: apresenta o cálculo do prazo médio de recebimento das faturas no período corrente, considerando o valor total faturado e o valor já baixado.</p>
+    <p>SQL utilizado para gerar os dados:</p>
+    <pre><code>SELECT
+  FORMAT(d.DATAEMISSAO, 'yyyy-MM')                                 AS mes,
+  ROUND(SUM(d.VALORLIQUIDO), 2)                                    AS receita_mes,
+  ROUND(SUM(d.VALORLIQUIDO - ISNULL(p.VALORESBAIXADOS, 0)), 2)     AS contas_a_receber,
+  CASE
+    WHEN SUM(d.VALORLIQUIDO) = 0 THEN NULL
+    ELSE
+      ROUND(
+        SUM(d.VALORLIQUIDO - ISNULL(p.VALORESBAIXADOS, 0))
+        / SUM(d.VALORLIQUIDO) * 30
+      , 0)
+  END                                                              AS prazo_medio_recebimento
+FROM fn_documentos d
+LEFT JOIN fn_parcelas p
+  ON p.DOCUMENTO       = d.HANDLE
+  AND p.DATALIQUIDACAO IS NULL
+WHERE d.DATAEMISSAO
+  BETWEEN DATEFROMPARTS(YEAR(GETDATE()), 1, 1)
+      AND GETDATE()
+GROUP BY FORMAT(d.DATAEMISSAO, 'yyyy-MM')
+ORDER BY mes DESC;</code></pre>
   </div>
 
   <script>
@@ -93,6 +156,25 @@
         if (pmrArray.length === 0) {
           throw new Error('Resposta inesperada: pmr não é um array ou está vazio');
         }
+
+        // Definir SLA em dias
+        const SLA = 29;
+        const totalMonths = pmrArray.length;
+        const compliant = pmrArray.filter(r => r.PRAZO_MEDIO_RECEBIMENTO <= SLA).length;
+        const percentage = Math.round((compliant / totalMonths) * 100);
+
+        // Criar barra de SLA
+        const yearCard = document.querySelector('.year-card');
+        const slaBar = document.createElement('div');
+        slaBar.classList.add('sla-bar');
+        const slaFill = document.createElement('div');
+        slaFill.classList.add('sla-fill');
+        slaFill.style.width = percentage + '%';
+        slaFill.textContent = `SLA: ${percentage}% (${compliant}/${totalMonths})`;
+        slaBar.appendChild(slaFill);
+        // Inserir antes do container de gauges
+        const gaugesContainer = document.getElementById('gauges-container');
+        yearCard.insertBefore(slaBar, gaugesContainer);
 
         const monthNames = {
           '01': 'Janeiro',
@@ -131,6 +213,17 @@
           wrapper.appendChild(label);
           // Adiciona ao container principal
           container.appendChild(wrapper);
+
+          // Definir cor do gauge conforme SLA mensal
+          let gaugeColor;
+          if (record.PRAZO_MEDIO_RECEBIMENTO <= 26) {
+            gaugeColor = '#4caf50'; // verde
+          } else if (record.PRAZO_MEDIO_RECEBIMENTO >= 30) {
+            gaugeColor = '#f44336'; // vermelho
+          } else {
+            gaugeColor = '#ffeb3b'; // amarelo
+          }
+
           // Instancia o gauge no gaugeDiv
           new JustGage({
             id: gaugeId,
@@ -141,7 +234,8 @@
             label: 'dias',
             decimals: 0,
             gaugeWidthScale: 0.6,
-            levelColorsGradient: false
+            levelColors: [gaugeColor],
+            gaugeColor: '#eee',
           });
         });
       } catch (err) {

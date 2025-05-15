@@ -316,6 +316,7 @@ export async function renderFinanceiroAnaliseDashboard() {
               return s === 'integrado benner'
                   || s === 'enviado controladoria'
                   || s === 'enviado integração benner'
+                  || s === 'rejeitado integração benner'
                   || s === 'integrado benner - recebimento físico'
                   || s === 'integrado benner - documento financeiro';
             });
@@ -346,10 +347,14 @@ export async function renderFinanceiroAnaliseDashboard() {
               const projetoName = projObj?.nome || '-';
               // Determine action buttons based on status
               let actionsHtml;
-              if (dadosLanc.status === 'Enviado Integração Benner' || dadosLanc.status === 'Integrado Benner') {
+              if (
+                dadosLanc.status === 'Enviado Integração Benner' ||
+                dadosLanc.status === 'Integrado Benner' ||
+                dadosLanc.status === 'Rejeitado Integração Benner'
+              ) {
                 actionsHtml = `<button class="btn btn-sm btn-visualizar" data-id="${lancamento.id}" title="Visualizar" style="background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404;">
-    <i class="iconly-Show icli svg-color"></i>
-  </button>`;
+      <i class="bi bi-eye"></i>
+    </button>`;
               } else {
                 actionsHtml = `<div style="display:inline-flex;gap:4px;">
       <button class="btn btn-sm btn-aprovar" data-id="${lancamento.id}" title="Aprovar" style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724;">

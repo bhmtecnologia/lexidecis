@@ -267,15 +267,20 @@ export async function listFiliais(AuthService) {
  * Lista os fornecedores.
  *
  * @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
+ * @param {Object} [filter={}] - Filtros opcionais para busca, ex: { cnpj: '...' }
  * @returns {Promise<Array>} - Array com os fornecedores.
  * @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro na API.
  */
-export async function listFornecedores(AuthService) {
+export async function listFornecedores(AuthService, filter = {}) {
   const user = AuthService.user;
   if (!user) throw new Error("Usuário não autenticado");
   const token = await user.getIdToken();
 
-  const response = await fetch('https://webhook.power.tec.br/webhook/voetur/v1/fornecedores', {
+  const params = new URLSearchParams();
+  if (filter.cnpj) params.append('cnpj', filter.cnpj);
+  const url = `https://webhook.power.tec.br/webhook/voetur/v1/fornecedores${params.toString() ? '?' + params.toString() : ''}`;
+
+  const response = await fetch(url, {
     method: "GET",
     headers: { 
       "Content-Type": "application/json",

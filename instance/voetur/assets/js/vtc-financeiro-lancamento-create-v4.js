@@ -617,8 +617,17 @@ export async function renderVtcFinanceiroLancamentoCreateV4() {
               payloadAuto.filial_id = filMatch.id || filMatch.uuid || null;
               payloadAuto.filial_nome = filMatch.nome;
             }
-            // Fornecedor
-            const fornMatch = (window.fornecedoresData || []).find(f => f.cnpj === info.cnpj_fornecedor);
+            // Busca fornecedor por CNPJ via API
+            // Busca fornecedor por CNPJ usando a API existente
+            let fornMatch = null;
+            try {
+              const fornecedores = await listFornecedores(AuthService, { cnpj: info.cnpj_fornecedor });
+              if (Array.isArray(fornecedores) && fornecedores.length > 0) {
+                fornMatch = fornecedores[0];
+              }
+            } catch (err) {
+              console.error("Erro ao buscar fornecedor por CNPJ:", err);
+            }
             if (fornMatch) {
               payloadAuto.fornecedor_id = fornMatch.id || fornMatch.uuid || null;
               payloadAuto.fornecedor_nome = fornMatch.nome;
@@ -702,7 +711,16 @@ export async function renderVtcFinanceiroLancamentoCreateV4() {
               payloadAuto.filial_id = filMatch.id || filMatch.uuid;
               payloadAuto.filial_nome = filMatch.nome;
             }
-            const fornMatch = (window.fornecedoresData || []).find(f => f.cnpj === info.cnpj_fornecedor);
+            // Busca fornecedor por CNPJ via API
+            let fornMatch = null;
+            try {
+              const fornecedores = await listFornecedores(AuthService, { cnpj: info.cnpj_fornecedor });
+              if (Array.isArray(fornecedores) && fornecedores.length > 0) {
+                fornMatch = fornecedores[0];
+              }
+            } catch (err) {
+              console.error("Erro ao buscar fornecedor por CNPJ:", err);
+            }
             if (fornMatch) {
               payloadAuto.fornecedor_id = fornMatch.id || fornMatch.uuid;
               payloadAuto.fornecedor_nome = fornMatch.nome;
@@ -1049,12 +1067,24 @@ export async function renderVtcFinanceiroLancamentoCreateV4() {
 
     // Fornecedor ou novo cadastro
     if (classification.tipo_documento === "Nota Fiscal" && classification.cnpj_fornecedor) {
-      // fornecedor existente
-      payload.fornecedor_cnpj = classification.cnpj_fornecedor;
-      payload.fornecedor_id = document.getElementById("fornecedorSelect").value;
-      payload.fornecedor_nome = document.getElementById("fornecedorSelect").options[
-        document.getElementById("fornecedorSelect").selectedIndex
-      ].text.split(" (")[0];
+      // Busca fornecedor por CNPJ usando a API existente
+      let fornMatch = null;
+      try {
+        const fornecedores = await listFornecedores(AuthService, { cnpj: classification.cnpj_fornecedor });
+        if (Array.isArray(fornecedores) && fornecedores.length > 0) {
+          fornMatch = fornecedores[0];
+        }
+      } catch (err) {
+        console.error("Erro ao buscar fornecedor por CNPJ:", err);
+      }
+      if (fornMatch) {
+        payload.fornecedor_cnpj = fornMatch.cnpj;
+        payload.fornecedor_id = fornMatch.id || fornMatch.uuid;
+        payload.fornecedor_nome = fornMatch.nome;
+      } else {
+        payload.fornecedor_cnpj = classification.cnpj_fornecedor;
+        payload.fornecedor_nome = classification.fornecedor || "";
+      }
     } else {
       // novo fornecedor
       payload.fornecedor_cnpj = classification.cnpj_fornecedor || document.getElementById("supCnpj").value;

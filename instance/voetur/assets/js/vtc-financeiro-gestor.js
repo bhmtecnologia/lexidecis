@@ -336,6 +336,18 @@ export async function renderVtcFinanceiroGestor() {
       currentLanc = lanc;
       $('#editFormContainer').empty();
       const data = currentLanc.dados;
+      // Normalize log content
+      const logContent = Array.isArray(data.log)
+        ? data.log.join('\n')
+        : (typeof data.log === 'string' ? data.log : '');
+      // Normalize attachments for edit form
+      let attachments = [];
+      try {
+        attachments = Array.isArray(data.anexo) ? data.anexo
+          : (typeof data.anexo === 'string' ? JSON.parse(data.anexo) : []);
+      } catch (e) {
+        attachments = [];
+      }
       // Build edit form based on document type
       const isNF = data.tipo_documento === 'Nota Fiscal';
       const isCP = data.tipo_documento === 'Conta a pagar';
@@ -348,8 +360,8 @@ export async function renderVtcFinanceiroGestor() {
         </div>
         <!-- Link dos anexos -->
         <div class="mb-3" id="attachmentLink">
-          ${Array.isArray(data.anexo) && data.anexo.length
-            ? data.anexo.map(a => `<a href="${a.url}" target="_blank">${a.categoria}</a>`).join('<br>')
+          ${attachments.length
+            ? attachments.map(a => `<a href="${a.url}" target="_blank">${a.categoria}</a>`).join('<br>')
             : '-'}
         </div>
         <div class="mb-3">
@@ -405,10 +417,19 @@ export async function renderVtcFinanceiroGestor() {
           <label for="justificativaInput" class="form-label">Justificativa</label>
           <textarea id="justificativaInput" name="justificativa" class="form-control" rows="3">${data.justificativa || ''}</textarea>
         </div>
+        <div class="mb-3">
+          <label for="formaPagamentoSelect" class="form-label">Forma de Pagamento</label>
+          <select id="formaPagamentoSelect" name="forma_pagamento" class="form-control">
+            <option value="">Selecione...</option>
+            <option value="boleto" ${data.forma_pagamento === 'boleto' ? 'selected' : ''}>Boleto</option>
+            <option value="pix" ${data.forma_pagamento === 'pix' ? 'selected' : ''}>Pix</option>
+            <option value="deposito" ${data.forma_pagamento === 'deposito' ? 'selected' : ''}>Depósito</option>
+          </select>
+        </div>
         <!-- Log de ações -->
         <div class="mb-3">
           <label for="logTextarea" class="form-label">Log</label>
-          <textarea id="logTextarea" name="log" class="form-control" rows="5" readonly>${data.log ? data.log.join('\n') : ''}</textarea>
+          <textarea id="logTextarea" name="log" class="form-control" rows="5" readonly>${logContent}</textarea>
         </div>
         <!-- add other common fields as needed -->
       `;
@@ -449,18 +470,47 @@ export async function renderVtcFinanceiroGestor() {
         const select = $('#fornecedorSelect');
         select.empty();
         if (data.fornecedor_id && data.fornecedor_nome) {
-          select.append(`<option value="${data.fornecedor_id}" selected>${data.fornecedor_nome}</option>`);
+          select.append(`<option value="${data.fornecedor_id}" data-cnpj="${data.cnpj_fornecedor}" selected>${data.fornecedor_nome}</option>`);
         }
         fornecedores.forEach(f => {
           if (String(f.id) !== String(data.fornecedor_id)) {
-            select.append(`<option value="${f.id}">${f.nome}</option>`);
+            select.append(`<option value="${f.id}" data-cnpj="${f.cnpj}">${f.nome}</option>`);
           }
         });
         select.val(data.fornecedor_id).trigger('change');
         select.select2({
           placeholder: 'Selecione o fornecedor',
           allowClear: true,
-          width: '100%'
+          width: '100%',
+          minimumResultsForSearch: 0,
+          dropdownParent: $('#editModal'),
+          templateResult: function(option) {
+            if (!option.id) return option.text;
+            const cnpj = $(option.element).data('cnpj') || '';
+            return $('<span>' + option.text + (cnpj ? ' – ' + cnpj : '') + '</span>');
+          },
+          templateSelection: function(option) {
+            const cnpj = $(option.element).data('cnpj') || '';
+            return option.text + (cnpj ? ' – ' + cnpj : '');
+          },
+          matcher: function(params, data) {
+            // If there is no search term, return all options
+            if ($.trim(params.term) === '') {
+              return data;
+            }
+            // Match term against option text and CNPJ data attribute
+            const term = params.term.toLowerCase();
+            const text = data.text.toLowerCase();
+            const rawCnpj = $(data.element).data('cnpj');
+            const cnpj = rawCnpj != null ? String(rawCnpj) : '';
+            const digitsTerm = term.replace(/\D/g, '');
+            const digitsCnpj = typeof cnpj === 'string' ? cnpj.replace(/\D/g, '') : '';
+            if (text.indexOf(term) > -1 || (digitsCnpj && digitsTerm && digitsCnpj.indexOf(digitsTerm) > -1)) {
+              return data;
+            }
+            // Return `null` if no match
+            return null;
+          }
         });
       });
       // Centro de Custo
@@ -500,6 +550,13 @@ export async function renderVtcFinanceiroGestor() {
           allowClear: true,
           width: '100%'
         });
+      });
+
+      // Forma de Pagamento
+      $('#formaPagamentoSelect').select2({
+        placeholder: 'Selecione a forma de pagamento',
+        allowClear: true,
+        width: '100%'
       });
 
       // Manual-toggle buttons: attach click handler as in create-v3
@@ -546,18 +603,38 @@ export async function renderVtcFinanceiroGestor() {
             listFornecedores(AuthService).then(fornecedores => {
               select.empty();
               if (data.fornecedor_id && data.fornecedor_nome) {
-                select.append(`<option value="${data.fornecedor_id}" selected>${data.fornecedor_nome}</option>`);
+                select.append(`<option value="${data.fornecedor_id}" data-cnpj="${data.cnpj_fornecedor}" selected>${data.fornecedor_nome}</option>`);
               }
               fornecedores.forEach(f => {
                 if (String(f.id) !== String(data.fornecedor_id)) {
-                  select.append(`<option value="${f.id}">${f.nome}</option>`);
+                  select.append(`<option value="${f.id}" data-cnpj="${f.cnpj}">${f.nome}</option>`);
                 }
               });
               select.val(data.fornecedor_id).trigger('change');
               select.select2({
                 placeholder: 'Selecione o fornecedor',
                 allowClear: true,
-                width: '100%'
+                width: '100%',
+                minimumResultsForSearch: 0,
+                dropdownParent: $('#editModal'),
+                matcher: function(params, data) {
+                  // If there is no search term, return all options
+                  if ($.trim(params.term) === '') {
+                    return data;
+                  }
+                  // Match term against option text and CNPJ data attribute
+                  const term = params.term.toLowerCase();
+                  const text = data.text.toLowerCase();
+                  const rawCnpj = $(data.element).data('cnpj');
+                  const cnpj = rawCnpj != null ? String(rawCnpj) : '';
+                  const digitsTerm = term.replace(/\D/g, '');
+                  const digitsCnpj = typeof cnpj === 'string' ? cnpj.replace(/\D/g, '') : '';
+                  if (text.indexOf(term) > -1 || (digitsCnpj && digitsTerm && digitsCnpj.indexOf(digitsTerm) > -1)) {
+                    return data;
+                  }
+                  // Return `null` if no match
+                  return null;
+                }
               });
             });
           }
@@ -674,6 +751,14 @@ export async function renderVtcFinanceiroGestor() {
       }
       payload[el.name] = val;
     });
+    // Update fornecedor_nome, fornecedor_id, fornecedor_cnpj based on selected option
+    const fSelect = document.getElementById('fornecedorSelect');
+    if (fSelect) {
+      const selectedOption = fSelect.options[fSelect.selectedIndex];
+      payload.fornecedor_nome = selectedOption.text || '';
+      payload.fornecedor_id = fSelect.value;
+      payload.fornecedor_cnpj = selectedOption.getAttribute('data-cnpj') || '';
+    }
     // Update status
     payload.status = 'Salvo';
     // Send update with full payload

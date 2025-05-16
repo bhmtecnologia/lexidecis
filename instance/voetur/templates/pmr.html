@@ -159,44 +159,53 @@
     <div class="legend">
       <div class="legend-item">
         <div class="legend-color" style="background:#4caf50;"></div>
-        ≤ 26 dias
+        ≤ 30 dias
       </div>
       <div class="legend-item">
         <div class="legend-color" style="background:#ffeb3b;"></div>
-        27‑29 dias
+        31‑40 dias
       </div>
       <div class="legend-item">
         <div class="legend-color" style="background:#f44336;"></div>
-        ≥ 30 dias
+        ≥ 41 dias
       </div>
     </div>
     <h2>2025</h2>
     <div id="gauges-container"></div>
   </div>
   <div class="description hidden">
-    <p><strong>Relatório PMR (Prazo Médio de Recebimento)</strong>: apresenta o cálculo do prazo médio de recebimento das faturas no período corrente, considerando o valor total faturado e o valor já baixado.</p>
-    <p><em>Fórmula do PMR</em>: (SUM(d.VALORLIQUIDO - ISNULL(p.VALORESBAIXADOS, 0)) / SUM(d.VALORLIQUIDO)) × 30</p>
+    <p><strong>Relatório PMR (Prazo Médio de Recebimento)</strong></p>
+    <p>Este indicador mede, para cada mês, em quantos dias em média recebemos nossos faturamentos. Para isso:</p>
+    <ul>
+      <li>Soma-se, para as parcelas ainda não liquidadas, o valor faturado naquele mês;</li>
+      <li>Divide-se essa soma pelo total faturado naquele mês;</li>
+      <li>Multiplica-se o resultado pelo número de dias do mês.</li>
+    </ul>
     <p>SQL utilizado para gerar os dados:</p>
     <pre><code>SELECT
-  FORMAT(d.DATAEMISSAO, 'yyyy-MM')                                 AS mes,
-  ROUND(SUM(d.VALORLIQUIDO), 2)                                    AS receita_mes,
-  ROUND(SUM(d.VALORLIQUIDO - ISNULL(p.VALORESBAIXADOS, 0)), 2)     AS contas_a_receber,
+  FORMAT(d.DATAEMISSAO, 'yyyy-MM')                             AS mes,
+  ROUND(SUM(d.VALORLIQUIDO), 2)                                AS receita_mes,
+  ROUND(SUM(d.VALORLIQUIDO), 2)                                AS contas_a_receber,
   CASE
     WHEN SUM(d.VALORLIQUIDO) = 0 THEN NULL
     ELSE
       ROUND(
-        SUM(d.VALORLIQUIDO - ISNULL(p.VALORESBAIXADOS, 0))
-        / SUM(d.VALORLIQUIDO) * 30
-      , 0)
-  END                                                              AS prazo_medio_recebimento
+        SUM(CASE
+              WHEN p.DATALIQUIDACAO IS NULL THEN d.VALORLIQUIDO
+              ELSE 0
+            END) 
+        / SUM(d.VALORLIQUIDO) 
+        * CAST(DAY(EOMONTH(d.DATAEMISSAO, 0)) AS FLOAT),
+        1
+      )
+  END                                                          AS prazo_medio_recebimento
 FROM fn_documentos d
 LEFT JOIN fn_parcelas p
-  ON p.DOCUMENTO       = d.HANDLE
-  AND p.DATALIQUIDACAO IS NULL
+  ON p.DOCUMENTO = d.HANDLE
 WHERE d.DATAEMISSAO
   BETWEEN DATEFROMPARTS(YEAR(GETDATE()), 1, 1)
       AND GETDATE()
-GROUP BY FORMAT(d.DATAEMISSAO, 'yyyy-MM')
+GROUP BY FORMAT(d.DATAEMISSAO, 'yyyy-MM'), EOMONTH(d.DATAEMISSAO, 0)
 ORDER BY mes DESC;</code></pre>
   </div>
 
@@ -243,7 +252,7 @@ ORDER BY mes DESC;</code></pre>
         pmrArray = displayArray;
 
         // Definir SLA em dias
-        const SLA = 29;
+        const SLA = 30;
         // Filtra apenas meses com dados para compliance
         const compliant = dataMonths.filter(r => r.PRAZO_MEDIO_RECEBIMENTO > 0 && r.PRAZO_MEDIO_RECEBIMENTO <= SLA).length;
         const percentage = totalDataMonths > 0
@@ -305,9 +314,9 @@ ORDER BY mes DESC;</code></pre>
           let gaugeColor;
           if (record.PRAZO_MEDIO_RECEBIMENTO === 0) {
             gaugeColor = '#ccc'; // cinza para meses sem dados
-          } else if (record.PRAZO_MEDIO_RECEBIMENTO <= 26) {
+          } else if (record.PRAZO_MEDIO_RECEBIMENTO <= 30) {
             gaugeColor = '#4caf50'; // verde
-          } else if (record.PRAZO_MEDIO_RECEBIMENTO >= 30) {
+          } else if (record.PRAZO_MEDIO_RECEBIMENTO >= 41) {
             gaugeColor = '#f44336'; // vermelho
           } else {
             gaugeColor = '#ffeb3b'; // amarelo

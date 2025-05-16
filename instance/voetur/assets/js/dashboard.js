@@ -45,24 +45,6 @@ export async function renderDashboard() {
           </div>
         </div>
       </div>
-      <div class="card mt-4">
-        <div class="card-body p-3">
-          <h5 class="card-title">Últimos Lançamentos</h5>
-          <div class="table-responsive">
-            <table class="table table-striped mb-0" id="lancamentos-tabela">
-              <thead>
-                <tr>
-                  <th>Descrição</th>
-                  <th>Data</th>
-                  <th>Valor</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
     </div>
   `;
 
@@ -91,19 +73,6 @@ export async function renderDashboard() {
     document.getElementById('total-lancamentos').textContent = totalLancamentos;
     document.getElementById('total-pago').textContent = 'R$ ' + totalPago.toFixed(2);
     document.getElementById('total-aberto').textContent = 'R$ ' + totalAberto.toFixed(2);
-
-    const tbody = document.querySelector('#lancamentos-tabela tbody');
-    tbody.innerHTML = '';
-    dados.slice(0, 10).forEach(l => {
-      tbody.innerHTML += `
-        <tr>
-          <td>${l.dados.descricao}</td>
-          <td>${new Date(l.dados.data_lancamento).toLocaleDateString()}</td>
-          <td>R$ ${(parseFloat(l.dados.valor) || 0).toFixed(2)}</td>
-          <td>${l.dados.status}</td>
-        </tr>
-      `;
-    });
 
   } catch (error) {
     console.error('Erro ao carregar lançamentos:', error);

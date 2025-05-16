@@ -22,6 +22,19 @@ export const menuItems = [
         ]
       },
     {
+      label: "KPI's",
+      icon: "Document",
+      route: "#vtc-indicador-pmr",
+      children: [
+          { label: "Prazo Médio de Recebimento - PMR", route: "#vtc-indicador-pmr" },
+      ]
+    },
+    {
+      label: "Aprovações",
+      icon: "Document",
+      route: "#aprovacoes-contas-a-pagar"
+    },
+    {
       label: "Controladoria",
       icon: "Document",
       route: "#controladoria",

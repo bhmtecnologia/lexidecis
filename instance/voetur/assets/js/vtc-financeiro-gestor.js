@@ -234,6 +234,9 @@ export async function renderVtcFinanceiroGestor() {
             data: null,
             orderable: false,
             render: data => {
+              if (!data || !data.id) {
+                return '-';
+              }
               const statusLC = (data.status || '').toLowerCase();
               const isEditable = statusLC === 'novo'
                 || statusLC === 'salvo'
@@ -265,8 +268,10 @@ export async function renderVtcFinanceiroGestor() {
             data: 'status',
             title: 'Status',
             defaultContent: '-',
-            render: (data, type, row) =>
-              `<span class="status-clickable" data-id="${row.id}" style="cursor:pointer; color: var(--theme-default);">${data}</span>`
+            render: (data, type, row) => {
+              const display = data || '-';
+              return `<span class="status-clickable" data-id="${row.id}" style="cursor:pointer; color: var(--theme-default);">${display}</span>`;
+            }
           },
           { data: 'filial_nome',       title: 'Filial',            defaultContent: '-' },
           { data: 'fornecedor_nome',   title: 'Fornecedor',        defaultContent: '-' },

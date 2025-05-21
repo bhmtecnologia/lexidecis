@@ -1245,14 +1245,23 @@ export async function renderFinanceiroLancamentoCreateV3() {
 
     // Fornecedor ou novo cadastro
     if (classification.tipo_documento === "Nota Fiscal" && classification.cnpj_fornecedor) {
-      // fornecedor existente
+      // fornecedor existente para Nota Fiscal
       payload.fornecedor_cnpj = classification.cnpj_fornecedor;
       payload.fornecedor_id = document.getElementById("fornecedorSelect").value;
-      payload.fornecedor_nome = document.getElementById("fornecedorSelect").options[
-        document.getElementById("fornecedorSelect").selectedIndex
-      ].text.split(" (")[0];
+      payload.fornecedor_nome = document.getElementById("fornecedorSelect")
+        .options[document.getElementById("fornecedorSelect").selectedIndex]
+        .text.split(" (")[0];
+    } else if (classification.tipo_documento === "Conta a pagar") {
+      // fornecedor selecionado para Conta a pagar
+      const fornecedorId = document.getElementById("fornecedorSelect").value;
+      payload.fornecedor_id = fornecedorId;
+      const fornecedorObj = (window.fornecedoresData || []).find(f =>
+        (f.uuid === fornecedorId) || (f.id === fornecedorId)
+      );
+      payload.fornecedor_cnpj = fornecedorObj ? fornecedorObj.cnpj : null;
+      payload.fornecedor_nome = fornecedorObj ? fornecedorObj.nome : null;
     } else {
-      // novo fornecedor
+      // novo fornecedor (manualmente cadastrado)
       payload.fornecedor_cnpj = classification.cnpj_fornecedor || document.getElementById("supCnpj").value;
       payload.fornecedor_nome = classification.fornecedor || document.getElementById("supNome").value;
     }

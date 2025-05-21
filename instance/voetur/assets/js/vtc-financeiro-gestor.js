@@ -52,9 +52,6 @@ export async function renderVtcFinanceiroGestor() {
               <button id="btnLaunch" class="btn btn-sm btn-primary me-2" title="Lançar novo lançamento">
                 <i class="iconly-Add icli svg-color"></i> Lançar
               </button>
-              <button id="btnLote" class="btn btn-sm btn-success me-2" title="Lote">
-                <i class="iconly-Bulk icli svg-color"></i> Lote
-              </button>
               <button id="reloadTable" class="btn btn-sm btn-secondary" title="Recarregar tabela">
                 <i class="iconly-Refresh icli svg-color"></i> Recarregar
               </button>
@@ -327,9 +324,6 @@ export async function renderVtcFinanceiroGestor() {
   });
   document.getElementById('btnLaunch').addEventListener('click', () => {
     window.location.hash = '#financeiro-lancamento-create-v3';
-  });
-  document.getElementById('btnLote').addEventListener('click', () => {
-    window.location.hash = '#vtc-financeiro-lancamento-create-v4';
   });
   // demais handlers iguais...
 

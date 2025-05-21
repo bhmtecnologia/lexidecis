@@ -362,15 +362,15 @@ export async function renderVtcFinanceiroGestor() {
             : '-'}
         </div>
         <div class="mb-3">
-          <label for="filialSelect" class="form-label mb-0">Filial</label>
+          <label for="filialSelect" class="form-label mb-0">Filial <span class="text-danger">*</span></label>
           <select id="filialSelect" name="filial_id" class="form-control select2"></select>
         </div>
         <div class="mb-3">
-          <label for="fornecedorSelect" class="form-label mb-0">Fornecedor</label>
+          <label for="fornecedorSelect" class="form-label mb-0">Fornecedor <span class="text-danger">*</span></label>
           <select id="fornecedorSelect" name="fornecedor_id" class="form-control select2"></select>
         </div>
         <div class="mb-3">
-          <label for="centroCustoSelect" class="form-label mb-0">Centro de Custo</label>
+          <label for="centroCustoSelect" class="form-label mb-0">Centro de Custo <span class="text-danger">*</span></label>
           <select id="centroCustoSelect" name="centro_custo_id" class="form-control select2"></select>
         </div>
         <div class="mb-3">
@@ -378,7 +378,7 @@ export async function renderVtcFinanceiroGestor() {
           <select id="projetoSelect" name="projeto_id" class="form-control select2"></select>
         </div>
         <div class="mb-3">
-          <label for="formaPagamentoSelect" class="form-label">Forma de Pagamento</label>
+          <label for="formaPagamentoSelect" class="form-label">Forma de Pagamento <span class="text-danger">*</span></label>
           <select id="formaPagamentoSelect" name="forma_pagamento" class="form-control">
             <option value="">Selecione...</option>
             <option value="boleto" ${data.forma_pagamento === 'boleto' ? 'selected' : ''}>Boleto</option>
@@ -395,16 +395,16 @@ export async function renderVtcFinanceiroGestor() {
           </select>
         </div>` : ''}
         <div class="mb-3">
-          <label for="valorInput" class="form-label">Valor Nominal</label>
+          <label for="valorInput" class="form-label">Valor Nominal <span class="text-danger">*</span></label>
           <input type="text" id="valorInput" name="valor_nominal" class="form-control mask-currency" value="${data.valor_nominal != null ? parseFloat(data.valor_nominal).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}" required>
         </div>
         <div class="mb-3">
-          <label for="dataEmissaoInput" class="form-label">Data Emissão</label>
+          <label for="dataEmissaoInput" class="form-label">Data Emissão <span class="text-danger">*</span></label>
           <input type="date" id="dataEmissaoInput" name="data_emissao" class="form-control" value="${data.data_emissao ? data.data_emissao.split('T')[0] : ''}" required>
         </div>
         ${isNF ? `
         <div class="mb-3">
-          <label class="form-label">Itens da Nota Fiscal</label>
+          <label class="form-label">Itens da Nota Fiscal <span class="text-danger">*</span></label>
           <table class="table table-sm" id="itensTable">
             <thead>
               <tr>
@@ -427,7 +427,7 @@ export async function renderVtcFinanceiroGestor() {
           <button type="button" id="addItemBtn" class="btn btn-sm btn-secondary">Adicionar item</button>
         </div>` : ''}
         <div class="mb-3">
-          <label for="justificativaInput" class="form-label">Justificativa</label>
+          <label for="justificativaInput" class="form-label">Justificativa <span class="text-danger">*</span></label>
           <textarea id="justificativaInput" name="justificativa" class="form-control" rows="3">${data.justificativa || ''}</textarea>
         </div>
         <!-- Log de ações -->
@@ -790,7 +790,47 @@ export async function renderVtcFinanceiroGestor() {
       alert('Todos os valores unitários devem ser números válidos.');
       return;
     }
+
+    // Required fields validation
+    const requiredFields = [
+      { el: document.getElementById('filialSelect'), name: 'Filial' },
+      { el: document.getElementById('fornecedorSelect'), name: 'Fornecedor' },
+      { el: document.getElementById('centroCustoSelect'), name: 'Centro de Custo' },
+      { el: document.getElementById('formaPagamentoSelect'), name: 'Forma de Pagamento' },
+      { el: document.getElementById('valorInput'), name: 'Valor Nominal' },
+      { el: document.getElementById('dataEmissaoInput'), name: 'Data Emissão' }
+    ];
+    for (const field of requiredFields) {
+      if (!field.el || !field.el.value || field.el.value.trim() === '') {
+        alert(`${field.name} é obrigatório.`);
+        return;
+      }
+    }
+    // Justificativa non-empty
+    const justEl = document.getElementById('justificativaInput');
+    if (!justEl.value || justEl.value.trim() === '') {
+      alert('Justificativa é obrigatória.');
+      return;
+    }
+    // If NF, ensure each item row is fully filled
     const form = document.getElementById('editFormContainer');
+    const isNF = currentLanc && currentLanc.dados && currentLanc.dados.tipo_documento === 'Nota Fiscal';
+    if (isNF) {
+      let invalid = false;
+      $('#itensTable tbody tr').each(function() {
+        const desc = $(this).find('input[name="itemDescricao[]"]').val();
+        const qtd  = $(this).find('input[name="itemQuantidade[]"]').val();
+        const val  = $(this).find('input[name="itemValorUnitario[]"]').val();
+        if (!desc || !desc.trim() || !qtd || isNaN(parseFloat(qtd)) || !val || isNaN(parseFloat(val.replace(/[^\d,]/g,'').replace(/\./g,'').replace(',', '.')))) {
+          invalid = true;
+        }
+      });
+      if (invalid) {
+        alert('Todos os itens da Nota Fiscal devem ter Descrição, Quantidade e Valor Unitário válidos.');
+        return;
+      }
+    }
+
     // Clone original dados
     const payload = { ...currentLanc.dados };
     // Build itens array from form inputs

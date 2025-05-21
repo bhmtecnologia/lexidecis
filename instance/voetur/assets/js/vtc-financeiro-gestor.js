@@ -484,6 +484,36 @@ export async function renderVtcFinanceiroGestor() {
           }
         });
 
+        // Enable/disable Save button based on required fields
+        function updateSaveBtnState() {
+          const saveBtn = document.getElementById('saveBtn');
+          const filial = $('#filialSelect').val();
+          const fornecedor = $('#fornecedorSelect').val();
+          const centro = $('#centroCustoSelect').val();
+          const forma = $('#formaPagamentoSelect').val();
+          const valor = $('#valorInput').val().replace(/[^\d,]/g,'').replace(/\./g,'').replace(',','.');
+          const dataEmissao = $('#dataEmissaoInput').val();
+          const just = $('#justificativaInput').val().trim();
+          let valid = filial && fornecedor && centro && forma && !isNaN(parseFloat(valor)) && dataEmissao && just;
+          if (isNF) {
+            $('#itensTable tbody tr').each(function() {
+              const desc = $(this).find('input[name="itemDescricao[]"]').val().trim();
+              const qtd  = $(this).find('input[name="itemQuantidade[]"]').val();
+              const valU = $(this).find('input[name="itemValorUnitario[]"]').val().replace(/[^\d,]/g,'').replace(/\./g,'').replace(',','.');
+              if (!desc || isNaN(parseFloat(qtd)) || isNaN(parseFloat(valU))) {
+                valid = false;
+              }
+            });
+          }
+          saveBtn.disabled = !valid;
+        }
+        // Attach listeners
+        $('#filialSelect, #fornecedorSelect, #centroCustoSelect, #formaPagamentoSelect, #dataEmissaoInput').on('change', updateSaveBtnState);
+        $('#valorInput, #justificativaInput').on('input', updateSaveBtnState);
+        $('#editFormContainer').on('input', 'input[name="itemDescricao[]"], input[name="itemQuantidade[]"], input[name="itemValorUnitario[]"]', updateSaveBtnState);
+        // Initial state
+        updateSaveBtnState();
+
       // --- Select2 initialization logic as in create-v3 ---
       // Filial
       listFiliais(AuthService).then(filiais => {
@@ -730,12 +760,19 @@ export async function renderVtcFinanceiroGestor() {
     const originalHtml = btn.html();
     btn.prop('disabled', true)
        .html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
-    
+
     const id = btn.data('id');
     const lanc = lancamentosData.find(l => l.id === id);
     if (!lanc) {
       console.error('Lançamento não encontrado para envio:', id);
       // Restore button state if no lanc found
+      btn.prop('disabled', false).html(originalHtml);
+      return;
+    }
+    // Prevent send if payment method is missing
+    if (!lanc.dados.forma_pagamento) {
+      alert('Forma de Pagamento é obrigatória antes de enviar.');
+      // Restore button state
       btn.prop('disabled', false).html(originalHtml);
       return;
     }
@@ -756,7 +793,7 @@ export async function renderVtcFinanceiroGestor() {
       enviado_por: userEmail,
       data_envio: isoString
     };
-    
+
     updateLancamento(AuthService, id, payload)
       .then(() => {
         if (lancamentosTable) lancamentosTable.ajax.reload(null, false);

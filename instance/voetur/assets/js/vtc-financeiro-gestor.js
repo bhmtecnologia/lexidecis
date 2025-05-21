@@ -632,8 +632,8 @@ export async function renderVtcFinanceiroGestor() {
           select.append(`<option value="${data.centro_custo_id}" selected>${data.centro_custo_nome}</option>`);
         }
         centros.forEach(c => {
-          if (String(c.id) !== String(data.centro_custo_id)) {
-            select.append(`<option value="${c.id}">${c.nome}</option>`);
+          if (String(c.uuid) !== String(data.centro_custo_id)) {
+            select.append(`<option value="${c.uuid}">${c.nome}</option>`);
           }
         });
         select.val(data.centro_custo_id).trigger('change');
@@ -757,8 +757,8 @@ export async function renderVtcFinanceiroGestor() {
                 select.append(`<option value="${data.centro_custo_id}" selected>${data.centro_custo_nome}</option>`);
               }
               centros.forEach(c => {
-                if (String(c.id) !== String(data.centro_custo_id)) {
-                  select.append(`<option value="${c.id}">${c.nome}</option>`);
+                if (String(c.uuid) !== String(data.centro_custo_id)) {
+                  select.append(`<option value="${c.uuid}">${c.nome}</option>`);
                 }
               });
               select.val(data.centro_custo_id).trigger('change');

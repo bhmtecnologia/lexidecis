@@ -402,6 +402,28 @@ export async function renderVtcFinanceiroGestor() {
           <label for="dataEmissaoInput" class="form-label">Data Emissão <span class="text-danger">*</span></label>
           <input type="date" id="dataEmissaoInput" name="data_emissao" class="form-control" value="${data.data_emissao ? data.data_emissao.split('T')[0] : ''}" required>
         </div>
+        ${Array.isArray(data.parcelas_financeiras) ? `
+        <div class="mb-3">
+          <label class="form-label">Parcelas <span class="text-danger">*</span></label>
+          <table class="table table-sm" id="parcelasTable">
+            <thead>
+              <tr>
+                <th>Valor</th>
+                <th>Data Vencimento</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.parcelas_financeiras.map((p, idx) => `
+                <tr>
+                  <td><input type="text" name="parcelaValor[]" class="form-control mask-currency" value="${parseFloat(p.valor).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}" /></td>
+                  <td><input type="date" name="parcelaDataVenc[]" class="form-control" value="${p.data_vencimento}" /></td>
+                  <td><button type="button" class="btn btn-sm btn-danger remove-parcela">Remover</button></td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+          <button type="button" id="addParcelaBtn" class="btn btn-sm btn-secondary">Adicionar parcela</button>
+        </div>` : ''}
         ${isNF ? `
         <div class="mb-3">
           <label class="form-label">Itens da Nota Fiscal <span class="text-danger">*</span></label>
@@ -433,7 +455,7 @@ export async function renderVtcFinanceiroGestor() {
         <!-- Log de ações -->
         <div class="mb-3">
           <label for="logTextarea" class="form-label">Log</label>
-          <textarea id="logTextarea" name="log" class="form-control" rows="5" readonly>${logContent}</textarea>
+          <textarea id="logTextarea" name="log" class="form-control" rows="5" readonly style="font-size: 0.875rem;">${logContent}</textarea>
         </div>
         <!-- add other common fields as needed -->
       `;
@@ -457,6 +479,25 @@ export async function renderVtcFinanceiroGestor() {
             alert('Deve ter pelo menos um item na nota fiscal');
           }
         });
+
+        // Handlers for Parcelas table
+        $('#addParcelaBtn').on('click', function() {
+          $('#parcelasTable tbody').append(`
+            <tr>
+              <td><input type="text" name="parcelaValor[]" class="form-control mask-currency" /></td>
+              <td><input type="date" name="parcelaDataVenc[]" class="form-control" /></td>
+              <td><button type="button" class="btn btn-sm btn-danger remove-parcela">Remover</button></td>
+            </tr>
+          `);
+        });
+        $('#editFormContainer').on('click', '.remove-parcela', function() {
+          const rows = $('#parcelasTable tbody tr');
+          if (rows.length > 1) {
+            $(this).closest('tr').remove();
+          } else {
+            alert('Deve ter pelo menos uma parcela');
+          }
+        });
         // Apply currency mask on inputs
         function formatCurrencyInput(el) {
           const oldValue = el.value;
@@ -478,6 +519,7 @@ export async function renderVtcFinanceiroGestor() {
             formatCurrencyInput(this);
           }
         });
+        // Apply currency mask to all mask-currency inputs, including parcelas
         $('#editFormContainer').on('keyup', 'input.mask-currency', function(e) {
           if (e.key !== 'Backspace' && e.key !== 'Delete') {
             formatCurrencyInput(this);
@@ -884,6 +926,18 @@ export async function renderVtcFinanceiroGestor() {
       itensArr.push({ descricao, quantidade, valor_unitario });
     });
     payload.itens = itensArr;
+    // Build parcelas array
+    const valores = form.querySelectorAll('input[name="parcelaValor[]"]');
+    const datas   = form.querySelectorAll('input[name="parcelaDataVenc[]"]');
+    const parcelasArr = [];
+    valores.forEach((el, i) => {
+      const raw = el.value.replace(/[^\d,]/g,'').replace(/\./g,'').replace(',', '.');
+      parcelasArr.push({
+        valor: parseFloat(raw),
+        data_vencimento: datas[i].value
+      });
+    });
+    payload.parcelas_financeiras = parcelasArr;
     // Collect all inputs and textareas
     form.querySelectorAll('[name]').forEach(el => {
       if (el.name === 'itemDescricao[]' || el.name === 'itemQuantidade[]' || el.name === 'itemValorUnitario[]') {

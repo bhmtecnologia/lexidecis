@@ -469,7 +469,7 @@ export async function renderVtcFinanceiroGestor() {
         const select = $('#fornecedorSelect');
         select.empty();
         if (data.fornecedor_id && data.fornecedor_nome) {
-          select.append(`<option value="${data.fornecedor_id}" data-cnpj="${data.cnpj_fornecedor}" selected>${data.fornecedor_nome}</option>`);
+          select.append(`<option value="${data.fornecedor_id}" data-cnpj="${data.fornecedor_cnpj}" selected>${data.fornecedor_nome}</option>`);
         }
         fornecedores.forEach(f => {
           if (String(f.id) !== String(data.fornecedor_id)) {
@@ -482,6 +482,7 @@ export async function renderVtcFinanceiroGestor() {
           allowClear: true,
           width: '100%',
           minimumResultsForSearch: 0,
+          minimumInputLength: 3,
           dropdownParent: $('#editModal'),
           templateResult: function(option) {
             if (!option.id) return option.text;
@@ -602,7 +603,7 @@ export async function renderVtcFinanceiroGestor() {
             listFornecedores(AuthService).then(fornecedores => {
               select.empty();
               if (data.fornecedor_id && data.fornecedor_nome) {
-                select.append(`<option value="${data.fornecedor_id}" data-cnpj="${data.cnpj_fornecedor}" selected>${data.fornecedor_nome}</option>`);
+                select.append(`<option value="${data.fornecedor_id}" data-cnpj="${data.fornecedor_cnpj}" selected>${data.fornecedor_nome}</option>`);
               }
               fornecedores.forEach(f => {
                 if (String(f.id) !== String(data.fornecedor_id)) {
@@ -615,6 +616,7 @@ export async function renderVtcFinanceiroGestor() {
                 allowClear: true,
                 width: '100%',
                 minimumResultsForSearch: 0,
+                minimumInputLength: 3,
                 dropdownParent: $('#editModal'),
                 matcher: function(params, data) {
                   // If there is no search term, return all options

@@ -68,7 +68,6 @@ export async function renderVtcFinanceiroGestor() {
                     <th>Data Emissão</th>
                     <th>Atualizado Em</th>
                     <th>Forma de Pagamento</th>
-                    <th>Comentário</th>
                     <th>Anexos</th>
                   </tr>
                 </thead>
@@ -276,7 +275,6 @@ export async function renderVtcFinanceiroGestor() {
           { data: 'data_emissao',      title: 'Data Emissão',      defaultContent: '-', render: d => d ? new Date(d).toLocaleDateString('pt-BR') : '-' },
           { data: 'updated_at',        title: 'Atualizado Em',     defaultContent: '-', render: u => u ? new Date(u).toLocaleString('pt-BR') : '-' },
           { data: 'forma_pagamento',   title: 'Forma de Pagamento', defaultContent: '-' },
-          { data: 'comentario_analista', title: 'Comentário',       defaultContent: '-' },
           { data: 'anexos',            title: 'Anexos',            defaultContent: '-', render: a => formatAnexos(a) }
         ]
       });
@@ -364,57 +362,20 @@ export async function renderVtcFinanceiroGestor() {
             : '-'}
         </div>
         <div class="mb-3">
-          <div class="d-flex justify-content-between align-items-center">
-            <label for="filialSelect" class="form-label mb-0">Filial</label>
-            <button type="button" class="btn btn-sm btn-outline-secondary manual-toggle" data-target="#filialSelect">Manual</button>
-          </div>
+          <label for="filialSelect" class="form-label mb-0">Filial</label>
           <select id="filialSelect" name="filial_id" class="form-control select2"></select>
         </div>
         <div class="mb-3">
-          <div class="d-flex justify-content-between align-items-center">
-            <label for="fornecedorSelect" class="form-label mb-0">Fornecedor</label>
-            <button type="button" class="btn btn-sm btn-outline-secondary manual-toggle" data-target="#fornecedorSelect">Manual</button>
-          </div>
+          <label for="fornecedorSelect" class="form-label mb-0">Fornecedor</label>
           <select id="fornecedorSelect" name="fornecedor_id" class="form-control select2"></select>
         </div>
         <div class="mb-3">
-          <div class="d-flex justify-content-between align-items-center">
-            <label for="projetoSelect" class="form-label mb-0">Projeto</label>
-            <button type="button" class="btn btn-sm btn-outline-secondary manual-toggle" data-target="#projetoSelect">Manual</button>
-          </div>
+          <label for="centroCustoSelect" class="form-label mb-0">Centro de Custo</label>
+          <select id="centroCustoSelect" name="centro_custo_id" class="form-control select2"></select>
+        </div>
+        <div class="mb-3">
+          <label for="projetoSelect" class="form-label mb-0">Projeto</label>
           <select id="projetoSelect" name="projeto_id" class="form-control select2"></select>
-        </div>
-        ${isCP ? `
-        <div class="mb-3">
-          <label for="moedaSelect" class="form-label">Moeda</label>
-          <select id="moedaSelect" name="moeda" class="form-control">
-            <option ${data.moeda === 'BRL' ? 'selected' : ''}>BRL</option>
-            <option ${data.moeda === 'USD' ? 'selected' : ''}>USD</option>
-          </select>
-        </div>` : ''}
-        ${isNF ? `
-        <div class="mb-3">
-          <label for="itensSection" class="form-label">Itens da Nota Fiscal</label>
-          <div id="itensSection">
-            ${Array.isArray(data.itens) ? data.itens.map(item => `
-              <div class="item-line">
-                <input name="itemDescricao[]" class="form-control mb-1" value="${item.descricao}" readonly>
-                <input name="itemQuantidade[]" class="form-control mb-1" value="${item.quantidade}" readonly>
-                <input name="itemValorUnitario[]" class="form-control mb-1" value="${item.valor_unitario}" readonly>
-              </div>`).join('') : ''}
-          </div>
-        </div>` : ''}
-        <div class="mb-3">
-          <label for="valorInput" class="form-label">Valor Nominal</label>
-          <input type="number" id="valorInput" name="valor_nominal" class="form-control" value="${data.valor_nominal ?? ''}" required>
-        </div>
-        <div class="mb-3">
-          <label for="dataEmissaoInput" class="form-label">Data Emissão</label>
-          <input type="date" id="dataEmissaoInput" name="data_emissao" class="form-control" value="${data.data_emissao ? data.data_emissao.split('T')[0] : ''}" required>
-        </div>
-        <div class="mb-3">
-          <label for="justificativaInput" class="form-label">Justificativa</label>
-          <textarea id="justificativaInput" name="justificativa" class="form-control" rows="3">${data.justificativa || ''}</textarea>
         </div>
         <div class="mb-3">
           <label for="formaPagamentoSelect" class="form-label">Forma de Pagamento</label>
@@ -425,6 +386,50 @@ export async function renderVtcFinanceiroGestor() {
             <option value="deposito" ${data.forma_pagamento === 'deposito' ? 'selected' : ''}>Depósito</option>
           </select>
         </div>
+        ${isCP ? `
+        <div class="mb-3">
+          <label for="moedaSelect" class="form-label">Moeda</label>
+          <select id="moedaSelect" name="moeda" class="form-control">
+            <option ${data.moeda === 'BRL' ? 'selected' : ''}>BRL</option>
+            <option ${data.moeda === 'USD' ? 'selected' : ''}>USD</option>
+          </select>
+        </div>` : ''}
+        <div class="mb-3">
+          <label for="valorInput" class="form-label">Valor Nominal</label>
+          <input type="text" id="valorInput" name="valor_nominal" class="form-control mask-currency" value="${data.valor_nominal != null ? parseFloat(data.valor_nominal).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}" required>
+        </div>
+        <div class="mb-3">
+          <label for="dataEmissaoInput" class="form-label">Data Emissão</label>
+          <input type="date" id="dataEmissaoInput" name="data_emissao" class="form-control" value="${data.data_emissao ? data.data_emissao.split('T')[0] : ''}" required>
+        </div>
+        ${isNF ? `
+        <div class="mb-3">
+          <label class="form-label">Itens da Nota Fiscal</label>
+          <table class="table table-sm" id="itensTable">
+            <thead>
+              <tr>
+                <th>Descrição</th>
+                <th>Quantidade</th>
+                <th>Valor Unitário</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${Array.isArray(data.itens) ? data.itens.map((item, idx) => `
+                <tr>
+                  <td><input type="text" name="itemDescricao[]" class="form-control" value="${item.descricao || ''}" /></td>
+                  <td><input type="number" name="itemQuantidade[]" class="form-control" step="0.0001" value="${item.quantidade || ''}" /></td>
+                  <td><input type="text" name="itemValorUnitario[]" class="form-control mask-currency" value="${item.valor_unitario != null ? parseFloat(item.valor_unitario).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}" /></td>
+                  <td><button type="button" class="btn btn-sm btn-danger remove-item">Remover</button></td>
+                </tr>`).join('') : ''}
+            </tbody>
+          </table>
+          <button type="button" id="addItemBtn" class="btn btn-sm btn-secondary">Adicionar item</button>
+        </div>` : ''}
+        <div class="mb-3">
+          <label for="justificativaInput" class="form-label">Justificativa</label>
+          <textarea id="justificativaInput" name="justificativa" class="form-control" rows="3">${data.justificativa || ''}</textarea>
+        </div>
         <!-- Log de ações -->
         <div class="mb-3">
           <label for="logTextarea" class="form-label">Log</label>
@@ -433,14 +438,49 @@ export async function renderVtcFinanceiroGestor() {
         <!-- add other common fields as needed -->
       `;
         $('#editFormContainer').html(formHtml);
-        // Append hidden inputs for any data fields not explicitly in the form
-        const formContainer = $('#editFormContainer');
-        Object.entries(data).forEach(([key, value]) => {
-          // Skip fields already present as visible inputs
-          if (formContainer.find(`[name="${key}"]`).length === 0) {
-            // For arrays or objects, JSON-stringify; else, use value directly
-            const val = (typeof value === 'object') ? JSON.stringify(value) : value;
-            formContainer.append(`<input type="hidden" name="${key}" value='${val}'>`);
+        // Handler to add and remove NF item rows
+        $('#addItemBtn').on('click', function() {
+          $('#itensTable tbody').append(`
+            <tr>
+              <td><input type="text" name="itemDescricao[]" class="form-control" /></td>
+              <td><input type="number" name="itemQuantidade[]" class="form-control" step="0.0001" /></td>
+              <td><input type="text" name="itemValorUnitario[]" class="form-control mask-currency" /></td>
+              <td><button type="button" class="btn btn-sm btn-danger remove-item">Remover</button></td>
+            </tr>
+          `);
+        });
+        $('#editFormContainer').on('click', '.remove-item', function() {
+          const rows = $('#itensTable tbody tr');
+          if (rows.length > 1) {
+            $(this).closest('tr').remove();
+          } else {
+            alert('Deve ter pelo menos um item na nota fiscal');
+          }
+        });
+        // Apply currency mask on inputs
+        function formatCurrencyInput(el) {
+          const oldValue = el.value;
+          const oldLen = oldValue.length;
+          const oldPos = el.selectionStart;
+          let v = el.value.replace(/[^\d,]/g, '').replace(/\./g, '');
+          v = v.replace(/,/, '.') || '0';
+          const num = parseFloat(v);
+          if (!isNaN(num)) {
+            el.value = num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const newValue = el.value;
+            const newLen = newValue.length;
+            const newPos = oldPos + (newLen - oldLen);
+            el.setSelectionRange(newPos, newPos);
+          }
+        }
+        $('#valorInput').on('keyup', function(e) {
+          if (e.key !== 'Backspace' && e.key !== 'Delete') {
+            formatCurrencyInput(this);
+          }
+        });
+        $('#editFormContainer').on('keyup', 'input.mask-currency', function(e) {
+          if (e.key !== 'Backspace' && e.key !== 'Delete') {
+            formatCurrencyInput(this);
           }
         });
 
@@ -732,11 +772,46 @@ export async function renderVtcFinanceiroGestor() {
 
   // Handler para salvar edição
   document.getElementById('saveBtn').addEventListener('click', () => {
+    // Validate currency fields
+    const rawValor = document.getElementById('valorInput').value;
+    const cleanValor = rawValor.replace(/[^\d,]/g, '').replace(/\./g, '').replace(',', '.');
+    if (isNaN(parseFloat(cleanValor))) {
+      alert('Valor Nominal inválido.');
+      return;
+    }
+    let invalidItem = false;
+    document.querySelectorAll('input[name="itemValorUnitario[]"]').forEach(el => {
+      const v = el.value.replace(/[^\d,]/g, '').replace(/\./g, '').replace(',', '.');
+      if (isNaN(parseFloat(v))) {
+        invalidItem = true;
+      }
+    });
+    if (invalidItem) {
+      alert('Todos os valores unitários devem ser números válidos.');
+      return;
+    }
     const form = document.getElementById('editFormContainer');
     // Clone original dados
     const payload = { ...currentLanc.dados };
+    // Build itens array from form inputs
+    const descrs = form.querySelectorAll('input[name="itemDescricao[]"]');
+    const qtys   = form.querySelectorAll('input[name="itemQuantidade[]"]');
+    const vals   = form.querySelectorAll('input[name="itemValorUnitario[]"]');
+    const itensArr = [];
+    descrs.forEach((el, idx) => {
+      const descricao = el.value;
+      const quantidade = parseFloat(qtys[idx].value);
+      // strip mask for unit value
+      const raw = vals[idx].value.replace(/[^\d,]/g,'').replace(/\./g,'').replace(',', '.');
+      const valor_unitario = parseFloat(raw);
+      itensArr.push({ descricao, quantidade, valor_unitario });
+    });
+    payload.itens = itensArr;
     // Collect all inputs and textareas
     form.querySelectorAll('[name]').forEach(el => {
+      if (el.name === 'itemDescricao[]' || el.name === 'itemQuantidade[]' || el.name === 'itemValorUnitario[]') {
+        return;
+      }
       let val = el.value;
       // Parse numbers
       if (el.type === 'number') {
@@ -749,6 +824,11 @@ export async function renderVtcFinanceiroGestor() {
         } catch (e) {
           // keep original string if not valid JSON
         }
+      }
+      if (el.name === 'valor_nominal') {
+        // strip mask and parse to decimal string
+        const cleaned = el.value.replace(/[R$\s\.]/g, '').replace(',', '.');
+        val = cleaned !== '' ? parseFloat(cleaned) : null;
       }
       payload[el.name] = val;
     });

@@ -80,7 +80,7 @@ export async function renderVtcFinanceiroGestor() {
     </div>
     <!-- Modal de Edição -->
     <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-dialog modal-fullscreen-sm-down modal-xl modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="editModalLabel">Editar Lançamento</h5>
@@ -349,113 +349,140 @@ export async function renderVtcFinanceiroGestor() {
       const isNF = data.tipo_documento === 'Nota Fiscal';
       const isCP = data.tipo_documento === 'Conta a pagar';
       const formHtml = `
-        <div class="mb-3">
-          <label for="tipoDocumento" class="form-label">Tipo de Documento</label>
-          <select id="tipoDocumento" name="tipo_documento" class="form-control" disabled>
-            <option>${data.tipo_documento}</option>
-          </select>
+        <div class="row mb-3">
+          <div class="col-12">
+            <label for="tipoDocumento" class="form-label">Tipo de Documento</label>
+            <select id="tipoDocumento" name="tipo_documento" class="form-control" disabled>
+              <option>${data.tipo_documento}</option>
+            </select>
+          </div>
         </div>
         <!-- Link dos anexos -->
-        <div class="mb-3" id="attachmentLink">
-          ${attachments.length
-            ? attachments.map(a => `<a href="${a.url}" target="_blank">${a.categoria}</a>`).join('<br>')
-            : '-'}
+        <div class="row mb-3">
+          <div class="col-12" id="attachmentLink">
+            ${attachments.length
+              ? attachments.map(a => `<a href="${a.url}" target="_blank">${a.categoria}</a>`).join('<br>')
+              : '-'}
+          </div>
         </div>
-        <div class="mb-3">
-          <label for="filialSelect" class="form-label mb-0">Filial <span class="text-danger">*</span></label>
-          <select id="filialSelect" name="filial_id" class="form-control select2"></select>
+        <div class="row mb-3">
+          <div class="col-12 col-md-6">
+            <label for="filialSelect" class="form-label mb-0">Filial <span class="text-danger">*</span></label>
+            <select id="filialSelect" name="filial_id" class="form-control select2"></select>
+          </div>
+          <div class="col-12 col-md-6">
+            <label for="fornecedorSelect" class="form-label mb-0">Fornecedor <span class="text-danger">*</span></label>
+            <select id="fornecedorSelect" name="fornecedor_id" class="form-control select2"></select>
+          </div>
         </div>
-        <div class="mb-3">
-          <label for="fornecedorSelect" class="form-label mb-0">Fornecedor <span class="text-danger">*</span></label>
-          <select id="fornecedorSelect" name="fornecedor_id" class="form-control select2"></select>
+        <div class="row mb-3">
+          <div class="col-12 col-md-6">
+            <label for="centroCustoSelect" class="form-label mb-0">Centro de Custo <span class="text-danger">*</span></label>
+            <select id="centroCustoSelect" name="centro_custo_id" class="form-control select2"></select>
+          </div>
+          <div class="col-12 col-md-6">
+            <label for="projetoSelect" class="form-label mb-0">Projeto</label>
+            <select id="projetoSelect" name="projeto_id" class="form-control select2"></select>
+          </div>
         </div>
-        <div class="mb-3">
-          <label for="centroCustoSelect" class="form-label mb-0">Centro de Custo <span class="text-danger">*</span></label>
-          <select id="centroCustoSelect" name="centro_custo_id" class="form-control select2"></select>
+        <div class="row mb-3">
+          <div class="col-12 col-md-6">
+            <label for="formaPagamentoSelect" class="form-label">Forma de Pagamento <span class="text-danger">*</span></label>
+            <select id="formaPagamentoSelect" name="forma_pagamento" class="form-control">
+              <option value="">Selecione...</option>
+              <option value="boleto" ${data.forma_pagamento === 'boleto' ? 'selected' : ''}>Boleto</option>
+              <option value="pix" ${data.forma_pagamento === 'pix' ? 'selected' : ''}>Pix</option>
+              <option value="deposito" ${data.forma_pagamento === 'deposito' ? 'selected' : ''}>Depósito</option>
+            </select>
+          </div>
+          ${isCP ? `
+          <div class="col-12 col-md-6">
+            <label for="moedaSelect" class="form-label">Moeda</label>
+            <select id="moedaSelect" name="moeda" class="form-control">
+              <option ${data.moeda === 'BRL' ? 'selected' : ''}>BRL</option>
+              <option ${data.moeda === 'USD' ? 'selected' : ''}>USD</option>
+            </select>
+          </div>
+          ` : ''}
         </div>
-        <div class="mb-3">
-          <label for="projetoSelect" class="form-label mb-0">Projeto</label>
-          <select id="projetoSelect" name="projeto_id" class="form-control select2"></select>
-        </div>
-        <div class="mb-3">
-          <label for="formaPagamentoSelect" class="form-label">Forma de Pagamento <span class="text-danger">*</span></label>
-          <select id="formaPagamentoSelect" name="forma_pagamento" class="form-control">
-            <option value="">Selecione...</option>
-            <option value="boleto" ${data.forma_pagamento === 'boleto' ? 'selected' : ''}>Boleto</option>
-            <option value="pix" ${data.forma_pagamento === 'pix' ? 'selected' : ''}>Pix</option>
-            <option value="deposito" ${data.forma_pagamento === 'deposito' ? 'selected' : ''}>Depósito</option>
-          </select>
-        </div>
-        ${isCP ? `
-        <div class="mb-3">
-          <label for="moedaSelect" class="form-label">Moeda</label>
-          <select id="moedaSelect" name="moeda" class="form-control">
-            <option ${data.moeda === 'BRL' ? 'selected' : ''}>BRL</option>
-            <option ${data.moeda === 'USD' ? 'selected' : ''}>USD</option>
-          </select>
-        </div>` : ''}
-        <div class="mb-3">
-          <label for="valorInput" class="form-label">Valor Nominal <span class="text-danger">*</span></label>
-          <input type="text" id="valorInput" name="valor_nominal" class="form-control mask-currency" value="${data.valor_nominal != null ? parseFloat(data.valor_nominal).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}" required>
-        </div>
-        <div class="mb-3">
-          <label for="dataEmissaoInput" class="form-label">Data Emissão <span class="text-danger">*</span></label>
-          <input type="date" id="dataEmissaoInput" name="data_emissao" class="form-control" value="${data.data_emissao ? data.data_emissao.split('T')[0] : ''}" required>
+        <div class="row mb-3">
+          <div class="col-12 col-md-6">
+            <label for="valorInput" class="form-label">Valor Nominal <span class="text-danger">*</span></label>
+            <input type="text" id="valorInput" name="valor_nominal" class="form-control mask-currency" value="${data.valor_nominal != null ? parseFloat(data.valor_nominal).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}" required>
+          </div>
+          <div class="col-12 col-md-6">
+            <label for="dataEmissaoInput" class="form-label">Data Emissão <span class="text-danger">*</span></label>
+            <input type="date" id="dataEmissaoInput" name="data_emissao" class="form-control" value="${data.data_emissao ? data.data_emissao.split('T')[0] : ''}" required>
+          </div>
         </div>
         ${Array.isArray(data.parcelas_financeiras) ? `
-        <div class="mb-3">
-          <label class="form-label">Parcelas <span class="text-danger">*</span></label>
-          <table class="table table-sm" id="parcelasTable">
-            <thead>
-              <tr>
-                <th>Valor</th>
-                <th>Data Vencimento</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${data.parcelas_financeiras.map((p, idx) => `
-                <tr>
-                  <td><input type="text" name="parcelaValor[]" class="form-control mask-currency" value="${parseFloat(p.valor).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}" /></td>
-                  <td><input type="date" name="parcelaDataVenc[]" class="form-control" value="${p.data_vencimento}" /></td>
-                  <td><button type="button" class="btn btn-sm btn-danger remove-parcela">Remover</button></td>
-                </tr>`).join('')}
-            </tbody>
-          </table>
-          <button type="button" id="addParcelaBtn" class="btn btn-sm btn-secondary">Adicionar parcela</button>
-        </div>` : ''}
+        <div class="row mb-3">
+          <div class="col-12">
+            <label class="form-label">Parcelas <span class="text-danger">*</span></label>
+            <div class="table-responsive">
+              <table class="table table-sm" id="parcelasTable">
+                <thead>
+                  <tr>
+                    <th>Valor</th>
+                    <th>Data Vencimento</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${data.parcelas_financeiras.map((p, idx) => `
+                    <tr>
+                      <td><input type="text" name="parcelaValor[]" class="form-control mask-currency" value="${parseFloat(p.valor).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}" /></td>
+                      <td><input type="date" name="parcelaDataVenc[]" class="form-control" value="${p.data_vencimento}" /></td>
+                      <td><button type="button" class="btn btn-sm btn-danger remove-parcela">Remover</button></td>
+                    </tr>`).join('')}
+                </tbody>
+              </table>
+            </div>
+            <button type="button" id="addParcelaBtn" class="btn btn-sm btn-secondary w-100 w-md-auto">Adicionar parcela</button>
+          </div>
+        </div>
+        ` : ''}
         ${isNF ? `
-        <div class="mb-3">
-          <label class="form-label">Itens da Nota Fiscal <span class="text-danger">*</span></label>
-          <table class="table table-sm" id="itensTable">
-            <thead>
-              <tr>
-                <th>Descrição</th>
-                <th>Quantidade</th>
-                <th>Valor Unitário</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${Array.isArray(data.itens) ? data.itens.map((item, idx) => `
-                <tr>
-                  <td><input type="text" name="itemDescricao[]" class="form-control" value="${item.descricao || ''}" /></td>
-                  <td><input type="number" name="itemQuantidade[]" class="form-control" step="0.0001" value="${item.quantidade || ''}" /></td>
-                  <td><input type="text" name="itemValorUnitario[]" class="form-control mask-currency" value="${item.valor_unitario != null ? parseFloat(item.valor_unitario).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}" /></td>
-                  <td><button type="button" class="btn btn-sm btn-danger remove-item">Remover</button></td>
-                </tr>`).join('') : ''}
-            </tbody>
-          </table>
-          <button type="button" id="addItemBtn" class="btn btn-sm btn-secondary">Adicionar item</button>
-        </div>` : ''}
-        <div class="mb-3">
-          <label for="justificativaInput" class="form-label">Justificativa <span class="text-danger">*</span></label>
-          <textarea id="justificativaInput" name="justificativa" class="form-control" rows="3">${data.justificativa || ''}</textarea>
+        <div class="row mb-3">
+          <div class="col-12">
+            <label class="form-label">Itens da Nota Fiscal <span class="text-danger">*</span></label>
+            <div class="table-responsive">
+              <table class="table table-sm" id="itensTable">
+                <thead>
+                  <tr>
+                    <th>Descrição</th>
+                    <th>Quantidade</th>
+                    <th>Valor Unitário</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${Array.isArray(data.itens) ? data.itens.map((item, idx) => `
+                    <tr>
+                      <td><input type="text" name="itemDescricao[]" class="form-control" value="${item.descricao || ''}" /></td>
+                      <td><input type="number" name="itemQuantidade[]" class="form-control" step="0.0001" value="${item.quantidade || ''}" /></td>
+                      <td><input type="text" name="itemValorUnitario[]" class="form-control mask-currency" value="${item.valor_unitario != null ? parseFloat(item.valor_unitario).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}" /></td>
+                      <td><button type="button" class="btn btn-sm btn-danger remove-item">Remover</button></td>
+                    </tr>`).join('') : ''}
+                </tbody>
+              </table>
+            </div>
+            <button type="button" id="addItemBtn" class="btn btn-sm btn-secondary w-100 w-md-auto">Adicionar item</button>
+          </div>
+        </div>
+        ` : ''}
+        <div class="row mb-3">
+          <div class="col-12">
+            <label for="justificativaInput" class="form-label">Justificativa <span class="text-danger">*</span></label>
+            <textarea id="justificativaInput" name="justificativa" class="form-control" rows="3">${data.justificativa || ''}</textarea>
+          </div>
         </div>
         <!-- Log de ações -->
-        <div class="mb-3">
-          <label for="logTextarea" class="form-label">Log</label>
-          <textarea id="logTextarea" name="log" class="form-control" rows="5" readonly style="font-size: 0.875rem;">${logContent}</textarea>
+        <div class="row mb-3">
+          <div class="col-12">
+            <label for="logTextarea" class="form-label">Log</label>
+            <textarea id="logTextarea" name="log" class="form-control" rows="5" readonly style="font-size: 0.875rem;">${logContent}</textarea>
+          </div>
         </div>
         <!-- add other common fields as needed -->
       `;

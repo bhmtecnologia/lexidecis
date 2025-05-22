@@ -799,8 +799,6 @@ export async function renderVtcFinanceiroGestor() {
     // Disable button and show loading spinner
     const btn = $(this);
     const originalHtml = btn.html();
-    btn.prop('disabled', true)
-       .html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
 
     const id = btn.data('id');
     const lanc = lancamentosData.find(l => l.id === id);
@@ -817,6 +815,13 @@ export async function renderVtcFinanceiroGestor() {
       btn.prop('disabled', false).html(originalHtml);
       return;
     }
+    // Confirmação após validação de existência e forma_pagamento
+    if (!confirm('Confirma o envio deste lançamento para a controladoria?')) {
+      return;
+    }
+    btn.prop('disabled', true)
+       .html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
+
     const now = new Date();
     const isoString = now.toISOString();
     const userEmail = AuthService.user.email;

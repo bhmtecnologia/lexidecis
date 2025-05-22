@@ -336,7 +336,7 @@ export async function renderFinanceiroLancamentoCreateV3() {
                   <option value="">Selecione</option>
                   <option value="Boleto">Boleto</option>
                   <option value="Pix">Pix</option>
-                  <option value="Depósito">Depósito</option>
+                  <option value="deposito">Depósito</option>
                 </select>
               </div>
               <!-- Moeda -->

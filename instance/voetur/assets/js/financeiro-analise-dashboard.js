@@ -112,6 +112,7 @@ export async function renderFinanceiroAnaliseDashboard() {
               <tr>
                 <th>Ações</th>
                 <th>Status</th>
+                <th>Email</th>
                 <th>Anexo(s)</th>
                 <th>Filial</th>
                 <th>Data de Inclusão</th>
@@ -125,7 +126,6 @@ export async function renderFinanceiroAnaliseDashboard() {
                 <th>Forma de Pagamento</th>
                 <th>Centro de Custo</th>
                 <th>Projeto</th>
-                <th>Email</th>
                 <th>Data criação</th>
                 <th>id usuário criação</th>
                 <th>Data alteração</th>
@@ -310,16 +310,8 @@ export async function renderFinanceiroAnaliseDashboard() {
             return loadLancamentosNoCache();
           })
           .then(dados => {
-            const pendentes = dados.filter(l => {
-              if (!(l.dados && l.dados.status)) return false;
-              const s = l.dados.status.toLowerCase().trim();
-              return s === 'integrado benner'
-                  || s === 'enviado controladoria'
-                  || s === 'enviado integração benner'
-                  || s === 'rejeitado integração benner'
-                  || s === 'integrado benner - recebimento físico'
-                  || s === 'integrado benner - documento financeiro';
-            });
+            // Exibir todos os lançamentos, independentemente do status
+            const pendentes = dados;
             // Atualiza cards de resumo
             // document.getElementById('total-pendentes').textContent = pendentes.length;
             const totalAprovado = dados.filter(l => l.dados && l.dados.status && l.dados.status.toLowerCase() === 'aprovado')
@@ -371,27 +363,30 @@ export async function renderFinanceiroAnaliseDashboard() {
               return [
                 actionsHtml,
                 `<span class="status-clickable text-primary" data-id="${lancamento.id}" style="cursor:pointer;">${dadosLanc.status||'-'}</span>`,
+                // Email (moved to index 2)
+                dadosLanc.email || dadosLanc.usuario_inclusao || '-',
+                // Anexos (now index 3)
                 formatAnexos(lancamento.anexos),
-                // Filial (index 3)
+                // Filial (index 4)
                 filialName,
-                // Data de Inclusão (index 4)
+                // Data de Inclusão (index 5)
                 (dadosLanc.data_entrada || dadosLanc.data_inclusao)
                   ? formatDate(dadosLanc.data_entrada || dadosLanc.data_inclusao)
                   : '-',
-                // Data de Emissão (index 5)
+                // Data de Emissão (index 6)
                 dadosLanc.data_emissao ? formatDate(dadosLanc.data_emissao) 
                   : (dadosLanc.dataEmissao ? formatDate(dadosLanc.dataEmissao) : '-'),
-                // Data de Vencimento (index 6) – primeiro valor de parcelas_financeiras
+                // Data de Vencimento (index 7) – primeiro valor de parcelas_financeiras
                 Array.isArray(dadosLanc.parcelas_financeiras) && dadosLanc.parcelas_financeiras.length
                   ? formatDate(dadosLanc.parcelas_financeiras[0].data_vencimento)
                   : (dadosLanc.data_vencimento 
                       ? formatDate(dadosLanc.data_vencimento) 
                       : '-'),
-                // Fornecedor (index 7)
+                // Fornecedor (index 8)
                 fornecedorName,
-                // Nº documento (index 8)
+                // Nº documento (index 9)
                 dadosLanc.numero_documento || dadosLanc.numeroDocumento || '-',
-                // Valor (index 9)
+                // Valor (index 10)
                 (dadosLanc.valor_nominal !== undefined && dadosLanc.valor_nominal !== null) 
                   ? formatCurrency(dadosLanc.valor_nominal) 
                   : ((dadosLanc.valor !== undefined && dadosLanc.valor !== null) 
@@ -402,8 +397,6 @@ export async function renderFinanceiroAnaliseDashboard() {
                 dadosLanc.forma_pagamento || '-',
                 centroName,
                 dadosLanc.projeto_nome || projetoName || '-',
-                // Email do usuário que incluiu (fallback to usuario_inclusao)
-                dadosLanc.email || dadosLanc.usuario_inclusao || '-',
                 lancamento.created_at ? formatDateTime(lancamento.created_at) : '-',
                 lancamento.created_by || '-',
                 lancamento.updated_at ? formatDateTime(lancamento.updated_at) : '-',
@@ -421,21 +414,21 @@ export async function renderFinanceiroAnaliseDashboard() {
         // Remova ou mantenha columnDefs conforme desejar
         columnDefs: [
           {
-            // Estiliza e define valor padrão para Filial (coluna 3) e Fornecedor (coluna 7)
-            targets: [3, 7],
+            // Estiliza e define valor padrão para Filial (coluna 4) e Fornecedor (coluna 8)
+            targets: [4, 8],
             className: 'text-start',
             defaultContent: '-'
           },
           {
             // Data de Inclusão, Emissão, Vencimento, Data criação, Data alteração
-            targets: [4, 5, 6, 16, 18],
+            targets: [5, 6, 7, 16, 18],
             render: function(data) {
               return data ? formatDate(data) : '-';
             }
           },
           {
-            // Valor column (index 9: 0-Ações,1-Anexo,2-Filial,3-DataInclusao,4-DataEmissao,5-Vencimento,6-Fornecedor,7-NumeroDocumento,8-Valor,9-Valor)
-            targets: 9,
+            // Valor column (index 10: 0-Ações,1-Status,2-Email,3-Anexo,4-Filial,5-DataInclusao,6-DataEmissao,7-Vencimento,8-Fornecedor,9-NumeroDocumento,10-Valor)
+            targets: 10,
             render: function(data) {
               // Remove non-numeric characters but keep dots and commas
               let raw = String(data).replace(/[^0-9\-,\.]/g, '');

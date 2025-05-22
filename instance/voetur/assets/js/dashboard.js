@@ -6,32 +6,6 @@ export async function renderDashboard() {
   const content = document.getElementById('content');
   content.innerHTML = `
     <div class="container-fluid">
-      <div class="row text-center mb-4">
-        <div class="col-12 col-md-4 mb-3">
-          <div class="card h-100">
-            <div class="card-body">
-              <h6 class="card-subtitle mb-2 text-muted">Total Lançamentos</h6>
-              <h3 id="total-lancamentos">0</h3>
-            </div>
-          </div>
-        </div>
-        <div class="col-12 col-md-4 mb-3">
-          <div class="card h-100">
-            <div class="card-body">
-              <h6 class="card-subtitle mb-2 text-muted">Total Pago</h6>
-              <h3 id="total-pago">R$ 0.00</h3>
-            </div>
-          </div>
-        </div>
-        <div class="col-12 col-md-4 mb-3">
-          <div class="card h-100">
-            <div class="card-body">
-              <h6 class="card-subtitle mb-2 text-muted">Total Aberto</h6>
-              <h3 id="total-aberto">R$ 0.00</h3>
-            </div>
-          </div>
-        </div>
-      </div>
       <div class="card">
         <div class="card-body text-center">
           <h5 class="card-title">Bem-vindo!</h5>
@@ -39,9 +13,33 @@ export async function renderDashboard() {
             O portal está em fase de testes. Caso encontre erros ou deseje enviar sugestões, entre em contato pelo e-mail:
             <a href="mailto:suporte@bhm.tec.br">suporte@bhm.tec.br</a>.
           </p>
-          <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-            <a href="#financeiro-lancamento-create-v3" class="btn btn-primary me-md-2">Lançar Pagamento</a>
-            <a href="#chat" class="btn btn-secondary">LexiDecis</a>
+          <div class="br-container" style="padding: 1rem;">
+            <div class="d-flex flex-wrap justify-content-center" style="gap: 1rem;">
+              <a role="button" href="#financeiro-lancamento-create-v3" class="br-button br-button--primary" style="flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.25rem;">
+                <div style="width: 80px; height: 80px; background-color: #f2f2f2; border: 1px solid #ccc; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                  <i class="bi bi-currency-dollar" style="font-size: 2.5rem;"></i>
+                </div>
+                <span style="font-size: 0.75rem; margin-top: 0.25rem;">Lançar</span>
+              </a>
+              <a role="button" href="#chat" class="br-button br-button--secondary" style="flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.25rem;">
+                <div style="width: 80px; height: 80px; background-color: #f2f2f2; border: 1px solid #ccc; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                  <i class="bi bi-chat-dots" style="font-size: 2.5rem;"></i>
+                </div>
+                <span style="font-size: 0.75rem; margin-top: 0.25rem;">LexiDecis</span>
+              </a>
+              <a role="button" href="#vtc-indicador-pmr" class="br-button br-button--tertiary" style="flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.25rem;">
+                <div style="width: 80px; height: 80px; background-color: #f2f2f2; border: 1px solid #ccc; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                  <i class="bi bi-bar-chart" style="font-size: 2.5rem;"></i>
+                </div>
+                <span style="font-size: 0.75rem; margin-top: 0.25rem;">KPIs</span>
+              </a>
+              <a role="button" href="#vtc-financeiro-gestor" class="br-button br-button--tertiary" style="flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.25rem;">
+                <div style="width: 80px; height: 80px; background-color: #f2f2f2; border: 1px solid #ccc; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                  <i class="bi bi-wallet2" style="font-size: 2.5rem;"></i>
+                </div>
+                <span style="font-size: 0.75rem; margin-top: 0.25rem;">Financeiro</span>
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -61,18 +59,6 @@ export async function renderDashboard() {
   // Busca dados da API fictícia de lançamentos
   try {
     const dados = await listLancamentos(AuthService);
-
-    const totalLancamentos = dados.length;
-    const totalPago = dados
-      .filter(l => l.dados.status === 'Pago')
-      .reduce((acc, cur) => acc + (parseFloat(cur.dados.valor) || 0), 0);
-    const totalAberto = dados
-      .filter(l => l.dados.status !== 'Pago')
-      .reduce((acc, cur) => acc + (parseFloat(cur.dados.valor) || 0), 0);
-
-    document.getElementById('total-lancamentos').textContent = totalLancamentos;
-    document.getElementById('total-pago').textContent = 'R$ ' + totalPago.toFixed(2);
-    document.getElementById('total-aberto').textContent = 'R$ ' + totalAberto.toFixed(2);
 
   } catch (error) {
     console.error('Erro ao carregar lançamentos:', error);

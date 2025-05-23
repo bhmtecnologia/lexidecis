@@ -1363,50 +1363,36 @@ export async function renderFinanceiroLancamentoCreateV3() {
     });
   }
 
-  // Dropzone for mobile-friendly file upload
-  const dropZone = document.getElementById('dropZone');
-  const arquivoInput = document.getElementById('arquivoClassify');
-  if (dropZone && arquivoInput) {
-    dropZone.addEventListener('click', () => arquivoInput.click());
-    dropZone.addEventListener('dragover', e => {
-      e.preventDefault();
-      dropZone.classList.add('dropzone-hover');
+// Dropzone for mobile-friendly file upload
+const dropZone = document.getElementById('dropZone');
+const arquivoInput = document.getElementById('arquivoClassify');
+if (dropZone && arquivoInput) {
+  dropZone.addEventListener('click', () => arquivoInput.click());
+  dropZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    dropZone.classList.add('dropzone-hover');
+  });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dropzone-hover'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('dropzone-hover');
+    arquivoInput.files = e.dataTransfer.files;
+    arquivoInput.dispatchEvent(new Event('change'));
+  });
+  // Also open file picker when tapping the text
+  const browseBtn = document.getElementById('browseBtn');
+  if (browseBtn) {
+    browseBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      arquivoInput.click();
     });
-    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dropzone-hover'));
-    dropZone.addEventListener('drop', e => {
-      e.preventDefault();
-      dropZone.classList.remove('dropzone-hover');
-      arquivoInput.files = e.dataTransfer.files;
-      arquivoInput.dispatchEvent(new Event('change'));
-    });
-    // Also open file picker when tapping the text
-    const browseBtn = document.getElementById('browseBtn');
-    if (browseBtn) {
-      browseBtn.addEventListener('click', e => {
-        e.stopPropagation();
-        arquivoInput.click();
-      });
-    }
   }
+}
+
 }
 
 // Registra a rota v3
 registerRoute("#financeiro-lancamento-create-v3", renderFinanceiroLancamentoCreateV3);
-// Adds new parcela fields when "+ Parcela" is clicked
-document.addEventListener('click', event => {
-  if (event.target && event.target.id === 'addParcelaBtn') {
-    const container = document.getElementById('parcelasContainer');
-    const item = document.createElement('div');
-    item.className = 'parcela-item mb-2';
-    const valorAtual = document.getElementById('valor').value;
-    item.innerHTML = `
-      <input type="date" name="parcelaData[]" class="form-control parcela-data mb-1" required>
-      <input type="text" name="parcelaValor[]" class="form-control parcela-valor" placeholder="Valor da Parcela" required value="${valorAtual}">
-      <button type="button" class="btn btn-danger btn-sm remove-parcela-btn ms-2">- Parcela</button>
-    `;
-    container.appendChild(item);
-  }
-});
 
 // Adds new item fields when "+ Item" is clicked
 document.addEventListener('click', event => {

@@ -459,6 +459,15 @@ export async function renderVtcFinanceiroGestor() {
         <!-- add other common fields as needed -->
       `;
         $('#editFormContainer').html(formHtml);
+        // Hide or show remove buttons for NF items based on row count
+        function updateRemoveItemButtons() {
+          const rows = $('#itensTable tbody tr');
+          if (rows.length <= 1) {
+            $('#itensTable .remove-item').hide();
+          } else {
+            $('#itensTable .remove-item').show();
+          }
+        }
         // Handler to add and remove NF item rows
         $('#addItemBtn').on('click', function() {
           $('#itensTable tbody').append(`
@@ -469,17 +478,24 @@ export async function renderVtcFinanceiroGestor() {
               <td><button type="button" class="btn btn-sm btn-danger remove-item">Remover</button></td>
             </tr>
           `);
+          updateRemoveItemButtons();
         });
         $('#editFormContainer').on('click', '.remove-item', function() {
-          const rows = $('#itensTable tbody tr');
-          if (rows.length > 1) {
-            $(this).closest('tr').remove();
-          } else {
-            alert('Deve ter pelo menos um item na nota fiscal');
-          }
+          $(this).closest('tr').remove();
+          updateRemoveItemButtons();
         });
+        updateRemoveItemButtons();
 
         // Handlers for Parcelas table
+        // Hide or show remove buttons based on row count
+        function updateRemoveParcelaButtons() {
+          const rows = $('#parcelasTable tbody tr');
+          if (rows.length <= 1) {
+            $('#parcelasTable .remove-parcela').hide();
+          } else {
+            $('#parcelasTable .remove-parcela').show();
+          }
+        }
         $('#addParcelaBtn').on('click', function() {
           $('#parcelasTable tbody').append(`
             <tr>
@@ -488,15 +504,13 @@ export async function renderVtcFinanceiroGestor() {
               <td><button type="button" class="btn btn-sm btn-danger remove-parcela">Remover</button></td>
             </tr>
           `);
+          updateRemoveParcelaButtons();
         });
         $('#editFormContainer').on('click', '.remove-parcela', function() {
-          const rows = $('#parcelasTable tbody tr');
-          if (rows.length > 1) {
-            $(this).closest('tr').remove();
-          } else {
-            alert('Deve ter pelo menos uma parcela');
-          }
+          $(this).closest('tr').remove();
+          updateRemoveParcelaButtons();
         });
+        updateRemoveParcelaButtons();
         // Apply currency mask on inputs
         function formatCurrencyInput(el) {
           const oldValue = el.value;

@@ -1394,21 +1394,22 @@ if (dropZone && arquivoInput) {
 // Registra a rota v3
 registerRoute("#financeiro-lancamento-create-v3", renderFinanceiroLancamentoCreateV3);
 
-// Adds new item fields when "+ Item" is clicked
-document.addEventListener('click', event => {
-  if (event.target && event.target.id === 'addItemBtn') {
-    const container = document.getElementById('itensContainer');
-    const item = document.createElement('div');
-    item.className = 'item-row mb-2';
-    item.innerHTML = `
-      <input type="text" name="itemDescricao[]" class="form-control item-descricao mb-1" placeholder="Descrição do Item" required>
-      <input type="text" name="itemQuantidade[]" class="form-control item-quantidade mb-1" placeholder="Quantidade" required>
-      <input type="text" name="itemValorUnitario[]" class="form-control item-valor-unitario" placeholder="Valor Unitário" required>
-      <button type="button" class="btn btn-danger btn-sm remove-item-btn ms-2">- Item</button>
-    `;
-    container.appendChild(item);
+  // Single item add
+  const addItemBtn = document.getElementById("addItemBtn");
+  if (addItemBtn) {
+    addItemBtn.onclick = () => {
+      const container = document.getElementById("itensContainer");
+      const item = document.createElement("div");
+      item.className = "item-row mb-2";
+      item.innerHTML = `
+        <input type="text" name="itemDescricao[]" class="form-control item-descricao mb-1" placeholder="Descrição do Item" required>
+        <input type="text" name="itemQuantidade[]" class="form-control item-quantidade mb-1" placeholder="Quantidade" required>
+        <input type="text" name="itemValorUnitario[]" class="form-control item-valor-unitario" placeholder="Valor Unitário" required>
+        <button type="button" class="btn btn-danger btn-sm remove-item-btn ms-2">- Item</button>
+      `;
+      container.appendChild(item);
+    };
   }
-});
 // Remove parcela when '-' button clicked
 document.addEventListener('click', event => {
   if (event.target && event.target.classList.contains('remove-parcela-btn')) {

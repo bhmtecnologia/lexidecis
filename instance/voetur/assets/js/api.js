@@ -541,3 +541,35 @@ export async function getGptConfig(AuthService, gptId) {
 
   return await response.json();
 }
+
+/**
+ * Lista os documentos do document-store ou um documento específico se um ID for fornecido.
+ *
+ * @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
+ * @param {string} [id] - (Opcional) Identificador do documento a ser buscado.
+ * @returns {Promise<Array|Object>} - Array de documentos ou o documento solicitado.
+ * @throws {Error} Se o usuário não estiver autenticado ou se ocorrer erro na API.
+ */
+export async function listDocumentStore(AuthService, id) {
+  const user = AuthService.user;
+  if (!user) throw new Error("Usuário não autenticado");
+  const token = await user.getIdToken();
+
+  const baseUrl = 'https://webhook.power.tec.br/webhook/lexidecis/v1/document-store';
+  const url = id ? `${baseUrl}?id=${encodeURIComponent(id)}` : baseUrl;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error("Erro ao listar document-store: " + errorText);
+  }
+
+  return await response.json();
+}

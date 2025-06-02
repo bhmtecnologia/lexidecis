@@ -28,7 +28,13 @@
       z-index: 11;
     }
     #video {
-      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      z-index: 0;
     }
     #btn-share {
       position: absolute;
@@ -313,7 +319,9 @@
     document.getElementById('btn-share').addEventListener('click', async () => {
       if (capturing) return;
       const videoElem = await startScreenCapture();
-      initWebGPU(videoElem);
+      if (navigator.gpu) {
+        initWebGPU(videoElem);
+      }
       document.getElementById('btn-share').disabled = true;
       document.getElementById('btn-share').innerText = "Tela Compartilhada";
       appendEventLog("Compartilhamento iniciado");
@@ -353,8 +361,6 @@
         const overlay = document.getElementById('overlay');
         const ctx = overlay.getContext('2d');
         ctx.clearRect(0, 0, overlay.width, overlay.height);
-        const canvas = document.getElementById('canvas');
-        canvas.style.display = 'none';
         appendEventLog("Compartilhamento parado");
         appendEventLog("Stream encerrado");
       }
@@ -364,7 +370,9 @@
     document.getElementById('btn-webcam').addEventListener('click', async () => {
       if (capturing) return;
       const videoElem = await startWebcamCapture();
-      initWebGPU(videoElem);
+      if (navigator.gpu) {
+        initWebGPU(videoElem);
+      }
       // Desabilita botões de compartilhar tela e webcam enquanto estiver ativo
       document.getElementById('btn-share').disabled = true;
       document.getElementById('btn-webcam').disabled = true;

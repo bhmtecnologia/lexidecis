@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>OpenCV.js - Detecção de Rosto com Haar Cascade</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f0f0f0; }
+        .container {
+            position: relative;
+            width: 640px; /* Defina de acordo com o esperado da câmera */
+            height: 480px;
+            margin: auto;
+            border: 2px solid #333;
+        }
+        #videoInput {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        #canvasOutput {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        #status {
+            display: block;
+            text-align: center;
+            margin-top: 10px;
+            font-weight: bold;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>Detecção de Rosto com OpenCV.js e Haar Cascade</h1>
+    <div class="container">
+        <video id="videoInput" playsinline autoplay muted></video>
+        <canvas id="canvasOutput"></canvas>
+    </div>
+    <p id="status">Carregando OpenCV.js...</p>
+
+    <script async src="https://docs.opencv.org/4.9.0/opencv.js" onload="onOpenCvReady();"></script>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detetive de Dados - LGPD e Segurança</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+            color: #333;
+            flex-direction: column;
+        }
+
+        .game-container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            text-align: center;
+            max-width: 900px;
+            width: 100%;
+            box-sizing: border-box;
+            margin: 20px;
+            position: relative;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        p.instructions {
+            color: #555;
+            font-size: 1.1em;
+            margin-bottom: 25px;
+        }
+
+        .scenario-area {
+            width: 800px; /* Largura do cenário - AJUSTE SE NECESSÁRIO CONFORME SUA IMAGEM */
+            height: 450px; /* Altura do cenário - AJUSTE SE NECESSÁRIO CONFORME SUA IMAGEM */
+            border: 2px solid #a7d9e7;
+            border-radius: 8px;
+            margin: 20px auto;
+            position: relative;
+            overflow: hidden;
+
+            /* IMAGEM DE FUNDO DO CENÁRIO - AGORA APONTA PARA mesa.png */
+            background-image: url('mesa.png'); /* <-- CAMINHO DA SUA IMAGEM: mesa.png */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .hotspot {
+            position: absolute;
+            /* PROPRIEDADES VISÍVEIS PARA DEPURAR (AJUSTAR COORDENADAS) */
+            background-color: rgba(255, 0, 0, 0.3); /* Cor vermelha transparente */
+            border: 2px dashed red; /* Borda visível */
+            cursor: pointer;
+            z-index: 10;
+            /* opacity: 0; <--- ESTAVA 0, AGORA SERÁ DEFINIDO PELO JS PARA DEPURAR */
+            transition: opacity 0.3s ease;
+        }
+
+        .hotspot:hover {
+            opacity: 0.7 !important; /* Torna-o mais visível ao passar o mouse */
+        }
+
+        /* Estilos para a caixa de diálogo de interação */
+        .interaction-modal {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            max-width: 500px;
+            z-index: 100;
+            text-align: left;
+        }
+
+        .interaction-modal h3 {
+            color: #2c3e50;
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+        }
+
+        .interaction-modal p {
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .interaction-options button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.2s ease;
+            min-width: 120px;
+        }
+
+        .interaction-options button:hover {
+            background-color: #2980b9;
+        }
+
+        .feedback-area {
+            margin-top: 25px;
+            min-height: 40px;
+        }
+
+        #score-display {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #34495e;
+        }
+
+        .feedback-message {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .feedback-message.correct { color: #27ae60; }
+        .feedback-message.incorrect { color: #e74c3c; }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Detetive de Dados</h1>
+        <p class="instructions">Clique nos elementos suspeitos na sala para identificar falhas de segurança e LGPD.</p>
+
+        <div class="scenario-area" id="scenario-area">
+            </div>
+
+        <div class="interaction-modal" id="interaction-modal">
+            <h3 id="modal-title"></h3>
+            <p id="modal-description"></p>
+            <div class="interaction-options" id="modal-options">
+                </div>
+            <p id="modal-feedback"></p>
+            <button id="modal-continue-button" style="display: none;">Continuar</button>
+        </div>
+
+        <div class="feedback-area">
+            <p id="score-display">Pontuação: 0</p>
+        </div>
+    </div>
+
+    <script>
+        // Dados dos cenários e hotspots
+        const scenarios = [
+            {
+                id: 'office-desk-1',
+                name: 'Mesa de Escritório Desorganizada',
+                description: 'Você está em uma mesa de escritório. Observe atentamente.',
+                hotspots: [
+                    {
+                        id: 'hotspot-postit',
+                        // COORDENADAS AJUSTADAS PARA A MESA QUE VOCÊ FORNECEU (mesa.png)
+                        x: 85, y: 395, width: 60, height: 40, // Post-it amarelo na parte inferior esquerda
+                        question: 'Um post-it solto na mesa com anotações. É um risco de LGPD ou segurança?',
+                        options: [
+                            { text: 'A) Sim, se contiver dados pessoais ou sensíveis.', isCorrect: true, feedback: 'Correto! Dados pessoais, mesmo em post-its, devem ser protegidos contra acesso indevido conforme a LGPD.' },
+                            { text: 'B) Não, é apenas um rascunho.', isCorrect: false, feedback: 'Incorreto. Mesmo rascunhos podem conter dados sensíveis que exigem proteção.' },
+                        ],
+                        resolved: false
+                    },
+                    {
+                        id: 'hotspot-phone',
+                        // COORDENADAS AJUSTADAS PARA A MESA QUE VOCÊ FORNECEU (mesa.png)
+                        x: 10, y: 220, width: 150, height: 200, // Celular na vertical à esquerda
+                        question: 'O celular na mesa está desbloqueado e sem supervisão. Qual o risco principal?',
+                        options: [
+                            { text: 'A) Acesso indevido a dados pessoais e corporativos.', isCorrect: true, feedback: 'Correto! Um celular desbloqueado é uma porta de entrada para violações de dados, tanto pessoais quanto da empresa.' },
+                            { text: 'B) Pode gastar a bateria mais rápido.', isCorrect: false, feedback: 'Incorreto. Embora a bateria possa ser afetada, o risco principal é de segurança.' },
+                        ],
+                        resolved: false
+                    },
+                    {
+                        id: 'hotspot-notebook',
+                        // COORDENADAS AJUSTADAS PARA A MESA QUE VOCÊ FORNECEU (mesa.png)
+                        x: 180, y: 220, width: 250, height: 200, // Caderno/notebook aberto no centro
+                        question: 'Há um caderno aberto que parece conter informações confidenciais. Isso é um risco?',
+                        options: [
+                            { text: 'A) Sim, informações confidenciais devem ser protegidas.', isCorrect: true, feedback: 'Correto! Dados confidenciais, mesmo em anotações físicas, precisam ser protegidos contra acesso não autorizado e divulgação indevida, conforme a LGPD.' },
+                            { text: 'B) Não, é apenas um caderno físico.', isCorrect: false, feedback: 'Incorreto. A LGPD e as políticas de segurança se aplicam a dados em qualquer formato, físico ou digital.' },
+                        ],
+                        resolved: false
+                    },
+                    {
+                        id: 'hotspot-clip',
+                        // COORDENADAS AJUSTADAS PARA A MESA QUE VOCÊ FORNECEU (mesa.png)
+                        x: 650, y: 360, width: 100, height: 70, // Prendedores de papel (clipes)
+                        question: 'Você vê prendedores de papel no canto da mesa. Qual o risco de segurança/LGPD aqui?',
+                        options: [
+                            { text: 'A) Nenhum risco aparente.', isCorrect: true, feedback: 'Correto! Embora a desorganização possa indicar problemas, os prendedores de papel em si não são um risco direto de segurança ou LGPD.' },
+                            { text: 'B) Podem prender documentos confidenciais de forma insegura.', isCorrect: false, feedback: 'Incorreto. O risco está nos documentos, não nos prendedores. A atenção deve ser na natureza dos dados e como são guardados.' },
+                        ],
+                        resolved: false
+                    },
+                    {
+                        id: 'hotspot-keyboard-mouse',
+                        // COORDENADAS AJUSTADAS PARA A MESA QUE VOCÊ FORNECEU (mesa.png)
+                        x: 50, y: 0, width: 700, height: 200, // Área do teclado e mouse, como um "distrator" maior
+                        question: 'O teclado e o mouse estão limpos. Isso é um item de segurança da informação?',
+                        options: [
+                            { text: 'A) Sim, a higiene evita a propagação de germes.', isCorrect: false, feedback: 'Incorreto. A higiene é importante para a saúde, mas não é um item direto de segurança da informação ou LGPD.' },
+                            { text: 'B) Não, a segurança da informação foca na proteção de dados, não na limpeza de hardware.', isCorrect: true, feedback: 'Correto! A segurança da informação se concentra na proteção de dados e sistemas, não na manutenção física do equipamento. ' },
+                        ],
+                        resolved: false
+                    }
+                ]
+            },
+            // Você pode adicionar mais cenários aqui!
+        ];
+
+        let currentScenarioIndex = 0;
+        let score = 0;
+        let activeHotspot = null;
+
+        // --- Variáveis que serão inicializadas após o DOM estar pronto ---
+        let scenarioArea, interactionModal, modalTitle, modalDescription, modalOptions, modalFeedback, modalContinueButton, scoreDisplay;
+
+        // --- Funções do Jogo ---
+
+        /**
+         * Carrega o cenário atual, criando os hotspots e configurando a interface.
+         */
+        function loadScenario() {
+            const scenario = scenarios[currentScenarioIndex];
+            document.querySelector('.instructions').textContent = scenario.description;
+            scenarioArea.innerHTML = ''; // Limpa hotspots antigos
+
+            scenario.hotspots.forEach(hotspotData => {
+                const hotspotDiv = document.createElement('div');
+                hotspotDiv.className = 'hotspot';
+                hotspotDiv.id = hotspotData.id;
+                hotspotDiv.style.left = `${hotspotData.x}px`;
+                hotspotDiv.style.top = `${hotspotData.y}px`;
+                hotspotDiv.style.width = `${hotspotData.width}px`;
+                hotspotDiv.style.height = `${hotspotData.height}px`;
+
+                hotspotDiv.addEventListener('click', () => handleHotspotClick(hotspotData, hotspotDiv));
+
+                if (hotspotData.resolved) {
+                    hotspotDiv.style.opacity = 0; // Oculta hotspots já resolvidos
+                    hotspotDiv.style.cursor = 'default';
+                } else {
+                    // Para desenvolvimento: torne os hotspots visíveis para ajuste
+                    hotspotDiv.style.opacity = 0.5; // HOTSPOTS VISÍVEIS PARA AJUSTE!
+                }
+
+                scenarioArea.appendChild(hotspotDiv);
+            });
+            updateScoreDisplay();
+        }
+
+        /**
+         * Lida com o clique em um hotspot, exibindo o modal de interação.
+         * @param {Object} hotspotData - Dados do hotspot clicado.
+         * @param {HTMLElement} hotspotElement - O elemento HTML do hotspot.
+         */
+        function handleHotspotClick(hotspotData, hotspotElement) {
+            if (hotspotData.resolved) return;
+
+            activeHotspot = hotspotData;
+
+            modalTitle.textContent = 'Problema Encontrado!';
+            modalDescription.textContent = hotspotData.question;
+            modalOptions.innerHTML = '';
+            modalFeedback.textContent = '';
+            modalFeedback.className = '';
+            modalContinueButton.style.display = 'none';
+
+            hotspotData.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.textContent = option.text;
+                button.setAttribute('data-option-index', index);
+                button.addEventListener('click', () => handleOptionClick(index, hotspotElement));
+                modalOptions.appendChild(button);
+            });
+
+            interactionModal.style.display = 'block';
+        }
+
+        /**
+         * Lida com o clique em uma opção de resposta dentro do modal.
+         * @param {number} selectedOptionIndex - O índice da opção selecionada.
+         * @param {HTMLElement} hotspotElement - O elemento HTML do hotspot original.
+         */
+        function handleOptionClick(selectedOptionIndex, hotspotElement) {
+            Array.from(modalOptions.children).forEach(btn => btn.disabled = true);
+
+            const selectedOption = activeHotspot.options[selectedOptionIndex];
+
+            modalFeedback.textContent = selectedOption.feedback;
+            if (selectedOption.isCorrect) {
+                modalFeedback.className = 'feedback-message correct';
+                score++;
+                activeHotspot.resolved = true;
+                hotspotElement.style.opacity = 0; // Oculta o hotspot após ser resolvido
+                hotspotElement.style.cursor = 'default';
+            } else {
+                modalFeedback.className = 'feedback-message incorrect';
+            }
+
+            updateScoreDisplay();
+            modalContinueButton.style.display = 'block';
+        }
+
+        /**
+         * Atualiza a exibição da pontuação na tela.
+         */
+        function updateScoreDisplay() {
+            scoreDisplay.textContent = `Pontuação: ${score}`;
+        }
+
+        /**
+         * Verifica se todos os hotspots do cenário atual foram resolvidos.
+         * @returns {boolean} True se todos foram resolvidos, false caso contrário.
+         */
+        function checkScenarioCompletion() {
+            return scenarios[currentScenarioIndex].hotspots.every(hotspot => hotspot.resolved);
+        }
+
+        /**
+         * Avança para o próximo cenário ou finaliza o jogo.
+         */
+        function advanceScenario() {
+            interactionModal.style.display = 'none';
+            activeHotspot = null;
+
+            if (checkScenarioCompletion()) {
+                currentScenarioIndex++;
+                if (currentScenarioIndex < scenarios.length) {
+                    loadScenario();
+                    showGeneralFeedback('Cenário completo! Próximo desafio...', 'success');
+                } else {
+                    endGame();
+                }
+            } else {
+                 showGeneralFeedback('Continue procurando! Ainda há problemas neste cenário.', 'warning');
+            }
+        }
+
+        /**
+         * Exibe uma mensagem de feedback generalizada na área de feedback principal.
+         * @param {string} message - A mensagem a ser exibida.
+         * @param {string} type - O tipo de mensagem ('success', 'warning', 'error').
+         */
+        function showGeneralFeedback(message, type) {
+            const mainFeedbackArea = document.querySelector('.feedback-area');
+            // Cria um novo parágrafo para a mensagem de feedback e o insere antes da pontuação
+            const feedbackP = document.createElement('p');
+            feedbackP.className = `feedback-message ${type}`;
+            feedbackP.textContent = message;
+
+            // Remove a mensagem anterior se existir, mantendo a pontuação
+            const oldFeedbackP = mainFeedbackArea.querySelector('.feedback-message');
+            if (oldFeedbackP) {
+                mainFeedbackArea.removeChild(oldFeedbackP);
+            }
+            mainFeedbackArea.prepend(feedbackP); // Adiciona no início da área de feedback
+            updateScoreDisplay(); // Garante que a pontuação esteja atualizada
+        }
+
+
+        /**
+         * Finaliza o jogo e exibe a pontuação final.
+         */
+        function endGame() {
+            document.querySelector('.game-container').innerHTML = `
+                <h2>Jogo Concluído!</h2>
+                <p>Parabéns, Detetive! Você identificou e corrigiu os problemas de segurança e LGPD.</p>
+                <p>Sua pontuação final: ${score} pontos.</p>
+                <button onclick="location.reload()">Jogar Novamente</button>
+            `;
+             document.querySelector('.game-container').style.display = 'block';
+             document.querySelector('.game-container').style.textAlign = 'center';
+             document.querySelector('.game-container').style.maxWidth = '600px';
+             document.querySelector('.game-container').style.padding = '40px';
+        }
+
+        // --- Inicialização do Jogo quando o DOM estiver pronto ---
+        document.addEventListener('DOMContentLoaded', () => {
+            scenarioArea = document.getElementById('scenario-area');
+            interactionModal = document.getElementById('interaction-modal');
+            modalTitle = document.getElementById('modal-title');
+            modalDescription = document.getElementById('modal-description');
+            modalOptions = document.getElementById('modal-options');
+            modalFeedback = document.getElementById('modal-feedback');
+            modalContinueButton = document.getElementById('modal-continue-button');
+            scoreDisplay = document.getElementById('score-display');
+
+            modalContinueButton.addEventListener('click', advanceScenario);
+
+            loadScenario();
+        });
+    </script>
+</body>
+</html>

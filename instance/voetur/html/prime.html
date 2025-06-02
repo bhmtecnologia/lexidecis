@@ -369,6 +369,7 @@
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         videoElem.srcObject = stream;
         await new Promise(r => videoElem.onloadedmetadata = r);
+        await videoElem.play();
         capturing = true;
         faceDetectionLoop(videoElem);
         return videoElem;

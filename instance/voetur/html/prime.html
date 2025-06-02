@@ -101,6 +101,12 @@
     // Lista câmeras disponíveis no dispositivo e preenche o <select>
     async function populateCameraList() {
       try {
+        // Solicitar permissão para câmera para expor labels e múltiplas entradas
+        try {
+          await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        } catch (e) {
+          console.warn("Permissão de câmera negada:", e);
+        }
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoInputs = devices.filter(d => d.kind === "videoinput");
         const select = document.getElementById('cameraSelect');

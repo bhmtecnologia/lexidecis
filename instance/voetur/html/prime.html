@@ -81,6 +81,9 @@
   <button id="btn-webcam" style="position:absolute; top:80px; left:10px; z-index:10; padding:8px 12px; background:rgba(0,0,0,0.6); color:white; border:none; cursor:pointer; font-size:14px; border-radius:4px;">
     Usar Webcam
   </button>
+  <select id="cameraSelect" style="position:absolute; top:115px; left:10px; z-index:10; padding:6px; font-size:14px; border-radius:4px;">
+    <option value="">Carregando câmeras...</option>
+  </select>
   <video id="video" autoplay playsinline></video>
   <canvas id="canvas"></canvas>
   <canvas id="overlay" style="position:absolute; top:0; left:0; width:100vw; height:100vh; pointer-events:none; z-index: 11;"></canvas>
@@ -94,6 +97,32 @@
   <!-- Script principal: WebGPU + captura de tela + detecção dinâmica -->
   <script type="module">
     import 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgpu@4.22.0/dist/tf-backend-webgpu.min.js';
+
+    // Lista câmeras disponíveis no dispositivo e preenche o <select>
+    async function populateCameraList() {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoInputs = devices.filter(d => d.kind === "videoinput");
+        const select = document.getElementById('cameraSelect');
+        select.innerHTML = ""; 
+        videoInputs.forEach(device => {
+          const option = document.createElement('option');
+          option.value = device.deviceId;
+          option.textContent = device.label || `Câmera ${select.length + 1}`;
+          select.appendChild(option);
+        });
+        if (videoInputs.length === 0) {
+          const option = document.createElement('option');
+          option.value = "";
+          option.textContent = "Nenhuma câmera encontrada";
+          select.appendChild(option);
+        }
+      } catch (err) {
+        console.error("Erro ao listar câmeras:", err);
+      }
+    }
+    // Chama logo que o script for carregado
+    populateCameraList();
 
     // Função para adicionar mensagens ao log
     function appendEventLog(msg) {
@@ -329,11 +358,15 @@
       document.getElementById('btn-stop').disabled = false;
     });
 
-    // Função para iniciar captura da webcam
-    async function startWebcamCapture() {
+    // Função para iniciar captura da webcam selecionando deviceId
+    async function startWebcamCapture(deviceId = null) {
       const videoElem = document.getElementById('video');
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        const constraints = {
+          video: deviceId ? { deviceId: { exact: deviceId } } : { facingMode: "user" },
+          audio: false
+        };
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
         videoElem.srcObject = stream;
         await new Promise(r => videoElem.onloadedmetadata = r);
         capturing = true;
@@ -369,14 +402,14 @@
     // Botão para iniciar captura da webcam + WebGPU
     document.getElementById('btn-webcam').addEventListener('click', async () => {
       if (capturing) return;
-      const videoElem = await startWebcamCapture();
+      const select = document.getElementById('cameraSelect');
+      const selectedDeviceId = select.value;
+      const videoElem = await startWebcamCapture(selectedDeviceId);
       if (navigator.gpu) {
         initWebGPU(videoElem);
       }
-      // Desabilita botões de compartilhar tela e webcam enquanto estiver ativo
       document.getElementById('btn-share').disabled = true;
       document.getElementById('btn-webcam').disabled = true;
-      // Habilita o botão de parar
       document.getElementById('btn-stop').disabled = false;
       appendEventLog("Webcam iniciada");
     });

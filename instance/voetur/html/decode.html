@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Decodificar Código de Barras Estático com QuaggaJS (Ajustado)</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 20px;
+      background: #f5f5f5;
+    }
+    #output {
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      background: white;
+      max-width: 400px;
+      word-break: break-all;
+    }
+    img {
+      max-width: 100%;
+      border: 1px solid #888;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 8px 16px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Decodificar Código de Barras Estático (Ajustado)</h1>
+  <p>
+    Esta página tenta ler apenas códigos Code 128 da imagem <code>barcode.png</code>.
+    Caso o seu código seja UPC ou EAN, substitua <code>"code_128_reader"</code> para <code>"ean_reader"</code> ou <code>"upc_reader"</code>.
+  </p>
+  <!-- Garanta que você tenha salvo a imagem como “barcode.png” na mesma pasta deste HTML -->
+  <img id="barcode-image" src="barcode.png" alt="Código de Barras a Decodificar" />
+
+  <br/>
+  <button id="btn-decode">Decodificar Agora</button>
+
+  <div id="output">Clique em “Decodificar Agora” para tentar ler o código.</div>
+
+  <!-- Inclui QuaggaJS (0.12.1) via CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+  <script>
+    document.getElementById('btn-decode').addEventListener('click', () => {
+      const outputDiv = document.getElementById('output');
+      outputDiv.textContent = 'Decodificando…';
+
+      Quagga.decodeSingle({
+        src: 'barcode.png',
+        numOfWorkers: 0,       // roda no thread principal
+        locate: true,          // tenta localizar o código dentro da imagem inteira
+        inputStream: {
+          size: 700            // escala de leitura (aumente ou diminua se não funcionar)
+        },
+        decoder: {
+          readers: ["code_128_reader"]  // deixar apenas um reader focado no padrão Code 128
+        }
+      }, function(result) {
+        if (result && result.codeResult) {
+          outputDiv.textContent = "✅ Código encontrado: " + result.codeResult.code;
+        } else {
+          outputDiv.textContent = "❌ Não conseguiu ler o código. Tente ajustar o reader ou o tamanho (inputStream.size).";
+        }
+      });
+    });
+  </script>
+</body>
+</html>

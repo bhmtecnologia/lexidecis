@@ -133,7 +133,6 @@
     <button id="btn-share">Compartilhar Tela</button>
     <button id="btn-stop" disabled>Parar Compartilhamento</button>
     <button id="btn-webcam">Usar Webcam</button>
-    <button id="btn-toggle-detect">Desativar Detecção</button>
     <select id="cameraSelect">
       <option value="">Carregando câmeras...</option>
     </select>
@@ -202,7 +201,6 @@
 
     let faceDetected = false;
     let capturing = false;
-    let detectionEnabled = true;
 
     // 1) Configurar backend TF.js (WebGPU ou fallback para WebGL)
     try {
@@ -223,18 +221,6 @@
     // 2) Função que usa coco-ssd para detectar pessoas no vídeo
     async function faceDetectionLoop(videoElem) {
       if (!capturing) return;
-      if (!detectionEnabled) {
-        // Clear overlay, reset counters and exit early
-        const overlay = document.getElementById('overlay');
-        const ctx = overlay.getContext('2d');
-        ctx.clearRect(0, 0, overlay.width, overlay.height);
-        document.getElementById('peopleCount').innerText = 'Pessoas: 0';
-        const eventAlert = document.getElementById('eventAlert');
-        eventAlert.innerText = detectionEnabled ? eventAlert.innerText : 'Detecção Desativada';
-        eventAlert.style.background = detectionEnabled ? eventAlert.style.background : 'rgba(0,0,200,0.9)';
-        setTimeout(() => faceDetectionLoop(videoElem), 500);
-        return;
-      }
       const overlay = document.getElementById('overlay');
       const ctx = overlay.getContext('2d');
       overlay.width  = videoElem.videoWidth;
@@ -495,27 +481,6 @@
       document.getElementById('btn-webcam').disabled = true;
       document.getElementById('btn-stop').disabled = false;
       appendEventLog("Webcam iniciada");
-    });
-
-    // Botão de ativar/desativar detecção
-    document.getElementById('btn-toggle-detect').addEventListener('click', () => {
-      detectionEnabled = !detectionEnabled;
-      const btn = document.getElementById('btn-toggle-detect');
-      const eventAlert = document.getElementById('eventAlert');
-      const overlay = document.getElementById('overlay');
-      const ctx = overlay.getContext('2d');
-      if (detectionEnabled) {
-        btn.innerText = 'Desativar Detecção';
-        appendEventLog('Detecção ativada');
-        // Reset overlay and UI when reactivating detection
-        ctx.clearRect(0, 0, overlay.width, overlay.height);
-        document.getElementById('peopleCount').innerText = 'Pessoas: 0';
-        eventAlert.innerText = 'Nenhum evento';
-        eventAlert.style.background = 'rgba(0,200,0,0.9)';
-      } else {
-        btn.innerText = 'Ativar Detecção';
-        appendEventLog('Detecção desativada');
-      }
     });
   </script>
 </body>

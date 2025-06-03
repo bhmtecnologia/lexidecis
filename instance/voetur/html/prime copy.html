@@ -39,71 +39,17 @@
       object-fit: contain;
       z-index: 0;
     }
-    /* Controls bar at top */
-    #controls {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      background: rgba(0,0,0,0.8);
-      padding: 8px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap; /* permite quebra de linha para não cortar texto */
-      z-index: 20;
-    }
-    #controls button, #controls select {
-      padding: 6px 10px;
-      background: rgba(255,255,255,0.1);
-      color: white;
-      border: 1px solid #444;
-      border-radius: 4px;
-      font-size: 14px;
-      cursor: pointer;
-    }
-    #backendIndicator {
-      margin-left: auto;
-      color: #fff;
-      font-size: 14px;
-      white-space: nowrap;      /* evita quebra de página no meio da palavra */
-      padding-right: 10px;      /* espaço extra para não encostar na borda */
-    }
-    #eventAlert {
-      position: fixed;
-      top: 50px;
-      left: 0;
-      width: 100%;
-      background: rgba(0,200,0,0.9);
-      color: white;
-      text-align: center;
-      padding: 6px;
-      font-size: 16px;
-      z-index: 20;
-    }
-    #peopleCount {
-      position: fixed;
-      top: 90px;
-      right: 10px;
-      background: rgba(0,0,0,0.6);
-      color: white;
-      padding: 8px 12px;
-      font-size: 14px;
-      border-radius: 4px;
-      z-index: 20;
-    }
-    #eventLog {
-      position: fixed;
-      top: 130px;
+    #btn-share {
+      position: absolute;
+      top: 10px;
       left: 10px;
-      width: 300px;
-      max-height: 200px;
-      overflow-y: auto;
+      z-index: 10;
+      padding: 8px 12px;
       background: rgba(0,0,0,0.6);
       color: white;
-      padding: 8px;
-      font-size: 12px;
-      z-index: 20;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
       border-radius: 4px;
     }
     #testImg {
@@ -129,26 +75,27 @@
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js"></script>
 </head>
 <body>
-  <div id="controls">
-    <button id="btn-share">Compartilhar Tela</button>
-    <button id="btn-stop" disabled>Parar Compartilhamento</button>
-    <button id="btn-webcam">Usar Webcam</button>
-    <button id="btn-toggle-detect">Desativar Detecção</button>
-    <select id="cameraSelect">
-      <option value="">Carregando câmeras...</option>
-    </select>
-    <div id="backendIndicator">...</div>
-  </div>
 
-  <div id="eventAlert">Nenhum evento</div>
-  <div id="peopleCount">Pessoas: 0</div>
-  <div id="eventLog">
-    <strong>Log de Eventos:</strong><br>
-  </div>
-
+  <!-- Botão para compartilhar tela -->
+  <button id="btn-share">Compartilhar Tela</button>
+  <button id="btn-stop" disabled style="position:absolute; top:45px; left:10px; z-index:10; padding:8px 12px; background:rgba(0,0,0,0.6); color:white; border:none; cursor:pointer; font-size:14px; border-radius:4px;">
+    Parar Compartilhamento
+  </button>
+  <button id="btn-webcam" style="position:absolute; top:80px; left:10px; z-index:10; padding:8px 12px; background:rgba(0,0,0,0.6); color:white; border:none; cursor:pointer; font-size:14px; border-radius:4px;">
+    Usar Webcam
+  </button>
+  <select id="cameraSelect" style="position:absolute; top:115px; left:10px; z-index:10; padding:6px; font-size:14px; border-radius:4px;">
+    <option value="">Carregando câmeras...</option>
+  </select>
   <video id="video" autoplay playsinline></video>
   <canvas id="canvas"></canvas>
-  <canvas id="overlay"></canvas>
+  <canvas id="overlay" style="position:absolute; top:0; left:0; width:100vw; height:100vh; pointer-events:none; z-index: 11;"></canvas>
+  <div id="eventLog" style="position:absolute; bottom:10px; left:10px; width:300px; max-height:200px; overflow-y:auto; background:rgba(0,0,0,0.6); color:white; padding:8px; font-size:12px; z-index:10; border-radius:4px;">
+    <strong>Log de Eventos:</strong><br>
+  </div>
+  <div id="peopleCount" style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.6); color:white; padding:8px 12px; font-size:14px; z-index:10; border-radius:4px;">
+    Pessoas: 0
+  </div>
 
   <!-- Script principal: WebGPU + captura de tela + detecção dinâmica -->
   <script type="module">
@@ -160,7 +107,7 @@
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoInputs = devices.filter(d => d.kind === "videoinput");
         const select = document.getElementById('cameraSelect');
-        select.innerHTML = "";
+        select.innerHTML = ""; 
         videoInputs.forEach(device => {
           const option = document.createElement('option');
           option.value = device.deviceId;
@@ -187,7 +134,7 @@
       const entry = document.createElement('div');
       entry.textContent = `[${time}] ${msg}`;
       logDiv.appendChild(entry);
-      // mantém o scroll no final
+      // opcional: mantém o scroll sempre no final
       logDiv.scrollTop = logDiv.scrollHeight;
     }
 
@@ -200,41 +147,27 @@
       originalWarn(msg, ...args);
     };
 
-    let faceDetected = false;
+    let faceDetected = false;  
     let capturing = false;
-    let detectionEnabled = true;
 
     // 1) Configurar backend TF.js (WebGPU ou fallback para WebGL)
     try {
       await tf.setBackend('webgpu');
       await tf.ready();
-      const be = tf.getBackend();
-      appendEventLog(`Sistema rodando: ${be}`);
-      document.getElementById('backendIndicator').innerText = be;
+      console.log("TF.js backend configurado para:", tf.getBackend());
+      appendEventLog(`Backend configurado: ${tf.getBackend()}`);
     } catch (err) {
       console.warn("WebGPU não disponível, usando WebGL. Erro:", err);
       await tf.setBackend('webgl');
       await tf.ready();
-      const be = tf.getBackend();
-      appendEventLog(`Sistema rodando: ${be}`);
-      document.getElementById('backendIndicator').innerText = be;
+      console.log("TF.js backend configurado para:", tf.getBackend());
+      appendEventLog(`Backend configurado: ${tf.getBackend()}`);
     }
 
     // 2) Função que usa coco-ssd para detectar pessoas no vídeo
     async function faceDetectionLoop(videoElem) {
       if (!capturing) return;
-      if (!detectionEnabled) {
-        // Clear overlay, reset counters and exit early
-        const overlay = document.getElementById('overlay');
-        const ctx = overlay.getContext('2d');
-        ctx.clearRect(0, 0, overlay.width, overlay.height);
-        document.getElementById('peopleCount').innerText = 'Pessoas: 0';
-        const eventAlert = document.getElementById('eventAlert');
-        eventAlert.innerText = detectionEnabled ? eventAlert.innerText : 'Detecção Desativada';
-        eventAlert.style.background = detectionEnabled ? eventAlert.style.background : 'rgba(0,0,200,0.9)';
-        setTimeout(() => faceDetectionLoop(videoElem), 500);
-        return;
-      }
+      // Prepare overlay
       const overlay = document.getElementById('overlay');
       const ctx = overlay.getContext('2d');
       overlay.width  = videoElem.videoWidth;
@@ -246,28 +179,23 @@
         }
         const predictions = await window.objectModel.detect(videoElem);
         faceDetected = predictions.some(pred => pred.class === 'person');
-
-        // Conta quantas pessoas foram detectadas
+        // Conta quantas pessoas (class === 'person') foram detectadas
         const personDetections = predictions.filter(pred => pred.class === 'person');
         const count = personDetections.length;
+        // Atualiza painel de contagem
         document.getElementById('peopleCount').innerText = `Pessoas: ${count}`;
-
-        const eventAlert = document.getElementById('eventAlert');
         if (count > 0) {
           const msg = `🚨 ${count} pessoas detectadas`;
-          eventAlert.innerText = msg;
-          eventAlert.style.background = "rgba(255,128,0,0.9)";
+          console.log(msg, personDetections);
           appendEventLog(msg);
-        } else {
-          eventAlert.innerText = "Nenhum evento";
-          eventAlert.style.background = "rgba(0,200,0,0.9)";
         }
-
-        // Desenha caixas ao redor das pessoas
+        // Draw bounding boxes on overlay
         ctx.clearRect(0, 0, overlay.width, overlay.height);
         if (personDetections.length > 0) {
-          const scaleX = overlay.width / videoElem.videoWidth;
-          const scaleY = overlay.height / videoElem.videoHeight;
+          const videoWidth = videoElem.videoWidth;
+          const videoHeight = videoElem.videoHeight;
+          const scaleX = overlay.width / videoWidth;
+          const scaleY = overlay.height / videoHeight;
           ctx.strokeStyle = 'red';
           ctx.lineWidth = 3;
           personDetections.forEach(det => {
@@ -314,7 +242,7 @@
       const context = canvas.getContext('webgpu');
       const format  = navigator.gpu.getPreferredCanvasFormat();
 
-      // Ajustar tamanho do canvas e overlay
+      // Set canvas and overlay to video resolution for higher quality
       canvas.width  = videoElem.videoWidth;
       canvas.height = videoElem.videoHeight;
       overlay.width = videoElem.videoWidth;
@@ -419,7 +347,7 @@
       const track = videoElem.srcObject.getVideoTracks()[0];
       track.addEventListener('ended', () => {
         capturing = false;
-        appendEventLog("Compartilhamento encerrado");
+        console.log("Compartilhamento encerrado.");
       });
     }
 
@@ -435,8 +363,6 @@
       appendEventLog("Compartilhamento iniciado");
       // Habilita o botão de parar
       document.getElementById('btn-stop').disabled = false;
-      // Desabilita botão de webcam
-      document.getElementById('btn-webcam').disabled = true;
     });
 
     // Função para iniciar captura da webcam selecionando deviceId
@@ -464,15 +390,17 @@
 
     // Botão para parar compartilhamento
     document.getElementById('btn-stop').addEventListener('click', () => {
+      // Interrompe todas as tracks de vídeo do objeto MediaStream
       const videoElem = document.getElementById('video');
       if (videoElem.srcObject) {
         videoElem.srcObject.getTracks().forEach(track => track.stop());
         capturing = false;
+        // Reabilita os botões de compartilhar e webcam, desabilita o de parar
         document.getElementById('btn-share').disabled = false;
         document.getElementById('btn-share').innerText = "Compartilhar Tela";
         document.getElementById('btn-stop').disabled = true;
         document.getElementById('btn-webcam').disabled = false;
-        // Limpa overlay
+        // Limpa canvases
         const overlay = document.getElementById('overlay');
         const ctx = overlay.getContext('2d');
         ctx.clearRect(0, 0, overlay.width, overlay.height);
@@ -484,6 +412,7 @@
     // Botão para iniciar captura da webcam + WebGPU
     document.getElementById('btn-webcam').addEventListener('click', async () => {
       if (capturing) return;
+      // Re-popular a lista de câmeras quando o usuário clica
       await populateCameraList();
       const select = document.getElementById('cameraSelect');
       const selectedDeviceId = select.value;
@@ -496,27 +425,7 @@
       document.getElementById('btn-stop').disabled = false;
       appendEventLog("Webcam iniciada");
     });
-
-    // Botão de ativar/desativar detecção
-    document.getElementById('btn-toggle-detect').addEventListener('click', () => {
-      detectionEnabled = !detectionEnabled;
-      const btn = document.getElementById('btn-toggle-detect');
-      const eventAlert = document.getElementById('eventAlert');
-      const overlay = document.getElementById('overlay');
-      const ctx = overlay.getContext('2d');
-      if (detectionEnabled) {
-        btn.innerText = 'Desativar Detecção';
-        appendEventLog('Detecção ativada');
-        // Reset overlay and UI when reactivating detection
-        ctx.clearRect(0, 0, overlay.width, overlay.height);
-        document.getElementById('peopleCount').innerText = 'Pessoas: 0';
-        eventAlert.innerText = 'Nenhum evento';
-        eventAlert.style.background = 'rgba(0,200,0,0.9)';
-      } else {
-        btn.innerText = 'Ativar Detecção';
-        appendEventLog('Detecção desativada');
-      }
-    });
   </script>
+
 </body>
 </html>

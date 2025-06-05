@@ -552,6 +552,7 @@
     // Registrar apenas a rota da Home; outros apps registram suas rotas ao importar seus módulos
     registerRoute("#", renderHome, null);
     registerRoute("#vtc-financeiro-gestor", openLancar, null);
+    registerRoute("#mail", openMail, null);
 
     // Forçar hash para "#" antes de inicializar o roteador
     window.location.hash = "#";

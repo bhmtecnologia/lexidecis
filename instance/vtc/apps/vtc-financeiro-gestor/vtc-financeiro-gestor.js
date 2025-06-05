@@ -30,13 +30,14 @@ export function openLancar() {
   if (table) {
     table.style.display = "table";
 
-    // Ajustar cabeçalho da tabela: trocar "ID" por "Status"
+    // Ajustar cabeçalho da tabela para três colunas: Status, Descrição, Valor
     const headerRow = table.querySelector("thead tr");
     if (headerRow) {
-      const firstTh = headerRow.querySelector("th");
-      if (firstTh) {
-        firstTh.textContent = "Status";
-      }
+      headerRow.innerHTML = `
+        <th>Status</th>
+        <th>Descrição</th>
+        <th>Valor</th>
+      `;
     }
 
     // Adicionar o menu inferior de ícones financeiro, se ainda não existir
@@ -53,7 +54,7 @@ export function openLancar() {
           </div>
           <div style="text-align: center;">
             <i class="fa-solid fa-list" style="font-size: 24px; color: #34C759;"></i>
-            <div style="font-size: 10px; color: #000;">Contas</div>
+            <div style="font-size: 10px; color: #000;">Lançamentos</div>
           </div>
           <div style="text-align: center;">
             <a href="#" id="btnNovoOption" style="text-decoration: none; color: inherit;">

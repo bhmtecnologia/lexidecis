@@ -18,6 +18,7 @@ export const menuItems = [
         // Subitens para o Dashboard:
         children: [
           { label: "Financeiro", route: "#vtc-financeiro-gestor" },
+          { label: "Prestação de Contas", route: "#vtc-prestacao-de-contas-gestor" },          
           { label: "Liberacao AP", route: "#decisor-liberacaoap" },
         ]
       },

@@ -156,6 +156,12 @@ export async function renderDashboard() {
                 </div>
                 <span style="font-size: 0.75rem; margin-top: 0.25rem;">Upload</span>
               </a>
+              <a role="button" onclick="window.open('https://voetur.bennercloud.com.br/CORPORATIVO/Pages/Prestacaodecontas.aspx?i=K_PRESTACAODECONTAS&m=MAIN', '_blank')" class="br-button br-button--secondary" style="flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.25rem;">
+                <div style="width: 80px; height: 80px; background-color: #f2f2f2; border: 1px solid #ccc; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                  <i class="bi bi-receipt" style="font-size: 2.5rem;"></i>
+                </div>
+                <span style="font-size: 0.75rem; margin-top: 0.25rem;">Prestação de Contas</span>
+              </a>
             </div>
           </div>
         </div>

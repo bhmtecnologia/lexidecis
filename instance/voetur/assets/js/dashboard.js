@@ -10,7 +10,7 @@ export async function renderDashboard() {
         <div class="card-body text-center">
           <h5 class="card-title">Bem-vindo!</h5>
           <p class="card-text">
-            O portal está em fase de testes. Caso encontre erros ou deseje enviar sugestões, entre em contato pelo e-mail:
+            Oteste portal está aaaem fase de testes. Caso encontre erros ou deseje enviar sugestões, entre em contato pelo e-mail:
             <a href="mailto:suporte@bhm.tec.br">suporte@bhm.tec.br</a>.
           </p>
           <div class="br-container" style="padding: 1rem;">
@@ -38,6 +38,12 @@ export async function renderDashboard() {
                   <i class="bi bi-wallet2" style="font-size: 2.5rem;"></i>
                 </div>
                 <span style="font-size: 0.75rem; margin-top: 0.25rem;">Financeiro</span>
+              </a>
+              <a role="button" href="#prestacao-de-contas" class="br-button br-button--secondary" style="flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.25rem;">
+                <div style="width: 80px; height: 80px; background-color: #f2f2f2; border: 1px solid #ccc; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                  <i class="bi bi-file-earmark-text" style="font-size: 2.5rem;"></i>
+                </div>
+                <span style="font-size: 0.75rem; margin-top: 0.25rem;">Prestação de Contas</span>
               </a>
             </div>
           </div>

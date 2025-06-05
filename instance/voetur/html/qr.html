@@ -441,6 +441,11 @@
     document.getElementById('btn-share').addEventListener('click', async () => {
       if (capturing) return;
       const videoElem = await startScreenCapture();
+      // Show WebGPU canvas and overlay again
+      const canvas = document.getElementById('canvas');
+      const overlay = document.getElementById('overlay');
+      canvas.style.display = '';
+      overlay.style.display = '';
       if (navigator.gpu) {
         initWebGPU(videoElem);
       }
@@ -465,6 +470,11 @@
         const overlay = document.getElementById('overlay');
         const ctx = overlay.getContext('2d');
         ctx.clearRect(0, 0, overlay.width, overlay.height);
+        // Hide WebGPU canvas and overlay so last frame is cleared
+        const canvas = document.getElementById('canvas');
+        // overlay already defined above
+        canvas.style.display = 'none';
+        overlay.style.display = 'none';
         appendEventLog("Compartilhamento parado");
         appendEventLog("Stream encerrado");
       }
@@ -477,6 +487,11 @@
       const select = document.getElementById('cameraSelect');
       const selectedDeviceId = select.value;
       const videoElem = await startWebcamCapture(selectedDeviceId);
+      // Show WebGPU canvas and overlay again
+      const canvas = document.getElementById('canvas');
+      const overlay = document.getElementById('overlay');
+      canvas.style.display = '';
+      overlay.style.display = '';
       if (navigator.gpu) {
         initWebGPU(videoElem);
       }

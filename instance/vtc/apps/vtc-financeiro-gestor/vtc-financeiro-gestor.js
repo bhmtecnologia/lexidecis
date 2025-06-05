@@ -62,67 +62,60 @@ export function openLancar() {
       document.body.appendChild(div.firstElementChild);
     }
 
-    // Quando o usuário estiver autenticado, executa a busca
-    AuthService.onAuthChange(async (user) => {
+    // Função para buscar e popular a tabela
+    async function fetchAndPopulate() {
+      const user = AuthService.user;
       if (!user) {
         console.warn("Usuário não autenticado ao abrir Financeiro.");
         return;
       }
-
       try {
-        // Chama a API para obter o array de lançamentos (via GET)
         const lancamentos = await listLancamentos(AuthService);
-
-        // 5. Popula o <tbody> da tabela
+        const selector = "#finance-table";
+        // Se já existe DataTable, destrói antes de alterar o tbody
+        if (window.$ && $.fn.DataTable && $.fn.DataTable.isDataTable(selector)) {
+          $(selector).DataTable().clear().destroy();
+        }
         const tbody = table.querySelector("tbody");
-        tbody.innerHTML = ""; // limpa linhas existentes, se houver
-
-        // Supondo que 'lancamentos' seja um array de objetos
+        tbody.innerHTML = "";
         lancamentos.forEach((item) => {
           const tr = document.createElement("tr");
-
-          // Coluna ID (campo top-level 'id')
           const tdId = document.createElement("td");
           tdId.textContent = item.id || "";
           tr.appendChild(tdId);
-
-          // Coluna Descrição (exemplo: nome do fornecedor dentro de 'dados')
           const tdDesc = document.createElement("td");
-          const fornecedorNome = item.dados && item.dados.fornecedor_nome 
-                                 ? item.dados.fornecedor_nome 
+          const fornecedorNome = item.dados && item.dados.fornecedor_nome
+                                 ? item.dados.fornecedor_nome
                                  : "";
           tdDesc.textContent = fornecedorNome;
           tr.appendChild(tdDesc);
-
-          // Coluna Valor (exemplo: 'valor_nominal' dentro de 'dados')
           const tdValor = document.createElement("td");
-          const valorNominal = item.dados && item.dados.valor_nominal 
-                               ? item.dados.valor_nominal 
+          const valorNominal = item.dados && item.dados.valor_nominal
+                               ? item.dados.valor_nominal
                                : "";
           tdValor.textContent = valorNominal;
           tr.appendChild(tdValor);
-
           tbody.appendChild(tr);
         });
-
-        // 6. (Re)Inicializa o DataTable
+        // Inicializa o DataTable com as novas linhas
         if (window.$ && $.fn.DataTable) {
-          const selector = "#finance-table";
-          if ($.fn.DataTable.isDataTable(selector)) {
-            $(selector).DataTable().clear().destroy();
-          }
-          $(selector).DataTable({
-            // Aqui você pode adicionar opções de DataTables, se necessário.
-          });
+          $(selector).DataTable();
         }
       } catch (err) {
         console.error("Erro ao buscar lançamentos:", err);
-        // Opcional: exibir mensagem de erro na tela
         const uploadResult = document.getElementById("uploadResult");
         if (uploadResult) {
           uploadResult.style.color = "red";
           uploadResult.textContent = "Erro ao carregar lançamentos: " + err.message;
         }
+      }
+    }
+
+    // Tenta buscar imediatamente; se não houver usuário, aguarda autenticação
+    fetchAndPopulate();
+    AuthService.onAuthChange((user) => {
+      if (user) {
+        fetchAndPopulate();
       }
     });
   }

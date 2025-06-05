@@ -11,6 +11,50 @@ import { listLancamentos } from "../../js/api.js";
  * - Inicializa (ou re-desenha) o DataTable
  */
 export function openLancar() {
+  // Splash screen elegante: exibe sempre ao chamar openLancar()
+  let splash = document.getElementById("finance-splash");
+  if (!splash) {
+    splash = document.createElement("div");
+    splash.id = "finance-splash";
+    // Definir estilo do overlay
+    Object.assign(splash.style, {
+      position: "fixed",
+      top: "0",
+      left: "0",
+      right: "0",
+      bottom: "0",
+      backgroundColor: "#007AFF", // cor de fundo primária
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: "100",
+      opacity: "1",
+      transition: "opacity 0.5s ease"
+    });
+    // Conteúdo do splash: ícone animado e texto
+    const splashContent = document.createElement("div");
+    splashContent.innerHTML = `
+      <i class="fa-solid fa-chart-line fa-spin" style="font-size: 3rem; color: #ffffff; margin-bottom: 1rem;"></i>
+      <div style="color: #ffffff; font-size: 2rem; font-weight: bold; text-shadow: 0 0 10px rgba(0,0,0,0.3);">
+        Financeiro
+      </div>`;
+    splashContent.style.textAlign = "center";
+    splash.appendChild(splashContent);
+    document.body.appendChild(splash);
+  } else {
+    // Se já existir, mostra novamente e redefine opacidade
+    splash.style.display = "flex";
+    splash.style.opacity = "1";
+  }
+  // Remover o splash com fade out após 1.5 segundos
+  setTimeout(() => {
+    splash.style.opacity = "0";
+    // Após a transição de opacidade, esconde o elemento
+    splash.addEventListener("transitionend", () => {
+      splash.style.display = "none";
+    }, { once: true });
+  }, 1500);
   // 1. Esconder a Home e exibir a página "lancar-page"
   const homePage = document.getElementById("home-page");
   const lancarPage = document.getElementById("lancar-page");
@@ -30,6 +74,57 @@ export function openLancar() {
   if (table) {
     table.style.display = "table";
 
+    // Criar container de resumo se não existir
+    let summaryContainer = document.getElementById("summary-container");
+    if (!summaryContainer) {
+      summaryContainer = document.createElement("div");
+      summaryContainer.id = "summary-container";
+      summaryContainer.style.padding = "1rem";
+      summaryContainer.style.fontSize = "16px";
+      table.parentNode.insertBefore(summaryContainer, table);
+    }
+    // Função para buscar resumo por status (contando todos os status distintos)
+    async function fetchSummary() {
+      const user = AuthService.user;
+      if (!user) return;
+      try {
+        const lancamentos = await listLancamentos(AuthService);
+        const counts = {};
+        // Para cada item, usar nested status (dados.dados.status) se existir,
+        // senão usar dados.status, senão usar item.status, senão "Sem status"
+        lancamentos.forEach((item) => {
+          let status;
+          if (item.dados && item.dados.dados && item.dados.dados.status) {
+            status = item.dados.dados.status;
+          } else if (item.dados && item.dados.status) {
+            status = item.dados.status;
+          } else if (item.status) {
+            status = item.status;
+          } else {
+            status = "Sem status";
+          }
+          counts[status] = (counts[status] || 0) + 1;
+        });
+        // Limpar conteúdo anterior
+        summaryContainer.innerHTML = "<h3>Resumo por Status</h3>";
+        // Exibir todos os status encontrados
+        Object.entries(counts).forEach(([status, count]) => {
+          const p = document.createElement("p");
+          p.textContent = `${status}: ${count}`;
+          summaryContainer.appendChild(p);
+        });
+      } catch (err) {
+        console.error("Erro ao buscar resumo:", err);
+      }
+    }
+    // Iniciar mostrando resumo e esconder a tabela, garantindo destruir DataTable existente
+    const selector = "#finance-table";
+    if (window.$ && $.fn.DataTable && $.fn.DataTable.isDataTable(selector)) {
+      $(selector).DataTable().clear().destroy();
+    }
+    fetchSummary();
+    table.style.display = "none";
+
     // Ajustar cabeçalho da tabela para três colunas: Status, Descrição, Valor
     const headerRow = table.querySelector("thead tr");
     if (headerRow) {
@@ -48,11 +143,11 @@ export function openLancar() {
              style="position: fixed; bottom: 56px; left: 0; right: 0; height: 56px;
                     background-color: #ffffff; display: flex; justify-content: space-around;
                     align-items: center; z-index: 45;">
-          <div style="text-align: center;">
+          <div id="btnResumo" style="text-align: center;">
             <i class="fa-solid fa-chart-line" style="font-size: 24px; color: #007AFF;"></i>
             <div style="font-size: 10px; color: #000;">Resumo2</div>
           </div>
-          <div style="text-align: center;">
+          <div id="btnLancamentos" style="text-align: center;">
             <i class="fa-solid fa-list" style="font-size: 24px; color: #34C759;"></i>
             <div style="font-size: 10px; color: #000;">Lançamentos</div>
           </div>
@@ -70,6 +165,22 @@ export function openLancar() {
       const div = document.createElement("div");
       div.innerHTML = menuHtml;
       document.body.appendChild(div.firstElementChild);
+
+      document.getElementById("btnResumo").addEventListener("click", () => {
+        const selector = "#finance-table";
+        // Se existe DataTable, destrói para remover controles (search, pagination)
+        if (window.$ && $.fn.DataTable && $.fn.DataTable.isDataTable(selector)) {
+          $(selector).DataTable().clear().destroy();
+        }
+        summaryContainer.style.display = "block";
+        table.style.display = "none";
+        fetchSummary();
+      });
+      document.getElementById("btnLancamentos").addEventListener("click", () => {
+        summaryContainer.style.display = "none";
+        table.style.display = "table";
+        fetchAndPopulate();
+      });
     }
 
     // Função para buscar e popular a tabela
@@ -123,11 +234,10 @@ export function openLancar() {
       }
     }
 
-    // Tenta buscar imediatamente; se não houver usuário, aguarda autenticação
-    fetchAndPopulate();
+    // Removed initial call to fetchAndPopulate() here; now loads only when "Lançamentos" clicked
     AuthService.onAuthChange((user) => {
       if (user) {
-        fetchAndPopulate();
+        // No automatic fetch here either; user must click "Lançamentos"
       }
     });
   }
@@ -163,7 +273,7 @@ export function goHome() {
   if (dock) dock.style.display = "flex";
 
   // Ajusta o hash para a rota Home
-window.location.hash = "#";
+  window.location.hash = "#";
 }
 
 // Tornar as funções acessíveis globalmente para os onclick inline

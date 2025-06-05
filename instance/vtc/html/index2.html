@@ -48,6 +48,7 @@
       padding-right: 12px;
       row-gap: 24px;
       column-gap: 20px;
+      /* limit area so icons do not go behind the dock */
       padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px));
     }
 
@@ -96,13 +97,13 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      padding-bottom: env(safe-area-inset-bottom, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px); /* considera barra de gesto */
     }
     .dock-inner {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      width: 60%;
+      width: 60%; /* largura do dock */
       max-width: 400px;
     }
     .dock-icon {
@@ -142,6 +143,10 @@
       padding-top: env(safe-area-inset-top, 0px);
       z-index: 10;
       pointer-events: none;
+    }
+    .navbar {
+      position: relative;
+      z-index: 20;
     }
     .status-bar span {
       color: white;
@@ -233,9 +238,24 @@
   <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
   <!-- DataTables JS -->
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-  <!-- Local Firebase config/module import -->
-  <script type="module">
-    import "../js/firebase.js";
+  <!-- Firebase App (the core Firebase SDK) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
+  <!-- Firebase Auth SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js"></script>
+  <!-- Initialize Firebase (replace with your config if not already present) -->
+  <script>
+    // NOTE: If you have already initialized Firebase elsewhere, you can omit this block.
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+    if (!firebase.apps || !firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
   </script>
 </head>
 <body>
@@ -249,31 +269,77 @@
     <!-- Search bar -->
     <div id="search-container" style="padding: 0 12px; margin-top: calc(env(safe-area-inset-top, 0px) + 60px);">
       <div class="search-bar" style="position: relative; width: 90%; max-width: 360px; margin: 0 auto;">
-        <i class="fa-solid fa-magnifying-glass"
-           style="position: absolute; top: 50%; left: 12px; transform: translateY(-50%);
-                  color: rgba(255,255,255,0.7); font-size: 16px; z-index: 1;"></i>
-        <input type="text" id="app-search-input"
-               placeholder="Pesquisar apps..."
-               style="width: 100%; max-width: 360px; min-width: 150px;
-                      margin: 0 auto; padding: 12px 16px 12px 40px;
-                      border-radius: 20px; border: none;
-                      background: rgba(255,255,255,0.3); color: white;
-                      font-size: 16px;
-                      text-shadow: 0 0 3px rgba(0,0,0,0.8);
-                      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-                      backdrop-filter: blur(10px);" />
+        <i class="fa-solid fa-magnifying-glass" style="position: absolute; top: 50%; left: 12px; transform: translateY(-50%); color: rgba(255,255,255,0.7); font-size: 16px; z-index: 1;"></i>
+        <input type="text" id="app-search-input" placeholder="Pesquisar apps..." style="width: 100%; max-width: 360px; min-width: 150px; margin: 0 auto; padding: 12px 16px 12px 40px; border-radius: 20px; border: none; background: rgba(255,255,255,0.3); color: white; font-size: 16px; text-shadow: 0 0 3px rgba(0,0,0,0.8); box-shadow: 0 2px 10px rgba(0,0,0,0.2); backdrop-filter: blur(10px);" />
       </div>
     </div>
-    <div class="home-grid" id="home-grid">
-      <!-- Aqui os ícones serão inseridos via buildHomeApps() -->
+    <div class="home-grid">
+    <!-- Exemplo de ícones “fixos” -->
+    <div class="app-item">
+      <div class="app-icon">
+        <i class="fa-solid fa-envelope" style="color: #FF3B30;"></i>
+      </div>
+      <div class="app-label">Mail</div>
+    </div>
+    <div class="app-item">
+      <div class="app-icon">
+        <i class="fa-solid fa-camera" style="color: #FF9500;"></i>
+      </div>
+      <div class="app-label">Câmera</div>
+    </div>
+    <div class="app-item">
+      <div class="app-icon">
+        <i class="fa-solid fa-map-location-dot" style="color: #34C759;"></i>
+      </div>
+      <div class="app-label">Mapas</div>
+    </div>
+    <div class="app-item">
+      <div class="app-icon">
+        <i class="fa-solid fa-clock" style="color: #007AFF;"></i>
+      </div>
+      <div class="app-label">Relógio</div>
+    </div>
+    <div class="app-item">
+      <a href="#" onclick="openLancar()">
+        <div class="app-icon">
+          <i class="fa-solid fa-notes-medical" style="color: #5856D6;"></i>
+        </div>
+        <div class="app-label">Financeiro</div>
+      </a>
+    </div>
+    <div class="app-item">
+      <div class="app-icon">
+        <i class="fa-solid fa-music" style="color: #AF52DE;"></i>
+      </div>
+      <div class="app-label">Música</div>
+    </div>
+    <div class="app-item">
+      <div class="app-icon">
+        <i class="fa-solid fa-photo-film" style="color: #FFD60A;"></i>
+      </div>
+      <div class="app-label">Fotos</div>
+    </div>
+    <div class="app-item">
+      <div class="app-icon">
+        <i class="fa-solid fa-cog" style="color: #8E8E93;"></i>
+      </div>
+      <div class="app-label">Ajustes</div>
+    </div>
+    <div class="app-item">
+      <a href="https://voetur.bennercloud.com.br/CORPORATIVO/Pages/Prestacaodecontas.aspx?i=K_PRESTACAODECONTAS&amp;m=MAIN" target="_blank">
+        <div class="app-icon">
+          <i class="fa-solid fa-file-invoice" style="color: #5AC8FA;"></i>
+        </div>
+        <div class="app-label">Prestação</div>
+      </a>
+    </div>
+    <!-- Acrescente mais linhas/colunas conforme desejar -->
     </div>
   </div>
 
   <div id="lancar-page" class="page" style="display:none; background-color: #ffffff;">
     <div class="page-content">
-      <div class="block-title"
-           style="padding: 1rem; background-color: #003366; color: #ffffff;
-                  font-size: 1.2rem; margin: 0;">
+      <div class="block-title" style="padding: 1rem; background-color: #003366; color: #ffffff; font-size: 1.2rem; margin: 0;">
         Financeiro
       </div>
       <div class="block" id="uploadBlock" style="padding: 1rem;">
@@ -283,11 +349,7 @@
             <label for="arquivoInput" style="color: white;">Selecione o arquivo:</label>
             <input type="file" id="arquivoInput" style="width: 100%; margin-top: 0.5rem;" />
           </div>
-          <button type="submit" id="uploadBtn"
-                  style="background-color: #fff; color: #000;
-                         padding: 0.5rem 1rem; border: none; border-radius: 8px;">
-            Enviar
-          </button>
+          <button type="submit" id="uploadBtn" style="background-color: #fff; color: #000; padding: 0.5rem 1rem; border: none; border-radius: 8px;">Enviar</button>
         </form>
         <div id="uploadResult" style="margin-top: 1rem; color: white;"></div>
       </div>
@@ -309,10 +371,7 @@
       </div>
     </div>
     <!-- Financeiro Bottom Icon Menu -->
-    <div id="finance-icon-menu"
-         style="position: fixed; bottom: 84px; left: 0; right: 0; height: 56px;
-                background-color: #ffffff; display: flex; justify-content: space-around;
-                align-items: center; z-index: 45;">
+    <div id="finance-icon-menu" style="position: fixed; bottom: 84px; left: 0; right: 0; height: 56px; background-color: #ffffff; display: flex; justify-content: space-around; align-items: center; z-index: 45;">
       <div style="text-align: center;">
         <i class="fa-solid fa-chart-line" style="font-size: 24px; color: #007AFF;"></i>
         <div style="font-size: 10px; color: #000;">Resumo</div>
@@ -333,23 +392,12 @@
       </div>
     </div>
     <!-- Novo Options Overlay -->
-    <div id="novo-options"
-         onclick="if(event.target.id === 'novo-options') this.style.display='none';"
-         style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-                background: rgba(0,0,0,0.5); justify-content: center; align-items: center;
-                z-index: 50;">
-      <div style="position: relative; background: #fff; border-radius: 8px; padding: 1rem;
-                  width: 80%; max-width: 300px;">
-        <a href="#" id="closeNovoOptions"
-           style="position: absolute; top: 8px; right: 8px; text-decoration: none;
-                  color: #000; font-size: 18px;">&#x2715;</a>
+    <div id="novo-options" onclick="if(event.target.id === 'novo-options') this.style.display='none';" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 50;">
+      <div style="position: relative; background: #fff; border-radius: 8px; padding: 1rem; width: 80%; max-width: 300px;">
+        <a href="#" id="closeNovoOptions" style="position: absolute; top: 8px; right: 8px; text-decoration: none; color: #000; font-size: 18px;">&#x2715;</a>
         <h3 style="margin-top: 0; color: #000;">Selecione a opção</h3>
-        <button id="selectImageBtn" style="width: 100%; padding: 10px; margin-bottom: 10px;">
-          Selecionar PNG/JPG
-        </button>
-        <button id="takePhotoBtn" style="width: 100%; padding: 10px;">
-          Tirar Foto
-        </button>
+        <button id="selectImageBtn" style="width: 100%; padding: 10px; margin-bottom: 10px;">Selecionar PNG/JPG</button>
+        <button id="takePhotoBtn" style="width: 100%; padding: 10px;">Tirar Foto</button>
       </div>
     </div>
     <!-- Hidden file inputs -->
@@ -400,19 +448,10 @@
       });
     </script>
   <!-- Android Navigation Footer -->
-  <div id="android-nav"
-       style="position: fixed; bottom: 0; left: 0; right: 0; height: 56px;
-              background-color: #000; display: flex; justify-content: space-around;
-              align-items: center; z-index: 30;">
-    <a href="#" onclick="goHome()" style="color: #fff; font-size: 24px;">
-      <i class="fa-solid fa-arrow-left"></i>
-    </a>
-    <a href="#" onclick="goHome()" style="color: #fff; font-size: 24px;">
-      <i class="fa-solid fa-home"></i>
-    </a>
-    <a href="#" onclick="openLancar()" style="color: #fff; font-size: 24px;">
-      <i class="fa-solid fa-table-cells"></i>
-    </a>
+  <div id="android-nav" style="position: fixed; bottom: 0; left: 0; right: 0; height: 56px; background-color: #000; display: flex; justify-content: space-around; align-items: center; z-index: 30;">
+    <a href="#" onclick="goHome()" style="color: #fff; font-size: 24px;"><i class="fa-solid fa-arrow-left"></i></a>
+    <a href="#" onclick="goHome()" style="color: #fff; font-size: 24px;"><i class="fa-solid fa-home"></i></a>
+    <a href="#" onclick="openLancar()" style="color: #fff; font-size: 24px;"><i class="fa-solid fa-table-cells"></i></a>
   </div>
   <style>
     /* Ensure Android nav only shows on lancar-page */
@@ -438,19 +477,10 @@
   </style>
   </div>
   <!-- Android Navigation Footer -->
-  <div id="android-nav-home"
-       style="position: fixed; bottom: 0; left: 0; right: 0; height: 56px;
-              background-color: #000; display: flex; justify-content: space-around;
-              align-items: center; z-index: 30;">
-    <a href="#" onclick="goHome()" style="color: #fff; font-size: 24px;">
-      <i class="fa-solid fa-arrow-left"></i>
-    </a>
-    <a href="#" onclick="goHome()" style="color: #fff; font-size: 24px;">
-      <i class="fa-solid fa-home"></i>
-    </a>
-    <a href="#" onclick="openLancar()" style="color: #fff; font-size: 24px;">
-      <i class="fa-solid fa-table-cells"></i>
-    </a>
+  <div id="android-nav-home" style="position: fixed; bottom: 0; left: 0; right: 0; height: 56px; background-color: #000; display: flex; justify-content: space-around; align-items: center; z-index: 30;">
+    <a href="#" onclick="goHome()" style="color: #fff; font-size: 24px;"><i class="fa-solid fa-arrow-left"></i></a>
+    <a href="#" onclick="goHome()" style="color: #fff; font-size: 24px;"><i class="fa-solid fa-home"></i></a>
+    <a href="#" onclick="openLancar()" style="color: #fff; font-size: 24px;"><i class="fa-solid fa-table-cells"></i></a>
   </div>
 
   <!-- 4. Dock inferior -->
@@ -477,46 +507,51 @@
     </div>
   </div>
 </div>
-<script>
+<script type="module">
+  import AuthService from "../js/auth.js";
+  // Filter home apps as user types
+  document.getElementById('app-search-input').addEventListener('input', function(e) {
+    const query = e.target.value.toLowerCase();
+    document.querySelectorAll('.home-grid .app-item').forEach(function(item) {
+      const label = item.querySelector('.app-label').textContent.toLowerCase();
+      if (label.includes(query)) {
+        item.style.display = 'flex';
+      } else {
+        item.style.display = 'none';
+      }
+    });
+  });
+
   function updateClock() {
     const now = new Date();
+    // Weekday and month names in Portuguese
     const weekdays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
     const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
     const dayName = weekdays[now.getDay()];
     const day = now.getDate();
     const monthName = months[now.getMonth()];
+    // Time formatting
     let hours = now.getHours();
     let minutes = now.getMinutes();
     if (hours < 10) hours = '0' + hours;
     if (minutes < 10) minutes = '0' + minutes;
+    // Combine date and time
     document.getElementById('status-clock').textContent =
       `${dayName}, ${day} ${monthName} ${hours}:${minutes}`;
   }
+  // Initialize clock immediately
   updateClock();
+  // Update every minute
   setInterval(updateClock, 60000);
-</script>
-<script type="module">
-  import { buildHomeApps } from "../js/menu-builder.js";
-  import { getUserProfile } from "../js/api.js";
-  import { registerRoute, router } from "../js/router.js";
-  import { renderPrestacao } from "../apps/vtc-prestacao-de-contas-gestor/vtc-prestacao-de-contas-gestor.js";
-  import AuthService from "../js/auth.js";
-
-  // Filtra apps enquanto o usuário digita
-  document.getElementById('app-search-input').addEventListener('input', function(e) {
-    const query = e.target.value.toLowerCase();
-    document.querySelectorAll('.home-grid .app-item').forEach(function(item) {
-      const label = item.querySelector('.app-label').textContent.toLowerCase();
-      item.style.display = label.includes(query) ? 'flex' : 'none';
-    });
-  });
 
   function openLancar() {
     document.getElementById('home-page').style.display = 'none';
     document.getElementById('lancar-page').style.display = 'block';
     document.querySelector('.dock').style.display = 'none';
+    // Hide upload form block
     const uploadBlock = document.getElementById('uploadBlock');
     if (uploadBlock) uploadBlock.style.display = 'none';
+    // Show and initialize DataTable
     const table = document.getElementById('finance-table');
     if (table) {
       table.style.display = 'table';
@@ -525,7 +560,6 @@
       }
     }
   }
-
   function goHome() {
     document.getElementById('lancar-page').style.display = 'none';
     document.getElementById('home-page').style.display = 'block';
@@ -546,32 +580,6 @@
       console.error("Erro ao fazer logout:", err);
       alert("Erro ao fazer logout: " + err.message);
     }
-  });
-
-  // Exibe a tela de home e oculta outras páginas
-  function renderHome() {
-    document.getElementById('lancar-page').style.display = 'none';
-    document.getElementById('home-page').style.display = 'block';
-    document.querySelector('.dock').style.display = 'flex';
-  }
-
-  AuthService.onAuthChange(async (user) => {
-    // Obter perfil do usuário via API
-    const profileData = await getUserProfile(AuthService);
-    const profile = Array.isArray(profileData) ? profileData[0] : profileData;
-
-    // Constroi a homeGrid dinamicamente
-    buildHomeApps(profile);
-
-    // Registrar rotas do SPA
-    registerRoute("#", renderHome, null);
-    registerRoute("#vtc-prestacao-de-contas-gestor", renderPrestacao, null);
-
-    // Forçar hash para "#" antes de inicializar o roteador
-    window.location.hash = "#";
-
-    // Inicializar o roteador
-    router();
   });
 </script>
 </html>

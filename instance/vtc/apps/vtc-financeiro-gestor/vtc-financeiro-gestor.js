@@ -30,6 +30,15 @@ export function openLancar() {
   if (table) {
     table.style.display = "table";
 
+    // Ajustar cabeçalho da tabela: trocar "ID" por "Status"
+    const headerRow = table.querySelector("thead tr");
+    if (headerRow) {
+      const firstTh = headerRow.querySelector("th");
+      if (firstTh) {
+        firstTh.textContent = "Status";
+      }
+    }
+
     // Adicionar o menu inferior de ícones financeiro, se ainda não existir
     if (!document.getElementById("finance-icon-menu")) {
       const menuHtml = `
@@ -80,9 +89,11 @@ export function openLancar() {
         tbody.innerHTML = "";
         lancamentos.forEach((item) => {
           const tr = document.createElement("tr");
-          const tdId = document.createElement("td");
-          tdId.textContent = item.id || "";
-          tr.appendChild(tdId);
+          const tdStatus = document.createElement("td");
+          // Use nested status if available, otherwise top-level status
+          const statusText = (item.dados && item.dados.status) ? item.dados.status : item.status || "";
+          tdStatus.textContent = statusText;
+          tr.appendChild(tdStatus);
           const tdDesc = document.createElement("td");
           const fornecedorNome = item.dados && item.dados.fornecedor_nome
                                  ? item.dados.fornecedor_nome

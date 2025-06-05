@@ -2,9 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta
-    name="viewport"
-  />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
   <title>Tela Estilo iOS</title>
 
   <!-- FontAwesome para os ícones de app -->
@@ -41,8 +39,8 @@
     .home-grid {
       flex: 1;
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      grid-template-rows: repeat(5, auto);
+      grid-template-columns: repeat(auto-fit, minmax(68px, 1fr));
+      grid-auto-rows: auto;
       justify-items: center;
       align-items: center;
       padding-top: calc(env(safe-area-inset-top, 0px) + 60px);

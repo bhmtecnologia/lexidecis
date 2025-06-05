@@ -122,6 +122,8 @@ export function openLancar() {
     if (window.$ && $.fn.DataTable && $.fn.DataTable.isDataTable(selector)) {
       $(selector).DataTable().clear().destroy();
     }
+    // Garantir que o container de resumo esteja visível
+    summaryContainer.style.display = "block";
     fetchSummary();
     table.style.display = "none";
 
@@ -145,7 +147,7 @@ export function openLancar() {
                     align-items: center; z-index: 45;">
           <div id="btnResumo" style="text-align: center;">
             <i class="fa-solid fa-chart-line" style="font-size: 24px; color: #007AFF;"></i>
-            <div style="font-size: 10px; color: #000;">Resumo2</div>
+            <div style="font-size: 10px; color: #000;">Resumo</div>
           </div>
           <div id="btnLancamentos" style="text-align: center;">
             <i class="fa-solid fa-list" style="font-size: 24px; color: #34C759;"></i>

@@ -499,8 +499,9 @@
   import { buildHomeApps } from "../js/menu-builder.js";
   import { getUserProfile } from "../js/api.js";
   import { registerRoute, router } from "../js/router.js";
-  import { renderPrestacao } from "../apps/vtc-prestacao-de-contas-gestor/vtc-prestacao-de-contas-gestor.js";
-  import { renderMail } from "../apps/mail/mail.js";
+  import "../apps/vtc-prestacao-de-contas-gestor/vtc-prestacao-de-contas-gestor.js";
+  import "../apps/mail/mail.js";
+  import "../apps/vtc-financeiro-gestor/vtc-financeiro-gestor.js";
   import AuthService from "../js/auth.js";
 
   // Filtra apps enquanto o usuário digita
@@ -548,10 +549,9 @@
       }
     });
 
-    // Registrar rotas do SPA
+    // Registrar apenas a rota da Home; outros apps registram suas rotas ao importar seus módulos
     registerRoute("#", renderHome, null);
-    registerRoute("#vtc-prestacao-de-contas-gestor", renderPrestacao, null);
-    registerRoute("#mail", renderMail, null);
+    registerRoute("#vtc-financeiro-gestor", openLancar, null);
 
     // Forçar hash para "#" antes de inicializar o roteador
     window.location.hash = "#";

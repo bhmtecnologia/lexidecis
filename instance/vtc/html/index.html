@@ -301,35 +301,8 @@
             </tr>
           </thead>
           <tbody>
-            <tr><td>1</td><td>Exemplo A</td><td>100,00</td></tr>
-            <tr><td>2</td><td>Exemplo B</td><td>200,00</td></tr>
-            <tr><td>3</td><td>Exemplo C</td><td>300,00</td></tr>
           </tbody>
         </table>
-      </div>
-    </div>
-    <!-- Financeiro Bottom Icon Menu -->
-    <div id="finance-icon-menu"
-         style="position: fixed; bottom: 84px; left: 0; right: 0; height: 56px;
-                background-color: #ffffff; display: flex; justify-content: space-around;
-                align-items: center; z-index: 45;">
-      <div style="text-align: center;">
-        <i class="fa-solid fa-chart-line" style="font-size: 24px; color: #007AFF;"></i>
-        <div style="font-size: 10px; color: #000;">Resumo</div>
-      </div>
-      <div style="text-align: center;">
-        <i class="fa-solid fa-list" style="font-size: 24px; color: #34C759;"></i>
-        <div style="font-size: 10px; color: #000;">Contas</div>
-      </div>
-      <div style="text-align: center;">
-        <a href="#" id="btnNovoOption" style="text-decoration: none; color: inherit;">
-          <i class="fa-solid fa-plus-circle" style="font-size: 24px; color: #5856D6;"></i>
-          <div style="font-size: 10px; color: #000;">Novo</div>
-        </a>
-      </div>
-      <div style="text-align: center;">
-        <i class="fa-solid fa-gear" style="font-size: 24px; color: #8E8E93;"></i>
-        <div style="font-size: 10px; color: #000;">Ajustes</div>
       </div>
     </div>
     <!-- Novo Options Overlay -->
@@ -368,36 +341,6 @@
         }
       });
 
-      // Novo options functionality
-      document.getElementById('btnNovoOption').addEventListener('click', function(e) {
-        e.preventDefault();
-        document.getElementById('novo-options').style.display = 'flex';
-      });
-      document.getElementById('closeNovoOptions').addEventListener('click', function() {
-        document.getElementById('novo-options').style.display = 'none';
-      });
-      document.getElementById('selectImageBtn').addEventListener('click', function() {
-        document.getElementById('fileInputImage').click();
-      });
-      document.getElementById('takePhotoBtn').addEventListener('click', function() {
-        document.getElementById('fileInputCamera').click();
-      });
-      // Handle file selection for image
-      document.getElementById('fileInputImage').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-          alert('Arquivo selecionado: ' + file.name);
-        }
-        document.getElementById('novo-options').style.display = 'none';
-      });
-      // Handle file selection for camera
-      document.getElementById('fileInputCamera').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-          alert('Foto capturada: ' + file.name);
-        }
-        document.getElementById('novo-options').style.display = 'none';
-      });
     </script>
   <!-- Android Navigation Footer -->
   <div id="android-nav"
@@ -454,29 +397,29 @@
   </div>
 
   <!-- 4. Dock inferior -->
-</body>
-<div style="margin-bottom: 56px;">
-  <div class="dock">
-    <div class="dock-inner">
-      <a href="#" class="dock-icon">
-        <i class="fa-solid fa-phone" style="color: #34C759;"></i>
-        <div class="dock-label">Telefone</div>
-      </a>
-      <a href="#" class="dock-icon">
-        <i class="fa-solid fa-comment" style="color: #007AFF;"></i>
-        <div class="dock-label">Mensagens</div>
-      </a>
-      <a href="#" class="dock-icon">
-        <i class="fa-solid fa-safari" style="color: #FF9500;"></i>
-        <div class="dock-label">Safari</div>
-      </a>
-      <a href="#" class="dock-icon" id="logout-button">
-        <i class="fa-solid fa-right-from-bracket" style="color: #FF3B30;"></i>
-        <div class="dock-label">Logout</div>
-      </a>
+  <div style="margin-bottom: 56px;">
+    <div class="dock">
+      <div class="dock-inner">
+        <a href="#" class="dock-icon">
+          <i class="fa-solid fa-phone" style="color: #34C759;"></i>
+          <div class="dock-label">Telefone</div>
+        </a>
+        <a href="#" class="dock-icon">
+          <i class="fa-solid fa-comment" style="color: #007AFF;"></i>
+          <div class="dock-label">Mensagens</div>
+        </a>
+        <a href="#" class="dock-icon">
+          <i class="fa-solid fa-safari" style="color: #FF9500;"></i>
+          <div class="dock-label">Safari</div>
+        </a>
+        <a href="#" class="dock-icon" id="logout-button">
+          <i class="fa-solid fa-right-from-bracket" style="color: #FF3B30;"></i>
+          <div class="dock-label">Logout</div>
+        </a>
+      </div>
     </div>
   </div>
-</div>
+</body>
 <script>
   function updateClock() {
     const now = new Date();
@@ -500,9 +443,9 @@
   import { getUserProfile } from "../js/api.js";
   import { registerRoute, router } from "../js/router.js";
   import "../apps/vtc-prestacao-de-contas-gestor/vtc-prestacao-de-contas-gestor.js";
-   import "../apps/vtc-indicadores/vtc-indicadores.js";
+  import "../apps/vtc-indicadores/vtc-indicadores.js";
   import "../apps/mail/mail.js";
-  import "../apps/vtc-financeiro-gestor/vtc-financeiro-gestor.js";
+  import { openLancar } from "../apps/vtc-financeiro-gestor/vtc-financeiro-gestor.js";
   import AuthService from "../js/auth.js";
 
   // Filtra apps enquanto o usuário digita
@@ -572,35 +515,4 @@
   }
 </script>
 
-<script>
-  function openLancar() {
-    document.getElementById('home-page').style.display = 'none';
-    document.getElementById('lancar-page').style.display = 'block';
-    document.querySelector('.dock').style.display = 'none';
-    const uploadBlock = document.getElementById('uploadBlock');
-    if (uploadBlock) uploadBlock.style.display = 'none';
-    const table = document.getElementById('finance-table');
-    if (table) {
-      table.style.display = 'table';
-      if (window.$ && $.fn.DataTable && !$.fn.DataTable.isDataTable('#finance-table')) {
-        $('#finance-table').DataTable();
-      }
-    }
-  }
-  function goHome() {
-    const lancarPage = document.getElementById('lancar-page');
-    const mailPage   = document.getElementById('mail-page');
-    if (lancarPage) lancarPage.style.display = 'none';
-    if (mailPage)   mailPage.style.display   = 'none';
-    const homePage = document.getElementById('home-page');
-    if (homePage) {
-      homePage.style.display = 'block';
-      const homeGrid = homePage.querySelector('.home-grid');
-      if (homeGrid) homeGrid.style.display = 'grid';
-    }
-    document.querySelector('.dock').style.display = 'flex';
-    // Sincroniza o hash com a Home
-    window.location.hash = "#";
-  }
-</script>
 </html>

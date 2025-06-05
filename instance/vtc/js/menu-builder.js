@@ -1,0 +1,186 @@
+// assets/js/menu-builder.js
+
+export const menuItems = [
+    {
+      label: "Página Inicial",
+      icon: "Home-dashboard",
+      route: "#dashboard",
+              // Subitens para o Dashboard:
+              children: [
+                { label: "Página Inicial", route: "#dashboard" },
+                { label: "Chat", route: "#chat" },
+              ]
+    },
+    {
+        label: "Área do Gestor",
+        icon: "Profile",
+        route: "#dashboard",
+        // Subitens para o Dashboard:
+        children: [
+          { label: "Financeiro", route: "#vtc-financeiro-gestor" },
+          { label: "Prestação de Contas", route: "#vtc-prestacao-de-contas-gestor" },          
+          { label: "Liberacao AP", route: "#decisor-liberacaoap" },
+        ]
+      },
+    {
+      label: "KPI's",
+      icon: "Document",
+      route: "#vtc-indicador-pmr",
+      children: [
+          { label: "Prazo Médio de Recebimento - PMR", route: "#vtc-indicador-pmr" },
+      ]
+    },
+    {
+      label: "Aprovações",
+      icon: "Document",
+      route: "#aprovacoes-contas-a-pagar"
+    },
+    {
+      label: "Controladoria",
+      icon: "Document",
+      route: "#controladoria",
+      children: [
+        { label: "Análise dos lançamentos", route: "#dashboard-analise" },
+        { label: "Todos os lançamentos", route: "#lancamentos-completo" },
+      ]
+    },
+    {
+      label: "Aprovações",
+      icon: "Document",
+      route: "#aprovacoes-contas-a-pagar"
+    }
+  ];
+  
+  export function buildSidebarMenu(profile) {
+    console.log("Iniciando construção do menu com profile:", profile);
+    const container = document.getElementById("simple-bar");
+    if (!container) {
+      console.error("Container do menu (#simple-bar) não encontrado");
+      return;
+    }
+    
+    if (!profile?.routes || !Array.isArray(profile.routes)) {
+      console.error("Propriedade 'routes' inválida no profile:", profile.routes);
+      container.innerHTML = "<li><a href='#'>Nenhum item de menu disponível</a></li>";
+      return;
+    }
+    
+    container.innerHTML = ""; // Limpa menu anterior
+    
+    menuItems.forEach((item) => {
+      // Verifica se o item principal é permitido
+      if (!profile.routes.includes(item.route)) {
+        console.log(`A rota ${item.route} não consta no array de permissões:`, profile.routes);
+        return;
+      }
+      const li = document.createElement("li");
+      li.className = "sidebar-list";
+      
+      // Cria o link do item principal
+      li.innerHTML = `
+        <a class="sidebar-link" href="${item.route}">
+          <svg class="stroke-icon">
+            <use href="../assets/svg/iconly-sprite.svg#${item.icon}"></use>
+          </svg>
+          <h6>${item.label}</h6>
+          <i class="iconly-Arrow-Right-2 icli toggle-icon"></i>
+        </a>
+      `;
+      
+      // Se o item possuir subitens, criamos o submenu
+      if (item.children && Array.isArray(item.children) && item.children.length > 0) {
+        const submenu = document.createElement("ul");
+        submenu.className = "sidebar-submenu";
+        // Inicialmente o submenu pode ficar oculto
+        submenu.style.display = "none";
+        
+        item.children.forEach((child) => {
+          // Verifica se cada subitem também está permitido
+          if (!profile.routes.includes(child.route)) {
+            console.log(`A rota ${child.route} (subitem de ${item.route}) não consta no array de permissões:`, profile.routes);
+            return;
+          }
+          const childLi = document.createElement("li");
+          childLi.innerHTML = `<a href="${child.route}">${child.label}</a>`;
+          submenu.appendChild(childLi);
+        });
+        
+        // Acrescenta o submenu ao item
+        li.appendChild(submenu);
+        
+        // Adiciona evento para alternar o submenu ao clicar
+        const link = li.querySelector("a.sidebar-link");
+        link.addEventListener("click", function (e) {
+          // Impede a navegação para itens que possuem submenu
+          e.preventDefault();
+          // Alterna exibição do submenu
+          if (submenu.style.display === "none") {
+            submenu.style.display = "block";
+          } else {
+            submenu.style.display = "none";
+          }
+        });
+      }
+      
+      container.appendChild(li);
+    });
+    
+    console.log("Menu construído. Conteúdo do container:", container.innerHTML);
+  }
+
+/**
+ * Constrói a grade de ícones na home com base em menuItems e permissões do profile.
+ * Cada ícone é exibido se profile.routes incluir item.route.
+ * O container em HTML deve ter id="home-grid".
+ */
+export function buildHomeApps(profile) {
+  console.log("Construindo apps home com profile:", profile);
+  const container = document.getElementById("home-grid");
+  if (!container) {
+    console.error("Container #home-grid não encontrado");
+    return;
+  }
+  if (!profile?.routes || !Array.isArray(profile.routes)) {
+    console.error("Propriedade 'routes' inválida no profile:", profile.routes);
+    container.innerHTML = "<p>Sem apps disponíveis</p>";
+    return;
+  }
+  container.innerHTML = ""; // Limpa conteúdo anterior
+
+  menuItems.forEach((item) => {
+    // Exibe apenas itens sem children (assumindo apps de primeiro nível)
+    if (!profile.routes.includes(item.route)) {
+      console.log(`App ${item.label} (${item.route}) não permitido para este usuário`);
+      return;
+    }
+    // Cria bloco para o app
+    const appDiv = document.createElement("div");
+    appDiv.className = "app-item";
+
+    // Link que altera hash para a rota do app
+    const a = document.createElement("a");
+    a.href = item.route;
+    a.className = "app-link";
+    a.style.textDecoration = "none";
+    a.style.color = "inherit";
+
+    // Ícone SVG (usa mesmo sprite definido para sidebar)
+    const svg = document.createElement("svg");
+    svg.className = "app-icon-svg";
+    const use = document.createElement("use");
+    use.setAttribute("href", `../assets/svg/iconly-sprite.svg#${item.icon}`);
+    svg.appendChild(use);
+
+    // Label embaixo do ícone
+    const label = document.createElement("div");
+    label.className = "app-label";
+    label.textContent = item.label;
+
+    a.appendChild(svg);
+    a.appendChild(label);
+    appDiv.appendChild(a);
+    container.appendChild(appDiv);
+  });
+
+  console.log("Apps da home construídos. Conteúdo do container:", container.innerHTML);
+}

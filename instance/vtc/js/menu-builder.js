@@ -19,7 +19,7 @@ export const menuItems = [
  
   { label: "Financeiro",           iconClass: "fa-solid fa-file-invoice-dollar", color: "#5856D6", route: "#vtc-financeiro-gestor" },
   { label: "Prestação de Contas",  iconClass: "fa-solid fa-file-invoice",        color: "#5AC8FA", route: "#vtc-prestacao-de-contas-gestor" },
-  { label: "KPI's",                iconClass: "fa-solid fa-chart-bar",          color: "#34C759", route: "#vtc-indicador-pmr" },
+  { label: "KPI's",                iconClass: "fa-solid fa-chart-bar",          color: "#34C759", route: "#vtc-indicadores" },
   { label: "Aprovações",           iconClass: null, svgIcon: "Tick-Square",  color: null, route: "#aprovacoes-contas-a-pagar" },
   { label: "Controladoria",        iconClass: "fa-solid fa-chart-pie",          color: "#AF52DE", route: "#controladoria" }
 ];

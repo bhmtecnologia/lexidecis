@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous" />
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <title>Página de Vendas</title>
+  <style>
+    .fade-in-left {
+      opacity: 0;
+      transform: translateX(-30px);
+      transition: all 0.6s ease-out;
+    }
+    .visible {
+      opacity: 1 !important;
+      transform: translateX(0) !important;
+    }
+    /* Animação para a seta */
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(10px); }
+    }
+    .animate-bounce {
+      animation: bounce 2s infinite;
+    }
+    @media (max-width: 767px) {
+      header h1 {
+        font-size: 2rem;
+      }
+      .section-title {
+        font-size: 2rem;
+      }
+    }
+    /* Reset básico */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Open Sans', Arial, sans-serif;
+      line-height: 1.6;
+      background: #fafafa;
+      color: #333;
+    }
+
+    /* ======================
+       Header / Abertura
+       ====================== */
+    header {
+      position: relative;
+      text-align: center;
+    }
+    header h1 {
+      font-family: 'Open Sans', Arial, sans-serif;
+      font-weight: 700;
+      font-size: 3rem;
+      margin-bottom: 30px;
+      color: #fff;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    }
+    header .video-placeholder {
+      width: 100%;
+      max-width: 800px;
+      height: 450px;
+      background: #eee;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #999;
+      margin: 0 auto 20px;
+    }
+    header .btn-comprar {
+      display: inline-block;
+      background-color: #007BFF;
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 4px;
+      text-decoration: none;
+      font-size: 1rem;
+      transition: background-color 0.2s;
+    }
+    header .btn-comprar:hover {
+      background-color: #0056b3;
+    }
+
+    /* ======================
+       Formulário de Captura (lead form)
+       ====================== */
+
+
+    /* ======================
+       Seções Principais
+       ====================== */
+    section {
+      padding: 60px 20px;
+      background: #fff;
+    }
+    section + section {
+      border-top: 1px solid #ddd;
+    }
+    section {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      border-radius: 6px;
+    }
+    .section-title {
+      font-family: 'Open Sans', Arial, sans-serif;
+      font-weight: 600;
+      font-size: 2.5rem;
+      margin-bottom: 25px;
+      color: #333;
+      text-align: center;
+    }
+
+    section p {
+      font-size: 1.125rem;
+      margin-bottom: 20px;
+    }
+
+    /* Placeholder genérico para imagens/ícones/gráficos */
+    .placeholder {
+      background: #f0f0f0;
+      color: #999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px dashed #ccc;
+      margin-bottom: 20px;
+    }
+    /* Alturas específicas para cada placeholder */
+    .video-placeholder { height: 450px; }
+    .imagem-pequena { height: 150px; }
+    .icone-pequeno { height: 100px; }
+    .selo-garantia { height: 100px; }
+    .produto-imagem { height: 200px; }
+    .depoimento-item { background: #f9f9f9; padding: 15px; border-radius: 4px; text-align: center; }
+
+    /* ======================
+       Botões Genéricos
+       ====================== */
+    .btn {
+      display: inline-block;
+      background-color: #007BFF;
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 4px;
+      text-decoration: none;
+      font-size: 1rem;
+      transition: background-color 0.2s;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background-color: #0056b3;
+    }
+
+    /* ======================
+       Falsas Soluções
+       ====================== */
+
+
+    /* ======================
+       Objeções (Ícones + Texto)
+       ====================== */
+
+
+    /* ======================
+       Apresentação da Oferta
+       ====================== */
+    #apresentacao-oferta {
+      background: #f8f9fa;
+    }
+    #apresentacao-oferta .produto-imagem {
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto 20px;
+    }
+    #apresentacao-oferta ul {
+      list-style: disc inside;
+      margin-bottom: 20px;
+    }
+
+    /* ======================
+       Benefícios em Destaque
+       ====================== */
+
+
+    /* ======================
+       Bônus
+       ====================== */
+
+
+    /* ======================
+       Q&A
+       ====================== */
+
+
+    /* ======================
+       Garantia
+       ====================== */
+
+    #garantia {
+      background: #f8f9fa;
+    }
+    #garantia p {
+      text-align: center;
+      font-size: 1.05rem;
+      margin-bottom: 20px;
+    }
+
+    /* ======================
+       Depoimentos
+       ====================== */
+    #depoimentos {
+      background: #f8f9fa;
+    }
+    /* Estilos para seção de GPTs Empresariais */
+    #gpts-enterprise .card {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    #gpts-enterprise .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+    #gpts-enterprise .card-img-top {
+      object-fit: cover;
+      height: 180px;
+    }
+    #gpts-enterprise .card-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    #gpts-enterprise .card-text {
+      font-size: 0.95rem;
+      color: #555;
+    }
+  </style>
+</head>
+<body class="p-0">
+  <div id="stickyCTA" style="position: fixed; bottom: 20px; right: 20px; z-index: 1030;">
+    <a href="#" class="btn btn-warning btn-lg shadow" data-bs-toggle="modal" data-bs-target="#leadModal">
+      Assinar LexiDecis
+    </a>
+  </div>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-black sticky-top">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="#">LexiDecis</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="#introducao">Introdução</a></li>
+          <li class="nav-item"><a class="nav-link" href="#falsas-solucoes">Falsas Soluções</a></li>
+          <li class="nav-item"><a class="nav-link" href="#objecoes">Objeções</a></li>
+          <li class="nav-item"><a class="nav-link" href="#apresentacao-oferta">Oferta</a></li>
+          <li class="nav-item"><a class="nav-link" href="#beneficios">Benefícios</a></li>
+          <li class="nav-item"><a class="nav-link" href="#bonus">Bônus</a></li>
+          <li class="nav-item"><a class="nav-link" href="#qa">Q&A</a></li>
+          <li class="nav-item"><a class="nav-link" href="#depoimentos">Depoimentos</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  <div class="container my-4">
+  <!-- ======================
+       Header / Abertura
+       ====================== -->
+  <header id="abertura" class="bg-dark text-white py-5 mb-4 rounded">
+    <div class="container">
+      <h1>Economize Horas em Pesquisas Jurídicas com IA Especializada</h1>
+      <video controls class="img-fluid" style="max-width: 100%; height: auto;">
+        <source src="./videos/video-apresentacao1.mp4" type="video/mp4" />
+        Seu navegador não suporta a reprodução de vídeo.
+      </video>
+      <p class="mt-3">Utilizado por +150 escritórios para reduzir 80% do tempo em pesquisas e aumentar sua produtividade.</p>
+      <a href="#lead-form" class="btn btn-warning btn-lg mt-3" data-bs-toggle="modal" data-bs-target="#leadModal">Assinar Agora</a>
+    </div>
+  </header>
+
+  <!-- ======================
+       Seção: Introdução e Conceito-Chave
+       ====================== -->
+  <section id="introducao" class="py-5">
+    <div class="container">
+      <h2 class="section-title text-center mb-4">Introdução e Conceito-Chave</h2>
+      <div class="row align-items-center">
+        <div class="col-md-6" style="background: #f1f3f5; padding: 20px; border-radius: 6px;">
+          <p class="fade-in-left">
+            LexiDecis é a plataforma de assistente jurídico alimentada por IA, desenvolvida para advogados e departamentos jurídicos que precisam otimizar pesquisas de jurisprudência, redigir documentos legais e obter análises de risco de forma ágil e precisa.
+          </p>
+          <p class="fade-in-left">
+            Com LexiDecis, você reduz horas de trabalho manual em minutos, garantindo decisões embasadas e maior produtividade no seu escritório ou setor jurídico.
+          </p>
+          <ul class="list-unstyled mt-3">
+            <li class="d-flex align-items-start mb-2 fade-in-left">
+              <i class="bi bi-clock-fill text-primary me-2"></i>
+              <span>Pesquisa de jurisprudência em <strong>segundos</strong> em vez de horas</span>
+            </li>
+            <li class="d-flex align-items-start mb-2 fade-in-left">
+              <i class="bi bi-file-earmark-text text-primary me-2"></i>
+              <span>Geração automática de contratos <strong>100% padronizados</strong></span>
+            </li>
+            <li class="d-flex align-items-start fade-in-left">
+              <i class="bi bi-lock-fill text-primary me-2"></i>
+              <span>Segurança total dos seus dados (criptografia e LGPD)</span>
+            </li>
+          </ul>
+          <a href="#" class="btn btn-success btn-lg mt-3 fade-in-left">Começar Teste Grátis</a>
+        </div>
+        <div class="col-md-6 text-center">
+          <img src="./images/dashboard.png" alt="Dashboard LexiDecis" class="img-fluid mb-3" />
+          <div class="text-center mt-4">
+            <i class="bi bi-chevron-down animate-bounce" style="font-size: 1.5rem;"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================
+       Seção: GPTs Empresariais
+       ====================== -->
+  <section id="gpts-enterprise" class="py-5">
+    <div class="container">
+      <h2 class="section-title text-center mb-4">Nossos GPTs Empresariais</h2>
+      <p class="text-center mb-5">
+        O LexiDecis já oferece diversos GPTs especializados (Jurídico, Contratos, Licitações, ERP, Bacen etc.). 
+        Para grandes empresas, podemos desenvolver versões customizadas que se integram aos seus processos corporativos — 
+        seja ERP interno, sistemas de licitação, ferramentas fiscais do Bacen ou fluxos de compliance.
+      </p>
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="card h-100">
+            <img src="./images/gpt-lexi-civel.jpg" class="card-img-top" alt="Lexi Cível">
+            <div class="card-body">
+              <h5 class="card-title">Lexi Cível</h5>
+              <p class="card-text">
+                Especialista em Direito Civil: contratos, obrigações, responsabilidade civil, família e sucessões. 
+                Integração ao ERP jurídico e consultas automáticas de jurisprudência.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100">
+            <img src="./images/gpt-lexi-licitacoes.jpg" class="card-img-top" alt="[VTC] Contratos de Licitação">
+            <div class="card-body">
+              <h5 class="card-title">[VTC] Contratos de Licitação</h5>
+              <p class="card-text">
+                Responde dúvidas sobre processos de licitação, editais, cláusulas contratuais e conformidade.
+                Pode ser integrado à base de dados de editais e ao ERP de transportes.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100">
+            <img src="./images/gpt-lexi-bacen.jpg" class="card-img-top" alt="[Bacen] Consultas Financeiras">
+            <div class="card-body">
+              <h5 class="card-title">[Bacen] Consultas Financeiras</h5>
+              <p class="card-text">
+                Acesso a regras do Banco Central: normativos, cotações, compliance financeiro. 
+                Ideal para integração com sistemas bancários e ERP corporativo.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="text-center mt-5">
+        <p>Precisa de um GPT customizado para processos internos da sua empresa? <br>
+           Conte com nosso time enterprise para desenvolver e integrar a solução ao seu sistema.</p>
+        <a href="#lead-form" class="btn btn-primary btn-lg mt-3" data-bs-toggle="modal" data-bs-target="#leadModal">
+          Solicitar GPT Enterprise
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================
+       Seção: Falsas Soluções
+       ====================== -->
+  <section id="falsas-solucoes" class="py-5">
+    <div class="container">
+      <h2 class="section-title text-center mb-4">Falsas Soluções</h2>
+      <div class="row justify-content-center">
+        <ul class="col-md-8">
+          <li class="mb-2">Contar apenas com pesquisa manual em livros e sites jurídicos, consumindo muito tempo.</li>
+          <li class="mb-2">Contratar estagiários para redigir documentos, gerando inconsistências e retrabalho.</li>
+          <li class="mb-2">Usar consultorias externas caras para análises de risco e revisão de contratos.</li>
+          <li class="mb-2">Depender de sistemas genéricos sem especialização em Direito, produzindo resultados imprecisos.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================
+       Seção: Objeções
+       ====================== -->
+  <section id="objecoes" class="py-5">
+    <div class="container">
+      <h2 class="section-title text-center mb-4">Objeções</h2>
+      <div class="row">
+        <div class="col-md-3 mb-4">
+          <div class="obje-item text-center">
+            <i class="bi bi-clock-fill" style="font-size: 2rem; color: #000;"></i>
+            <p class="mt-2">Não confio em IA para documentos jurídicos</p>
+          </div>
+        </div>
+        <div class="col-md-3 mb-4">
+          <div class="obje-item text-center">
+            <i class="bi bi-wallet-fill" style="font-size: 2rem; color: #000;"></i>
+            <p class="mt-2">Será muito caro para meu escritório</p>
+          </div>
+        </div>
+        <div class="col-md-3 mb-4">
+          <div class="obje-item text-center">
+            <i class="bi bi-question-circle-fill" style="font-size: 2rem; color: #000;"></i>
+            <p class="mt-2">Não sei se atende às nossas necessidades específicas</p>
+          </div>
+        </div>
+        <div class="col-md-3 mb-4">
+          <div class="obje-item text-center">
+            <i class="bi bi-x-circle-fill" style="font-size: 2rem; color: #000;"></i>
+            <p class="mt-2">Prefiro métodos tradicionais de trabalho</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================
+       Seção: Apresentação da Oferta
+       ====================== -->
+  <section id="apresentacao-oferta" class="py-5">
+    <div class="container">
+      <h2 class="section-title text-center mb-4">Apresentação da Oferta</h2>
+      <div class="row align-items-center">
+        <div class="col-md-4 text-center mb-3">
+          <img src="./images/lexidecis-logo.png" alt="Logo LexiDecis" class="img-fluid mb-3 produto-imagem" />
+        </div>
+        <div class="col-md-8">
+          <p>Ao adquirir LexiDecis, você receberá:</p>
+          <ul>
+            <li>Módulo de Pesquisa Jurisprudencial Avançada</li>
+            <li>Geração Automática de Contratos e Documentos Legais</li>
+            <li>Análise de Risco e Conformidade em Tempo Real</li>
+          </ul>
+          <a href="#" class="btn btn-success btn-lg">Assinar Agora</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="planos" class="py-5">
+    <div class="container">
+      <h2 class="section-title text-center mb-4">Planos e Preços</h2>
+      <div class="row justify-content-center">
+        <div class="col-md-8">
+          <table class="table table-bordered text-center">
+            <thead class="table-light">
+              <tr>
+                <th>Plano</th>
+                <th>Preço Mensal</th>
+                <th>Recursos Incluídos</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Básico</td>
+                <td>R$ 299/mês</td>
+                <td>
+                  <ul class="list-unstyled mb-0">
+                    <li>Pesquisa Jurisprudencial</li>
+                    <li>Geração de Contratos (até 5 usuários)</li>
+                    <li>Suporte via E-mail</li>
+                  </ul>
+                </td>
+              </tr>
+              <tr>
+                <td>Profissional</td>
+                <td>R$ 599/mês</td>
+                <td>
+                  <ul class="list-unstyled mb-0">
+                    <li>Recursos do Básico</li>
+                    <li>Análise de Risco Avançada</li>
+                    <li>Geração Ilimitada de Documentos</li>
+                    <li>Suporte Prioritário 24/7</li>
+                  </ul>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="text-center">
+            <a href="#" class="btn btn-success btn-lg">Começar Teste Grátis de 7 dias</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================
+       Seção: Benefícios em Destaque
+       ====================== -->
+  <section id="beneficios" class="py-5">
+    <div class="container">
+      <h2 class="section-title text-center mb-4">Benefícios em Destaque</h2>
+      <div class="row">
+        <div class="col-md-3 mb-4">
+          <div class="benef-item text-center">
+            <i class="bi bi-speedometer2" style="font-size: 2rem; color: #28a745;"></i>
+            <p class="mt-2">Ganhe agilidade: pesquisas e relatórios em segundos.</p>
+          </div>
+        </div>
+        <div class="col-md-3 mb-4">
+          <div class="benef-item text-center">
+            <i class="bi bi-file-earmark-text" style="font-size: 2rem; color: #28a745;"></i>
+            <p class="mt-2">Precisão na redação: contratos sem erros e padronizados.</p>
+          </div>
+        </div>
+        <div class="col-md-3 mb-4">
+          <div class="benef-item text-center">
+            <i class="bi bi-lock-fill" style="font-size: 2rem; color: #28a745;"></i>
+            <p class="mt-2">Segurança de dados: criptografia e conformidade com LGPD.</p>
+          </div>
+        </div>
+        <div class="col-md-3 mb-4">
+          <div class="benef-item text-center">
+            <i class="bi bi-people-fill" style="font-size: 2rem; color: #28a745;"></i>
+            <p class="mt-2">Suporte dedicado: equipe especializada à disposição.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================
+       Seção: Bônus
+       ====================== -->
+  <section id="bonus" class="py-5">
+    <div class="container">
+      <h2 class="section-title text-center mb-4">Bônus</h2>
+      <div class="row">
+        <div class="col-md-4 d-flex align-items-start mb-3">
+          <div class="me-3 mt-1">
+            <i class="bi bi-book-fill text-primary" style="font-size: 2rem;"></i>
+          </div>
+          <p class="mb-0">Bônus: Guia completo de utilização com casos práticos legais.</p>
+        </div>
+        <div class="col-md-4 d-flex align-items-start mb-3">
+          <div class="me-3 mt-1">
+            <i class="bi bi-headset text-primary" style="font-size: 2rem;"></i>
+          </div>
+          <p class="mb-0">Bônus: Suporte técnico prioritário durante 3 meses.</p>
+        </div>
+        <div class="col-md-4 d-flex align-items-start mb-3">
+          <div class="me-3 mt-1">
+            <i class="bi bi-cloud-arrow-down-fill text-primary" style="font-size: 2rem;"></i>
+          </div>
+          <p class="mb-0">Bônus: Atualizações mensais gratuitas por 1 ano.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================
+       Seção: Perguntas & Respostas (Q&A)
+       ====================== -->
+  <section id="qa" class="py-5">
+    <div class="container">
+      <h2 class="section-title text-center mb-4">Perguntas & Respostas (Q&A)</h2>
+      <div class="qa-list">
+        <ul class="list-group">
+          <li class="list-group-item"><strong>Como garantem a segurança dos meus dados?</strong> Utilizamos criptografia de ponta e servidores compliance para a LGPD.</li>
+          <li class="list-group-item"><strong>Posso customizar o modelo jurídico?</strong> Sim, você pode ajustar templates para adequar ao seu escritório.</li>
+          <li class="list-group-item"><strong>Qual o tempo de implantação?</strong> Em até 24 horas após confirmação, você já estará usando o sistema.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================
+       Seção: Garantia
+       ====================== -->
+  <section id="garantia" class="bg-light text-center py-4 rounded">
+    <div class="container">
+      <h2 class="section-title text-center mb-4">Garantia</h2>
+      <p>
+        Aqui você descreve sua política de garantia e/ou devolução. 
+        Exemplo: “Se em até 7 dias você não estiver satisfeito, devolvemos 100% do valor.” 
+      </p>
+      <p>Teste sem riscos por 7 dias. Se não atender às expectativas, devolvemos 100% do valor.</p>
+    </div>
+  </section>
+
+  <!-- ======================
+       Seção: Depoimentos
+       ====================== -->
+  <section id="depoimentos" class="py-5">
+    <div class="container">
+      <h2 class="section-title text-center mb-4">Depoimentos</h2>
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="card h-100">
+            <div class="card-body text-center">
+              <img src="./images/dra-mariana-silva.png" alt="Dra. Mariana Silva" class="img-fluid rounded-circle mb-2" style="width: 100px; height: 100px; object-fit: cover;">
+              <p class="card-text">“LexiDecis reduziu meu tempo de pesquisa em 80%. Incrível!”</p>
+              <p class="fw-bold mb-0">— Dra. Mariana Silva, Advogada Especialista em Direito Civil</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100">
+            <div class="card-body text-center">
+              <p class="card-text">“Os contratos gerados são impecáveis. Sem necessidade de revisão manual.”</p>
+              <p class="fw-bold mb-0">— Escritório Souza & Costa Advogados</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100">
+            <div class="card-body text-center">
+              <p class="card-text">“Integração simples e suporte rápido. Recomendo para qualquer departamento jurídico.”</p>
+              <p class="fw-bold mb-0">— Jurídico BetaTech S.A.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100">
+            <div class="card-body text-center">
+              <p class="card-text">“Com LexiDecis, meu escritório economizou horas e dinheiro em análises de risco.”</p>
+              <p class="fw-bold mb-0">— Dr. Felipe Andrade, Consultor Jurídico</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100">
+            <div class="card-body text-center">
+              <p class="card-text">“Ferramenta intuitiva e resultados precisos. Excelente custo-benefício.”</p>
+              <p class="fw-bold mb-0">— Adv. Camila Ribeiro, Especialista em Compliance</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100">
+            <div class="card-body text-center">
+              <p class="card-text">“Uso diário para redação de contratos. Transformou nossa rotina.”</p>
+              <p class="fw-bold mb-0">— Escritório Lopes & Partners</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+    <footer class="bg-dark text-white py-4 mt-5">
+      <div class="container text-center">
+        <p class="mb-1">&copy; 2025 LexiDecis. Todos os direitos reservados.</p>
+        <p class="mb-0">Desenvolvido por <a href="#" class="text-warning text-decoration-none">Sua Empresa</a></p>
+      </div>
+    </footer>
+  </div>
+  <!-- ======================
+       JavaScript
+       ====================== -->
+  <!-- Modal Lead Form -->
+  <div class="modal fade" id="leadModal" tabindex="-1" aria-labelledby="leadModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="leadModalLabel">Assine LexiDecis</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="lead-form-bootstrap">
+            <div class="mb-3">
+              <label for="nome" class="form-label">Nome</label>
+              <input type="text" class="form-control" id="nome" placeholder="Seu nome" required>
+            </div>
+            <div class="mb-3">
+              <label for="email" class="form-label">Email</label>
+              <input type="email" class="form-control" id="email" placeholder="Seu email" required>
+            </div>
+            <div class="mb-3">
+              <label for="telefone" class="form-label">Telefone</label>
+              <input type="tel" class="form-control" id="telefone" placeholder="Seu telefone" required>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+          <button type="button" class="btn btn-primary" id="btn-submit">Assinar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 1) Scroll suave para todos os links âncora da página
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener("click", function(e) {
+        // Não bloquear se for modal
+        if (this.hasAttribute('data-bs-toggle')) return;
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute("href"));
+        if (target) {
+          target.scrollIntoView({ behavior: "smooth" });
+        }
+      });
+    });
+
+    // 2) Validação simples do formulário de captura
+    document.getElementById("btn-submit").addEventListener("click", function(e) {
+      e.preventDefault();
+      const nome = document.getElementById("nome").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const telefone = document.getElementById("telefone").value.trim();
+
+      if (!nome || !email || !telefone) {
+        alert("Por favor, preencha todos os campos antes de continuar.");
+        return;
+      }
+
+      // Aqui você pode integrar com sua API de checkout ou redirecionar para a página de pagamento
+      alert("Obrigado, " + nome + "! Em breve você será redirecionado ao checkout.");
+      // Exemplo de redirecionamento:
+      // window.location.href = "checkout.html";
+    });
+
+    // 3) Fade-in left scroll reveal para introdução e bullets
+    document.addEventListener("DOMContentLoaded", function() {
+      const observers = document.querySelectorAll('.fade-in-left');
+      const options = {
+        threshold: 0.1
+      };
+      const observer = new IntersectionObserver(function(entries) {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, options);
+      observers.forEach(el => {
+        observer.observe(el);
+      });
+    });
+  </script>
+  <!-- Bootstrap JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+</body>
+</html>

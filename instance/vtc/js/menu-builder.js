@@ -7,7 +7,6 @@
  */
 export const menuItems = [
   // Fixed apps (no route, always visible)
-  { label: "Mail",        iconClass: "fa-solid fa-envelope",         color: "#FF3B30", route: null },
   { label: "Camera",      iconClass: "fa-solid fa-camera",           color: "#FF9500", route: null },
   { label: "Mapas",       iconClass: "fa-solid fa-map-location-dot",  color: "#34C759", route: null },
   { label: "Relógio",     iconClass: "fa-solid fa-clock",            color: "#007AFF", route: null },
@@ -16,6 +15,8 @@ export const menuItems = [
   { label: "Ajustes",     iconClass: "fa-solid fa-cog",              color: "#8E8E93", route: "#ajustes" },
 
   // Dynamic apps (require permission in profile.routes)
+   { label: "Mail",        iconClass: "fa-solid fa-envelope",         color: "#FF3B30", route: "#mail" },
+ 
   { label: "Financeiro",           iconClass: "fa-solid fa-file-invoice-dollar", color: "#5856D6", route: "#vtc-prestacao-de-contas-gestor" },
   { label: "Prestação de Contas",  iconClass: "fa-solid fa-file-invoice",        color: "#5AC8FA", route: "#vtc-prestacao-de-contas-gestor" },
   { label: "KPI's",                iconClass: "fa-solid fa-chart-bar",          color: "#34C759", route: "#vtc-indicador-pmr" },

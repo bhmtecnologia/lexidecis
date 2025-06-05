@@ -500,6 +500,7 @@
   import { getUserProfile } from "../js/api.js";
   import { registerRoute, router } from "../js/router.js";
   import { renderPrestacao } from "../apps/vtc-prestacao-de-contas-gestor/vtc-prestacao-de-contas-gestor.js";
+  import { renderMail } from "../apps/mail/mail.js";
   import AuthService from "../js/auth.js";
 
   // Filtra apps enquanto o usuário digita
@@ -511,6 +512,66 @@
     });
   });
 
+
+
+  // Exibe a tela de home e oculta outras páginas
+  function renderHome() {
+    document.getElementById('lancar-page').style.display = 'none';
+    document.getElementById('home-page').style.display = 'block';
+    const homeGrid = document.getElementById('home-page').querySelector('.home-grid');
+    if (homeGrid) homeGrid.style.display = 'grid';
+    document.querySelector('.dock').style.display = 'flex';
+  }
+
+  AuthService.onAuthChange(async (user) => {
+    // Obter perfil do usuário via API
+    const profileData = await getUserProfile(AuthService);
+    const profile = Array.isArray(profileData) ? profileData[0] : profileData;
+
+    // Constroi a homeGrid dinamicamente
+    buildHomeApps(profile);
+
+    // Registrar logout listener agora que o botão existe
+    document.getElementById('logout-button').addEventListener('click', async function(e) {
+      e.preventDefault();
+      try {
+        const result = await AuthService.logout();
+        if (result.success) {
+          window.location.href = "login.html";
+        } else {
+          console.error("Erro ao fazer logout:", result.error);
+          alert("Erro ao fazer logout: " + result.error);
+        }
+      } catch (err) {
+        console.error("Erro ao fazer logout:", err);
+        alert("Erro ao fazer logout: " + err.message);
+      }
+    });
+
+    // Registrar rotas do SPA
+    registerRoute("#", renderHome, null);
+    registerRoute("#vtc-prestacao-de-contas-gestor", renderPrestacao, null);
+    registerRoute("#mail", renderMail, null);
+
+    // Forçar hash para "#" antes de inicializar o roteador
+    window.location.hash = "#";
+
+    // Inicializar o roteador
+    router();
+  });
+</script>
+<script>
+  function goToMail() {
+    if (window.location.hash === "#mail") {
+      window.location.hash = "#";
+    }
+    setTimeout(() => {
+      window.location.hash = "#mail";
+    }, 50);
+  }
+</script>
+
+<script>
   function openLancar() {
     document.getElementById('home-page').style.display = 'none';
     document.getElementById('lancar-page').style.display = 'block';
@@ -525,53 +586,20 @@
       }
     }
   }
-
   function goHome() {
-    document.getElementById('lancar-page').style.display = 'none';
-    document.getElementById('home-page').style.display = 'block';
-    document.querySelector('.dock').style.display = 'flex';
-  }
-
-  document.getElementById('logout-button').addEventListener('click', async function(e) {
-    e.preventDefault();
-    try {
-      const result = await AuthService.logout();
-      if (result.success) {
-        window.location.href = "login.html";
-      } else {
-        console.error("Erro ao fazer logout:", result.error);
-        alert("Erro ao fazer logout: " + result.error);
-      }
-    } catch (err) {
-      console.error("Erro ao fazer logout:", err);
-      alert("Erro ao fazer logout: " + err.message);
+    const lancarPage = document.getElementById('lancar-page');
+    const mailPage   = document.getElementById('mail-page');
+    if (lancarPage) lancarPage.style.display = 'none';
+    if (mailPage)   mailPage.style.display   = 'none';
+    const homePage = document.getElementById('home-page');
+    if (homePage) {
+      homePage.style.display = 'block';
+      const homeGrid = homePage.querySelector('.home-grid');
+      if (homeGrid) homeGrid.style.display = 'grid';
     }
-  });
-
-  // Exibe a tela de home e oculta outras páginas
-  function renderHome() {
-    document.getElementById('lancar-page').style.display = 'none';
-    document.getElementById('home-page').style.display = 'block';
     document.querySelector('.dock').style.display = 'flex';
-  }
-
-  AuthService.onAuthChange(async (user) => {
-    // Obter perfil do usuário via API
-    const profileData = await getUserProfile(AuthService);
-    const profile = Array.isArray(profileData) ? profileData[0] : profileData;
-
-    // Constroi a homeGrid dinamicamente
-    buildHomeApps(profile);
-
-    // Registrar rotas do SPA
-    registerRoute("#", renderHome, null);
-    registerRoute("#vtc-prestacao-de-contas-gestor", renderPrestacao, null);
-
-    // Forçar hash para "#" antes de inicializar o roteador
+    // Sincroniza o hash com a Home
     window.location.hash = "#";
-
-    // Inicializar o roteador
-    router();
-  });
+  }
 </script>
 </html>

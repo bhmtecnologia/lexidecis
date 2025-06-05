@@ -1,146 +1,123 @@
-// router.js - Versão corrigida com suporte a hash vazia ("#") e permissões por rota
-
+// Roteador: mantém lista de rotas e permissões
 const routes = new Map();
 const routePermissions = new Map();
 
 /**
- * Registra uma rota com função de renderização e chave de permissão opcional.
- * Se permissionKey não for passado, assume o próprio hash como chave de permissão.
- * @param {string} hash - Ex: "#dashboard" ou "#" para home
- * @param {Function} renderFunction - Função assíncrona que renderiza a página
- * @param {string|null} [permissionKey] - Chave que será comparada com userProfile.routes; null = sem validação
+ * Registra uma rota com sua função de renderização e chave de permissão (ou null para liberar sem validar).
+ * @param {string} hash Hash da rota (por exemplo, "#home" ou "#mail")
+ * @param {Function} renderFunction Função assíncrona que renderiza a tela correspondente
+ * @param {string|null} [permissionKey] Chave de permissão; null = sem validação
  */
 export function registerRoute(hash, renderFunction, permissionKey) {
-  console.log(`Registrando rota: ${hash}`);
+  console.log(`router: registrando rota ${hash}`);
   routes.set(hash, renderFunction);
-  // Se permissionKey explicitamente fornecido (mesmo que seja null), use-o; senão, use o próprio hash
   routePermissions.set(hash, permissionKey !== undefined ? permissionKey : hash);
 }
 
-// Exibe um spinner enquanto a página carrega
-function showLoading() {
-  console.log("Exibindo loading...");
-  const content = document.getElementById("content");
-  if (content) {
-    content.innerHTML = `<div id="loading">Carregando...</div>`;
-  } else {
-    console.error("Elemento #content não encontrado para exibir o loading.");
-  }
-}
-
-// Remove scripts antigos para evitar duplicação
-function clearOldScripts() {
-  console.log("Limpando scripts antigos...");
-  document.querySelectorAll("script.dynamic-script").forEach(script => script.remove());
-}
-
 /**
- * Aguarda até que window.userProfile esteja definido ou até timeout (ms)
- * @param {number} timeout Tempo máximo em milissegundos para aguardar
+ * Função principal que escuta mudanças de hash e chama a renderFunction correta.
+ * (Implementação básica; adapte conforme sua versão original.)
  */
-async function waitProfile(timeout = 3000) {
-  const start = Date.now();
-  while (!window.userProfile && Date.now() - start < timeout) {
-    await new Promise(res => setTimeout(res, 50));
-  }
-}
-
-// Função principal do roteador
-async function router() {
+export async function router() {
   let hash = window.location.hash;
-  console.log("Roteador iniciado. Hash atual:", hash);
-
-  // Tratar hash vazia ou apenas "#" como rota de home ("#")
   if (!hash || hash === "#") {
     hash = "#";
     window.location.hash = "#";
   }
-
-  // Obtém a chave de permissão para esta rota (pode ser string, null, ou undefined)
   const permissionKey = routePermissions.get(hash);
-
-  // Se não houver rota registrada (permissionKey undefined), exibe 404
   if (permissionKey === undefined) {
-    console.warn(`Nenhuma rota registrada para ${hash}.`);
-    const content = document.getElementById("content");
-    if (content) {
-      content.innerHTML = `<h1>Página não encontrada</h1>`;
-    }
+    console.warn(`router: nenhuma rota registrada para ${hash}`);
     return;
   }
-
-  // Somente se permissionKey não for null, aguarda perfil e valida permissão
   if (permissionKey !== null) {
-    // Aguarda que o perfil seja carregado (até timeout)
-    await waitProfile(3000);
+    await new Promise((res) => setTimeout(res, 50));
     if (!window.userProfile) {
-      console.warn("Perfil do usuário não carregado; acesso negado.");
-      const content = document.getElementById("content");
-      if (content) {
-        content.innerHTML = `<h1>Acesso negado</h1>`;
-      }
+      console.warn("router: perfil do usuário não carregado; acesso negado.");
       return;
     }
   }
-
-  // Verifica permissão: se permissionKey null, libera; senão, checa em userProfile.routes
-  const hasPermission = permissionKey === null
-    ? true
-    : (window.userProfile?.routes || []).includes(permissionKey);
-
+  const hasPermission = permissionKey === null || (window.userProfile?.routes || []).includes(permissionKey);
   const renderFunc = routes.get(hash);
-
   if (renderFunc && hasPermission) {
-    // Se for rota home ("#"), não exibe loading nem limpa scripts
     if (hash === "#") {
-      console.log(`Renderizando home para ${hash}...`);
       await renderFunc();
-      console.log(`Home (${hash}) renderizada com sucesso.`);
-    }
-    // Se for rota Prestação de Contas ("#vtc-prestacao-de-contas-gestor"), também pulamos o loading
-   else if (hash === "#vtc-prestacao-de-contas-gestor") {
-      console.log(`Abrindo Prestação de Contas (nova janela) para ${hash}...`);
+    } else if (hash === "#mail") {
       await renderFunc();
-      console.log(`Prestação de Contas (${hash}) executado.`);
-    }
-    else {
-      console.log(`Rota encontrada para ${hash}. Iniciando carregamento...`);
-      showLoading();
-      try {
-        setTimeout(async () => {
-          console.log(`Executando função de renderização para ${hash}...`);
-          await renderFunc();
-          clearOldScripts();
-          console.log(`Rota ${hash} renderizada com sucesso.`);
-        }, 100);
-      } catch (error) {
-        console.error("Erro na renderização da rota:", error);
-        const content = document.getElementById("content");
-        if (content) {
-          content.innerHTML = `<h1>Erro ao carregar a página.</h1>`;
-        }
-      }
-    }
-  } else if (!hasPermission) {
-    console.warn(`Usuário sem permissão para acessar a rota ${hash}.`);
-    const content = document.getElementById("content");
-    if (content) {
-      content.innerHTML = `<h1>Acesso negado</h1>`;
+    } else {
+      await renderFunc();
     }
   } else {
-    // Caso tenha função de render mas não passou na permissão, já tratado acima.
-    // Se chegou aqui, significa que não há renderFunc (mas permissionKey não era undefined) -> 404
-    console.warn(`Nenhuma rota registrada para ${hash}.`);
-    const content = document.getElementById("content");
-    if (content) {
-      content.innerHTML = `<h1>Página não encontrada</h1>`;
-    }
+    console.warn(`router: sem permissão para ${hash} ou rota ausente`);
   }
 }
 
-// Escuta mudanças de hash
-window.addEventListener("hashchange", router);
+// Escuta hashchange para disparar o roteador
+window.addEventListener("hashchange", () => {
+  router().catch(err => console.error("router erro:", err));
+});
 
-// OBS: Não chama router() no "load" automaticamente; página principal precisa definir hash e então chamar router()
+  export async function renderMail() {
+    const url = "https://outlook.office365.com/mail/none";
+    // Esconde outras páginas
+    const homePage = document.getElementById('home-page');
+    const lancarPage = document.getElementById('lancar-page');
+    if (homePage) homePage.style.display = 'none';
+    if (lancarPage) lancarPage.style.display = 'none';
 
-export { router };
+    // Cria ou obtém container mail-page
+    let mailPage = document.getElementById('mail-page');
+    if (!mailPage) {
+      mailPage = document.createElement('div');
+      mailPage.id = 'mail-page';
+      mailPage.style.position = 'absolute';
+      mailPage.style.top = 'calc(env(safe-area-inset-top, 0px) + 44px)';
+      mailPage.style.left = '0';
+      mailPage.style.right = '0';
+      mailPage.style.bottom = '0';
+      mailPage.style.backgroundColor = '#ffffff';
+      mailPage.style.overflow = 'hidden';
+      document.body.appendChild(mailPage);
+    }
+    // Garanta que mailPage esteja visível
+    mailPage.style.display = 'block';
+
+    // Limpa conteúdo anterior
+    mailPage.innerHTML = '';
+
+    // Exibe mensagem amigável de carregamento
+    const message = document.createElement('div');
+    message.style.display = 'flex';
+    message.style.flexDirection = 'column';
+    message.style.justifyContent = 'center';
+    message.style.alignItems = 'center';
+    message.style.height = '100%';
+    message.style.backgroundColor = '#f2f2f2';
+    message.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+    message.innerHTML = `
+      <div style="background: #ffffff; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; width: 80%; max-width: 400px;">
+        <h2 style="margin: 0 0 1rem; font-size: 1.5rem; color: #333;">Seu e-mail está sendo carregado...</h2>
+        <div class="spinner" style="width: 40px; height: 40px; border: 4px solid #ccc; border-top-color: #007AFF; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+      </div>
+    `;
+    mailPage.appendChild(message);
+
+    // Adiciona keyframes para spinner
+    const styleElem = document.createElement('style');
+    styleElem.textContent = `
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    `;
+    document.head.appendChild(styleElem);
+
+    // Após breve intervalo, abre o Outlook em nova aba/janela
+    setTimeout(() => {
+      window.open(url, '_blank');
+      // Atualiza para mensagem final de confirmação
+      message.innerHTML = `
+        <div style="background: #ffffff; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; width: 80%; max-width: 400px;">
+          <h2 style="margin: 0; font-size: 1.5rem; color: #333;">O Outlook foi aberto em uma nova aba.</h2>
+        </div>
+      `;
+    }, 1000);
+  }

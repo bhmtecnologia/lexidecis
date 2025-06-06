@@ -226,8 +226,8 @@
       box-shadow: 0 8px 20px rgba(0,0,0,0.1);
     }
     #gpts-enterprise .card-img-top {
-      object-fit: cover;
-      height: 180px;
+      width: 100%;
+      height: auto;
     }
     #gpts-enterprise .card-title {
       font-size: 1.25rem;
@@ -410,7 +410,7 @@
       <div class="row g-4">
         <div class="col-md-4 col-lg-3">
           <div class="card h-100 border-0 shadow-sm">
-            <img src="./images/lexi-grok.jpg" class="card-img-top" alt="Lexi AI (Grok – xAI v1)">
+            <img src="./images/grok.png" class="card-img-top" alt="Lexi AI (Grok – xAI v1)">
             <div class="card-body text-center">
               <h5 class="card-title">Lexi AI (Grok – xAI v1)</h5>
               <p class="card-text">Motor Grok da xAI: criatividade ilimitada e insights sobre o universo jurídico.</p>
@@ -419,7 +419,7 @@
         </div>
         <div class="col-md-4 col-lg-3">
           <div class="card h-100 border-0 shadow-sm">
-            <img src="./images/lexi-chatgpt.jpg" class="card-img-top" alt="Lexi AI (ChatGPT-4.1)">
+            <img src="./images/openai.png" class="card-img-top" alt="Lexi AI (ChatGPT-4.1)">
             <div class="card-body text-center">
               <h5 class="card-title">Lexi AI (ChatGPT-4.1 – v1)</h5>
               <p class="card-text">ChatGPT-4.1: respostas rápidas e detalhadas para tarefas diárias do escritório.</p>
@@ -428,7 +428,7 @@
         </div>
         <div class="col-md-4 col-lg-3">
           <div class="card h-100 border-0 shadow-sm">
-            <img src="./images/lexi-claude.jpg" class="card-img-top" alt="Lexi AI (Claude 3.5 Haiku)">
+            <img src="./images/claude.png" class="card-img-top" alt="Lexi AI (Claude 3.5 Haiku)">
             <div class="card-body text-center">
               <h5 class="card-title">Lexi AI (Claude 3.5 Haiku)</h5>
               <p class="card-text">Claude 3.5 Haiku: precisão e fluidez em linguagem natural para análises complexas.</p>
@@ -437,7 +437,7 @@
         </div>
         <div class="col-md-4 col-lg-3">
           <div class="card h-100 border-0 shadow-sm">
-            <img src="./images/lexi-deepseek.jpg" class="card-img-top" alt="Lexi AI (DeepSeek – Groq v1)">
+            <img src="./images/deepseek.png" class="card-img-top" alt="Lexi AI (DeepSeek – Groq v1)">
             <div class="card-body text-center">
               <h5 class="card-title">Lexi AI (DeepSeek – Groq v1)</h5>
               <p class="card-text">DeepSeek na plataforma Groq: desempenho extremo para consultas em grande escala.</p>
@@ -446,10 +446,90 @@
         </div>
         <div class="col-md-4 col-lg-3">
           <div class="card h-100 border-0 shadow-sm">
-            <img src="./images/lexi-gemini.jpg" class="card-img-top" alt="Lexi AI (Gemini 1.5 Pro)">
+            <img src="./images/gemini.png" class="card-img-top" alt="Lexi AI (Gemini 1.5 Pro)">
             <div class="card-body text-center">
               <h5 class="card-title">Lexi AI (Gemini 1.5 Pro – v1)</h5>
               <p class="card-text">Google Gemini 1.5 Pro: IA Google para brainstorming e ações inteligentes em seu processo.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================
+       Seção: GPTs Jurídicos
+       ====================== -->
+  <section id="gpts-juridicos" class="py-5">
+    <div class="container">
+      <h2 class="section-title text-center mb-4">Alguns de nossos GPTs Jurídicos</h2>
+      <p class="text-center mb-5">
+        Modelos de IA especializados em áreas do Direito, prontos para uso imediato. Incluem integração via API para consulta ao Escavador, Câmara e Senado, além de conexão direta ao ambiente do cliente.
+      </p>
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="card h-100">
+            <img src="./images/lexi-civel.png" class="card-img-top img-fluid" alt="Lexi Cível">
+            <div class="card-body">
+              <h5 class="card-title">Lexi Cível</h5>
+              <p class="card-text">
+                Especializado em Direito Civil: análise de contratos, jurisprudência e doutrina.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100">
+            <img src="./images/lexi-trabalhista.png" class="card-img-top img-fluid" alt="Lexi Trabalhista">
+            <div class="card-body">
+              <h5 class="card-title">Lexi Trabalhista</h5>
+              <p class="card-text">
+                Análise de legislação trabalhista, elaboração de contratos de trabalho e consultoria em relações sindicais.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100">
+            <img src="./images/lexi-tributos.png" class="card-img-top img-fluid" alt="Lexi Tributos">
+            <div class="card-body">
+              <h5 class="card-title">Lexi Tributos</h5>
+              <p class="card-text">
+                Especializado em Direito Tributário: consultas de legislação fiscal, cálculos de tributos e planejamento tributário. Integração a sistemas fiscais via API.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100">
+            <img src="./images/lexi-penal.png" class="card-img-top img-fluid" alt="Lexi Penal">
+            <div class="card-body">
+              <h5 class="card-title">Lexi Penal</h5>
+              <p class="card-text">
+                Especializado em Direito Penal: análise de casos, pesquisa de jurisprudência criminal e elaboração de defesas.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100">
+            <img src="./images/lexi-imobiliario.png" class="card-img-top img-fluid" alt="Lexi Imobiliário">
+            <div class="card-body">
+              <h5 class="card-title">Lexi Imobiliário</h5>
+              <p class="card-text">
+                Focado em Direito Imobiliário: contratos de compra e venda, locações, registros e questões imobiliárias.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100">
+            <img src="./images/lexi-administrativo.png" class="card-img-top img-fluid" alt="Lexi Administrativo">
+            <div class="card-body">
+              <h5 class="card-title">Lexi Administrativo</h5>
+              <p class="card-text">
+                Voltado para Direito Administrativo: licitações, contratos públicos, processos administrativos e compliance governamental.
+              </p>
             </div>
           </div>
         </div>
@@ -462,38 +542,16 @@
        ====================== -->
   <section id="gpts-enterprise" class="py-5">
     <div class="container">
-      <h2 class="section-title text-center mb-4">Nossos GPTs Empresariais</h2>
+      <h2 class="section-title text-center mb-4">GPTs Empresariais</h2>
       <p class="text-center mb-5">
-        Nossos GPTs já atendem a áreas como Direito Civil, Licitações, Finanças e Compliance. Para grandes organizações, desenvolvemos versões personalizadas que se conectam a ERPs, sistemas de licitação e bancos de dados internos.
+        Para grandes organizações, desenvolvemos GPTs customizados que se conectam a ERPs, sistemas de licitação, bancos de dados internos e fluxos corporativos.
       </p>
-      <div class="row g-4">
+      <div class="row g-4 justify-content-center">
         <div class="col-md-4">
           <div class="card h-100">
-            <img src="./images/gpt-lexi-civel.jpg" class="card-img-top" alt="Lexi Cível">
+            <img src="./images/gpt-lexi-bacen.jpg" class="card-img-top img-fluid" alt="[Bacen] Consultas Financeiras">
             <div class="card-body">
-              <h5 class="card-title">Lexi Cível</h5>
-              <p class="card-text">
-                Especializado em Direito Civil: análise de contratos, jurisprudência e doutrina. Integração direta ao seu ERP jurídico.
-              </p>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="card h-100">
-            <img src="./images/gpt-lexi-licitacoes.jpg" class="card-img-top" alt="[VTC] Contratos de Licitação">
-            <div class="card-body">
-              <h5 class="card-title">[VTC] Contratos de Licitação</h5>
-              <p class="card-text">
-                Consultoria inteligente em licitações: leitura de editais, interpretação de cláusulas e compliance completo para processos públicos.
-              </p>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="card h-100">
-            <img src="./images/gpt-lexi-bacen.jpg" class="card-img-top" alt="[Bacen] Consultas Financeiras">
-            <div class="card-body">
-              <h5 class="card-title">[Bacen] Consultas Financeiras</h5>
+              <h5 class="card-title">Consultas Financeiras</h5>
               <p class="card-text">
                 Acesso a normativos do Banco Central, cotações e compliance financeiro. Ideal para integração com sistemas bancários e ERP corporativo.
               </p>
@@ -502,22 +560,11 @@
         </div>
         <div class="col-md-4">
           <div class="card h-100">
-            <img src="./images/gpt-lexi-trabalhista.jpg" class="card-img-top" alt="Lexi Trabalhista">
+            <img src="./images/gpt-lexi-licitacoes.jpg" class="card-img-top img-fluid" alt="[VTC] Contratos de Licitação">
             <div class="card-body">
-              <h5 class="card-title">Lexi Trabalhista</h5>
+              <h5 class="card-title">Contratos de Licitação</h5>
               <p class="card-text">
-                Análise de legislação trabalhista, elaboração de contratos de trabalho e consultoria em relações sindicais.
-              </p>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="card h-100">
-            <img src="./images/gpt-lexi-contratos.jpg" class="card-img-top" alt="Lexi Contratos Automáticos">
-            <div class="card-body">
-              <h5 class="card-title">Lexi Contratos Automáticos</h5>
-              <p class="card-text">
-                Gere minutas de contratos padronizados e cláusulas customizáveis em segundos.
+                Consultoria inteligente em contratos de licitação empresarial: elaboração e revisão de contratos corporativos, análises de cláusulas e compliance.
               </p>
             </div>
           </div>
@@ -669,9 +716,9 @@
                 </td>
                 <td>
                   <ul class="list-unstyled mb-0">
-                    <li>Pesquisa Jurisprudencial</li>
-                    <li>Geração de Contratos (até 5 usuários)</li>
-                    <li>Suporte via E-mail (resposta em até 24h)</li>
+                    <li>Acesso à plataforma SaaS de IA para pesquisa jurídica</li>
+                    <li>Geração de contratos automatizada (até 5 usuários)</li>
+                    <li>Suporte via e-mail com resposta em até 24h</li>
                   </ul>
                 </td>
               </tr>
@@ -684,9 +731,10 @@
                 <td>
                   <ul class="list-unstyled mb-0">
                     <li>Todos recursos do Essencial</li>
-                    <li>Análise de Risco Avançada</li>
-                    <li>Geração Ilimitada de Documentos</li>
-                    <li>Suporte Prioritário 24/7</li>
+                    <li>Integração com sistemas internos (ERP, bancos de dados)</li>
+                    <li>Criação de GPTs on demand para sua empresa</li>
+                    <li>Gestão corporativa de IA (controle de usuários e permissões)</li>
+                    <li>Suporte prioritário 24/7</li>
                   </ul>
                 </td>
               </tr>

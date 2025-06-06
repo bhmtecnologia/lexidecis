@@ -664,58 +664,68 @@
   <!-- ======================
        Seção: Apresentação da Oferta
        ====================== -->
-  <section id="apresentacao-oferta" class="py-5">
+  <section id="apresentacao-oferta" class="py-5 bg-light">
     <div class="container">
       <h2 class="section-title text-center mb-4">Apresentação da Oferta</h2>
       <div class="row align-items-center">
-        <div class="col-md-4 text-center mb-3">
-          <img src="./images/lexidecis-logo.png" alt="Logo LexiDecis" class="img-fluid mb-3 produto-imagem" />
+        <!-- Vídeo à esquerda -->
+        <div class="col-md-6 mb-4 mb-md-0">
+          <div class="ratio ratio-1x1" style="max-width: 400px; margin: 0 auto;">
+            <video controls class="w-100 h-100">
+              <source src="./videos/oferta.mp4" type="video/mp4" />
+              Seu navegador não suporta a reprodução de vídeo.
+            </video>
+          </div>
         </div>
-        <div class="col-md-8">
-          <ul class="list-unstyled mb-3">
-            <li class="d-flex align-items-start mb-1">
-              <i class="bi bi-x-circle-fill text-danger me-2"></i>
+        <!-- Conteúdo à direita -->
+        <div class="col-md-6">
+          <ul class="list-unstyled mb-4">
+            <li class="d-flex align-items-start mb-3">
+              <i class="bi bi-x-circle-fill text-danger me-2 fs-4"></i>
               <span><strong>Não</strong> perca mais horas copiando e colando jurisprudência.</span>
             </li>
-            <li class="d-flex align-items-start mb-1">
-              <i class="bi bi-x-circle-fill text-danger me-2"></i>
+            <li class="d-flex align-items-start mb-3">
+              <i class="bi bi-x-circle-fill text-danger me-2 fs-4"></i>
               <span><strong>Não</strong> revise manualmente cada parágrafo de um contrato.</span>
             </li>
             <li class="d-flex align-items-start">
-              <i class="bi bi-x-circle-fill text-danger me-2"></i>
+              <i class="bi bi-x-circle-fill text-danger me-2 fs-4"></i>
               <span><strong>Não</strong> pague consultorias caras para analisar editais.</span>
             </li>
           </ul>
           <p class="mb-4">
-            Ao escolher LexiDecis, você adquire muito mais do que um simples assistente jurídico: tem acesso a um ecossistema completo de inteligência artificial desenhado para transformar sua rotina.
+            Ao escolher LexiDecis, você adquire muito mais do que um simples assistente jurídico:
+            tem acesso a um ecossistema completo de inteligência artificial desenhado para transformar sua rotina.
           </p>
           <ul class="list-unstyled mb-4">
-            <li class="d-flex align-items-start mb-2">
-              <i class="bi bi-cpu text-primary me-2"></i>
+            <li class="d-flex align-items-start mb-3">
+              <i class="bi bi-cpu text-primary me-2 fs-4"></i>
               <span><strong>Engines LLM Premium:</strong> ChatGPT-4.1, Claude 3.5 Haiku, Grok (xAI), DeepSeek (Groq) e Gemini 1.5 Pro em um só lugar.</span>
             </li>
-            <li class="d-flex align-items-start mb-2">
-              <i class="bi bi-journal-text text-primary me-2"></i>
+            <li class="d-flex align-items-start mb-3">
+              <i class="bi bi-journal-text text-primary me-2 fs-4"></i>
               <span><strong>GPTs Jurídicos Especializados:</strong> Modelos treinados para Direito Civil, Licitações, Finanças, Compliance e muito mais.</span>
             </li>
-            <li class="d-flex align-items-start mb-2">
-              <i class="bi bi-plug text-primary me-2"></i>
+            <li class="d-flex align-items-start mb-3">
+              <i class="bi bi-plug text-primary me-2 fs-4"></i>
               <span><strong>Integração via APIs RESTful:</strong> Conecte a LexiDecis ao seu ERP, sistema de licitações, bancos de dados e fluxos internos automaticamente.</span>
             </li>
-            <li class="d-flex align-items-start mb-2">
-              <i class="bi bi-bar-chart-line text-primary me-2"></i>
+            <li class="d-flex align-items-start mb-3">
+              <i class="bi bi-bar-chart-line text-primary me-2 fs-4"></i>
               <span><strong>Dashboard Interativo:</strong> Painel completo para monitorar consultas, gerar relatórios e acompanhar métricas em tempo real.</span>
             </li>
-            <li class="d-flex align-items-start mb-2">
-              <i class="bi bi-gear text-primary me-2"></i>
+            <li class="d-flex align-items-start mb-3">
+              <i class="bi bi-gear text-primary me-2 fs-4"></i>
               <span><strong>Atualizações Contínuas:</strong> Modelos e bibliotecas jurídicas sempre atualizados, com conformidade LGPD garantida.</span>
             </li>
             <li class="d-flex align-items-start">
-              <i class="bi bi-headset text-primary me-2"></i>
+              <i class="bi bi-headset text-primary me-2 fs-4"></i>
               <span><strong>Suporte e Treinamento:</strong> Assistência técnica prioritária e treinamento dedicado para sua equipe adotar a solução rapidamente.</span>
             </li>
           </ul>
-          <a href="#planos" class="btn btn-success btn-lg">Sim, Quero LexiDecis</a>
+          <div class="text-center">
+            <a href="#planos" class="btn btn-success btn-lg">Sim, Quero LexiDecis</a>
+          </div>
         </div>
       </div>
     </div>

@@ -1067,7 +1067,7 @@ export async function renderFinanceiroLancamentoCreateV3() {
           const opt = document.createElement("option");
           // Ajuste opt.value conforme o identificador retornado (e.g., c.id ou c.uuid)
           opt.value = c.id || c.uuid || c.nome;
-          opt.text = c.nome;
+          opt.text = `${c.estrutura} - ${c.nome}`;
           centroSelectEl.add(opt);
         });
         // Atualiza Select2, se ativo
@@ -1237,6 +1237,15 @@ export async function renderFinanceiroLancamentoCreateV3() {
     const ctrEl = document.getElementById("centroCustoSelect");
     payload.centro_custo_id = ctrEl ? ctrEl.value : null;
     payload.centro_custo_nome = ctrEl ? ctrEl.options[ctrEl.selectedIndex].text : null;
+    // Capture 'codigo' from the selected Centro de Custo
+    if (ctrEl) {
+      const centroObj = (window.centrosData || []).find(c =>
+        (c.id || c.uuid || c.nome) == ctrEl.value
+      );
+      payload.centro_custo_codigo = centroObj ? centroObj.codigo : null;
+    } else {
+      payload.centro_custo_codigo = null;
+    }
 
     // Projeto (opcional)
     const projEl = document.getElementById("projetoSelect");

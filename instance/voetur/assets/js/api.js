@@ -38,7 +38,7 @@ export async function createLancamento(AuthService, payload) {
   if (!user) throw new Error("Usuário não autenticado");
   const token = await user.getIdToken();
 
-  const response = await fetch('https://webhook.power.tec.br/webhook/voetur/v1/lancamentos', {
+  const response = await fetch('https://webhook.power.tec.br/webhook/voetur/v1/lancamentos/post', {
     method: "POST",
     headers: { 
       "Content-Type": "application/json",

@@ -39,6 +39,7 @@ function formatDateISO(dateObj) {
 }
 
 // Reseta campos do formulário
+// Adiciona: updateParcelaRemoveButtons e updateItemRemoveButtons após manipulação de linhas
 function resetFormFields() {
   const padBlankSelect = selectId => {
     const el = document.getElementById(selectId);
@@ -84,34 +85,44 @@ function resetFormFields() {
   document.getElementById("justificativa").value = "";
   document.getElementById("arquivo").value = "";
 
-  // Reset parcelas para o estado inicial (uma parcela com data hoje+3 dias)
-  const parcelasContainer = document.getElementById("parcelasContainer");
-  if (parcelasContainer) {
+  // Reset parcelas para o estado inicial (uma linha no #parcelasTable tbody)
+  const parcelasTbody = document.querySelector("#parcelasTable tbody");
+  if (parcelasTbody) {
+    // Limpa o tbody
+    parcelasTbody.innerHTML = "";
+    // Cria uma linha padrão (Valor + Data + Remover)
+    const row = document.createElement("tr");
+    // Data padrão: hoje + 7 dias
     const dv = new Date();
-    dv.setDate(dv.getDate() + 3);
+    dv.setDate(dv.getDate() + 7);
     const dvStr = dv.toISOString().split("T")[0];
-    parcelasContainer.innerHTML = `
-      <div class="parcela-item mb-2">
-        <span class="parcela-index me-2">1</span>
-        <input type="date" name="parcelaData[]" class="form-control parcela-data mb-1" required value="${dvStr}">
-        <input type="text" name="parcelaValor[]" class="form-control parcela-valor" placeholder="Valor da Parcela" required>
-        <button type="button" class="btn btn-danger btn-sm remove-parcela-btn ms-2">- Parcela</button>
-      </div>
+    row.innerHTML = `
+      <td><input type="text" name="parcelaValor[]" class="form-control mask-currency parcela-valor" required></td>
+      <td><input type="date" name="parcelaDataVenc[]" class="form-control parcela-data" required value="${dvStr}"></td>
+      <td><button type="button" class="btn btn-sm btn-danger remove-parcela">Remover</button></td>
     `;
-    if (typeof updateParcelaIndices === "function") updateParcelaIndices();
+    parcelasTbody.appendChild(row);
+    // Define valor da parcela igual ao Valor Bruto
+    const bruto = document.getElementById("valor").value;
+    row.querySelector(".parcela-valor").value = bruto;
+    // Atualiza estado dos botões de remover
+    updateParcelaRemoveButtons();
   }
-  // Reset itens para o estado inicial (um item em branco)
-  const itensContainer = document.getElementById("itensContainer");
-  if (itensContainer) {
-    itensContainer.innerHTML = `
-      <div class="item-row mb-2">
-        <span class="item-index me-2">1</span>
-        <input type="text" name="itemDescricao[]" class="form-control item-descricao mb-1" placeholder="Descrição do Item" required>
-        <input type="text" name="itemQuantidade[]" class="form-control item-quantidade mb-1" placeholder="Quantidade" required>
-        <input type="text" name="itemValorUnitario[]" class="form-control item-valor-unitario" placeholder="Valor Unitário" required>
-      </div>
+
+  // Reset itens para o estado inicial (uma linha no #itensTable tbody)
+  const itensTbody = document.querySelector("#itensTable tbody");
+  if (itensTbody) {
+    itensTbody.innerHTML = "";
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td><input type="text" name="itemDescricao[]" class="form-control" required></td>
+      <td><input type="text" name="itemQuantidade[]" class="form-control" required></td>
+      <td><input type="text" name="itemValorUnitario[]" class="form-control mask-currency" required></td>
+      <td><button type="button" class="btn btn-sm btn-danger remove-item">Remover</button></td>
     `;
-    if (typeof updateItemIndices === "function") updateItemIndices();
+    itensTbody.appendChild(row);
+    // Atualiza estado dos botões de remover
+    updateItemRemoveButtons();
   }
 }
 
@@ -274,6 +285,18 @@ export async function renderFinanceiroLancamentoCreateV3() {
                 </div>
                 <select class="form-control" id="filialSelect" required><option value="">Selecione</option></select>
               </div>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <!-- Centro de Custo -->
+                  <label for="centroCustoSelect" class="form-label">Centro de Custo <span class="text-danger">*</span></label>
+                  <select class="form-control" id="centroCustoSelect" required><option value="">Selecione</option></select>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <!-- Projeto -->
+                  <label for="projetoSelect" class="form-label">Projeto</label>
+                  <select class="form-control" id="projetoSelect"><option value="">Selecione</option></select>
+                </div>
+              </div>
               <!-- Fornecedor -->
               <div class="mb-3">
                 <div class="d-flex justify-content-between align-items-center">
@@ -285,49 +308,42 @@ export async function renderFinanceiroLancamentoCreateV3() {
                 </div>
                 <select class="form-control" id="fornecedorSelect" required><option value="">Selecione</option></select>
               </div>
-              <!-- Centro de Custo -->
-              <div class="mb-3">
-                <label for="centroCustoSelect" class="form-label">Centro de Custo <span style="color:red">*</span></label>
-                <select class="form-control" id="centroCustoSelect" required><option value="">Selecione</option></select>
-              </div>
-              <!-- Projeto -->
-              <div class="mb-3">
-                <label for="projetoSelect" class="form-label">Projeto</label>
-                <select class="form-control" id="projetoSelect"><option value="">Selecione</option></select>
-              </div>
-              <!-- Número do Documento -->
-              <div class="mb-3">
-                <div class="d-flex justify-content-between align-items-center">
-                  <label for="numeroDocumento" class="form-label">N° Documento <span style="color:red">*</span></label>
-                  <div class="form-check form-switch mb-0">
-                    <input class="form-check-input" type="checkbox" id="unlockNumero">
-                    <label class="form-check-label" for="unlockNumero">Manual</label>
+              <!-- Número do Documento, Valor Bruto, Data de Emissão -->
+              <div class="row">
+                <div class="col-md-4 mb-3">
+                  <!-- Número do Documento -->
+                  <div class="d-flex justify-content-between align-items-center">
+                    <label for="numeroDocumento" class="form-label">N° Documento <span class="text-danger">*</span></label>
+                    <div class="form-check form-switch mb-0">
+                      <input class="form-check-input" type="checkbox" id="unlockNumero">
+                      <label class="form-check-label" for="unlockNumero">Manual</label>
+                    </div>
                   </div>
+                  <input type="text" class="form-control" id="numeroDocumento" required placeholder="Digite o número do documento">
                 </div>
-                <input type="text" class="form-control" id="numeroDocumento" required placeholder="Digite o número do documento">
-              </div>
-              <!-- Data de Emissão -->
-              <div class="mb-3">
-                <div class="d-flex justify-content-between align-items-center">
-                  <label for="dataEmissao" class="form-label">Data de Emissão <span style="color:red">*</span></label>
-                  <div class="form-check form-switch mb-0">
-                    <input class="form-check-input" type="checkbox" id="unlockData">
-                    <label class="form-check-label" for="unlockData">Manual</label>
+                <div class="col-md-4 mb-3">
+                  <!-- Valor Bruto -->
+                  <div class="d-flex justify-content-between align-items-center">
+                    <label for="valor" class="form-label">Valor Bruto <span class="text-danger">*</span></label>
+                    <div class="form-check form-switch mb-0">
+                      <input class="form-check-input" type="checkbox" id="unlockValor">
+                      <label class="form-check-label" for="unlockValor">Manual</label>
+                    </div>
                   </div>
+                  <input type="text" class="form-control" id="valor" required placeholder="0,00">
                 </div>
-                <input type="date" class="form-control" id="dataEmissao" required>
-                <small class="form-text text-muted">Não pode ser superior à data atual.</small>
-              </div>
-              <!-- Valor Bruto -->
-              <div class="mb-3">
-                <div class="d-flex justify-content-between align-items-center">
-                  <label for="valor" class="form-label">Valor Bruto <span style="color:red">*</span></label>
-                  <div class="form-check form-switch mb-0">
-                    <input class="form-check-input" type="checkbox" id="unlockValor">
-                    <label class="form-check-label" for="unlockValor">Manual</label>
+                <div class="col-md-4 mb-3">
+                  <!-- Data de Emissão -->
+                  <div class="d-flex justify-content-between align-items-center">
+                    <label for="dataEmissao" class="form-label">Data de Emissão <span class="text-danger">*</span></label>
+                    <div class="form-check form-switch mb-0">
+                      <input class="form-check-input" type="checkbox" id="unlockData">
+                      <label class="form-check-label" for="unlockData">Manual</label>
+                    </div>
                   </div>
+                  <input type="date" class="form-control" id="dataEmissao" required>
+                  <small class="form-text text-muted">Não pode ser superior à data atual.</small>
                 </div>
-                <input type="text" class="form-control" id="valor" required placeholder="0,00">
               </div>
               <!-- Forma de Pagamento -->
               <div class="mb-3">
@@ -336,7 +352,7 @@ export async function renderFinanceiroLancamentoCreateV3() {
                   <option value="">Selecione</option>
                   <option value="Boleto">Boleto</option>
                   <option value="Pix">Pix</option>
-                  <option value="deposito">Depósito</option>
+                  <option value="deposito" selected>Depósito</option>
                 </select>
               </div>
               <!-- Moeda -->
@@ -355,26 +371,38 @@ export async function renderFinanceiroLancamentoCreateV3() {
               </div>
               <!-- Parcelas -->
               <div id="parcelasSection" class="mb-3">
-                <label class="form-label">Parcelas <span style="color:red">*</span></label>
-                <div id="parcelasContainer">
-                  <div class="parcela-item mb-2">
-                    <input type="date" name="parcelaData[]" class="form-control parcela-data mb-1" required>
-                    <input type="text" name="parcelaValor[]" class="form-control parcela-valor" placeholder="Valor da Parcela" required>
-                  </div>
-                </div>
-                <button type="button" id="addParcelaBtn" class="btn btn-secondary btn-sm mt-2">+ Parcela</button>
+                <label class="form-label">Parcelas <span class="text-danger">*</span></label>
+                <table class="table table-sm" id="parcelasTable">
+                  <thead>
+                    <tr>
+                      <th>Valor</th>
+                      <th>Data Vencimento</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- rows will be dynamically managed -->
+                  </tbody>
+                </table>
+                <button type="button" id="addParcelaBtn" class="btn btn-sm btn-secondary">Adicionar parcela</button>
               </div>
               <!-- Itens da Nota Fiscal -->
               <div id="itensSection" class="mb-3">
-                <label class="form-label">Itens <span style="color:red">*</span></label>
-                <div id="itensContainer">
-                  <div class="item-row mb-2">
-                    <input type="text" name="itemDescricao[]" class="form-control item-descricao mb-1" placeholder="Descrição do Item" required>
-                    <input type="text" name="itemQuantidade[]" class="form-control item-quantidade mb-1" placeholder="Quantidade" required>
-                    <input type="text" name="itemValorUnitario[]" class="form-control item-valor-unitario" placeholder="Valor Unitário" required>
-                  </div>
-                </div>
-                <button type="button" id="addItemBtn" class="btn btn-secondary btn-sm mt-2">+ Item</button>
+                <label class="form-label">Itens da Nota Fiscal <span class="text-danger">*</span></label>
+                <table class="table table-sm" id="itensTable">
+                  <thead>
+                    <tr>
+                      <th>Descrição</th>
+                      <th>Quantidade</th>
+                      <th>Valor Unitário</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- item rows will be dynamically managed -->
+                  </tbody>
+                </table>
+                <button type="button" id="addItemBtn" class="btn btn-sm btn-secondary">Adicionar item</button>
               </div>
               <!-- Justificativa -->
               <div class="mb-3">
@@ -390,6 +418,47 @@ export async function renderFinanceiroLancamentoCreateV3() {
       </div>
     </div>
   `;
+
+  // --- Parcelas: adicionar/remover linha (table) ---
+  document.getElementById('addParcelaBtn').addEventListener('click', () => {
+    const tbody = document.querySelector('#parcelasTable tbody');
+    if (!tbody) return; // evita erros se o elemento não existir
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td><input type="text" name="parcelaValor[]" class="form-control mask-currency" required></td>
+      <td><input type="date" name="parcelaDataVenc[]" class="form-control" required></td>
+      <td><button type="button" class="btn btn-sm btn-danger remove-parcela">Remover</button></td>
+    `;
+    tbody.appendChild(row);
+    updateParcelaRemoveButtons();
+  });
+  document.addEventListener('click', e => {
+    if (e.target.matches('.remove-parcela')) {
+      const tr = e.target.closest('tr');
+      if (tr) tr.remove();
+      updateParcelaRemoveButtons();
+    }
+  });
+
+  // --- Itens da Nota: adicionar/remover linha (table) ---
+  document.getElementById('addItemBtn').addEventListener('click', () => {
+    const tbody = document.querySelector('#itensTable tbody');
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td><input type="text" name="itemDescricao[]" class="form-control" required></td>
+      <td><input type="text" name="itemQuantidade[]" class="form-control" required></td>
+      <td><input type="text" name="itemValorUnitario[]" class="form-control mask-currency" required></td>
+      <td><button type="button" class="btn btn-sm btn-danger remove-item">Remover</button></td>
+    `;
+    tbody.appendChild(row);
+    updateItemRemoveButtons();
+  });
+  document.addEventListener('click', e => {
+    if (e.target.matches('.remove-item')) {
+      e.target.closest('tr').remove();
+      updateItemRemoveButtons();
+    }
+  });
 
   // Loader animation logic for progress bar (indeterminate)
   function startLoaderAnimation() {
@@ -712,7 +781,60 @@ export async function renderFinanceiroLancamentoCreateV3() {
             }
           }
           showAlert("Documento classificado como Nota Fiscal. Campos preenchidos.", "success");
-          // Preenche itens da Nota Fiscal no formulário
+          // ======= Preenche tabelas de parcelas e itens =======
+          // Preenche parcelas no table
+          const parcelas = info.parcelas_financeiras || info.parcelas || [];
+          const parcelasTbody = document.querySelector('#parcelasTable tbody');
+          if (parcelasTbody) {
+            parcelasTbody.innerHTML = '';
+            parcelas.forEach(p => {
+              const tr = document.createElement('tr');
+              tr.innerHTML = `
+                <td><input type="text" name="parcelaValor[]" class="form-control mask-currency" value="${Number(p.valor).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}" required></td>
+                <td><input type="date" name="parcelaDataVenc[]" class="form-control" value="${p.data_vencimento.split('T')[0]}" required></td>
+                <td><button type="button" class="btn btn-sm btn-danger remove-parcela">Remover</button></td>
+              `;
+              parcelasTbody.appendChild(tr);
+            });
+            updateParcelaRemoveButtons();
+          }
+          // Se não houver parcelas, adiciona uma linha padrão (vencimento +7 dias, valor bruto)
+          if (parcelas.length === 0 && parcelasTbody) {
+            // Default single parcel when API returns none
+            const tr = document.createElement('tr');
+            const dueDate = new Date(info.data_emissao);
+            dueDate.setDate(dueDate.getDate() + 7);
+            const dueStr = dueDate.toISOString().split('T')[0];
+            const brutoStr = document.getElementById('valor').value;
+            tr.innerHTML = `
+              <td><input type="text" name="parcelaValor[]" class="form-control mask-currency" value="${brutoStr}" required></td>
+              <td><input type="date" name="parcelaDataVenc[]" class="form-control" value="${dueStr}" required></td>
+              <td><button type="button" class="btn btn-sm btn-danger remove-parcela">Remover</button></td>
+            `;
+            parcelasTbody.appendChild(tr);
+            updateParcelaRemoveButtons();
+          }
+
+          // Preenche itens no table
+          const itens = info.itens || [];
+          const itensTbody = document.querySelector('#itensTable tbody');
+          if (itensTbody) {
+            itensTbody.innerHTML = '';
+            itens.forEach(item => {
+              const tr = document.createElement('tr');
+              tr.innerHTML = `
+                <td><input type="text" name="itemDescricao[]" class="form-control" value="${item.descricao}" required></td>
+                <td><input type="text" name="itemQuantidade[]" class="form-control" value="${item.quantidade}" required></td>
+                <td><input type="text" name="itemValorUnitario[]" class="form-control mask-currency" value="${Number(item.valor_unitario).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}" required></td>
+                <td><button type="button" class="btn btn-sm btn-danger remove-item">Remover</button></td>
+              `;
+              itensTbody.appendChild(tr);
+            });
+            updateItemRemoveButtons();
+          }
+          // ======= Fim do preenchimento das tabelas =======
+          // REMOVIDO: Preenchimento antigo do itensContainer
+          /*
           const itensData = info.itens || [];
           const itensContainer = document.getElementById('itensContainer');
           if (itensContainer) {
@@ -731,6 +853,7 @@ export async function renderFinanceiroLancamentoCreateV3() {
               itensContainer.appendChild(row);
             });
           }
+          */
         } else {
           // Oculta formulário normal
           document.getElementById("form-section").classList.add("d-none");
@@ -1212,13 +1335,15 @@ export async function renderFinanceiroLancamentoCreateV3() {
     payload.auditoria = window.auditInfo || {};
     // Parcelas financeiras de vencimento e valor
     payload.parcelas_financeiras = [];
-    document.querySelectorAll('.parcela-item').forEach(item => {
-      const dateEl = item.querySelector('.parcela-data');
-      const valorEl = item.querySelector('.parcela-valor');
+    document.querySelectorAll('#parcelasTable tbody tr').forEach(row => {
+      const dateEl = row.querySelector('input[name="parcelaDataVenc[]"]');
+      const valorEl = row.querySelector('input[name="parcelaValor[]"]');
       if (dateEl && valorEl && dateEl.value) {
         const raw = valorEl.value.replace(/\./g, '').replace(',', '.');
-        const numVal = Number(raw);
-        payload.parcelas_financeiras.push({ data_vencimento: dateEl.value, valor: numVal });
+        payload.parcelas_financeiras.push({
+          data_vencimento: dateEl.value,
+          valor: Number(raw)
+        });
       }
     });
 
@@ -1277,15 +1402,18 @@ export async function renderFinanceiroLancamentoCreateV3() {
 
     // Itens de nota fiscal a partir do formulário
     payload.itens = [];
-    document.querySelectorAll('.item-row').forEach(row => {
-      const descEl = row.querySelector('.item-descricao');
-      const qtyEl = row.querySelector('.item-quantidade');
-      const valEl = row.querySelector('.item-valor-unitario');
+    document.querySelectorAll('#itensTable tbody tr').forEach(row => {
+      const descEl = row.querySelector('input[name="itemDescricao[]"]');
+      const qtyEl  = row.querySelector('input[name="itemQuantidade[]"]');
+      const valEl  = row.querySelector('input[name="itemValorUnitario[]"]');
       if (descEl && qtyEl && valEl && descEl.value && qtyEl.value) {
         const quantidade = Number(qtyEl.value.replace(',', '.'));
         const rawVal = valEl.value.replace(/\./g, '').replace(',', '.');
-        const valor_unitario = Number(rawVal);
-        payload.itens.push({ descricao: descEl.value, quantidade, valor_unitario });
+        payload.itens.push({
+          descricao: descEl.value,
+          quantidade,
+          valor_unitario: Number(rawVal)
+        });
       }
     });
 
@@ -1403,40 +1531,20 @@ if (dropZone && arquivoInput) {
 // Registra a rota v3
 registerRoute("#financeiro-lancamento-create-v3", renderFinanceiroLancamentoCreateV3);
 
-  // Single item add
-  const addItemBtn = document.getElementById("addItemBtn");
-  if (addItemBtn) {
-    addItemBtn.onclick = () => {
-      const container = document.getElementById("itensContainer");
-      const item = document.createElement("div");
-      item.className = "item-row mb-2";
-      item.innerHTML = `
-        <input type="text" name="itemDescricao[]" class="form-control item-descricao mb-1" placeholder="Descrição do Item" required>
-        <input type="text" name="itemQuantidade[]" class="form-control item-quantidade mb-1" placeholder="Quantidade" required>
-        <input type="text" name="itemValorUnitario[]" class="form-control item-valor-unitario" placeholder="Valor Unitário" required>
-        <button type="button" class="btn btn-danger btn-sm remove-item-btn ms-2">- Item</button>
-      `;
-      container.appendChild(item);
-    };
+  // Helpers para habilitar/desabilitar botões de remover parcelas/itens
+  function updateParcelaRemoveButtons() {
+    const rows = document.querySelectorAll('#parcelasTable tbody tr');
+    const disabled = rows.length <= 1;
+    rows.forEach(tr => {
+      const btn = tr.querySelector('.remove-parcela');
+      if (btn) btn.disabled = disabled;
+    });
   }
-// Remove parcela when '-' button clicked
-document.addEventListener('click', event => {
-  if (event.target && event.target.classList.contains('remove-parcela-btn')) {
-    const item = event.target.closest('.parcela-item');
-    if (item) {
-      item.remove();
-      if (typeof updateParcelaIndices === "function") updateParcelaIndices();
-    }
+  function updateItemRemoveButtons() {
+    const rows = document.querySelectorAll('#itensTable tbody tr');
+    const disabled = rows.length <= 1;
+    rows.forEach(tr => {
+      const btn = tr.querySelector('.remove-item');
+      if (btn) btn.disabled = disabled;
+    });
   }
-});
-
-// Remove item when '-' button clicked
-document.addEventListener('click', event => {
-  if (event.target && event.target.classList.contains('remove-item-btn')) {
-    const item = event.target.closest('.item-row');
-    if (item) {
-      item.remove();
-      if (typeof updateItemIndices === "function") updateItemIndices();
-    }
-  }
-});

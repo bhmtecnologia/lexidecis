@@ -205,14 +205,14 @@ export async function renderFinanceiroLancamentoCreateV5() {
       <div class="page-title" style="padding: 1rem;">
         <div class="row">
           <div class="col-sm-6 col-12">
-            <h2 style="color: var(--black);">Financeiro - Lançamento Create V3</h2>
-            <p class="mb-0" style="color: var(--black);">Crie e gerencie novos lançamentos de pagamento (v3)</p>
+            <h2 style="color: var(--black);">Financeiro - Lançamento Create V5</h2>
+            <p class="mb-0" style="color: var(--black);">Crie e gerencie novos lançamentos de pagamento (v5)</p>
           </div>
           <div class="col-sm-6 col-12">
             <ol class="breadcrumb" style="color: var(--theme-default);">
               <li class="breadcrumb-item"><a href="index.html" style="color: var(--theme-default);"><i class="iconly-Home icli svg-color"></i></a></li>
               <li class="breadcrumb-item" style="color: var(--theme-default);">Financeiro</li>
-              <li class="breadcrumb-item active" style="color: var(--theme-default);">Lançamento Create V3</li>
+              <li class="breadcrumb-item active" style="color: var(--theme-default);">Lançamento Create V5</li>
             </ol>
           </div>
         </div>
@@ -457,46 +457,6 @@ export async function renderFinanceiroLancamentoCreateV5() {
     <!--  -->
   `;
 
-  // --- Parcelas: adicionar/remover linha (table) ---
-  document.getElementById('addParcelaBtn').addEventListener('click', () => {
-    const tbody = document.querySelector('#parcelasTable tbody');
-    if (!tbody) return; // evita erros se o elemento não existir
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td><input type="text" name="parcelaValor[]" class="form-control mask-currency" required></td>
-      <td><input type="date" name="parcelaDataVenc[]" class="form-control" required></td>
-      <td><button type="button" class="btn btn-sm btn-danger remove-parcela">Remover</button></td>
-    `;
-    tbody.appendChild(row);
-    updateParcelaRemoveButtons();
-  });
-  document.addEventListener('click', e => {
-    if (e.target.matches('.remove-parcela')) {
-      const tr = e.target.closest('tr');
-      if (tr) tr.remove();
-      updateParcelaRemoveButtons();
-    }
-  });
-
-  // --- Itens da Nota: adicionar/remover linha (table) ---
-  document.getElementById('addItemBtn').addEventListener('click', () => {
-    const tbody = document.querySelector('#itensTable tbody');
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td><input type="text" name="itemDescricao[]" class="form-control" required></td>
-      <td><input type="text" name="itemQuantidade[]" class="form-control" required></td>
-      <td><input type="text" name="itemValorUnitario[]" class="form-control mask-currency" required></td>
-      <td><button type="button" class="btn btn-sm btn-danger remove-item">Remover</button></td>
-    `;
-    tbody.appendChild(row);
-    updateItemRemoveButtons();
-  });
-  document.addEventListener('click', e => {
-    if (e.target.matches('.remove-item')) {
-      e.target.closest('tr').remove();
-      updateItemRemoveButtons();
-    }
-  });
 
   // Loader animation logic for progress bar (indeterminate)
   function startLoaderAnimation() {
@@ -626,6 +586,8 @@ export async function renderFinanceiroLancamentoCreateV5() {
   const wizardSteps = Array.from(document.querySelectorAll('.wizard-step'));
   let currentStep = 0;
   function showWizardStep(idx) {
+    // Scroll to top of form when changing steps
+    document.getElementById("content").scrollIntoView({ behavior: "smooth", block: "start" });
     wizardSteps.forEach((el, i) => el.style.display = i === idx ? 'block' : 'none');
     // Show/hide all "Anterior" buttons
     document.querySelectorAll('#wizardPrev').forEach(btn => {
@@ -1713,3 +1675,53 @@ registerRoute("#vtc-financeiro-lancamento-create-v5", renderFinanceiroLancamento
       if (btn) btn.disabled = disabled;
     });
   }
+
+  // Utility to add a row to a table and update buttons
+  function addTableRow(tableSelector, rowHtml, updateFn) {
+    const tbody = document.querySelector(`${tableSelector} tbody`);
+    if (!tbody) return;
+    tbody.insertAdjacentHTML('beforeend', rowHtml);
+    updateFn();
+  }
+
+  // Utility to handle remove-row button clicks
+  function initRemoveRow(buttonSelector, updateFn) {
+    document.addEventListener('click', e => {
+      if (e.target.matches(buttonSelector)) {
+        const tr = e.target.closest('tr');
+        if (tr) tr.remove();
+        updateFn();
+      }
+    });
+  }
+
+  // Initialize parcelas add/remove
+  const parcelaRowHtml = `
+    <tr>
+      <td><input type="text" name="parcelaValor[]" class="form-control mask-currency" required></td>
+      <td><input type="date" name="parcelaDataVenc[]" class="form-control" required></td>
+      <td><button type="button" class="btn btn-sm btn-danger remove-parcela">Remover</button></td>
+    </tr>`;
+  const addParcelaBtn = document.getElementById('addParcelaBtn');
+  if (addParcelaBtn) {
+    addParcelaBtn.addEventListener('click', () => {
+      addTableRow('#parcelasTable', parcelaRowHtml, updateParcelaRemoveButtons);
+    });
+  }
+  initRemoveRow('.remove-parcela', updateParcelaRemoveButtons);
+
+  // Initialize itens add/remove
+  const itemRowHtml = `
+    <tr>
+      <td><input type="text" name="itemDescricao[]" class="form-control" required></td>
+      <td><input type="text" name="itemQuantidade[]" class="form-control" required></td>
+      <td><input type="text" name="itemValorUnitario[]" class="form-control mask-currency" required></td>
+      <td><button type="button" class="btn btn-sm btn-danger remove-item">Remover</button></td>
+    </tr>`;
+  const addItemBtn = document.getElementById('addItemBtn');
+  if (addItemBtn) {
+    addItemBtn.addEventListener('click', () => {
+      addTableRow('#itensTable', itemRowHtml, updateItemRemoveButtons);
+    });
+  }
+  initRemoveRow('.remove-item', updateItemRemoveButtons);

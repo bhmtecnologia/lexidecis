@@ -182,6 +182,16 @@ export async function renderFinanceiroLancamentoCreateV3() {
         text-decoration: underline;
         cursor: pointer;
       }
+      /* Permite quebra de linha em células de tabela responsiva */
+      .table-responsive td {
+        white-space: normal !important;
+        word-break: break-word !important;
+      }
+      /* Aumenta a largura mínima da coluna de descrição */
+      #itensTable th:first-child,
+      #itensTable td:first-child {
+        min-width: 150px;
+      }
     </style>
     <div class="container-fluid" style="background-color: var(--body-color); color: var(--body-font-color);" aria-busy="false">
       <!-- Loading Overlay -->
@@ -372,36 +382,40 @@ export async function renderFinanceiroLancamentoCreateV3() {
               <!-- Parcelas -->
               <div id="parcelasSection" class="mb-3">
                 <label class="form-label">Parcelas <span class="text-danger">*</span></label>
-                <table class="table table-sm" id="parcelasTable">
-                  <thead>
-                    <tr>
-                      <th>Valor</th>
-                      <th>Data Vencimento</th>
-                      <th>Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <!-- rows will be dynamically managed -->
-                  </tbody>
-                </table>
+                <div class="table-responsive">
+                  <table class="table table-sm" id="parcelasTable">
+                    <thead>
+                      <tr>
+                        <th>Valor</th>
+                        <th>Data Vencimento</th>
+                        <th>Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <!-- rows will be dynamically managed -->
+                    </tbody>
+                  </table>
+                </div>
                 <button type="button" id="addParcelaBtn" class="btn btn-sm btn-secondary">Adicionar parcela</button>
               </div>
               <!-- Itens da Nota Fiscal -->
               <div id="itensSection" class="mb-3">
                 <label class="form-label">Itens da Nota Fiscal <span class="text-danger">*</span></label>
-                <table class="table table-sm" id="itensTable">
-                  <thead>
-                    <tr>
-                      <th>Descrição</th>
-                      <th>Quantidade</th>
-                      <th>Valor Unitário</th>
-                      <th>Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <!-- item rows will be dynamically managed -->
-                  </tbody>
-                </table>
+                <div class="table-responsive">
+                  <table class="table table-sm" id="itensTable">
+                    <thead>
+                      <tr>
+                        <th>Descrição</th>
+                        <th>Quantidade</th>
+                        <th>Valor Unitário</th>
+                        <th>Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <!-- item rows will be dynamically managed -->
+                    </tbody>
+                  </table>
+                </div>
                 <button type="button" id="addItemBtn" class="btn btn-sm btn-secondary">Adicionar item</button>
               </div>
               <!-- Justificativa -->

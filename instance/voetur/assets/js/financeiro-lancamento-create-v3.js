@@ -649,6 +649,12 @@ export async function renderFinanceiroLancamentoCreateV3() {
           <div><a href="${info.filename}" target="_blank">${info.filename}</a></div>`;
       }
       if (info.tipo_documento === "Nota Fiscal") {
+        // ===== DEBUG LOGS: Preenchimento de Filial =====
+        console.group("DEBUG: Preenchimento de Filial");
+        console.log("Classification info:", info);
+        console.log("FiliaisData original:", window.filiaisData);
+        console.log("CNPJ do tomador extraído:", info.cnpj_tomador);
+        console.groupEnd();
         // Preenche campos da nota fiscal com checagem de existência
         const numeroEl = document.getElementById("numeroDocumento");
         if (numeroEl) {
@@ -738,8 +744,6 @@ export async function renderFinanceiroLancamentoCreateV3() {
         } catch (err) {
           console.error("Erro ao recarregar fornecedores:", err);
         }
-        const fornecedorSelect = document.getElementById("fornecedorSelect");
-        const match = (window.fornecedoresData || []).find(f => f.cnpj === info.cnpj_fornecedor);
         // Hide classification-section before toggling others
         document.getElementById("classification-section").classList.add("d-none");
         // Hide Moeda for Nota Fiscal
@@ -750,282 +754,140 @@ export async function renderFinanceiroLancamentoCreateV3() {
           moedaSelectEl.required = false;
           moedaSelectEl.disabled = true;
         }
-        if (match) {
-          // Oculta seção de cadastro e exibe formulário normal
-          document.getElementById("supplier-registration-section").classList.add("d-none");
-          document.getElementById("form-section").classList.remove("d-none");
-          // Seletor do fornecedor (criado ou existente)
-          let optionValue = match.uuid;
-          const fornecedorSelect = document.getElementById("fornecedorSelect");
-          fornecedorSelect.value = optionValue;
-          fornecedorSelect.disabled = true;
-          const unlockFornecedor = document.getElementById("unlockFornecedor");
-          if (unlockFornecedor) {
-            unlockFornecedor.checked = !info.cnpj_fornecedor;
-            fornecedorSelect.disabled = !unlockFornecedor.checked;
-            unlockFornecedor.disabled = false;
-            if (window.$ && $.fn.select2) $("#fornecedorSelect").trigger("change");
-          }
-          // Preenche filial com o tomador (sua filial que contratou)
-          const filialMatch = (window.filiaisData || []).find(f => f.cnpj === info.cnpj_tomador);
-          if (filialMatch) {
-            const filialSelect = document.getElementById("filialSelect");
-            filialSelect.value = filialMatch.id || filialMatch.uuid || filialMatch.nome;
+        // Sempre mostra o formulário e oculta o cadastro de fornecedor
+        document.getElementById("supplier-registration-section").classList.add("d-none");
+        document.getElementById("form-section").classList.remove("d-none");
+
+        // Preenche Filial (Tomador) via API usando CNPJ do tomador
+        try {
+          const allFiliais = await listFiliais(AuthService, { cnpj: info.cnpj_tomador });
+          const filialSelect = document.getElementById("filialSelect");
+          filialSelect.innerHTML = '<option value="">Selecione</option>';
+          // Filtra apenas filiais cujo CNPJ, sem formatação, coincide exatamente
+          const desiredCnpj = info.cnpj_tomador ? info.cnpj_tomador.replace(/\D/g, "") : "";
+          const matched = allFiliais.filter(f => {
+            const fCnpj = f.cnpj ? f.cnpj.replace(/\D/g, "") : "";
+            return fCnpj === desiredCnpj;
+          });
+          // Popula apenas as filiais correspondentes
+          matched.forEach(f => {
+            const opt = document.createElement('option');
+            opt.value = f.id || f.uuid || '';
+            opt.text = `${f.nome} (${f.cnpj})`;
+            filialSelect.add(opt);
+          });
+          // Se houver correspondência, seleciona e bloqueia o campo
+          if (matched.length) {
+            filialSelect.value = matched[0].id || matched[0].uuid;
             filialSelect.disabled = true;
-            const unlockFilial = document.getElementById("unlockFilial");
-            if (unlockFilial) {
-              unlockFilial.checked = !info.cnpj_tomador;
-              filialSelect.disabled = !unlockFilial.checked;
-              unlockFilial.disabled = false;
-              if (window.$ && $.fn.select2) $("#filialSelect").trigger("change");
+            if (window.$ && $.fn.select2) {
+              $("#filialSelect").trigger("change");
             }
           }
-          showAlert("Documento classificado como Nota Fiscal. Campos preenchidos.", "success");
-          // ======= Preenche tabelas de parcelas e itens =======
-          // Preenche parcelas no table
-          const parcelas = info.parcelas_financeiras || info.parcelas || [];
-          const parcelasTbody = document.querySelector('#parcelasTable tbody');
-          if (parcelasTbody) {
-            parcelasTbody.innerHTML = '';
-            parcelas.forEach(p => {
-              const tr = document.createElement('tr');
-              tr.innerHTML = `
-                <td><input type="text" name="parcelaValor[]" class="form-control mask-currency" value="${Number(p.valor).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}" required></td>
-                <td><input type="date" name="parcelaDataVenc[]" class="form-control" value="${p.data_vencimento.split('T')[0]}" required></td>
-                <td><button type="button" class="btn btn-sm btn-danger remove-parcela">Remover</button></td>
-              `;
-              parcelasTbody.appendChild(tr);
-            });
-            updateParcelaRemoveButtons();
+        } catch (err) {
+          console.error("Erro ao buscar filiais do tomador:", err);
+        }
+
+        // Seletor do fornecedor (auto-preenchimento)
+        const fornecedorSelect = document.getElementById("fornecedorSelect");
+        if (fornecedorSelect) {
+          const desiredCnpj = info.cnpj_fornecedor ? info.cnpj_fornecedor.replace(/\D/g, "") : "";
+          // Tenta corresponder em lista já carregada
+          let existingSupplier = (window.fornecedoresData || []).find(f => {
+            const cnpjClean = f.cnpj ? f.cnpj.replace(/\D/g, "") : "";
+            return cnpjClean === desiredCnpj;
+          });
+          // Se não encontrar, reconsulta API filtrando pelo CNPJ
+          if (!existingSupplier) {
+            try {
+              const retryList = await listFornecedores(AuthService, { cnpj: info.cnpj_fornecedor });
+              window.fornecedoresData = retryList; // atualiza global
+              existingSupplier = retryList.find(f => {
+                const cnpjClean = f.cnpj ? f.cnpj.replace(/\D/g, "") : "";
+                return cnpjClean === desiredCnpj;
+              });
+            } catch (err) {
+              console.error("Erro ao reconsultar fornecedores:", err);
+            }
           }
-          // Se não houver parcelas, adiciona uma linha padrão (vencimento +7 dias, valor bruto)
-          if (parcelas.length === 0 && parcelasTbody) {
-            // Default single parcel when API returns none
+          // Se encontrou, preenche e trava o select
+          if (existingSupplier) {
+            fornecedorSelect.innerHTML = `<option value="${existingSupplier.uuid || existingSupplier.id}">${existingSupplier.nome} (${existingSupplier.cnpj})</option>`;
+            fornecedorSelect.value = existingSupplier.uuid || existingSupplier.id;
+            fornecedorSelect.disabled = true;
+            const unlockFornecedor = document.getElementById("unlockFornecedor");
+            if (unlockFornecedor) {
+              unlockFornecedor.checked = false;
+              unlockFornecedor.disabled = false;
+            }
+            if (window.$ && $.fn.select2) {
+              $("#fornecedorSelect").trigger("change");
+            }
+          }
+        }
+        showAlert("Documento classificado como Nota Fiscal. Campos preenchidos.", "success");
+        // ======= Preenche tabelas de parcelas e itens =======
+        // Preenche parcelas no table
+        const parcelas = info.parcelas_financeiras || info.parcelas || [];
+        const parcelasTbody = document.querySelector('#parcelasTable tbody');
+        if (parcelasTbody) {
+          parcelasTbody.innerHTML = '';
+          parcelas.forEach(p => {
             const tr = document.createElement('tr');
-            const dueDate = new Date(info.data_emissao);
-            dueDate.setDate(dueDate.getDate() + 7);
-            const dueStr = dueDate.toISOString().split('T')[0];
-            const brutoStr = document.getElementById('valor').value;
             tr.innerHTML = `
-              <td><input type="text" name="parcelaValor[]" class="form-control mask-currency" value="${brutoStr}" required></td>
-              <td><input type="date" name="parcelaDataVenc[]" class="form-control" value="${dueStr}" required></td>
+              <td><input type="text" name="parcelaValor[]" class="form-control mask-currency" value="${Number(p.valor).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}" required></td>
+              <td><input type="date" name="parcelaDataVenc[]" class="form-control" value="${p.data_vencimento.split('T')[0]}" required></td>
               <td><button type="button" class="btn btn-sm btn-danger remove-parcela">Remover</button></td>
             `;
             parcelasTbody.appendChild(tr);
-            updateParcelaRemoveButtons();
-          }
-
-          // Preenche itens no table
-          const itens = info.itens || [];
-          const itensTbody = document.querySelector('#itensTable tbody');
-          if (itensTbody) {
-            itensTbody.innerHTML = '';
-            itens.forEach(item => {
-              const rawValStr = item.valor_unitario;
-              let numVal;
-              if (rawValStr.includes(',') && rawValStr.includes('.')) {
-                numVal = Number(rawValStr.replace(/\./g,'').replace(',', '.'));
-              } else if (rawValStr.includes(',')) {
-                numVal = Number(rawValStr.replace(',', '.'));
-              } else {
-                numVal = Number(rawValStr);
-              }
-              const formatted = isNaN(numVal) ? '' : numVal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-              const tr = document.createElement('tr');
-              tr.innerHTML = `
-                <td><input type="text" name="itemDescricao[]" class="form-control" value="${item.descricao}" required></td>
-                <td><input type="text" name="itemQuantidade[]" class="form-control" value="${item.quantidade}" required></td>
-                <td><input type="text" name="itemValorUnitario[]" class="form-control mask-currency" value="${formatted}" required></td>
-                <td><button type="button" class="btn btn-sm btn-danger remove-item">Remover</button></td>
-              `;
-              itensTbody.appendChild(tr);
-            });
-            updateItemRemoveButtons();
-          }
-          // ======= Fim do preenchimento das tabelas =======
-          // REMOVIDO: Preenchimento antigo do itensContainer
-          /*
-          const itensData = info.itens || [];
-          const itensContainer = document.getElementById('itensContainer');
-          if (itensContainer) {
-            itensContainer.innerHTML = '';
-            itensData.forEach(item => {
-              // Formata valor unitário para pt-BR
-              const numVal = Number(item.valor_unitario);
-              const formattedVal = numVal.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-              const row = document.createElement('div');
-              row.className = 'item-row mb-2';
-              row.innerHTML = `
-                <input type="text" name="itemDescricao[]" class="form-control item-descricao mb-1" placeholder="Descrição do Item" required value="${item.descricao}">
-                <input type="text" name="itemQuantidade[]" class="form-control item-quantidade mb-1" placeholder="Quantidade" required value="${item.quantidade}">
-                <input type="text" name="itemValorUnitario[]" class="form-control item-valor-unitario" placeholder="Valor Unitário" required value="${formattedVal}">
-              `;
-              itensContainer.appendChild(row);
-            });
-          }
-          */
-        } else {
-          // Re-tentar consulta de fornecedores filtrando pelo CNPJ
-          try {
-            window.fornecedoresData = await listFornecedores(AuthService, { cnpj: info.cnpj_fornecedor });
-            // Atualiza o select de fornecedores com o resultado filtrado
-            const fornecedorSelectEl = document.getElementById("fornecedorSelect");
-            if (fornecedorSelectEl) {
-              fornecedorSelectEl.innerHTML = '<option value="">Selecione</option>';
-              window.fornecedoresData.forEach(f => {
-                const opt = document.createElement("option");
-                opt.value = f.uuid;
-                opt.text = `${f.nome} (${f.cnpj})`;
-                fornecedorSelectEl.add(opt);
-              });
-              if (window.$ && $.fn.select2) $("#fornecedorSelect").trigger("change");
-            }
-            // Tenta encontrar novamente
-            const retryMatch = (window.fornecedoresData || []).find(f => f.cnpj === info.cnpj_fornecedor);
-            if (retryMatch) {
-              // Se encontrou, reinicia a seção de formulário normalmente
-              document.getElementById("classification-section").classList.add("d-none");
-              document.getElementById("supplier-registration-section").classList.add("d-none");
-              document.getElementById("form-section").classList.remove("d-none");
-              const fornecedorSelect = document.getElementById("fornecedorSelect");
-              fornecedorSelect.value = retryMatch.uuid;
-              fornecedorSelect.disabled = true;
-              const unlockFornecedor = document.getElementById("unlockFornecedor");
-              if (unlockFornecedor) {
-                unlockFornecedor.checked = false;
-                unlockFornecedor.disabled = false;
-                if (window.$ && $.fn.select2) $("#fornecedorSelect").trigger("change");
-              }
-              // Preenche tabelas de parcelas e itens após retryMatch
-              const parcelas = info.parcelas_financeiras || info.parcelas || [];
-              const parcelasTbody = document.querySelector('#parcelasTable tbody');
-              if (parcelasTbody) {
-                parcelasTbody.innerHTML = '';
-                parcelas.forEach(p => {
-                  const tr = document.createElement('tr');
-                  tr.innerHTML = `
-                    <td><input type="text" name="parcelaValor[]" class="form-control mask-currency" value="${Number(p.valor).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}" required></td>
-                    <td><input type="date" name="parcelaDataVenc[]" class="form-control" value="${p.data_vencimento.split('T')[0]}" required></td>
-                    <td><button type="button" class="btn btn-sm btn-danger remove-parcela">Remover</button></td>
-                  `;
-                  parcelasTbody.appendChild(tr);
-                });
-                if (parcelas.length === 0) {
-                  // adiciona default como antes
-                  const tr = document.createElement('tr');
-                  const dueDate = new Date(info.data_emissao);
-                  dueDate.setDate(dueDate.getDate() + 7);
-                  const dueStr = dueDate.toISOString().split('T')[0];
-                  const brutoStr = document.getElementById('valor').value;
-                  tr.innerHTML = `
-                    <td><input type="text" name="parcelaValor[]" class="form-control mask-currency" value="${brutoStr}" required></td>
-                    <td><input type="date" name="parcelaDataVenc[]" class="form-control" value="${dueStr}" required></td>
-                    <td><button type="button" class="btn btn-sm btn-danger remove-parcela">Remover</button></td>
-                  `;
-                  parcelasTbody.appendChild(tr);
-                }
-                updateParcelaRemoveButtons();
-              }
-              const itens = info.itens || [];
-              const itensTbody = document.querySelector('#itensTable tbody');
-              if (itensTbody) {
-                itensTbody.innerHTML = '';
-                itens.forEach(item => {
-                  const rawValStr = item.valor_unitario;
-                  let numVal;
-                  if (rawValStr.includes(',') && rawValStr.includes('.')) {
-                    numVal = Number(rawValStr.replace(/\./g,'').replace(',', '.'));
-                  } else if (rawValStr.includes(',')) {
-                    numVal = Number(rawValStr.replace(',', '.'));
-                  } else {
-                    numVal = Number(rawValStr);
-                  }
-                  const formatted = isNaN(numVal) ? '' : numVal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                  const tr = document.createElement('tr');
-                  tr.innerHTML = `
-                    <td><input type="text" name="itemDescricao[]" class="form-control" value="${item.descricao}" required></td>
-                    <td><input type="text" name="itemQuantidade[]" class="form-control" value="${item.quantidade}" required></td>
-                    <td><input type="text" name="itemValorUnitario[]" class="form-control mask-currency" value="${formatted}" required></td>
-                    <td><button type="button" class="btn btn-sm btn-danger remove-item">Remover</button></td>
-                  `;
-                  itensTbody.appendChild(tr);
-                });
-                updateItemRemoveButtons();
-              }
-              showAlert("Fornecedor encontrado após nova consulta.", "success");
-              return; // não entra no else original
-            }
-          } catch (err) {
-            console.warn("Reconsulta de fornecedores falhou:", err);
-          }
-          // Oculta formulário normal
-          document.getElementById("form-section").classList.add("d-none");
-          // Exibe seção de registro de fornecedor
-          const supplierSection = document.getElementById("supplier-registration-section");
-          supplierSection.classList.remove("d-none");
-          // Preenche dados no formulário de cadastro
-          const supNomeEl = document.getElementById("supNome");
-          if (supNomeEl) supNomeEl.value = info.fornecedor || "";
-          const supCnpjEl = document.getElementById("supCnpj");
-          if (supCnpjEl) supCnpjEl.value = info.cnpj_fornecedor || "";
-          // Botão para preencher manualmente
-          let manualBtn = document.getElementById("btnManualEntry");
-          if (!manualBtn) {
-            manualBtn = document.createElement("button");
-            manualBtn.type = "button";
-            manualBtn.id = "btnManualEntry";
-            manualBtn.className = "btn btn-secondary mt-3";
-            manualBtn.textContent = "Preencher manualmente";
-            supplierSection.appendChild(manualBtn);
-            manualBtn.addEventListener("click", () => {
-              supplierSection.classList.add("d-none");
-              const formSection = document.getElementById("form-section");
-              formSection.classList.remove("d-none");
-              const fornecedorSelect = document.getElementById("fornecedorSelect");
-              fornecedorSelect.value = "";
-              fornecedorSelect.disabled = false;
-              // Força marcação manual e bloqueia o switch de Fornecedor
-              const unlockFornecedor = document.getElementById("unlockFornecedor");
-              if (unlockFornecedor) {
-                unlockFornecedor.checked = true;
-                unlockFornecedor.disabled = true;
-              }
-              if (window.$ && $.fn.select2) $("#fornecedorSelect").trigger("change");
-
-              // Desabilita o switch Manual (campo preenchido) mas mantém o campo editável com estilo cinza
-              const unlockFilial = document.getElementById("unlockFilial");
-              if (unlockFilial) {
-                unlockFilial.checked = false;
-                unlockFilial.disabled = false;
-              }
-
-              // Preenche manualmente a Filial com base na classificação da API
-              const filialSelect = document.getElementById("filialSelect");
-              const classification = window.classificationResult || {};
-              const tomadorCnpj = classification.cnpj_tomador;
-              const filialMatchManual = (window.filiaisData || []).find(f => f.cnpj === tomadorCnpj);
-              if (filialMatchManual) {
-                filialSelect.value = filialMatchManual.id || filialMatchManual.uuid || filialMatchManual.nome;
-              }
-
-              // Habilita o select de Filial para edição manual
-              if (filialSelect) {
-                filialSelect.disabled = false;
-                // Remove a linha que adiciona bg-light diretamente
-                // filialSelect.classList.add("bg-light");
-                // Em vez disso, aplica o estilo bg-light no container Select2
-                if (window.$ && $.fn.select2) {
-                  const $filial = $("#filialSelect");
-                  $filial.trigger("change");
-                  const sel2 = $filial.data("select2");
-                  if (sel2 && sel2.$selection) {
-                    sel2.$selection.addClass("bg-light");
-                  }
-                }
-              }
-            });
-          }
+          });
+          updateParcelaRemoveButtons();
         }
+        // Se não houver parcelas, adiciona uma linha padrão (vencimento +7 dias, valor bruto)
+        if (parcelas.length === 0 && parcelasTbody) {
+          // Default single parcel when API returns none
+          const tr = document.createElement('tr');
+          const dueDate = new Date(info.data_emissao);
+          dueDate.setDate(dueDate.getDate() + 7);
+          const dueStr = dueDate.toISOString().split('T')[0];
+          const brutoStr = document.getElementById('valor').value;
+          tr.innerHTML = `
+            <td><input type="text" name="parcelaValor[]" class="form-control mask-currency" value="${brutoStr}" required></td>
+            <td><input type="date" name="parcelaDataVenc[]" class="form-control" value="${dueStr}" required></td>
+            <td><button type="button" class="btn btn-sm btn-danger remove-parcela">Remover</button></td>
+          `;
+          parcelasTbody.appendChild(tr);
+          updateParcelaRemoveButtons();
+        }
+
+        // Preenche itens no table
+        const itens = info.itens || [];
+        const itensTbody = document.querySelector('#itensTable tbody');
+        if (itensTbody) {
+          itensTbody.innerHTML = '';
+          itens.forEach(item => {
+            const rawValStr = item.valor_unitario;
+            let numVal;
+            if (rawValStr.includes(',') && rawValStr.includes('.')) {
+              numVal = Number(rawValStr.replace(/\./g,'').replace(',', '.'));
+            } else if (rawValStr.includes(',')) {
+              numVal = Number(rawValStr.replace(',', '.'));
+            } else {
+              numVal = Number(rawValStr);
+            }
+            const formatted = isNaN(numVal) ? '' : numVal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td><input type="text" name="itemDescricao[]" class="form-control" value="${item.descricao}" required></td>
+              <td><input type="text" name="itemQuantidade[]" class="form-control" value="${item.quantidade}" required></td>
+              <td><input type="text" name="itemValorUnitario[]" class="form-control mask-currency" value="${formatted}" required></td>
+              <td><button type="button" class="btn btn-sm btn-danger remove-item">Remover</button></td>
+            `;
+            itensTbody.appendChild(tr);
+          });
+          updateItemRemoveButtons();
+        }
+        // ======= Fim do preenchimento das tabelas =======
       } else if (info.tipo_documento === "Conta a pagar") {
         // Preenche Tipo de Documento (read-only)
         const tipoEl = document.getElementById("tipoDocumento");

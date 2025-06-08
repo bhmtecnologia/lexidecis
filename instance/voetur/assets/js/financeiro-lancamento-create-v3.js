@@ -287,7 +287,7 @@ export async function renderFinanceiroLancamentoCreateV3() {
               <!-- Filial -->
               <div class="mb-3">
                 <div class="d-flex justify-content-between align-items-center">
-                  <label for="filialSelect" class="form-label">Filial <span style="color:red">*</span></label>
+                  <label for="filialSelect" class="form-label" data-bs-toggle="tooltip" title="Selecione a filial que contratou o serviço">Filial <span style="color:red">*</span></label>
                   <div class="form-check form-switch mb-0">
                     <input class="form-check-input" type="checkbox" id="unlockFilial">
                     <label class="form-check-label" for="unlockFilial">Manual</label>
@@ -298,19 +298,19 @@ export async function renderFinanceiroLancamentoCreateV3() {
               <div class="row">
                 <div class="col-md-6 mb-3">
                   <!-- Centro de Custo -->
-                  <label for="centroCustoSelect" class="form-label">Centro de Custo <span class="text-danger">*</span></label>
+                  <label for="centroCustoSelect" class="form-label" data-bs-toggle="tooltip" title="Selecione o centro de custo correspondente a este lançamento">Centro de Custo <span class="text-danger">*</span></label>
                   <select class="form-control" id="centroCustoSelect" required><option value="">Selecione</option></select>
                 </div>
                 <div class="col-md-6 mb-3">
                   <!-- Projeto -->
-                  <label for="projetoSelect" class="form-label">Projeto</label>
+                  <label for="projetoSelect" class="form-label" data-bs-toggle="tooltip" title="Selecione o projeto associado, se houver">Projeto</label>
                   <select class="form-control" id="projetoSelect"><option value="">Selecione</option></select>
                 </div>
               </div>
               <!-- Fornecedor -->
               <div class="mb-3">
                 <div class="d-flex justify-content-between align-items-center">
-                  <label for="fornecedorSelect" class="form-label">Fornecedor <span style="color:red">*</span></label>
+                  <label for="fornecedorSelect" class="form-label" data-bs-toggle="tooltip" title="Selecione ou insira o fornecedor registrado no sistema">Fornecedor <span style="color:red">*</span></label>
                   <div class="form-check form-switch mb-0">
                     <input class="form-check-input" type="checkbox" id="unlockFornecedor">
                     <label class="form-check-label" for="unlockFornecedor">Manual</label>
@@ -323,7 +323,7 @@ export async function renderFinanceiroLancamentoCreateV3() {
                 <div class="col-md-4 mb-3">
                   <!-- Número do Documento -->
                   <div class="d-flex justify-content-between align-items-center">
-                    <label for="numeroDocumento" class="form-label">N° Documento <span class="text-danger">*</span></label>
+                    <label for="numeroDocumento" class="form-label" data-bs-toggle="tooltip" title="Número do documento fiscal ou referência">N° Documento <span class="text-danger">*</span></label>
                     <div class="form-check form-switch mb-0">
                       <input class="form-check-input" type="checkbox" id="unlockNumero">
                       <label class="form-check-label" for="unlockNumero">Manual</label>
@@ -334,7 +334,7 @@ export async function renderFinanceiroLancamentoCreateV3() {
                 <div class="col-md-4 mb-3">
                   <!-- Valor Bruto -->
                   <div class="d-flex justify-content-between align-items-center">
-                    <label for="valor" class="form-label">Valor Bruto <span class="text-danger">*</span></label>
+                    <label for="valor" class="form-label" data-bs-toggle="tooltip" title="Valor total bruto do documento">Valor Bruto <span class="text-danger">*</span></label>
                     <div class="form-check form-switch mb-0">
                       <input class="form-check-input" type="checkbox" id="unlockValor">
                       <label class="form-check-label" for="unlockValor">Manual</label>
@@ -345,7 +345,7 @@ export async function renderFinanceiroLancamentoCreateV3() {
                 <div class="col-md-4 mb-3">
                   <!-- Data de Emissão -->
                   <div class="d-flex justify-content-between align-items-center">
-                    <label for="dataEmissao" class="form-label">Data de Emissão <span class="text-danger">*</span></label>
+                    <label for="dataEmissao" class="form-label" data-bs-toggle="tooltip" title="Data de emissão do documento">Data de Emissão <span class="text-danger">*</span></label>
                     <div class="form-check form-switch mb-0">
                       <input class="form-check-input" type="checkbox" id="unlockData">
                       <label class="form-check-label" for="unlockData">Manual</label>
@@ -505,6 +505,10 @@ export async function renderFinanceiroLancamentoCreateV3() {
     $("#centroCustoSelect").select2({ placeholder: "Selecione um centro de custo", width: "100%" });
     $("#projetoSelect").select2({ placeholder: "Selecione um projeto", allowClear: true, width: "100%" });
   }
+
+  // Initialize Bootstrap tooltips
+  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
 
   // Aplica máscara de moeda no campo Valor Bruto
   const valorInput = document.getElementById("valor");

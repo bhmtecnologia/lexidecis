@@ -585,6 +585,45 @@ export async function renderFinanceiroLancamentoCreateV5() {
   // Wizard step logic
   const wizardSteps = Array.from(document.querySelectorAll('.wizard-step'));
   let currentStep = 0;
+
+  // Step 1 validation helper
+  function validateStep1() {
+    const errors = [];
+    const tipo = document.getElementById('tipoDocumento').value;
+    const filial = document.getElementById('filialSelect').value;
+    const centro = document.getElementById('centroCustoSelect').value;
+    if (!tipo) errors.push('Tipo de Documento');
+    if (!filial) errors.push('Filial');
+    if (!centro) errors.push('Centro de Custo');
+    if (errors.length) {
+      showAlert(`Preencha os campos obrigatórios: ${errors.join(', ')}`, 'warning');
+      return false;
+    }
+    return true;
+  }
+
+  // Step 2 validation helper
+  function validateStep2() {
+    const errors = [];
+    const fornecedor = document.getElementById('fornecedorSelect').value;
+    const forma = document.getElementById('formaPagamento').value;
+    const numero = document.getElementById('numeroDocumento').value.trim();
+    const valor = document.getElementById('valor').value.trim();
+    const data = document.getElementById('dataEmissao').value;
+    const justificativa = document.getElementById('justificativa').value.trim();
+    if (!fornecedor) errors.push('Fornecedor');
+    if (!forma) errors.push('Forma de Pagamento');
+    if (!numero) errors.push('N° Documento');
+    if (!valor) errors.push('Valor Bruto');
+    if (!data) errors.push('Data de Emissão');
+    if (!justificativa) errors.push('Justificativa');
+    if (errors.length) {
+      showAlert(`Preencha os campos obrigatórios: ${errors.join(', ')}`, 'warning');
+      return false;
+    }
+    return true;
+  }
+
   function showWizardStep(idx) {
     // Scroll to top of form when changing steps
     document.getElementById("content").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -632,6 +671,8 @@ export async function renderFinanceiroLancamentoCreateV5() {
   document.querySelectorAll('#wizardNext').forEach(btn => {
     btn.addEventListener('click', () => {
       if (currentStep < wizardSteps.length - 1) {
+        if (currentStep === 0 && !validateStep1()) return;
+        if (currentStep === 1 && !validateStep2()) return;
         currentStep++;
         if (currentStep === wizardSteps.length - 1) {
           buildReview();

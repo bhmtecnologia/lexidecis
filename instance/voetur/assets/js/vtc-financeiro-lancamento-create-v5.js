@@ -1238,19 +1238,29 @@ export async function renderFinanceiroLancamentoCreateV5() {
           }
         }
 
-        // Ajusta data e valor da primeira parcela
-        const firstParcela = document.querySelector("#parcelasContainer .parcela-data");
-        if (firstParcela) {
-          // Data de vencimento
-          firstParcela.value = info.data_vencimento || "";
-          // Valor da parcela igual ao Valor Bruto
-          const valorParcelaInput = firstParcela.closest(".parcela-item").querySelector(".parcela-valor");
-          const valorEl = document.getElementById("valor");
-          if (valorParcelaInput && valorEl) {
-            valorParcelaInput.value = valorEl.value;
-          }
+        // ====== INÍCIO: Preenche parcelas no table como em Nota Fiscal ======
+        // Preenche parcelas no table como em Nota Fiscal
+        const parcelasTbody = document.querySelector('#parcelasTable tbody');
+        if (parcelasTbody) {
+          parcelasTbody.innerHTML = '';
+          // Default single parcel: valor bruto e vencimento hoje + 7 dias
+          const tr = document.createElement('tr');
+          const dueDate = new Date(info.data_emissao);
+          dueDate.setDate(dueDate.getDate() + 7);
+          const dueStr = dueDate.toISOString().split('T')[0];
+          // Converte e formata valor bruto
+          const raw = info.valor_total_nota || "0";
+          let numVal = Number(raw.replace(/\./g,'').replace(',', '.')) || 0;
+          const brutoStr = numVal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          tr.innerHTML = `
+            <td><input type="text" name="parcelaValor[]" class="form-control mask-currency" value="${brutoStr}" required></td>
+            <td><input type="date" name="parcelaDataVenc[]" class="form-control" value="${dueStr}" required></td>
+            <td><button type="button" class="btn btn-sm btn-danger remove-parcela">Remover</button></td>
+          `;
+          parcelasTbody.appendChild(tr);
+          updateParcelaRemoveButtons();
         }
-        // ===================== Fim dos campos adicionais =====================
+        // ====== FIM: Preenche parcelas no table como em Nota Fiscal ======
 
         // Hide classification-section before toggling others
         document.getElementById("classification-section").classList.add("d-none");
@@ -1267,10 +1277,6 @@ export async function renderFinanceiroLancamentoCreateV5() {
           el.disabled = true;
           el.required = false;
         });
-
-        // Use the first parcela date as the due date
-        const firstParcelaDateInput = document.querySelector("#parcelasContainer .parcela-data");
-        if (firstParcelaDateInput) firstParcelaDateInput.id = "vencimentoParcela1";
       } else {
         showAlert("Documento não reconhecido ou ilegível. Preencha manualmente.", "warning");
       }
@@ -1490,7 +1496,7 @@ export async function renderFinanceiroLancamentoCreateV5() {
       data_emissao: classification.data_emissao || document.getElementById("dataEmissao").value,
       // somente para contas a pagar
       data_vencimento: classification.tipo_documento === "Conta a pagar"
-        ? document.querySelector("#parcelasContainer .parcela-data").value
+        ? document.querySelector('#parcelasTable tbody tr input[name="parcelaDataVenc[]"]').value
         : null,
       // Converte valor total da nota (classification.valor_total_nota) para número pt-BR
       valor_nominal: (() => {

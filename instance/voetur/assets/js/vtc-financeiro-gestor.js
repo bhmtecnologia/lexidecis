@@ -321,11 +321,11 @@ export async function renderVtcFinanceiroGestor() {
     if (lancamentosTable) lancamentosTable.ajax.reload(null, false);
   });
   document.getElementById('btnLaunch').addEventListener('click', () => {
-    window.location.hash = '#financeiro-lancamento-create-v3';
+    window.location.hash = '#vtc-financeiro-lancamento-create-v5';
   });
   // demais handlers iguais...
 
-  // Handler para abrir modal de edição com estrutura estática (igual create-v3)
+  // Handler para abrir modal de edição com estrutura estática (igual create-v5)
   $('#lancamentosTable tbody').on('click', 'button[data-action="edit"]', function() {
     const id = $(this).data('id');
     const lanc = lancamentosData.find(l => l.id === id);
@@ -569,7 +569,7 @@ export async function renderVtcFinanceiroGestor() {
         // Initial state
         updateSaveBtnState();
 
-      // --- Select2 initialization logic as in create-v3 ---
+      // --- Select2 initialization logic as in create-v5 ---
       // Filial
       listFiliais(AuthService).then(filiais => {
         const select = $('#filialSelect');
@@ -684,7 +684,7 @@ export async function renderVtcFinanceiroGestor() {
         width: '100%'
       });
 
-      // Manual-toggle buttons: attach click handler as in create-v3
+      // Manual-toggle buttons: attach click handler as in create-v5
       $('#editFormContainer').on('click', '.manual-toggle', function() {
         const target = $($(this).data('target'));
         if (target.prop('tagName') === 'SELECT') {

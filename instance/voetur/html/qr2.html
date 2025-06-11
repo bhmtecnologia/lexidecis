@@ -124,8 +124,13 @@
       const qrStats = document.getElementById('qrStats');
       if (!qrStats) return;
       const entries = Array.from(window.recentQRCodes.keys());
-      qrStats.innerHTML = `QR Codes únicos detectados: ${entries.length}\n` +
-        entries.map((code, i) => `${String.fromCharCode(97 + i)}) ${code}`).join('\n');
+      const lines = entries.map(code => {
+        const time = window.recentQRCodes.get(code);
+        const dt = new Date(time);
+        const dateStr = `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}:${String(dt.getSeconds()).padStart(2,'0')}`;
+        return `${dateStr}: ${code}`;
+      });
+      qrStats.innerHTML = `QR Codes únicos detectados: ${entries.length}\n` + lines.join('\n');
     };
   </script>
 
@@ -152,13 +157,16 @@
 
     // Nova versão: leitura manual de múltiplos QR Codes por frame usando ZXing MultiFormatReader e decodeMultiple
     async function iniciarLeitorZXing(video) {
+      // Detections ativas para manter múltiplos bounding boxes na tela
+      window.activeDetections = []; // { text, points, time }
+      window.DETECTION_EXPIRY_MS = 3000; // milissegundos antes de expirar uma detecção
       // Configura leitor para múltiplos QR Codes
       const hints = new Map();
       hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.QR_CODE]);
       const reader = new ZXing.MultiFormatReader(hints);
 
       const tempCanvas = document.createElement('canvas');
-      const tempCtx = tempCanvas.getContext('2d');
+      const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
       tempCanvas.width = video.videoWidth;
       tempCanvas.height = video.videoHeight;
 
@@ -183,37 +191,50 @@
           } catch {}
         }
 
-        // Limpa overlay
-        const overlay = document.getElementById('overlay');
-        const ctx = overlay.getContext('2d');
-        ctx.clearRect(0, 0, overlay.width, overlay.height);
+        // Prune stale detections
+        const now = Date.now();
+        window.activeDetections = window.activeDetections.filter(d => now - d.time < window.DETECTION_EXPIRY_MS);
 
-        // Processa cada resultado
+        // Atualiza detections com os resultados atuais
         results.forEach(result => {
           const text = result.getText();
-          const points = result.getResultPoints();
+          const existing = window.activeDetections.find(d => d.text === text);
+          if (existing) {
+            existing.time = now;
+            existing.points = result.getResultPoints();
+          } else {
+            window.activeDetections.push({ text, points: result.getResultPoints(), time: now });
+          }
+
           // Atualiza contagem única
-          const now = Date.now();
           if (!window.recentQRCodes.has(text) ||
               now - window.recentQRCodes.get(text) > window.QR_REPEAT_INTERVAL_MS) {
             window.recentQRCodes.set(text, now);
             window.updateQRStats();
           }
-          // Desenha bounding box
-          if (points.length >= 4) {
-            ctx.strokeStyle = 'lime';
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.moveTo(points[0].getX(), points[0].getY());
-            points.slice(1).forEach(pt => ctx.lineTo(pt.getX(), pt.getY()));
-            ctx.closePath();
-            ctx.stroke();
-          }
+
           // Exibe alerta e log
           const msg = `ZXing: ${text}`;
           document.getElementById('eventAlert').textContent = msg;
           document.getElementById('eventAlert').style.background = "rgba(0,200,0,0.9)";
           window.appendEventLog(msg);
+        });
+
+        // Desenha todos os bounding boxes ativos
+        const overlay = document.getElementById('overlay');
+        const ctx = overlay.getContext('2d', { willReadFrequently: true });
+        ctx.clearRect(0, 0, overlay.width, overlay.height);
+        window.activeDetections.forEach(det => {
+          const pts = det.points;
+          if (pts && pts.length >= 4) {
+            ctx.strokeStyle = 'lime';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(pts[0].getX(), pts[0].getY());
+            pts.slice(1).forEach(pt => ctx.lineTo(pt.getX(), pt.getY()));
+            ctx.closePath();
+            ctx.stroke();
+          }
         });
       }, 200);
     }

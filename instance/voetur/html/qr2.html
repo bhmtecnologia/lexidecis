@@ -249,24 +249,6 @@
       originalWarn(msg, ...args);
     };
 
-    // Função para iniciar captura de tela
-    async function startScreenCapture() {
-      const videoElem = document.getElementById('video');
-      try {
-        const stream = await navigator.mediaDevices.getDisplayMedia({
-          video: { cursor: "always" },
-          audio: false
-        });
-        videoElem.srcObject = stream;
-        await new Promise(r => videoElem.onloadedmetadata = r);
-        capturing = true;
-        return videoElem;
-      } catch (err) {
-        alert("Erro ao capturar a tela: " + err);
-        throw err;
-      }
-    }
-
     // Função para iniciar captura de webcam, permitindo seleção de câmera
     async function startWebcamCapture(deviceId = null) {
       const videoElem = document.getElementById('video');
@@ -283,6 +265,24 @@
         return videoElem;
       } catch (err) {
         alert("Erro ao acessar a webcam: " + err);
+        throw err;
+      }
+    }
+
+    // Função para iniciar captura de tela
+    async function startScreenCapture() {
+      const videoElem = document.getElementById('video');
+      try {
+        const stream = await navigator.mediaDevices.getDisplayMedia({
+          video: { cursor: "always" },
+          audio: false
+        });
+        videoElem.srcObject = stream;
+        await new Promise(r => videoElem.onloadedmetadata = r);
+        capturing = true;
+        return videoElem;
+      } catch (err) {
+        alert("Erro ao capturar a tela: " + err);
         throw err;
       }
     }
@@ -532,6 +532,12 @@
           const option = document.createElement('option');
           option.text = 'Nenhuma câmera detectada';
           select.appendChild(option);
+        }
+
+        // Seleciona automaticamente a primeira câmera com "back" no nome, se disponível
+        const backCamOption = Array.from(select.options).find(opt => /back|trás|rear/i.test(opt.text));
+        if (backCamOption) {
+          select.value = backCamOption.value;
         }
       } catch (err) {
         console.error("Erro ao listar câmeras:", err);

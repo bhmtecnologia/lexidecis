@@ -131,14 +131,14 @@
     window.zxingReader = new ZXing.BrowserMultiFormatReader();
   </script>
   <script>
-    // Exemplo mínimo funcional usando ZXing diretamente na câmera
-    document.addEventListener('DOMContentLoaded', () => {
-      const video = document.getElementById('video');
+    // ZXing: iniciar leitura apenas após clicar em "Camera"
+    let codeReader = null;
 
-      // Inicializa o leitor ZXing
-      const codeReader = new ZXing.BrowserMultiFormatReader();
-
-      // Tenta usar qualquer câmera disponível
+    async function iniciarLeitorZXing(video) {
+      if (codeReader) {
+        codeReader.reset();
+      }
+      codeReader = new ZXing.BrowserMultiFormatReader();
       codeReader.decodeFromVideoDevice(null, video, (result, err) => {
         if (result) {
           console.log('Código detectado:', result.getText());
@@ -149,14 +149,34 @@
           console.error('Erro de leitura ZXing:', err);
         }
       });
+    }
 
-      // Para a câmera ao fechar a aba ou recarregar
-      window.addEventListener('beforeunload', () => codeReader.reset());
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('btn-webcam').addEventListener('click', async () => {
+        const deviceId = document.getElementById('cameraSelect').value;
+        const videoElem = await startWebcamCapture(deviceId);
+        const canvas = document.getElementById('canvas');
+        const overlay = document.getElementById('overlay');
+        canvas.style.display = '';
+        overlay.style.display = '';
+        if (navigator.gpu) {
+          initWebGPU(videoElem);
+        }
+        document.getElementById('btn-share').disabled = true;
+        document.getElementById('btn-webcam').disabled = true;
+        document.getElementById('btn-stop').disabled = false;
+        appendEventLog("Webcam iniciada");
+
+        iniciarLeitorZXing(videoElem);
+      });
+
+      listarCameras();
     });
   </script>
 </head>
 <body>
   <div id="controls">
+    <select id="cameraSelect"></select>
     <button id="btn-webcam">Camera</button>
     <button id="btn-share">Compartilhar Tela</button>
     <!-- O botão de ativar/desativar QR apenas desativa o loop de leitura -->
@@ -247,12 +267,12 @@
       }
     }
 
-    // Função para iniciar captura de webcam (sempre câmera traseira, sem deviceId)
-    async function startWebcamCapture() {
+    // Função para iniciar captura de webcam, permitindo seleção de câmera
+    async function startWebcamCapture(deviceId = null) {
       const videoElem = document.getElementById('video');
       try {
         const constraints = {
-          video: { facingMode: { exact: "environment" }, width: { ideal: 640 }, height: { ideal: 480 } },
+          video: deviceId ? { deviceId: { exact: deviceId } } : true,
           audio: false
         };
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -438,10 +458,11 @@
       }
     });
 
-    // Botão Usar Webcam
+    // Botão Usar Webcam (usa a câmera selecionada no dropdown)
     document.getElementById('btn-webcam').addEventListener('click', async () => {
       if (capturing) return;
-      const videoElem = await startWebcamCapture();
+      const deviceId = document.getElementById('cameraSelect').value;
+      const videoElem = await startWebcamCapture(deviceId);
       // Show WebGPU canvas and overlay again
       const canvas = document.getElementById('canvas');
       const overlay = document.getElementById('overlay');
@@ -479,6 +500,46 @@
       }
       document.getElementById('backendIndicator').textContent = tf.getBackend().toUpperCase();
     });
+
+    // Listar dispositivos de vídeo ao carregar a página e popular o select
+    async function listarCameras() {
+      try {
+        // Solicita permissão para acessar a câmera antes de listar
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          stream.getTracks().forEach(track => track.stop()); // Libera a câmera logo após obter permissão
+        } catch (error) {
+          console.error("Permissão de câmera negada ou erro ao acessar a câmera:", error);
+          const select = document.getElementById('cameraSelect');
+          select.innerHTML = '<option>Permissão de câmera negada</option>';
+          return;
+        }
+
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const select = document.getElementById('cameraSelect');
+        const videoDevices = devices.filter(d => d.kind === 'videoinput');
+
+        select.innerHTML = ''; // limpa antes de preencher
+
+        videoDevices.forEach((device, index) => {
+          const option = document.createElement('option');
+          option.value = device.deviceId;
+          option.text = device.label || `Câmera ${index + 1}`;
+          select.appendChild(option);
+        });
+
+        if (videoDevices.length === 0) {
+          const option = document.createElement('option');
+          option.text = 'Nenhuma câmera detectada';
+          select.appendChild(option);
+        }
+      } catch (err) {
+        console.error("Erro ao listar câmeras:", err);
+      }
+    }
+
+    // Chama a função ao carregar a página
+    window.addEventListener('DOMContentLoaded', listarCameras);
 
   </script>
 </body>

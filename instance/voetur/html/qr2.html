@@ -162,9 +162,9 @@
     <!-- O botão de ativar/desativar QR apenas desativa o loop de leitura -->
     <button id="btn-toggle-detect">Desativar QR</button>
     <button id="btn-toggle-qr">Desativar Leitura QR</button>
-    <select id="cameraSelect">
+    <!-- <select id="cameraSelect">
       <option value="">Carregando câmeras...</option>
-    </select>
+    </select> -->
     <button id="btn-stop" disabled>Parar Compartilhamento</button>
     <div id="backendIndicator">...</div>
   </div>
@@ -273,14 +273,12 @@
       }
     }
 
-    // Função para iniciar captura de webcam por deviceId
-    async function startWebcamCapture(deviceId = null) {
+    // Função para iniciar captura de webcam (sempre câmera traseira, sem deviceId)
+    async function startWebcamCapture() {
       const videoElem = document.getElementById('video');
       try {
         const constraints = {
-          video: deviceId
-            ? { deviceId: { exact: deviceId }, width: { exact: 640 }, height: { exact: 480 } }
-            : { facingMode: "user", width: { exact: 640 }, height: { exact: 480 } },
+          video: { facingMode: { exact: "environment" }, width: { ideal: 640 }, height: { ideal: 480 } },
           audio: false
         };
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -466,28 +464,11 @@
       }
     });
 
-    // Botão Usar Webcam (solicita permissão antes de listar dispositivos)
+    // Botão Usar Webcam
     document.getElementById('btn-webcam').addEventListener('click', async () => {
       if (capturing) return;
-
-      // 1. Acesso temporário para desbloquear enumerateDevices
-      try {
-        const tempStream = await navigator.mediaDevices.getUserMedia({ video: true });
-        tempStream.getTracks().forEach(track => track.stop()); // Para o stream após liberação
-      } catch (err) {
-        alert("Permissão negada para acessar a câmera");
-        return;
-      }
-
-      // 2. Agora podemos listar as câmeras corretamente
-      await populateCameraList();
-      const select = document.getElementById('cameraSelect');
-      const selectedDeviceId = select.value;
-
-      // 3. Abre a câmera com base no dispositivo selecionado
-      const videoElem = await startWebcamCapture(selectedDeviceId);
-
-      // Exibe WebGPU e overlay
+      const videoElem = await startWebcamCapture();
+      // Show WebGPU canvas and overlay again
       const canvas = document.getElementById('canvas');
       const overlay = document.getElementById('overlay');
       canvas.style.display = '';
@@ -495,7 +476,6 @@
       if (navigator.gpu) {
         initWebGPU(videoElem);
       }
-
       document.getElementById('btn-share').disabled = true;
       document.getElementById('btn-webcam').disabled = true;
       document.getElementById('btn-stop').disabled = false;

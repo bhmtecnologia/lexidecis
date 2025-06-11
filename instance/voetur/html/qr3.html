@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>WebGPU + Vídeo (detecção de QR Code)</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #000;
+    }
+    #canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+    }
+    #overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 11;
+    }
+    #video {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: auto;
+      height: auto;
+      max-width: 100vw;
+      max-height: 100vh;
+      transform: translate(-50%, -50%);
+      object-fit: contain;
+      z-index: 0;
+    }
+    #controls {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(0,0,0,0.8);
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      z-index: 20;
+    }
+    #controls button, #controls select {
+      padding: 6px 10px;
+      background: rgba(255,255,255,0.1);
+      color: white;
+      border: 1px solid #444;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    #backendIndicator {
+      margin-left: auto;
+      color: #fff;
+      font-size: 14px;
+      white-space: nowrap;
+      padding-right: 10px;
+    }
+    #eventAlert {
+      position: fixed;
+      top: 50px;
+      left: 0;
+      width: 100%;
+      background: rgba(0,200,0,0.9);
+      color: white;
+      text-align: center;
+      padding: 6px;
+      font-size: 16px;
+      z-index: 20;
+    }
+    #detectionInfo {
+      position: fixed;
+      top: 90px;
+      right: 10px;
+      background: rgba(0,0,0,0.6);
+      color: white;
+      padding: 8px;
+      font-size: 14px;
+      border-radius: 4px;
+      z-index: 20;
+    }
+    #eventLog {
+      position: fixed;
+      top: 130px;
+      left: 10px;
+      width: 300px;
+      max-height: 200px;
+      overflow-y: auto;
+      background: rgba(0,0,0,0.6);
+      color: white;
+      padding: 8px;
+      font-size: 12px;
+      z-index: 20;
+      border-radius: 4px;
+    }
+    #cameraSelect {
+      padding: 6px 10px;
+      background: rgba(255,255,255,0.1);
+      color: white;
+      border: 1px solid #444;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+  </style>
+
+  <script>
+    // Inicializa contagem de QRs únicos globalmente
+    window.recentQRCodes = new Map();
+    window.QR_REPEAT_INTERVAL_MS = 3000;
+    window.updateQRStats = function() {
+      const qrStats = document.getElementById('qrStats');
+      if (!qrStats) return;
+      const entries = Array.from(window.recentQRCodes.keys());
+      const lines = entries.map(code => {
+        const time = window.recentQRCodes.get(code);
+        const dt = new Date(time);
+        const dateStr = `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}:${String(dt.getSeconds()).padStart(2,'0')}`;
+        return `${dateStr}: ${code}`;
+      });
+      qrStats.innerHTML = `QR Codes únicos detectados: ${entries.length}\n` + lines.join('\n');
+    };
+  </script>
+
+  <!-- Removido: QuaggaJS -->
+  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script> -->
+
+  <!-- Inclui TensorFlow e backend WebGPU -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+  <script type="module">
+    import 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgpu@4.22.0/dist/tf-backend-webgpu.min.js';
+  </script>
+
+  <!-- ZXing para leitura de múltiplos QR Codes -->
+  <script src="https://unpkg.com/@zxing/library@0.20.0"></script>
+  <script>
+    window.zxingReader = new ZXing.BrowserMultiFormatReader();
+    // Flags globais para controle de captura e leitura
+    window.capturing = false;
+    window.qrEnabled = true;
+    // Lista de códigos válidos esperados
+    window.validCodes = ['1234', '4321'];
+
+    // Store last 5 photo captures with validity flag
+    window.photoRecords = []; // Array of { dataUrl, isValid }
+
+    function updatePhotoGallery() {
+      const gallery = document.getElementById('photoGallery');
+      gallery.innerHTML = '';
+      window.photoRecords.forEach(rec => {
+        const img = document.createElement('img');
+        img.src = rec.dataUrl;
+        img.style.width = '60px';
+        img.style.height = '60px';
+        img.style.objectFit = 'cover';
+        img.style.border = `3px solid ${rec.isValid ? 'lime' : 'red'}`;
+        gallery.appendChild(img);
+      });
+    }
+  </script>
+  <script>
+    // ZXing: iniciar leitura apenas após clicar em "Camera"
+    let codeReader = null;
+
+    // Nova versão: leitura manual de múltiplos QR Codes por frame usando ZXing MultiFormatReader e decodeMultiple
+    async function iniciarLeitorZXing(video) {
+      // Detections ativas para manter múltiplos bounding boxes na tela
+      window.activeDetections = []; // { text, points, time }
+      window.DETECTION_EXPIRY_MS = 3000; // milissegundos antes de expirar uma detecção
+      // Configura leitor para múltiplos QR Codes
+      const hints = new Map();
+      hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.QR_CODE]);
+      const reader = new ZXing.MultiFormatReader(hints);
+
+      const tempCanvas = document.createElement('canvas');
+      const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+      tempCanvas.width = video.videoWidth;
+      tempCanvas.height = video.videoHeight;
+
+      // Intervalo de leitura (200ms)
+      setInterval(() => {
+        if (!window.capturing || !window.qrEnabled) return;
+        // Desenha frame no canvas temporário
+        tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+        // Prepara bitmap
+        const luminanceSource = new ZXing.HTMLCanvasElementLuminanceSource(tempCanvas);
+        const binaryBitmap = new ZXing.BinaryBitmap(
+          new ZXing.HybridBinarizer(luminanceSource)
+        );
+        let results = [];
+        try {
+          results = reader.decodeMultiple(binaryBitmap) || [];
+        } catch (e) {
+          // sem múltiplos resultados, tentar decode simples
+          try {
+            const single = reader.decode(binaryBitmap);
+            if (single) results = [single];
+          } catch {}
+        }
+
+        // Prune stale detections
+        const now = Date.now();
+        window.activeDetections = window.activeDetections.filter(d => now - d.time < window.DETECTION_EXPIRY_MS);
+
+        // Atualiza detections com os resultados atuais
+        results.forEach(result => {
+          const text = result.getText();
+          const points = result.getResultPoints();
+          const isValid = window.validCodes.includes(text);
+          // Atualiza contagem única se válido
+          const now = Date.now();
+          if (isValid) {
+            if (!window.recentQRCodes.has(text) ||
+                now - window.recentQRCodes.get(text) > window.QR_REPEAT_INTERVAL_MS) {
+              window.recentQRCodes.set(text, now);
+              window.updateQRStats();
+            }
+          }
+          // Desenha bounding box
+          const overlay = document.getElementById('overlay');
+          const ctx = overlay.getContext('2d', { willReadFrequently: true });
+          if (points.length >= 4) {
+            ctx.strokeStyle = isValid ? 'lime' : 'red';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(points[0].getX(), points[0].getY());
+            points.slice(1).forEach(pt => ctx.lineTo(pt.getX(), pt.getY()));
+            ctx.closePath();
+            ctx.stroke();
+          }
+          // Exibe alerta e log
+          if (isValid) {
+            const msg = `QR válido: ${text}`;
+            document.getElementById('eventAlert').textContent = msg;
+            document.getElementById('eventAlert').style.background = "rgba(0,200,0,0.9)";
+            window.appendEventLog(msg);
+
+            // Capture photo of current frame
+            const photoCanvas = document.createElement('canvas');
+            photoCanvas.width = video.videoWidth;
+            photoCanvas.height = video.videoHeight;
+            const pctx = photoCanvas.getContext('2d');
+            pctx.drawImage(video, 0, 0, photoCanvas.width, photoCanvas.height);
+            const dataUrl = photoCanvas.toDataURL('image/png');
+
+            // Add to gallery and keep only last 5
+            window.photoRecords.unshift({ dataUrl, isValid });
+            if (window.photoRecords.length > 5) window.photoRecords.pop();
+            updatePhotoGallery();
+          } else {
+            const msg = `Item não identificado: ${text}`;
+            document.getElementById('eventAlert').textContent = msg;
+            document.getElementById('eventAlert').style.background = "rgba(200,0,0,0.9)";
+            window.appendEventLog(msg);
+          }
+        });
+
+        // Desenha todos os bounding boxes ativos (opcional, pode ser removido se só quiser o bounding box do forEach acima)
+        /*
+        const overlay = document.getElementById('overlay');
+        const ctx = overlay.getContext('2d', { willReadFrequently: true });
+        ctx.clearRect(0, 0, overlay.width, overlay.height);
+        window.activeDetections.forEach(det => {
+          const pts = det.points;
+          if (pts && pts.length >= 4) {
+            ctx.strokeStyle = 'lime';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(pts[0].getX(), pts[0].getY());
+            pts.slice(1).forEach(pt => ctx.lineTo(pt.getX(), pt.getY()));
+            ctx.closePath();
+            ctx.stroke();
+          }
+        });
+        */
+      }, 200);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('btn-webcam').addEventListener('click', async () => {
+        const deviceId = document.getElementById('cameraSelect').value;
+        const videoElem = await startWebcamCapture(deviceId);
+        const canvas = document.getElementById('canvas');
+        const overlay = document.getElementById('overlay');
+        canvas.style.display = '';
+        overlay.style.display = '';
+        if (navigator.gpu) {
+          initWebGPU(videoElem);
+        }
+        document.getElementById('btn-share').disabled = true;
+        document.getElementById('btn-webcam').disabled = true;
+        document.getElementById('btn-stop').disabled = false;
+        if (typeof appendEventLog === 'function') {
+          appendEventLog("Webcam iniciada");
+        }
+
+        iniciarLeitorZXing(videoElem);
+      });
+    });
+  </script>
+</head>
+<body>
+  <div id="controls">
+    <select id="cameraSelect"></select>
+    <button id="btn-webcam">Camera</button>
+    <button id="btn-share">Compartilhar Tela</button>
+    <!-- O botão de ativar/desativar QR apenas desativa o loop de leitura -->
+    <button id="btn-toggle-detect">Desativar QR</button>
+    <button id="btn-toggle-qr">Desativar Leitura QR</button>
+    <button id="btn-stop" disabled>Parar Compartilhamento</button>
+    <div id="backendIndicator">...</div>
+  </div>
+
+  <div id="eventAlert">Nenhum evento</div>
+  <div id="qrStats" style="
+    position: fixed;
+    top: 90px;
+    right: 10px;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    padding: 8px;
+    font-size: 14px;
+    border-radius: 4px;
+    z-index: 20;
+    max-width: 300px;
+    white-space: pre-wrap;
+  ">
+    QR Codes únicos detectados: 0
+  </div>
+  <div id="eventLog">
+    <strong>Log de Eventos:</strong><br>
+  </div>
+
+  <video id="video" autoplay playsinline></video>
+  <canvas id="canvas"></canvas>
+  <canvas id="overlay"></canvas>
+
+  <div id="photoGallery" style="
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    background: rgba(0,0,0,0.6);
+    padding: 8px;
+    border-radius: 4px;
+    z-index: 20;
+    display: flex;
+    gap: 4px;
+  ">
+    <!-- Up to 5 miniatures will be inserted here -->
+  </div>
+
+  <script type="module">
+    let faceDetected = false;
+    let capturing = false;
+    let detectEnabled = true;
+    let qrEnabled = true;
+    let qrInitial = null;
+    let qrLast = null;
+    let barInitial = null;
+    let barLast = null;
+
+    // (Removido: recentQRCodes, QR_REPEAT_INTERVAL_MS, updateQRStats - agora globais)
+
+
+
+    // Filtrar aviso de NonMaxSuppression síncrono no WebGPU
+    const originalWarn = console.warn.bind(console);
+    console.warn = (msg, ...args) => {
+      if (typeof msg === 'string' && msg.includes('tf.nonMaxSuppression() in webgpu locks the UI thread')) {
+        return;
+      }
+      originalWarn(msg, ...args);
+    };
+
+    // Função para iniciar captura de webcam, permitindo seleção de câmera
+    window.startWebcamCapture = async function(deviceId = null) {
+      const videoElem = document.getElementById('video');
+      try {
+        const constraints = {
+          video: deviceId ? { deviceId: { exact: deviceId } } : true,
+          audio: false
+        };
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        videoElem.srcObject = stream;
+        await new Promise(r => videoElem.onloadedmetadata = r);
+        if (videoElem.paused) await videoElem.play();
+        window.capturing = true;
+        return videoElem;
+      } catch (err) {
+        alert("Erro ao acessar a webcam: " + err);
+        throw err;
+      }
+    }
+
+    // Função para iniciar captura de tela
+    async function startScreenCapture() {
+      const videoElem = document.getElementById('video');
+      try {
+        const stream = await navigator.mediaDevices.getDisplayMedia({
+          video: { cursor: "always" },
+          audio: false
+        });
+        videoElem.srcObject = stream;
+        await new Promise(r => videoElem.onloadedmetadata = r);
+        window.capturing = true;
+        return videoElem;
+      } catch (err) {
+        alert("Erro ao capturar a tela: " + err);
+        throw err;
+      }
+    }
+
+    // Inicializa WebGPU + pipeline de exibição
+    async function initWebGPU(videoElem) {
+      if (!navigator.gpu) {
+        alert("WebGPU não suportado neste navegador.");
+        return;
+      }
+      const adapter = await navigator.gpu.requestAdapter();
+      const device  = await adapter.requestDevice();
+      const canvas  = document.getElementById('canvas');
+      const overlay = document.getElementById('overlay');
+      const context = canvas.getContext('webgpu');
+      const format  = navigator.gpu.getPreferredCanvasFormat();
+
+      // Ajusta tamanhos
+      canvas.width  = videoElem.videoWidth;
+      canvas.height = videoElem.videoHeight;
+      overlay.width = videoElem.videoWidth;
+      overlay.height = videoElem.videoHeight;
+      context.configure({ device, format, alphaMode: "opaque" });
+
+      const videoTex = device.createTexture({
+        size: [videoElem.videoWidth, videoElem.videoHeight, 1],
+        format: "rgba8unorm",
+        usage: GPUTextureUsage.TEXTURE_BINDING |
+               GPUTextureUsage.COPY_DST      |
+               GPUTextureUsage.RENDER_ATTACHMENT
+      });
+
+      const wgslShaderCode = `
+      struct VertexOutput {
+        @builtin(position) Position : vec4<f32>,
+        @location(0) fragUV      : vec2<f32>,
+      };
+
+      @group(0) @binding(0) var videoTex : texture_2d<f32>;
+      @group(0) @binding(1) var videoSampler : sampler;
+
+      @vertex
+      fn vs_main(@builtin(vertex_index) idx : u32) -> VertexOutput {
+        var pos = array<vec2<f32>, 3>(
+          vec2<f32>(-1.0, -1.0),
+          vec2<f32>( 3.0, -1.0),
+          vec2<f32>(-1.0,  3.0)
+        );
+        var uv = array<vec2<f32>, 3>(
+          vec2<f32>(0.0, 1.0),
+          vec2<f32>(2.0, 1.0),
+          vec2<f32>(0.0, -1.0)
+        );
+        var output : VertexOutput;
+        output.Position = vec4<f32>(pos[idx], 0.0, 1.0);
+        output.fragUV   = uv[idx];
+        return output;
+      }
+
+      @fragment
+      fn fs_main(in : VertexOutput) -> @location(0) vec4<f32> {
+        return textureSample(videoTex, videoSampler, in.fragUV);
+      }
+      `;
+
+      const shaderModule = device.createShaderModule({ code: wgslShaderCode });
+      const pipeline     = device.createRenderPipeline({
+        layout: 'auto',
+        vertex:  { module: shaderModule, entryPoint: 'vs_main' },
+        fragment:{ 
+          module: shaderModule, 
+          entryPoint: 'fs_main',
+          targets: [{ format }]
+        },
+        primitive: { topology: 'triangle-list' }
+      });
+
+      const sampler = device.createSampler({ magFilter: 'linear', minFilter: 'linear' });
+      const bindGroup = device.createBindGroup({
+        layout: pipeline.getBindGroupLayout(0),
+        entries: [
+          { binding: 0, resource: videoTex.createView() },
+          { binding: 1, resource: sampler },
+        ]
+      });
+
+      // Loop de renderização WebGPU
+      function frame() {
+        if (!window.capturing) return;
+        faceDetected = false;
+
+        if (videoElem.videoWidth > 0 && videoElem.videoHeight > 0) {
+          try {
+            device.queue.copyExternalImageToTexture(
+              { source: videoElem, origin: { x: 0, y: 0 } },
+              { texture: videoTex, mipLevel: 0, origin: { x: 0, y: 0 } },
+              { width: videoElem.videoWidth, height: videoElem.videoHeight, depthOrArrayLayers: 1 }
+            );
+          } catch (e) {
+            console.warn("Erro ao copiar textura:", e);
+          }
+        }
+
+        const commandEncoder = device.createCommandEncoder();
+        const textureView    = context.getCurrentTexture().createView();
+        const renderPass     = commandEncoder.beginRenderPass({
+          colorAttachments: [{
+            view: textureView,
+            loadOp: "clear",
+            clearValue: faceDetected
+              ? { r: 0.0, g: 0.8, b: 0.0, a: 1.0 }
+              : { r: 0.0, g: 0.0, b: 0.8, a: 1.0 },
+            storeOp: "store"
+          }]
+        });
+
+        renderPass.setPipeline(pipeline);
+        renderPass.setBindGroup(0, bindGroup);
+        renderPass.draw(3, 1, 0, 0);
+        renderPass.end();
+
+        device.queue.submit([commandEncoder.finish()]);
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+
+      // Quando a captura terminar
+      const track = videoElem.srcObject.getVideoTracks()[0];
+      track.addEventListener('ended', () => {
+        window.capturing = false;
+        appendEventLog("Compartilhamento encerrado");
+      });
+
+    // (Removido: Inicia o loop de QR scanning via jsQR; leitura agora é feita exclusivamente via ZXing)
+    }
+
+    window.initWebGPU = initWebGPU;
+
+    // (Removido: Funções de leitura de QR Codes usando jsQR; leitura agora é feita exclusivamente via ZXing)
+
+
+    // Função appendEventLog global (garante que não haja erro de referência)
+    if (typeof appendEventLog !== 'function') {
+      function appendEventLog(msg) {
+        const logDiv = document.getElementById('eventLog');
+        const time = new Date().toLocaleTimeString();
+        const entry = document.createElement('div');
+        entry.textContent = `[${time}] ${msg}`;
+        logDiv.appendChild(entry);
+        logDiv.scrollTop = logDiv.scrollHeight;
+      }
+    }
+
+    // Define window.appendEventLog globalmente (garante disponibilidade para outros scripts)
+    window.appendEventLog = function(msg) {
+      const logDiv = document.getElementById('eventLog');
+      const time = new Date().toLocaleTimeString();
+      const entry = document.createElement('div');
+      entry.textContent = `[${time}] ${msg}`;
+      logDiv.appendChild(entry);
+      logDiv.scrollTop = logDiv.scrollHeight;
+    };
+
+    // Botão Compartilhar Tela
+    document.getElementById('btn-share').addEventListener('click', async () => {
+      if (window.capturing) return;
+      const videoElem = await startScreenCapture();
+      // Show WebGPU canvas and overlay again
+      const canvas = document.getElementById('canvas');
+      const overlay = document.getElementById('overlay');
+      canvas.style.display = '';
+      overlay.style.display = '';
+      if (navigator.gpu) {
+        initWebGPU(videoElem);
+      }
+      document.getElementById('btn-share').disabled = true;
+      document.getElementById('btn-share').innerText = "Tela Compartilhada";
+      appendEventLog("Compartilhamento iniciado");
+      document.getElementById('btn-stop').disabled = false;
+      document.getElementById('btn-webcam').disabled = true;
+    });
+
+    // Botão Parar Compartilhamento
+    document.getElementById('btn-stop').addEventListener('click', () => {
+      const videoElem = document.getElementById('video');
+      if (videoElem.srcObject) {
+        videoElem.srcObject.getTracks().forEach(track => track.stop());
+        window.capturing = false;
+        document.getElementById('btn-share').disabled = false;
+        document.getElementById('btn-share').innerText = "Compartilhar Tela";
+        document.getElementById('btn-stop').disabled = true;
+        document.getElementById('btn-webcam').disabled = false;
+        // Limpa overlay
+        const overlay = document.getElementById('overlay');
+        const ctx = overlay.getContext('2d');
+        ctx.clearRect(0, 0, overlay.width, overlay.height);
+        // Hide WebGPU canvas and overlay so last frame is cleared
+        const canvas = document.getElementById('canvas');
+        // overlay already defined above
+        canvas.style.display = 'none';
+        overlay.style.display = 'none';
+        appendEventLog("Compartilhamento parado");
+        appendEventLog("Stream encerrado");
+      }
+    });
+
+    // Botão Usar Webcam (usa a câmera selecionada no dropdown)
+    document.getElementById('btn-webcam').addEventListener('click', async () => {
+      if (window.capturing) return;
+      const deviceId = document.getElementById('cameraSelect').value;
+      const videoElem = await window.startWebcamCapture(deviceId);
+      // Show WebGPU canvas and overlay again
+      const canvas = document.getElementById('canvas');
+      const overlay = document.getElementById('overlay');
+      canvas.style.display = '';
+      overlay.style.display = '';
+      if (navigator.gpu && typeof window.initWebGPU === 'function') {
+        window.initWebGPU(videoElem);
+      }
+      document.getElementById('btn-share').disabled = true;
+      document.getElementById('btn-webcam').disabled = true;
+      document.getElementById('btn-stop').disabled = false;
+      appendEventLog("Webcam iniciada");
+    });
+
+    // Botão para ativar/desativar QR scanning
+    document.getElementById('btn-toggle-detect').addEventListener('click', () => {
+      detectEnabled = !detectEnabled;
+      const btn = document.getElementById('btn-toggle-detect');
+      btn.innerText = detectEnabled ? 'Desativar QR' : 'Ativar QR';
+      appendEventLog(detectEnabled ? 'Leitura de QR retomada' : 'Leitura de QR pausada');
+    });
+
+    // Botão para ativar/desativar leitura de QR (qrEnabled flag)
+    document.getElementById('btn-toggle-qr').addEventListener('click', () => {
+      window.qrEnabled = !window.qrEnabled;
+      document.getElementById('btn-toggle-qr').innerText = window.qrEnabled ? 'Desativar Leitura QR' : 'Ativar Leitura QR';
+      appendEventLog(window.qrEnabled ? 'Leitura QR ativada' : 'Leitura QR desativada');
+    });
+
+    // Indicador de backend (WebGPU ou WebGL)
+    tf.ready().then(async () => {
+      if (navigator.gpu) {
+        await tf.setBackend('webgpu');
+      } else {
+        await tf.setBackend('webgl');
+      }
+      document.getElementById('backendIndicator').textContent = tf.getBackend().toUpperCase();
+    });
+
+    // Listar dispositivos de vídeo ao carregar a página e popular o select
+    async function listarCameras() {
+      try {
+        // Solicita permissão para acessar a câmera antes de listar
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          stream.getTracks().forEach(track => track.stop()); // Libera a câmera logo após obter permissão
+        } catch (error) {
+          console.error("Permissão de câmera negada ou erro ao acessar a câmera:", error);
+          const select = document.getElementById('cameraSelect');
+          select.innerHTML = '<option>Permissão de câmera negada</option>';
+          return;
+        }
+
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const select = document.getElementById('cameraSelect');
+        const videoDevices = devices.filter(d => d.kind === 'videoinput');
+
+        select.innerHTML = ''; // limpa antes de preencher
+
+        videoDevices.forEach((device, index) => {
+          const option = document.createElement('option');
+          option.value = device.deviceId;
+          option.text = device.label || `Câmera ${index + 1}`;
+          select.appendChild(option);
+        });
+
+        if (videoDevices.length === 0) {
+          const option = document.createElement('option');
+          option.text = 'Nenhuma câmera detectada';
+          select.appendChild(option);
+        }
+
+        // Seleciona automaticamente a primeira câmera com "back" no nome, se disponível
+        const backCamOption = Array.from(select.options).find(opt => /back|trás|rear/i.test(opt.text));
+        if (backCamOption) {
+          select.value = backCamOption.value;
+        }
+      } catch (err) {
+        console.error("Erro ao listar câmeras:", err);
+      }
+    }
+
+    listarCameras();
+
+    // Permite troca de câmera em tempo real no celular
+    document.getElementById('cameraSelect').addEventListener('change', async () => {
+      const select = document.getElementById('cameraSelect');
+      const deviceId = select.value;
+      if (window.capturing) {
+        // Para a captura atual
+        const videoElem = document.getElementById('video');
+        videoElem.srcObject.getTracks().forEach(track => track.stop());
+        window.capturing = false;
+        // Inicia nova captura com a câmera escolhida
+        const newVideo = await window.startWebcamCapture(deviceId);
+        // Reconfigura WebGPU para o novo vídeo
+        if (navigator.gpu && typeof window.initWebGPU === 'function') {
+          window.initWebGPU(newVideo);
+        }
+        appendEventLog(`Câmera trocada para: ${select.options[select.selectedIndex].text}`);
+        // Reinicia leitura ZXing na nova câmera
+        iniciarLeitorZXing(newVideo);
+      }
+    });
+
+
+  </script>
+</body>
+</html>

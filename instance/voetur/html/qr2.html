@@ -466,14 +466,28 @@
       }
     });
 
-    // Botão Usar Webcam
+    // Botão Usar Webcam (solicita permissão antes de listar dispositivos)
     document.getElementById('btn-webcam').addEventListener('click', async () => {
       if (capturing) return;
+
+      // 1. Acesso temporário para desbloquear enumerateDevices
+      try {
+        const tempStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        tempStream.getTracks().forEach(track => track.stop()); // Para o stream após liberação
+      } catch (err) {
+        alert("Permissão negada para acessar a câmera");
+        return;
+      }
+
+      // 2. Agora podemos listar as câmeras corretamente
       await populateCameraList();
       const select = document.getElementById('cameraSelect');
       const selectedDeviceId = select.value;
+
+      // 3. Abre a câmera com base no dispositivo selecionado
       const videoElem = await startWebcamCapture(selectedDeviceId);
-      // Show WebGPU canvas and overlay again
+
+      // Exibe WebGPU e overlay
       const canvas = document.getElementById('canvas');
       const overlay = document.getElementById('overlay');
       canvas.style.display = '';
@@ -481,6 +495,7 @@
       if (navigator.gpu) {
         initWebGPU(videoElem);
       }
+
       document.getElementById('btn-share').disabled = true;
       document.getElementById('btn-webcam').disabled = true;
       document.getElementById('btn-stop').disabled = false;

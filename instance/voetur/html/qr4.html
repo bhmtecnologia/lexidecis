@@ -132,9 +132,6 @@
       });
       qrStats.innerHTML = `QR Codes únicos detectados: ${entries.length}\n` + lines.join('\n');
     };
-
-    // Definição global de códigos válidos antes de qualquer uso
-    window.validCodes = ['1234', '4321']; // códigos que devem aparecer com box verde
   </script>
 
   <!-- Removido: QuaggaJS -->
@@ -153,6 +150,8 @@
     // Flags globais para controle de captura e leitura
     window.capturing = false;
     window.qrEnabled = true;
+    // Lista de códigos válidos esperados
+    window.validCodes = ['1234', '4321'];
 
     // Store last 5 photo captures with validity flag
     window.photoRecords = []; // Array of { dataUrl, isValid }
@@ -211,33 +210,15 @@
           } catch {}
         }
 
-        // Clear overlay and detections if no QR found
-        if (results.length === 0) {
-          // No QR found: clear detections and overlay immediately
-          window.activeDetections = [];
-          const overlay2 = document.getElementById('overlay');
-          const ctx2 = overlay2.getContext('2d', { willReadFrequently: true });
-          ctx2.clearRect(0, 0, overlay2.width, overlay2.height);
-          return; // skip drawing stale detections
-        }
-
-        // Clear overlay before drawing any boxes
-        const overlay = document.getElementById('overlay');
-        const ctxOverlay = overlay.getContext('2d', { willReadFrequently: true });
-        console.log('Detected codes:', results.map(r => r.getText()));
-
         // Prune stale detections
         const now = Date.now();
         window.activeDetections = window.activeDetections.filter(d => now - d.time < window.DETECTION_EXPIRY_MS);
 
         // Atualiza detections com os resultados atuais
         results.forEach(result => {
-          const text = result.getText().trim();
+          const text = result.getText();
           const points = result.getResultPoints();
-          // Validação flexível: considera válido se contiver qualquer substring da lista
-          const validList = ['1234', '4321'];
-          const isValid = validList.some(v => text.includes(v));
-          console.log('isValid?', text, isValid);
+          const isValid = window.validCodes.includes(text);
           // Atualiza contagem única se válido
           const now = Date.now();
           if (isValid) {
@@ -248,8 +229,8 @@
             }
           }
           // Desenha bounding box
-          const ctx = ctxOverlay;
-          ctx.clearRect(0, 0, overlay.width, overlay.height);
+          const overlay = document.getElementById('overlay');
+          const ctx = overlay.getContext('2d', { willReadFrequently: true });
           if (points.length >= 4) {
             ctx.strokeStyle = isValid ? 'lime' : 'red';
             ctx.lineWidth = 4;
@@ -259,27 +240,25 @@
             ctx.closePath();
             ctx.stroke();
           }
-          // Capture composite photo of current frame (video + overlay) for every detection
-          const photoCanvas = document.createElement('canvas');
-          photoCanvas.width = video.videoWidth;
-          photoCanvas.height = video.videoHeight;
-          const pctx = photoCanvas.getContext('2d', { willReadFrequently: true });
-          // Draw the video frame
-          pctx.drawImage(video, 0, 0, photoCanvas.width, photoCanvas.height);
-          // Draw the overlay (bounding boxes) on top
-          const overlayElem = document.getElementById('overlay');
-          pctx.drawImage(overlayElem, 0, 0, photoCanvas.width, photoCanvas.height);
-          // Export composite image
-          const dataUrl = photoCanvas.toDataURL('image/png');
-          window.photoRecords.unshift({ dataUrl, isValid });
-          if (window.photoRecords.length > 5) window.photoRecords.pop();
-          updatePhotoGallery();
           // Exibe alerta e log
           if (isValid) {
             const msg = `QR válido: ${text}`;
             document.getElementById('eventAlert').textContent = msg;
             document.getElementById('eventAlert').style.background = "rgba(0,200,0,0.9)";
             window.appendEventLog(msg);
+
+            // Capture photo of current frame
+            const photoCanvas = document.createElement('canvas');
+            photoCanvas.width = video.videoWidth;
+            photoCanvas.height = video.videoHeight;
+            const pctx = photoCanvas.getContext('2d');
+            pctx.drawImage(video, 0, 0, photoCanvas.width, photoCanvas.height);
+            const dataUrl = photoCanvas.toDataURL('image/png');
+
+            // Add to gallery and keep only last 5
+            window.photoRecords.unshift({ dataUrl, isValid });
+            if (window.photoRecords.length > 5) window.photoRecords.pop();
+            updatePhotoGallery();
           } else {
             const msg = `Item não identificado: ${text}`;
             document.getElementById('eventAlert').textContent = msg;
@@ -370,17 +349,14 @@
 
   <div id="photoGallery" style="
     position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 120px;
+    bottom: 10px;
+    right: 10px;
     background: rgba(0,0,0,0.6);
-    display: flex;
-    overflow-x: auto;
-    align-items: center;
     padding: 8px;
-    gap: 8px;
+    border-radius: 4px;
     z-index: 20;
+    display: flex;
+    gap: 4px;
   ">
     <!-- Up to 5 miniatures will be inserted here -->
   </div>
@@ -605,24 +581,6 @@
       logDiv.scrollTop = logDiv.scrollHeight;
     };
 
-    // Atualiza galeria de fotos usando window.photoRecords
-    window.updatePhotoGallery = function() {
-      const gallery = document.getElementById('photoGallery');
-      if (!gallery) return;
-      gallery.innerHTML = '';
-      (window.photoRecords || []).slice(-5).forEach(rec => {
-        const img = document.createElement('img');
-        img.src = rec.dataUrl;
-        img.style.height = '100px';
-        img.style.width = 'auto';
-        img.style.objectFit = 'contain';
-        img.style.border = `3px solid ${rec.isValid ? 'lime' : 'red'}`;
-        img.style.borderRadius = '6px';
-        img.style.boxShadow = '0 2px 8px rgba(0,0,0,0.5)';
-        gallery.appendChild(img);
-      });
-    };
-
     // Botão Compartilhar Tela
     document.getElementById('btn-share').addEventListener('click', async () => {
       if (window.capturing) return;
@@ -678,11 +636,6 @@
       overlay.style.display = '';
       if (navigator.gpu && typeof window.initWebGPU === 'function') {
         window.initWebGPU(videoElem);
-        // Ajusta overlay para coincidir com o vídeo
-        overlay.style.width = `${videoElem.videoWidth}px`;
-        overlay.style.height = `${videoElem.videoHeight}px`;
-        overlay.style.left = `${(window.innerWidth - videoElem.videoWidth) / 2}px`;
-        overlay.style.top = `${(window.innerHeight - videoElem.videoHeight) / 2}px`;
       }
       document.getElementById('btn-share').disabled = true;
       document.getElementById('btn-webcam').disabled = true;

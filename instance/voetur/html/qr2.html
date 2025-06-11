@@ -162,9 +162,6 @@
     <!-- O botão de ativar/desativar QR apenas desativa o loop de leitura -->
     <button id="btn-toggle-detect">Desativar QR</button>
     <button id="btn-toggle-qr">Desativar Leitura QR</button>
-    <!-- <select id="cameraSelect">
-      <option value="">Carregando câmeras...</option>
-    </select> -->
     <button id="btn-stop" disabled>Parar Compartilhamento</button>
     <div id="backendIndicator">...</div>
   </div>
@@ -213,29 +210,6 @@
         entries.map((code, i) => `${String.fromCharCode(97 + i)}) ${code}`).join('\n');
     }
 
-    // Lista câmeras disponíveis
-    async function populateCameraList() {
-      try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const videoInputs = devices.filter(d => d.kind === "videoinput");
-        const select = document.getElementById('cameraSelect');
-        select.innerHTML = "";
-        videoInputs.forEach(device => {
-          const option = document.createElement('option');
-          option.value = device.deviceId;
-          option.textContent = device.label || `Câmera ${select.length + 1}`;
-          select.appendChild(option);
-        });
-        if (videoInputs.length === 0) {
-          const option = document.createElement('option');
-          option.value = "";
-          option.textContent = "Nenhuma câmera encontrada";
-          select.appendChild(option);
-        }
-      } catch (err) {
-        console.error("Erro ao listar câmeras:", err);
-      }
-    }
 
     function appendEventLog(msg) {
       const logDiv = document.getElementById('eventLog');

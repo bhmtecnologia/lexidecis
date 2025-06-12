@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Exemplo AR.js com A-Frame</title>
+  <!-- A-Frame -->
+  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+  <!-- AR.js para A-Frame -->
+  <script src="https://cdn.rawgit.com/jeromeetienne/ar.js/master/aframe/build/aframe-ar.js"></script>
+  <style> body { margin: 0; overflow: hidden; } </style>
+</head>
+<body>
+  <!-- Cena AR.js -->
+  <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+    <!-- Marcador Hiro padrão -->
+    <a-marker preset="hiro">
+      <!-- Objeto 3D: caixa vermelha -->
+      <a-box position="0 0.5 0" material="color: red;"></a-box>
+    </a-marker>
+    <!-- Câmera AR -->
+    <a-entity camera></a-entity>
+  </a-scene>
+</body>
+</html>

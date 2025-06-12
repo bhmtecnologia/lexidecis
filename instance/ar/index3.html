@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <script>
+    // Filtra warnings específicos do AR.js
+    (function() {
+      const origWarn = console.warn;
+      console.warn = function(...args) {
+        if (args[0] && typeof args[0] === 'string' && args[0].includes("markersAreaEnabled")) {
+          return;
+        }
+        origWarn.apply(console, args);
+      };
+    })();
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Exemplo AR.js com A-Frame</title>
+  <!-- A-Frame -->
+  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+  <!-- AR.js para A-Frame -->
+  <script src="https://cdn.rawgit.com/jeromeetienne/ar.js/master/aframe/build/aframe-ar.js"></script>
+  <script>
+    // Remove 'markersAreaEnabled' para evitar warning de parâmetro desconhecido
+    if (window.THREEx && THREEx.ArMarkerControls) {
+      const origSetParams = THREEx.ArMarkerControls.prototype.setParameters;
+      THREEx.ArMarkerControls.prototype.setParameters = function(parameters) {
+        delete parameters.markersAreaEnabled;
+        origSetParams.call(this, parameters);
+      };
+    }
+    // Monkey-patch getImageData para usar willReadFrequently quando suportado
+    const origGetImageData = CanvasRenderingContext2D.prototype.getImageData;
+    CanvasRenderingContext2D.prototype.getImageData = function(sx, sy, sw, sh) {
+      try {
+        return origGetImageData.call(this, sx, sy, sw, sh, { willReadFrequently: true });
+      } catch (err) {
+        return origGetImageData.call(this, sx, sy, sw, sh);
+      }
+    };
+    // Monkey-patch para definir willReadFrequently ao obter o contexto 2D
+    const origGetContext = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function(type, attrs) {
+      if (type === '2d') {
+        attrs = Object.assign({}, attrs, { willReadFrequently: true });
+      }
+      return origGetContext.call(this, type, attrs);
+    };
+  </script>
+  <style> body { margin: 0; overflow: hidden; } </style>
+</head>
+<body>
+  <!-- Cena AR.js -->
+  <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;" vr-mode-ui="enabled: false" shadow="type: pcfsoft">
+    <a-assets>
+      <a-asset-item id="duck-model" src="models/duck.glb"></a-asset-item>
+    </a-assets>
+    <!-- Novo marcador Hiro com modelo GLTF animado -->
+    <a-marker preset="hiro">
+      <a-entity
+        gltf-model="#duck-model"
+        scale="0.5 0.5 0.5"
+        animation-mixer
+        rotation="0 180 0"
+        position="0 0 0"
+        shadow="cast: true; receive: false"
+      ></a-entity>
+    </a-marker>
+    <!-- Luz direcional para realçar o modelo -->
+    <a-entity light="type: directional; color: #FFFFFF; intensity: 1" position="0 4 0" target="#robomodel"></a-entity>
+    <!-- Plano invisível para capturar sombra -->
+    <a-plane rotation="-90 0 0" width="4" height="4" position="0 0 0" shadow="receive: true" visible="false"></a-plane>
+    <!-- Câmera AR -->
+    <a-entity camera></a-entity>
+  </a-scene>
+  <div id="status" style="
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: white;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 5px;
+    font-family: sans-serif;
+  ">Aguardando marcador...</div>
+  <script>
+    const statusEl = document.getElementById('status');
+    const marker = document.querySelector('a-marker');
+    marker.addEventListener('markerFound', () => {
+      statusEl.textContent = 'Marcador detectado!';
+    });
+    marker.addEventListener('markerLost', () => {
+      statusEl.textContent = 'Aguardando marcador...';
+    });
+  </script>
+</body>
+</html>

@@ -238,6 +238,12 @@ export default class GPTManager {
             const img = document.createElement('img');
             img.src = gpt.imageUrl || 'path/to/default-image.jpg';
             img.classList.add('card-img-top', 'gpt-image');
+            img.style.objectFit = 'contain';
+            img.style.width = '100%';
+            img.style.height = 'auto';
+            // Responsive maxHeight for image
+            const maxHeight = window.innerWidth < 768 ? '150px' : '300px';
+            img.style.maxHeight = maxHeight;
             img.alt = `${gpt.name} Image`;
 
             const cardBody = document.createElement('div');
@@ -317,6 +323,12 @@ export default class GPTManager {
             const img = document.createElement('img');
             img.src = gpt.imageUrl || 'path/to/default-image.jpg';
             img.classList.add('card-img-top', 'gpt-image');
+            img.style.objectFit = 'contain';
+            img.style.width = '100%';
+            img.style.height = 'auto';
+            // Responsive maxHeight for image
+            const maxHeight = window.innerWidth < 768 ? '150px' : '300px';
+            img.style.maxHeight = maxHeight;
             img.alt = `${gpt.name} Image`;
 
             const cardBody = document.createElement('div');

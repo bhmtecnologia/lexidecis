@@ -98,7 +98,7 @@ export default class GPTManager {
         }
 
         const modalHtml = `
-            <div class="modal fade" id="gpt-modal" tabindex="-1" aria-labelledby="gpt-modal-title" aria-hidden="true">
+            <div class="modal fade" id="gpt-modal" role="dialog" aria-modal="true" tabindex="-1" aria-labelledby="gpt-modal-title" aria-hidden="true">
                 <div class="modal-dialog modal-xl modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -132,6 +132,24 @@ export default class GPTManager {
         const gptModalElement = document.getElementById('gpt-modal');
         this.modal = bootstrap.Modal.getOrCreateInstance(gptModalElement);
         this.reassignModalEvents(gptModalElement);
+
+        // Accessibility: trap focus inside modal and return focus after close
+        let lastFocusedElement;
+        gptModalElement.addEventListener('show.bs.modal', () => {
+            lastFocusedElement = document.activeElement;
+        });
+        gptModalElement.addEventListener('shown.bs.modal', () => {
+            const searchInput = document.getElementById('gpt-search');
+            if (searchInput) searchInput.focus();
+        });
+        gptModalElement.addEventListener('hidden.bs.modal', () => {
+            const chatInput = document.querySelector('textarea.text-input');
+            if (chatInput) {
+                chatInput.focus();
+            } else if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+                lastFocusedElement.focus();
+            }
+        });
 
         const searchInput = document.getElementById('gpt-search');
         searchInput.addEventListener('input', (event) => {

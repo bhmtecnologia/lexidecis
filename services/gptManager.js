@@ -30,6 +30,58 @@ export default class GPTManager {
         this.createModal();
     }
 
+    /**
+     * @private
+     * Monta e retorna um elemento colDiv com card de GPT.
+     * @param {Object} gpt - Objeto GPT com id, name, description, category, imageUrl e enabled.
+     * @returns {HTMLDivElement}
+     */
+    createGptCard(gpt) {
+        const colDiv = document.createElement('div');
+        colDiv.classList.add('col-12', 'col-sm-6', 'col-lg-4', 'mb-4');
+
+        const cardDiv = document.createElement('div');
+        cardDiv.classList.add('card', 'gpt-card', 'h-100', 'd-flex', 'flex-column');
+        cardDiv.dataset.gptId = gpt.id;
+        cardDiv.dataset.category = gpt.category || 'Sem Categoria';
+
+        const img = document.createElement('img');
+        img.src = gpt.imageUrl || 'path/to/default-image.jpg';
+        img.classList.add('card-img-top', 'gpt-image');
+        // estilos responsivos devem estar no CSS
+        img.style.objectFit = 'contain';
+        img.style.width = '100%';
+        img.style.height = 'auto';
+        const maxHeight = window.innerWidth < 768 ? '150px' : '300px';
+        img.style.maxHeight = maxHeight;
+        img.alt = `${gpt.name} Image`;
+        img.setAttribute('loading', 'lazy');
+
+        const cardBody = document.createElement('div');
+        cardBody.classList.add('card-body', 'd-flex', 'flex-column');
+
+        const title = document.createElement('h5');
+        title.classList.add('card-title');
+        title.textContent = gpt.name;
+
+        const description = document.createElement('p');
+        description.classList.add('card-text', 'text-muted');
+        description.textContent = gpt.description || 'Sem descrição disponível.';
+
+        cardBody.appendChild(title);
+        cardBody.appendChild(description);
+
+        cardDiv.appendChild(img);
+        cardDiv.appendChild(cardBody);
+
+        cardDiv.addEventListener('click', async (event) => {
+            await this.handleGPTSelection(event, gpt, cardDiv);
+        });
+
+        colDiv.appendChild(cardDiv);
+        return colDiv;
+    }
+
     createModal() {
         if (document.getElementById('gpt-modal')) {
             console.log('Modal já existe.');
@@ -223,54 +275,11 @@ export default class GPTManager {
         }
 
         const fragment = document.createDocumentFragment();
-
         gpts.forEach((gpt) => {
             if (!gpt.enabled) return;
-
-            const colDiv = document.createElement('div');
-            colDiv.classList.add('col-md-6', 'mb-4');
-
-            const cardDiv = document.createElement('div');
-            cardDiv.classList.add('card', 'gpt-card', 'h-100', 'd-flex', 'flex-column');
-            cardDiv.dataset.gptId = gpt.id;
-            cardDiv.dataset.category = gpt.category || 'Sem Categoria';
-
-            const img = document.createElement('img');
-            img.src = gpt.imageUrl || 'path/to/default-image.jpg';
-            img.classList.add('card-img-top', 'gpt-image');
-            img.style.objectFit = 'contain';
-            img.style.width = '100%';
-            img.style.height = 'auto';
-            // Responsive maxHeight for image
-            const maxHeight = window.innerWidth < 768 ? '150px' : '300px';
-            img.style.maxHeight = maxHeight;
-            img.alt = `${gpt.name} Image`;
-
-            const cardBody = document.createElement('div');
-            cardBody.classList.add('card-body', 'd-flex', 'flex-column');
-
-            const title = document.createElement('h5');
-            title.classList.add('card-title');
-            title.textContent = gpt.name;
-
-            const description = document.createElement('p');
-            description.classList.add('card-text', 'text-muted');
-            description.textContent = gpt.description || 'Sem descrição disponível.';
-
-            cardBody.appendChild(title);
-            cardBody.appendChild(description);
-
-            cardDiv.appendChild(img);
-            cardDiv.appendChild(cardBody);
-
-            cardDiv.addEventListener('click', async (event) => {
-                await this.handleGPTSelection(event, gpt, cardDiv);
-            });
-
-            colDiv.appendChild(cardDiv);
+            const colDiv = this.createGptCard(gpt);
             fragment.appendChild(colDiv);
         });
-
         gptList.appendChild(fragment);
     }
 
@@ -312,47 +321,7 @@ export default class GPTManager {
 
         const fragment = document.createDocumentFragment();
         gpts.forEach((gpt) => {
-            const colDiv = document.createElement('div');
-            colDiv.classList.add('col-md-6', 'mb-4');
-
-            const cardDiv = document.createElement('div');
-            cardDiv.classList.add('card', 'gpt-card', 'h-100', 'd-flex', 'flex-column');
-            cardDiv.dataset.gptId = gpt.id;
-            cardDiv.dataset.category = gpt.category || 'Sem Categoria';
-
-            const img = document.createElement('img');
-            img.src = gpt.imageUrl || 'path/to/default-image.jpg';
-            img.classList.add('card-img-top', 'gpt-image');
-            img.style.objectFit = 'contain';
-            img.style.width = '100%';
-            img.style.height = 'auto';
-            // Responsive maxHeight for image
-            const maxHeight = window.innerWidth < 768 ? '150px' : '300px';
-            img.style.maxHeight = maxHeight;
-            img.alt = `${gpt.name} Image`;
-
-            const cardBody = document.createElement('div');
-            cardBody.classList.add('card-body', 'd-flex', 'flex-column');
-
-            const title = document.createElement('h5');
-            title.classList.add('card-title');
-            title.textContent = gpt.name;
-
-            const description = document.createElement('p');
-            description.classList.add('card-text', 'text-muted');
-            description.textContent = gpt.description || 'Sem descrição disponível.';
-
-            cardBody.appendChild(title);
-            cardBody.appendChild(description);
-
-            cardDiv.appendChild(img);
-            cardDiv.appendChild(cardBody);
-
-            cardDiv.addEventListener('click', async (event) => {
-                await this.handleGPTSelection(event, gpt, cardDiv);
-            });
-
-            colDiv.appendChild(cardDiv);
+            const colDiv = this.createGptCard(gpt);
             fragment.appendChild(colDiv);
         });
         gptList.appendChild(fragment);

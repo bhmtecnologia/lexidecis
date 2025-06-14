@@ -42,6 +42,8 @@ export default class GPTManager {
 
         const cardDiv = document.createElement('div');
         cardDiv.classList.add('card', 'gpt-card', 'h-100', 'd-flex', 'flex-column');
+        // Prepare card for spinner overlay
+        cardDiv.style.position = 'relative';
         cardDiv.dataset.gptId = gpt.id;
         cardDiv.dataset.category = gpt.category || 'Sem Categoria';
 
@@ -73,6 +75,13 @@ export default class GPTManager {
 
         cardDiv.appendChild(img);
         cardDiv.appendChild(cardBody);
+
+        // Spinner overlay element (hidden by default)
+        const spinnerOverlay = document.createElement('div');
+        spinnerOverlay.classList.add('spinner-overlay', 'd-none');
+        spinnerOverlay.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;display:flex;justify-content:center;align-items:center;background:rgba(255,255,255,0.7);';
+        spinnerOverlay.innerHTML = '<div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>';
+        cardDiv.appendChild(spinnerOverlay);
 
         cardDiv.addEventListener('click', async (event) => {
             await this.handleGPTSelection(event, gpt, cardDiv);
@@ -340,6 +349,9 @@ export default class GPTManager {
 
         try {
             gptItem.classList.add('loading');
+            // Show spinner
+            const spinner = gptItem.querySelector('.spinner-overlay');
+            if (spinner) spinner.classList.remove('d-none');
             await this.selectGPTItem(gpt);
         } catch (error) {
             console.error('Erro ao selecionar GPT:', error);
@@ -348,6 +360,9 @@ export default class GPTManager {
             this.isEventLocked = false;
             this.stateManager.setGPTSelectionLoading(false);
             gptItem.classList.remove('loading');
+            // Hide spinner
+            const spinner = gptItem.querySelector('.spinner-overlay');
+            if (spinner) spinner.classList.add('d-none');
         }
     }
 

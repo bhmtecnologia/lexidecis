@@ -91,6 +91,21 @@ export default class GPTManager {
         return colDiv;
     }
 
+    /**
+     * @private
+     * Debounce utility to delay execution of a function.
+     * @param {Function} fn - The function to debounce.
+     * @param {number} delay - Delay in milliseconds.
+     * @returns {Function} - Debounced function.
+     */
+    debounce(fn, delay) {
+        let timer;
+        return (...args) => {
+            clearTimeout(timer);
+            timer = setTimeout(() => fn.apply(this, args), delay);
+        };
+    }
+
     createModal() {
         if (document.getElementById('gpt-modal')) {
             console.log('Modal já existe.');
@@ -109,13 +124,14 @@ export default class GPTManager {
                             <div class="mb-4">
                                 <div id="gpt-categories" class="d-flex flex-wrap gap-2"></div>
                             </div>
-                            <div class="mb-3">
+                            <div class="input-group mb-3">
                                 <input 
                                     type="text" 
                                     id="gpt-search" 
                                     class="form-control" 
                                     placeholder="Pesquisar GPT..."
                                 >
+                                <button class="btn btn-outline-secondary" type="button" id="gpt-clear-search" aria-label="Limpar pesquisa">×</button>
                             </div>
                             <div class="row" id="gpt-list"></div>
                         </div>
@@ -140,7 +156,10 @@ export default class GPTManager {
         });
         gptModalElement.addEventListener('shown.bs.modal', () => {
             const searchInput = document.getElementById('gpt-search');
-            if (searchInput) searchInput.focus();
+            if (searchInput) {
+                searchInput.value = '';
+                searchInput.focus();
+            }
         });
         gptModalElement.addEventListener('hidden.bs.modal', () => {
             const chatInput = document.querySelector('textarea.text-input');
@@ -152,11 +171,23 @@ export default class GPTManager {
         });
 
         const searchInput = document.getElementById('gpt-search');
-        searchInput.addEventListener('input', (event) => {
+        const debouncedFilter = this.debounce((event) => {
             const searchTerm = event.target.value;
             const activeCategoryBadge = document.querySelector('.category-tag.bg-success') || document.querySelector('.category-tag[data-category="all"]');
             const activeCategory = activeCategoryBadge.dataset.category;
             this.filterGPTList(searchTerm, activeCategory);
+        }, 300);
+        searchInput.addEventListener('input', debouncedFilter);
+
+        // Clear button functionality
+        const clearBtn = document.getElementById('gpt-clear-search');
+        clearBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            // Reset filter to current category
+            const activeCategoryBadge = document.querySelector('.category-tag.bg-success') || document.querySelector('.category-tag[data-category="all"]');
+            const activeCategory = activeCategoryBadge.dataset.category;
+            this.filterGPTList('', activeCategory);
+            searchInput.focus();
         });
 
         this.initializeCategories();

@@ -14,6 +14,11 @@ import StatusCheck from './statusCheck.js';
 import { getJwt } from './auth.js';
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
 
+// Endpoint configuration
+const ENDPOINT_URL = 'https://webhook.power.tec.br/webhook/lexidecis/endpoints';
+const ENDPOINT_TIMEOUT_MS = 3000;
+const ENDPOINT_MAX_RETRIES = 3;
+
 // Checa se está em localhost/127.0.0.1 para modo debug
 const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
 const DEBUG_MODE = isLocalhost;
@@ -136,30 +141,52 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
         debugLog("[Renderer] CONFIG atualizado após autenticação:", CONFIG);
 
-        // ETAPA 3: Carregar Endpoints (via n8n)
-        debugLog("[Renderer] Buscando endpoints via n8n.power.tec.br/webhook/lexidecis/endpoints...");
+        // ETAPA 3: Carregar Endpoints (via n8n) com timeout e retry
+        await loadingScreen.loadModel('Carregar Endpoints');
+        if (abortLoading) return;
+        debugLog("[Renderer] Carregando endpoints via", ENDPOINT_URL);
         const jwt = await getJwt();
-        const response = await fetch('https://webhook.power.tec.br/webhook/lexidecis/endpoints', {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${jwt}`,
-                'Content-Type': 'application/json'
+        let data;
+        for (let attempt = 1; attempt <= ENDPOINT_MAX_RETRIES; attempt++) {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), ENDPOINT_TIMEOUT_MS);
+            try {
+                const response = await fetch(ENDPOINT_URL, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${jwt}`,
+                        'Content-Type': 'application/json'
+                    },
+                    signal: controller.signal
+                });
+                clearTimeout(timer);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const json = await response.json();
+                data = json;
+                debugLog(`[Renderer] Endpoints carregados na tentativa ${attempt}.`);
+                break;
+            } catch (err) {
+                clearTimeout(timer);
+                debugLog(`[Renderer] Tentativa ${attempt} falhou:`, err);
+                if (attempt === ENDPOINT_MAX_RETRIES) {
+                    // Fallback UX: informar e oferecer recarregar
+                    showAlert('Não foi possível carregar configurações. Verifique sua conexão e clique em Recarregar Configurações.', 'error');
+                    loadingScreen.hide();
+                    return;
+                }
+                // Exponential backoff entre tentativas
+                await new Promise(res => setTimeout(res, ENDPOINT_TIMEOUT_MS));
             }
-        });
-        if (!response.ok) {
-            throw new Error(`Erro ao buscar endpoints: ${response.statusText}`);
         }
-        const data = await response.json();
         const endpoints = data?.endpoints;
         if (!endpoints || !endpoints.flowise || !endpoints.apiCredentials) {
             throw new Error("Dados de endpoints inválidos ou não encontrados.");
         }
         CONFIG.flowise = { ...endpoints.flowise };
         CONFIG.apiCredentials = { ...endpoints.apiCredentials };
-        debugLog("[Renderer] Endpoints carregados e CONFIG atualizado:", CONFIG);
-
-        await loadingScreen.loadModel('Carregar Endpoints');
-        if (abortLoading) return;
+        debugLog("[Renderer] CONFIG atualizado com endpoints:", CONFIG);
 
         // ETAPA 4: Pré-carregar GPTs e Inicializar Serviços
         debugLog("[Renderer] Inicializando serviços e pré-carregando GPTs...");

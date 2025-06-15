@@ -83,9 +83,7 @@ export default class GPTManager {
         spinnerOverlay.innerHTML = '<div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>';
         cardDiv.appendChild(spinnerOverlay);
 
-        cardDiv.addEventListener('click', async (event) => {
-            await this.handleGPTSelection(event, gpt, cardDiv);
-        });
+        // Removido o listener individual de clique do card; agora o clique é delegado no container.
 
         colDiv.appendChild(cardDiv);
         return colDiv;
@@ -191,6 +189,23 @@ export default class GPTManager {
         });
 
         this.initializeCategories();
+
+        // Event Delegation for GPT card clicks
+        const gptListContainer = document.getElementById('gpt-list');
+        if (gptListContainer) {
+            gptListContainer.addEventListener('click', async (event) => {
+                const cardDiv = event.target.closest('.gpt-card');
+                if (!cardDiv) return;
+                const gptId = cardDiv.dataset.gptId;
+                const allGpts = this.stateManager.getGPTs() || [];
+                const selectedGpt = allGpts.find(g => String(g.id) === String(gptId));
+                if (!selectedGpt) {
+                    console.error('GPT não encontrado para id', gptId);
+                    return;
+                }
+                await this.handleGPTSelection(event, selectedGpt, cardDiv);
+            });
+        }
     }
 
     reassignModalEvents(modalElement) {

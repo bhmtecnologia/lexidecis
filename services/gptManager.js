@@ -219,7 +219,18 @@ export default class GPTManager {
 
     initializeCategories() {
         const categoriesContainer = document.getElementById('gpt-categories');
-        categoriesContainer.innerHTML = '<span class="badge bg-secondary cursor-pointer category-tag" data-category="all">Todas</span>';
+        // Reset container
+        categoriesContainer.textContent = '';
+        // Create "Todas" badge
+        const allCategoryBadge = document.createElement('span');
+        allCategoryBadge.classList.add('badge', 'bg-secondary', 'cursor-pointer', 'category-tag');
+        allCategoryBadge.dataset.category = 'all';
+        allCategoryBadge.textContent = 'Todas';
+        allCategoryBadge.addEventListener('click', () => {
+            this.filterByCategory('all');
+            this.updateActiveCategory('all');
+        });
+        categoriesContainer.appendChild(allCategoryBadge);
     }
 
     populateCategories(gpts) {
@@ -236,7 +247,13 @@ export default class GPTManager {
             }
         });
 
-        categoriesContainer.innerHTML = '<span class="badge bg-secondary cursor-pointer category-tag" data-category="all">Todas</span>';
+        // Reset container and add "Todas" badge
+        categoriesContainer.textContent = '';
+        const allCategoryBadge = document.createElement('span');
+        allCategoryBadge.classList.add('badge', 'bg-secondary', 'cursor-pointer', 'category-tag');
+        allCategoryBadge.dataset.category = 'all';
+        allCategoryBadge.textContent = 'Todas';
+        categoriesContainer.appendChild(allCategoryBadge);
 
         categories.forEach(category => {
             const categoryBadge = document.createElement('span');

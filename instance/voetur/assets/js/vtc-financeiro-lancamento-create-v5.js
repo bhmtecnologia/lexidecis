@@ -1224,6 +1224,11 @@ export async function renderFinanceiroLancamentoCreateV5() {
             unlockNumero.checked = false;
             unlockNumero.disabled = false;
           }
+          if (!info.numero_nota && unlockNumero) {
+            unlockNumero.checked = true;
+            unlockNumero.disabled = true;
+            numeroEl.disabled = false;
+          }
         }
 
         // Preenche Data de Emissão
@@ -1250,7 +1255,17 @@ export async function renderFinanceiroLancamentoCreateV5() {
           const dueStr = dueDate.toISOString().split('T')[0];
           // Converte e formata valor bruto
           const raw = info.valor_total_nota || "0";
-          let numVal = Number(raw.replace(/\./g,'').replace(',', '.')) || 0;
+          let numVal = 0;
+          if (raw.includes(',') && raw.includes('.')) {
+            // formato europeu: "1.234,56"
+            numVal = Number(raw.replace(/\./g, '').replace(',', '.'));
+          } else if (raw.includes(',')) {
+            // apenas vírgula: "1234,56"
+            numVal = Number(raw.replace(',', '.'));
+          } else {
+            // formato americano ou inteiro: "1234.56"
+            numVal = Number(raw);
+          }
           const brutoStr = numVal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
           tr.innerHTML = `
             <td><input type="text" name="parcelaValor[]" class="form-control mask-currency" value="${brutoStr}" required></td>

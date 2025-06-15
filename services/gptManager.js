@@ -54,23 +54,24 @@ export default class GPTManager {
         if (isVideo) {
             mediaEl = document.createElement('video');
             mediaEl.src = url;
-            // Custom video behavior: no controls, muted, loop, preload, style, play on hover
             mediaEl.muted = true;
             mediaEl.loop = true;
             mediaEl.preload = 'metadata';
             mediaEl.style.border = 'none';
-            // Play on hover, pause on mouse leave
-            mediaEl.addEventListener('mouseenter', () => {
-                mediaEl.play();
-            });
-            mediaEl.addEventListener('mouseleave', () => {
-                mediaEl.pause();
-            });
             mediaEl.style.objectFit = 'contain';
             mediaEl.style.width = '100%';
             mediaEl.style.height = 'auto';
             const maxH = window.innerWidth < 768 ? '150px' : '300px';
             mediaEl.style.maxHeight = maxH;
+            // Autoplay on touch devices, hover play on desktop
+            const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+            if (isTouch) {
+                mediaEl.autoplay = true;
+                mediaEl.playsInline = true;
+            } else {
+                mediaEl.addEventListener('mouseenter', () => mediaEl.play());
+                mediaEl.addEventListener('mouseleave', () => mediaEl.pause());
+            }
         } else {
             mediaEl = document.createElement('img');
             mediaEl.src = url || 'path/to/default-image.jpg';

@@ -296,6 +296,10 @@
     #chat-list li {
       font-size: 0.875rem;
     }
+    /* Left-align chat items */
+    #chat-list li {
+      justify-content: flex-start !important;
+    }
     /* Match GPT list font size to chat list */
     #ai-providers-list li {
       font-size: 0.875rem;
@@ -310,6 +314,16 @@
       opacity: 0.7;
     }
     #chat-list li { cursor: pointer; }
+
+    /* Remove divider between chat list items */
+    #chat-list li {
+      border-bottom: none !important;
+    }
+
+    /* Reduce spacing between chat items by 40% */
+    #chat-list li {
+      padding: 0.3rem 0.6rem !important;
+    }
   </style>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simplebar@6.2.3/dist/simplebar.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/simplebar@6.2.3/dist/simplebar.min.js"></script>
@@ -670,6 +684,12 @@
         chatListEl.innerHTML = '';
         chatItems.forEach(chat => {
           const li = document.createElement('li');
+          // Discrete chat icon before each chat name
+          const icon = document.createElement('i');
+          icon.className = 'bi bi-chat-dots me-2';
+          icon.style.fontSize = '1rem';
+          icon.style.color = 'var(--font-color)';
+          li.appendChild(icon);
           const span = document.createElement('span');
           span.textContent = chat.name || chat.id;
           li.appendChild(span);

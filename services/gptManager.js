@@ -54,24 +54,23 @@ export default class GPTManager {
         if (isVideo) {
             mediaEl = document.createElement('video');
             mediaEl.src = url;
+            // iOS Safari inline autoplay support
+            mediaEl.setAttribute('playsinline', '');
+            mediaEl.setAttribute('webkit-playsinline', '');
+            // Custom video behavior: no controls, muted, loop, preload, style, always autoplay
             mediaEl.muted = true;
             mediaEl.loop = true;
             mediaEl.preload = 'metadata';
+            mediaEl.autoplay = true;
+            mediaEl.playsInline = true;
+            // Ensure playback starts
+            mediaEl.load();
             mediaEl.style.border = 'none';
             mediaEl.style.objectFit = 'contain';
             mediaEl.style.width = '100%';
             mediaEl.style.height = 'auto';
             const maxH = window.innerWidth < 768 ? '150px' : '300px';
             mediaEl.style.maxHeight = maxH;
-            // Autoplay on touch devices, hover play on desktop
-            const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-            if (isTouch) {
-                mediaEl.autoplay = true;
-                mediaEl.playsInline = true;
-            } else {
-                mediaEl.addEventListener('mouseenter', () => mediaEl.play());
-                mediaEl.addEventListener('mouseleave', () => mediaEl.pause());
-            }
         } else {
             mediaEl = document.createElement('img');
             mediaEl.src = url || 'path/to/default-image.jpg';

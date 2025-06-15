@@ -712,13 +712,17 @@ export async function renderFinanceiroLancamentoCreateV5() {
     }
   });
 
-  // Exibe campo de anexo para boletos
+  // Exibe campo de anexo para boletos e move o campo de anexo acima da justificativa
   const formaEl = document.getElementById("formaPagamento");
   if (formaEl) {
     formaEl.addEventListener("change", () => {
       const anexGroup = document.querySelector("#arquivo").closest(".mb-3");
+      const justificativaField = document.getElementById("justificativa")?.closest(".mb-3");
       if (formaEl.value === "Boleto") {
         anexGroup.classList.remove("d-none");
+        if (justificativaField && anexGroup) {
+          justificativaField.parentElement.insertBefore(anexGroup, justificativaField);
+        }
       } else {
         anexGroup.classList.add("d-none");
       }
@@ -749,29 +753,42 @@ export async function renderFinanceiroLancamentoCreateV5() {
         previewEl.innerHTML = "";
       }
       for (const file of files) {
-        try {
-          const resp = await uploadArquivo(AuthService, file);
-          const url = resp.filename || resp.url || resp;
-          window.boletoUrls.push(url);
-          // Registra log de boleto anexado
-          addLog(`Boleto anexado: ${url}`);
-          // Exibe link de preview de cada boleto
-          previewEl = document.getElementById("boletoPreview")
-            || (() => {
-              const div = document.createElement("div");
-              div.id = "boletoPreview";
-              document.querySelector("#arquivo").closest(".mb-3").appendChild(div);
-              return div;
-            })();
-          const link = document.createElement("a");
-          link.href = url;
-          link.target = "_blank";
-          link.textContent = file.name;
-          previewEl.appendChild(link);
-          previewEl.appendChild(document.createElement("br"));
-        } catch (err) {
-          showAlert(`Erro ao enviar boleto ${file.name}: ${handleError(err)}`, "danger");
+        let resp = null;
+        let success = false;
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          try {
+            resp = await uploadArquivo(AuthService, file);
+            success = true;
+            break;
+          } catch (err) {
+            console.warn(`Tentativa ${attempt} falhou para upload do arquivo:`, err);
+            if (attempt < 3) await new Promise(r => setTimeout(r, 3000));
+          }
         }
+        if (!success) {
+          showAlert(`Erro no upload do arquivo "${file.name}". O formulário será reiniciado.`, "danger");
+          // Recarrega a tela para recomeçar o processo
+          location.hash = "#vtc-financeiro-lancamento-create-v5";
+          return;
+        }
+        const url = resp.filename || resp.url || resp;
+        window.boletoUrls.push(url);
+        // Registra log de boleto anexado
+        addLog(`Boleto anexado: ${url}`);
+        // Exibe link de preview de cada boleto
+        previewEl = document.getElementById("boletoPreview")
+          || (() => {
+            const div = document.createElement("div");
+            div.id = "boletoPreview";
+            document.querySelector("#arquivo").closest(".mb-3").appendChild(div);
+            return div;
+          })();
+        const link = document.createElement("a");
+        link.href = url;
+        link.target = "_blank";
+        link.textContent = file.name;
+        previewEl.appendChild(link);
+        previewEl.appendChild(document.createElement("br"));
       }
       // Reabilita o botão criar lançamento após uploads de boleto
       if (submitBtn) submitBtn.disabled = false;
@@ -794,11 +811,26 @@ export async function renderFinanceiroLancamentoCreateV5() {
       // Atualiza título da página para criação de lançamento
       const pageTitle = document.querySelector(".page-title h2");
       if (pageTitle) pageTitle.textContent = "Financeiro - Novo Lançamento";
-      // Realiza upload e classificação para cada arquivo
+      // Realiza upload e classificação para cada arquivo, com retry de até 3 tentativas e espera de 3s entre elas
       let resultados = [];
       for (const file of files) {
-        // uploadArquivo deve aceitar a opção { classify: true } e retornar o JSON de classificação
-        const resp = await uploadArquivo(AuthService, file, { classify: true });
+        let resp = null;
+        let success = false;
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          try {
+            resp = await uploadArquivo(AuthService, file, { classify: true });
+            success = true;
+            break;
+          } catch (err) {
+            console.warn(`Tentativa ${attempt} falhou na classificação do arquivo:`, err);
+            if (attempt < 3) await new Promise(r => setTimeout(r, 3000));
+          }
+        }
+        if (!success) {
+          classificationError.innerHTML = `Erro no upload do arquivo "${file.name}". O formulário será reiniciado.`;
+          location.hash = "#vtc-financeiro-lancamento-create-v5";
+          return;
+        }
         resultados.push(resp);
       }
       // Processa o primeiro resultado
@@ -933,12 +965,23 @@ export async function renderFinanceiroLancamentoCreateV5() {
           } else {
             valorEl.value = "";
           }
+          // Valor Bruto somente leitura até “Manual” ser ativado
+          valorEl.readOnly = true;
           valorEl.disabled = true;
           const unlockValor = document.getElementById("unlockValor");
           if (unlockValor) {
-            unlockValor.checked = !info.valor_total_nota;
-            valorEl.disabled = !unlockValor.checked;
+            unlockValor.checked = false;
             unlockValor.disabled = false;
+          }
+          // unlockValor event listener (ensure present)
+          if (unlockValor && !unlockValor._hasListener) {
+            unlockValor.addEventListener("change", e => {
+              const enabled = e.target.checked;
+              valorEl.readOnly = !enabled;
+              valorEl.disabled = !enabled;
+              addLog("Valor Bruto definido como " + (enabled ? "Manual" : "Automático"));
+            });
+            unlockValor._hasListener = true;
           }
         }
 
@@ -1144,12 +1187,23 @@ export async function renderFinanceiroLancamentoCreateV5() {
           } else {
             valorEl.value = "";
           }
+          // Valor Bruto somente leitura até “Manual” ser ativado
           valorEl.readOnly = true;
+          valorEl.disabled = true;
           const unlockValor = document.getElementById("unlockValor");
           if (unlockValor) {
-            unlockValor.checked = !info.valor_total_nota;
-            valorEl.disabled = !unlockValor.checked;
+            unlockValor.checked = false;
             unlockValor.disabled = false;
+          }
+          // unlockValor event listener (ensure present)
+          if (unlockValor && !unlockValor._hasListener) {
+            unlockValor.addEventListener("change", e => {
+              const enabled = e.target.checked;
+              valorEl.readOnly = !enabled;
+              valorEl.disabled = !enabled;
+              addLog("Valor Bruto definido como " + (enabled ? "Manual" : "Automático"));
+            });
+            unlockValor._hasListener = true;
           }
         }
 
@@ -1323,13 +1377,7 @@ export async function renderFinanceiroLancamentoCreateV5() {
       addLog("Data de Emissão definida como " + (e.target.checked ? "Manual" : "Automática"));
     });
   }
-  const unlockValor = document.getElementById("unlockValor");
-  if (unlockValor) {
-    unlockValor.addEventListener("change", e => {
-      document.getElementById("valor").disabled = !e.target.checked;
-      addLog("Valor Bruto definido como " + (e.target.checked ? "Manual" : "Automático"));
-    });
-  }
+  // Valor Bruto desbloqueio manual: handled in classification handler for correct logic.
   const unlockFilial = document.getElementById("unlockFilial");
   if (unlockFilial) {
     unlockFilial.addEventListener("change", e => {

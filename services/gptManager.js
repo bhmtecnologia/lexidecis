@@ -69,8 +69,9 @@ export default class GPTManager {
             mediaEl.style.objectFit = 'contain';
             mediaEl.style.width = '100%';
             mediaEl.style.height = 'auto';
-            const maxH = window.innerWidth < 768 ? '150px' : '300px';
+            const maxH = window.innerWidth < 768 ? '200px' : '300px';
             mediaEl.style.maxHeight = maxH;
+            mediaEl.style.minHeight = maxH;
         } else {
             mediaEl = document.createElement('img');
             mediaEl.src = url || 'path/to/default-image.jpg';

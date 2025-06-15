@@ -47,17 +47,43 @@ export default class GPTManager {
         cardDiv.dataset.gptId = gpt.id;
         cardDiv.dataset.category = gpt.category || 'Sem Categoria';
 
-        const img = document.createElement('img');
-        img.src = gpt.imageUrl || 'path/to/default-image.jpg';
-        img.classList.add('card-img-top', 'gpt-image');
-        // estilos responsivos devem estar no CSS
-        img.style.objectFit = 'contain';
-        img.style.width = '100%';
-        img.style.height = 'auto';
-        const maxHeight = window.innerWidth < 768 ? '150px' : '300px';
-        img.style.maxHeight = maxHeight;
-        img.alt = `${gpt.name} Image`;
-        img.setAttribute('loading', 'lazy');
+        // Determine media type: image or video
+        const url = gpt.imageUrl || '';
+        const isVideo = /\.(mp4|webm|ogg)$/i.test(url);
+        let mediaEl;
+        if (isVideo) {
+            mediaEl = document.createElement('video');
+            mediaEl.src = url;
+            // Custom video behavior: no controls, muted, loop, preload, style, play on hover
+            mediaEl.muted = true;
+            mediaEl.loop = true;
+            mediaEl.preload = 'metadata';
+            mediaEl.style.border = 'none';
+            // Play on hover, pause on mouse leave
+            mediaEl.addEventListener('mouseenter', () => {
+                mediaEl.play();
+            });
+            mediaEl.addEventListener('mouseleave', () => {
+                mediaEl.pause();
+            });
+            mediaEl.style.objectFit = 'contain';
+            mediaEl.style.width = '100%';
+            mediaEl.style.height = 'auto';
+            const maxH = window.innerWidth < 768 ? '150px' : '300px';
+            mediaEl.style.maxHeight = maxH;
+        } else {
+            mediaEl = document.createElement('img');
+            mediaEl.src = url || 'path/to/default-image.jpg';
+            mediaEl.alt = `${gpt.name} Image`;
+            mediaEl.classList.add('card-img-top', 'gpt-image');
+            mediaEl.setAttribute('loading', 'lazy');
+            mediaEl.style.objectFit = 'contain';
+            mediaEl.style.width = '100%';
+            mediaEl.style.height = 'auto';
+            const maxH = window.innerWidth < 768 ? '150px' : '300px';
+            mediaEl.style.maxHeight = maxH;
+        }
+        cardDiv.appendChild(mediaEl);
 
         const cardBody = document.createElement('div');
         cardBody.classList.add('card-body', 'd-flex', 'flex-column');
@@ -73,7 +99,6 @@ export default class GPTManager {
         cardBody.appendChild(title);
         cardBody.appendChild(description);
 
-        cardDiv.appendChild(img);
         cardDiv.appendChild(cardBody);
 
         // Spinner overlay element (hidden by default)

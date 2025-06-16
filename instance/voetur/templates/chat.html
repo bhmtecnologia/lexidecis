@@ -933,6 +933,13 @@
         }
         const chatArea = document.getElementById('chat-area');
         chatArea.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
+        // If no previous history exists, start chat without streaming
+        const extKey = `${cfg.chatflowid}_EXTERNAL`;
+        if (!localStorage.getItem(extKey)) {
+          await import('../assets/js/web.js').then(mod => mod.default.initFull(cfg));
+          spinner.remove();
+          return;
+        }
         // Import Flowise web component from local assets
         await import('../assets/js/web.js').then(mod => mod.default.initFull(cfg));
         } catch (err) {
@@ -1146,6 +1153,12 @@ document.getElementById('new-conversation').addEventListener('click', () => {
         // Replace chat container and init
         const chatArea = document.getElementById('chat-area');
         chatArea.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
+        // Guard: If no previous history exists, start chat without streaming
+        const extKeyDefault = `${cfg.chatflowid}_EXTERNAL`;
+        if (!localStorage.getItem(extKeyDefault)) {
+          await import('../assets/js/web.js').then(mod => mod.default.initFull(cfg));
+          return;
+        }
         // Import Flowise web component from local assets
         await import('../assets/js/web.js').then(mod => mod.default.initFull(cfg));
       } catch (err) {

@@ -122,7 +122,6 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid var(--shape-border);
     }
 
     #chat-sidebar ul {
@@ -216,7 +215,7 @@
     .search-box {
       display: flex;
       align-items: center;
-      border-bottom: 1px solid var(--shape-border);
+      /* border-bottom: 1px solid var(--shape-border); */
       gap: 0.5rem;
     }
     .search-box .search-icon {
@@ -318,6 +317,17 @@
       border-bottom: none !important;
     }
 
+    /* Remove divider below Nova conversa */
+    #new-conversation {
+      border-bottom: none !important;
+    }
+
+    /* Remove divider between Nova conversa and Explore GPTs */
+    #new-conversation,
+    #explore-gpt-item {
+      border-bottom: none !important;
+    }
+
     /* Reduce spacing between chat items by 40% */
     #chat-list li {
       padding: 0.3rem 0.6rem !important;
@@ -360,8 +370,10 @@
         <li id="new-conversation" class="px-3 py-2 d-flex align-items-center" role="button" tabindex="0">
           <i class="bi bi-plus-lg me-2"></i><span class="flex-grow-1">Nova conversa</span>
         </li>
-        <hr class="mx-3 my-2" />
-        <div class="px-3 py-0 d-flex align-items-center">
+        <ul class="list-unstyled m-0">
+          <li id="explore-gpt-item" class="px-3 py-2 d-flex align-items-center" role="button" tabindex="0" data-bs-toggle="modal" data-bs-target="#gptModal"><i class="bi bi-grid-3x3-gap me-2"></i><span class="flex-grow-1">Explore GPTs</span></li>
+        </ul>
+        <div class="ps-4 py-0 d-flex align-items-center">
           <button class="btn btn-link p-0 me-2" data-bs-toggle="collapse" data-bs-target="#gpts-collapse" aria-expanded="true" aria-controls="gpts-collapse">
             <i class="bi bi-chevron-down"></i>
           </button>
@@ -372,11 +384,8 @@
           <ul id="ai-providers-list" class="list-unstyled m-0"></ul>
         </div>
         </div>
-        <ul class="list-unstyled m-0">
-          <li id="explore-gpt-item" class="px-3 py-2 d-flex align-items-center" role="button" tabindex="0" data-bs-toggle="modal" data-bs-target="#gptModal"><i class="bi bi-grid-3x3-gap me-2"></i><span class="flex-grow-1">Explore GPTs</span></li>
-        </ul>
-        <hr class="mx-3 my-2" />
-        <div class="d-flex align-items-center px-3 py-0">
+        
+        <div class="d-flex align-items-center px-3 py-0 mt-3">
           <div class="text-muted small fw-semibold flex-grow-1">Chats</div>
           <button id="refresh-chats" class="btn btn-sm btn-outline-theme" title="Atualizar chats">
             <i class="bi bi-arrow-clockwise"></i>

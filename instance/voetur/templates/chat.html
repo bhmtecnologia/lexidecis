@@ -932,12 +932,22 @@
         }
       });
     });
-    // open chat if chatId parameter is present in URL
+    // open chat if chatId parameter is present in URL, fallback to new conversation if not found
     const urlParams = new URLSearchParams(window.location.search);
     const directChatId = urlParams.get('chatId');
+    let found = false;
     if (directChatId) {
-      const directLi = Array.from(chatListEl.children).find(el => el.dataset.sessionId === directChatId);
-      if (directLi) directLi.click();
+      const directLi = Array.from(chatListEl.children)
+        .find(el => el.dataset.sessionId === directChatId);
+      if (directLi) {
+        directLi.click();
+        found = true;
+      }
+    }
+    // If no valid chatId provided or not found, start a new conversation
+    if (!found) {
+      const newConv = document.getElementById('new-conversation');
+      if (newConv) newConv.click();
     }
     refreshSearchOptions();
   } catch (err) {

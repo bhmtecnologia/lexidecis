@@ -512,6 +512,8 @@
         // Stub: will be overridden per session
       }
     };
+    // Set apiHost to current origin for initial page load and reload
+    window.flowiseConfig.apiHost = window.location.protocol + '//' + window.location.host;
     import AuthService from '../assets/js/auth.js';
     import { listChats, listGpts, getGptConfig, createChatMessage } from "../assets/js/api.js";
 

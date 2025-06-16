@@ -926,7 +926,8 @@
         }
         const chatArea = document.getElementById('chat-area');
         chatArea.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
-        Chatbot.initFull(cfg);
+        // Import Flowise web component from local assets
+        await import('../assets/js/web.js').then(mod => mod.default.initFull(cfg));
         } catch (err) {
           console.error('Erro ao carregar histórico:', err);
           spinner.remove();
@@ -1118,8 +1119,8 @@ document.getElementById('new-chat').addEventListener('click', () => {
         // Replace chat container and init
         const chatArea = document.getElementById('chat-area');
         chatArea.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
-        // Launch chat
-        await import(`${apiHost}/web.js`).then(mod => mod.default.initFull(cfg));
+        // Import Flowise web component from local assets
+        await import('../assets/js/web.js').then(mod => mod.default.initFull(cfg));
       } catch (err) {
         console.error('Erro inicializando chat padrão:', err);
       }

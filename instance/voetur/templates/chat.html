@@ -394,9 +394,6 @@
         
         <div class="d-flex align-items-center px-3 py-0 mt-3">
           <div class="text-muted small fw-semibold flex-grow-1">Chats</div>
-          <button id="refresh-chats" class="btn btn-sm btn-outline-theme" title="Atualizar chats">
-            <i class="bi bi-arrow-clockwise"></i>
-          </button>
         </div>
         <div class="flex-grow-1" data-simplebar style="overflow-y: auto; flex: 1; min-height: 0;">
           <ul id="chat-list" class="mb-0 pt-0"><li id="chat-loading" class="px-3 py-2 text-muted">Carregando chats...</li></ul>
@@ -1059,10 +1056,6 @@ document.getElementById('new-conversation').addEventListener('click', () => {
       updateUI();
     });
     updateUI();
-    // Refresh chat list by reloading the page
-    document.getElementById('refresh-chats').addEventListener('click', () => {
-      location.reload();
-    });
     // Default GPT override ID (replace with the GPT ID from your API)
     const defaultGptId = 'ed2af5a7-a9f0-4882-9dbc-a7f9dbb9b1e4';
     // Initialize default GPT chat using its own API host

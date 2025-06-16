@@ -682,246 +682,269 @@
         aiList.appendChild(li);
       });
     })();
-    (async () => {
-      await new Promise(resolve => {
-        const checkAuth = setInterval(() => {
-          if (AuthService.user) { clearInterval(checkAuth); resolve(); }
-        }, 100);
-      });
-      const chatListEl = document.getElementById('chat-list');
-      chatListEl.innerHTML = '<li id="chat-loading" class="px-3 py-2 text-muted">Carregando chats...</li>';
-      try {
-        let resp = await listChats(AuthService);
-        if (typeof resp === 'string') resp = JSON.parse(resp);
-        const items = Array.isArray(resp) ? resp : resp.data ? [resp] : [];
-        const chatItems = items.flatMap(i => {
-          const raw = i.data;
-          return Array.isArray(raw) ? raw : typeof raw === 'string' ? JSON.parse(raw) : [raw];
-        });
-        chatListEl.innerHTML = '';
-        chatItems.forEach(chat => {
-          const li = document.createElement('li');
-          // Discrete chat icon before each chat name
-          const icon = document.createElement('i');
-          icon.className = 'bi bi-chat-dots me-2';
-          icon.style.fontSize = '1rem';
-          icon.style.color = 'var(--font-color)';
-          li.appendChild(icon);
-          const span = document.createElement('span');
-          span.textContent = chat.name || chat.id;
-          li.appendChild(span);
-          // Fetch and display message count
-          (async () => {
-            try {
-              const gptKey = chat.fk_gpt_id || chat.gpt_id || chat.gptId;
-              const gpt = gptMap[gptKey];
-              const baseFlowise = gpt?.flowiseConfig?.flowise;
-              let apiHost = baseFlowise?.apiHost || window.flowiseConfig.apiHost;
-              apiHost = apiHost.replace(/\/$/, '');
-              if (!/^https?:\/\//.test(apiHost)) {
-                apiHost = window.location.protocol + '//' + apiHost;
-              }
-              const flowId = baseFlowise?.chatflowId || gptKey;
-              const res = await fetch(
-                `${apiHost}/api/v1/chatmessage/${flowId}?sessionId=${chat.id}`,
-                {
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${baseFlowise?.token}`
-                  }
-                }
-              );
-              if (res.ok) {
-                const history = await res.json();
-                const count = Array.isArray(history)
-                  ? history.length
-                  : (history.data?.length || 0);
-                const countBadge = document.createElement('span');
-                countBadge.className = 'badge bg-secondary ms-2';
-                countBadge.textContent = count;
-                span.appendChild(countBadge);
-              }
-            } catch (err) {
-              console.error('Failed to fetch message count', err);
-            }
-          })();
-          const actions = document.createElement('div');
-          actions.className = 'ms-auto';
-          actions.innerHTML = `<button class="chat-options-btn btn-icon" title="Opções"><i class="bi bi-three-dots"></i></button>`;
-          li.appendChild(actions);
-          chatListEl.appendChild(li);
-          tippy(li.querySelector('.chat-options-btn'), {
-            content: `
-              <ul class="list-unstyled m-0">
-                <li><button class="dropdown-item">Renomear</button></li>
-                <li><button class="dropdown-item">Arquivar</button></li>
-                <li><button class="dropdown-item text-danger">Excluir</button></li>
-              </ul>
-            `,
-            allowHTML: true,
-            interactive: true,
-            trigger: 'click',
-            placement: 'right-start'
-          });
-          // Clique para carregar histórico usando chatflowId mapping
-          li.addEventListener('click', async () => {
-            // Show loading spinner on selected chat
-            const spinner = document.createElement('div');
-            spinner.className = 'spinner-border spinner-border-sm text-primary me-2';
-            spinner.setAttribute('role', 'status');
-            spinner.innerHTML = '<span class="visually-hidden">Loading...</span>';
-            li.insertBefore(spinner, li.firstChild);
-            // Marca visualmente o item selecionado
-            document.querySelectorAll('#chat-sidebar li').forEach(elem => elem.classList.remove('selected'));
-            li.classList.add('selected');
-
-            const sessionId = chat.id;
-            // Use the GPT ID from the chat object (support different naming)
-            const gptKey = chat.fk_gpt_id || chat.gpt_id || chat.gptId;
-            // Debug logs for GPT config retrieval
-            console.log('Debug: chat object has fk_gpt_id =', chat.fk_gpt_id, 'gpt_id =', chat.gpt_id);
-            console.log('Debug: available GPT configs in cache:', Object.keys(configCache));
-            let override = configCache[gptKey];
-            if (!override) {
-              override = await getGptConfig(AuthService, gptKey);
-              configCache[gptKey] = override;
-            }
-            // If override is wrapped as an array with a JSON string under empty key, parse it
-            if (!Array.isArray(override) && override[0] && typeof override[0] === 'object' && override[0]['']) {
-              try {
-                const parsed = JSON.parse(override[0]['']);
-                override = parsed;
-                configCache[gptKey] = override;
-                console.log('Parsed wrapped override for GPT key', gptKey, '=', override);
-              } catch (err) {
-                console.error('Error parsing wrapped override for GPT key', gptKey, err);
-              }
-            }
-            // Ensure sessionId is updated in the override
-            override = { ...override, sessionId };
-            configCache[gptKey] = override;
-            // Debug log after setting override
-            console.log('Debug: override for GPT key', gptKey, '=', override);
-            try {
-            // Determine the actual Flowise chatflowId for this GPT
-            const gpt = gptMap[gptKey];
-            // Respect the chat's own flowiseConfig.chatflowId if provided, otherwise fallback to the GPT metadata
-            const realFlowId = chat.chatflowId
-              || (gpt && gpt.flowiseConfig && gpt.flowiseConfig.flowise && gpt.flowiseConfig.flowise.chatflowId)
-              || gptKey;
-            // Use proxy-mapped chatflow ID only, without sessionId
-            const proxyFlowId = mapChatflowId(realFlowId);
-            // Determine API host for this GPT
-            const rawApiHost = gpt && gpt.flowiseConfig && gpt.flowiseConfig.flowise
-              ? gpt.flowiseConfig.flowise.apiHost
-              : window.flowiseConfig.apiHost;
-            let apiHost = rawApiHost.replace(/\/$/, '');
-            // Normalize apiHost: if missing protocol (e.g., ":3000" or "localhost:3000"), prepend current origin protocol and host
-            if (!/^https?:\/\//.test(apiHost)) {
-              apiHost = window.location.protocol + '//' + apiHost;
-            }
-            const flowId = `${proxyFlowId}_${sessionId}`;
-            // Session-specific storage keys
-            const sessionExtKey = `${proxyFlowId}__${sessionId}_EXTERNAL`;
-            const sessionFlagKey = `${proxyFlowId}__${sessionId}_historyInjected`;
-
-            // Inject session history only if not already stored
-            if (!localStorage.getItem(sessionFlagKey)) {
-              // Fetch history directly from Flowise API
-              const response = await fetch(
-                `${apiHost}/api/v1/chatmessage/${realFlowId}?sessionId=${sessionId}`, {
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${gpt.flowiseConfig.flowise.token}`
-                  }
-                }
-              );
-              if (!response.ok) throw new Error(`Status ${response.status}`);
-              const apiHistory = await response.json();
-              const formattedHistory = apiHistory.map(msg => ({
-                message: msg.content,
-                type: msg.role === 'userMessage' ? 'userMessage' : 'apiMessage',
-                dateTime: msg.createdDate || new Date().toISOString(),
-                messageId: msg.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substr(2, 9)),
-                fileUploads: msg.fileUploads || []
-              }));
-              // Store under session-specific keys
-              localStorage.setItem(sessionExtKey, JSON.stringify({ chatHistory: formattedHistory, chatId: sessionId }));
-              localStorage.setItem(sessionFlagKey, 'true');
-            }
-
-            // Copy session history into the base key so web.js picks it up
-            const baseExtKey = `${proxyFlowId}_EXTERNAL`;
-            const baseFlagKey = `${proxyFlowId}_historyInjected`;
-            const sessionData = localStorage.getItem(sessionExtKey);
-            if (sessionData) {
-              localStorage.setItem(baseExtKey, sessionData);
-              localStorage.setItem(baseFlagKey, 'true');
-            }
-            // === Build and initialize embed using a fresh cfg object ===
-            const cfg = {
-              chatflowid:  realFlowId,
-              apiHost:     apiHost,
-              token:       gpt.flowiseConfig.flowise.token,
+(async () => {
+  await new Promise(resolve => {
+    const checkAuth = setInterval(() => {
+      if (AuthService.user) { clearInterval(checkAuth); resolve(); }
+    }, 100);
+  });
+  // Wait for GPT list to be loaded before fetching counts
+  await new Promise(resolve => {
+    const checkMap = setInterval(() => {
+      if (Object.keys(gptMap).length > 0) { clearInterval(checkMap); resolve(); }
+    }, 50);
+  });
+  const chatListEl = document.getElementById('chat-list');
+  chatListEl.innerHTML = '<li id="chat-loading" class="px-3 py-2 text-muted">Carregando chats...</li>';
+  try {
+    let resp = await listChats(AuthService);
+    if (typeof resp === 'string') resp = JSON.parse(resp);
+    const items = Array.isArray(resp) ? resp : resp.data ? [resp] : [];
+    const chatItems = items.flatMap(i => {
+      const raw = i.data;
+      return Array.isArray(raw) ? raw : typeof raw === 'string' ? JSON.parse(raw) : [raw];
+    });
+    chatListEl.innerHTML = '';
+    chatItems.forEach(chat => {
+      const li = document.createElement('li');
+      // allow direct chat opening via URL
+      li.dataset.sessionId = chat.id;
+      // Discrete chat icon before each chat name
+      const icon = document.createElement('i');
+      icon.className = 'bi bi-chat-dots me-2';
+      icon.style.fontSize = '1rem';
+      icon.style.color = 'var(--font-color)';
+      li.appendChild(icon);
+      const span = document.createElement('span');
+      span.textContent = chat.name || chat.id;
+      li.appendChild(span);
+      // Placeholder badge for message count
+      const countBadge = document.createElement('span');
+      countBadge.className = 'badge bg-secondary ms-2';
+      countBadge.textContent = '...';
+      span.appendChild(countBadge);
+      // Fetch and display message count
+      (async () => {
+        try {
+          const gptKey = chat.fk_gpt_id || chat.gpt_id || chat.gptId;
+          const gpt = gptMap[gptKey];
+          const baseFlowise = gpt?.flowiseConfig?.flowise;
+          // Determine API host, with fallback to current origin
+          let apiHost = baseFlowise?.apiHost || window.flowiseConfig.apiHost || window.location.origin;
+          apiHost = (apiHost || '').replace(/\/$/, '');
+          let normApiHost = apiHost;
+          if (!/^https?:\/\//.test(normApiHost)) {
+            normApiHost = window.location.protocol + '//' + normApiHost;
+          }
+          const flowId = baseFlowise?.chatflowId || gptKey;
+          const res = await fetch(
+            `${normApiHost}/api/v1/chatmessage/${flowId}?sessionId=${chat.id}`,
+            {
               headers: {
-                'x-user-email': AuthService.user.email,
-                'x-user-uuid':  AuthService.user.uid,
-                'x-user-jwt':   AuthService.token,
-                'x-gpt-id':     gpt.id
-              },
-              chatflowConfig: override,
-              theme:           window.flowiseConfig.theme,
-              observersConfig: {
-                observeLoading: async (loading) => {
-                  if (loading) {
-                    // Capture user input...
-                    try {
-                      const userInput = document
-                        .querySelector('flowise-fullchatbot')
-                        .shadowRoot
-                        .querySelector('textarea').value;
-                      console.log('Sending chatmessage payload:', {
-                        chatflowid: cfg.chatflowid,
-                        sessionId: override.sessionId,
-                        role: 'user',
-                        message: userInput
-                      });
-                      await createChatMessage(
-                        AuthService,
-                        cfg.chatflowid,
-                        override.sessionId,
-                        'user',
-                        userInput
-                      );
-                      console.log('Chat message created successfully');
-                    } catch (err) {
-                      console.error('Failed to create chat message', err);
-                    }
-                  } else {
-                    // Remove loading spinner when chat content has loaded
-                    spinner.remove();
-                  }
-                }
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${baseFlowise?.token}`
               }
-            };
-            // Atualiza título do chat com o nome do GPT
-            if (cfg.theme && cfg.theme.chatWindow) {
-              cfg.theme.chatWindow.title = gpt.name || cfg.theme.chatWindow.title;
             }
-            const chatArea = document.getElementById('chat-area');
-            chatArea.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
-            Chatbot.initFull(cfg);
-            } catch (err) {
-              console.error('Erro ao carregar histórico:', err);
-              spinner.remove();
+          );
+          if (res.ok) {
+            const history = await res.json();
+            const count = Array.isArray(history)
+              ? history.length
+              : (history.data?.length || 0);
+            // Update placeholder badge with actual count
+            const countBadge = span.querySelector('.badge');
+            if (countBadge) countBadge.textContent = count;
+          }
+        } catch (err) {
+          console.error('Failed to fetch message count', err);
+        }
+      })();
+      const actions = document.createElement('div');
+      actions.className = 'ms-auto';
+      actions.innerHTML = `<button class="chat-options-btn btn-icon" title="Opções"><i class="bi bi-three-dots"></i></button>`;
+      li.appendChild(actions);
+      chatListEl.appendChild(li);
+      tippy(li.querySelector('.chat-options-btn'), {
+        content: `
+          <ul class="list-unstyled m-0">
+            <li><button class="dropdown-item">Renomear</button></li>
+            <li><button class="dropdown-item">Arquivar</button></li>
+            <li><button class="dropdown-item text-danger">Excluir</button></li>
+          </ul>
+        `,
+        allowHTML: true,
+        interactive: true,
+        trigger: 'click',
+        placement: 'right-start'
+      });
+      // Clique para carregar histórico usando chatflowId mapping
+      li.addEventListener('click', async () => {
+        // Show loading spinner on selected chat
+        const spinner = document.createElement('div');
+        spinner.className = 'spinner-border spinner-border-sm text-primary me-2';
+        spinner.setAttribute('role', 'status');
+        spinner.innerHTML = '<span class="visually-hidden">Loading...</span>';
+        li.insertBefore(spinner, li.firstChild);
+        // Marca visualmente o item selecionado
+        document.querySelectorAll('#chat-sidebar li').forEach(elem => elem.classList.remove('selected'));
+        li.classList.add('selected');
+
+        const sessionId = chat.id;
+        // update URL to include this chatId
+        window.history.replaceState(null, '', `${window.location.pathname}?chatId=${sessionId}`);
+        // Use the GPT ID from the chat object (support different naming)
+        const gptKey = chat.fk_gpt_id || chat.gpt_id || chat.gptId;
+        // Debug logs for GPT config retrieval
+        console.log('Debug: chat object has fk_gpt_id =', chat.fk_gpt_id, 'gpt_id =', chat.gpt_id);
+        console.log('Debug: available GPT configs in cache:', Object.keys(configCache));
+        let override = configCache[gptKey];
+        if (!override) {
+          override = await getGptConfig(AuthService, gptKey);
+          configCache[gptKey] = override;
+        }
+        // If override is wrapped as an array with a JSON string under empty key, parse it
+        if (!Array.isArray(override) && override[0] && typeof override[0] === 'object' && override[0]['']) {
+          try {
+            const parsed = JSON.parse(override[0]['']);
+            override = parsed;
+            configCache[gptKey] = override;
+            console.log('Parsed wrapped override for GPT key', gptKey, '=', override);
+          } catch (err) {
+            console.error('Error parsing wrapped override for GPT key', gptKey, err);
+          }
+        }
+        // Ensure sessionId is updated in the override
+        override = { ...override, sessionId };
+        configCache[gptKey] = override;
+        // Debug log after setting override
+        console.log('Debug: override for GPT key', gptKey, '=', override);
+        try {
+        // Determine the actual Flowise chatflowId for this GPT
+        const gpt = gptMap[gptKey];
+        // Respect the chat's own flowiseConfig.chatflowId if provided, otherwise fallback to the GPT metadata
+        const realFlowId = chat.chatflowId
+          || (gpt && gpt.flowiseConfig && gpt.flowiseConfig.flowise && gpt.flowiseConfig.flowise.chatflowId)
+          || gptKey;
+        // Use proxy-mapped chatflow ID only, without sessionId
+        const proxyFlowId = mapChatflowId(realFlowId);
+        // Determine API host for this GPT
+        const rawApiHost = gpt && gpt.flowiseConfig && gpt.flowiseConfig.flowise
+          ? gpt.flowiseConfig.flowise.apiHost
+          : window.flowiseConfig.apiHost;
+        let apiHost = rawApiHost.replace(/\/$/, '');
+        // Normalize apiHost: if missing protocol (e.g., ":3000" or "localhost:3000"), prepend current origin protocol and host
+        if (!/^https?:\/\//.test(apiHost)) {
+          apiHost = window.location.protocol + '//' + apiHost;
+        }
+        const flowId = `${proxyFlowId}_${sessionId}`;
+        // Session-specific storage keys
+        const sessionExtKey = `${proxyFlowId}__${sessionId}_EXTERNAL`;
+        const sessionFlagKey = `${proxyFlowId}__${sessionId}_historyInjected`;
+
+        // Inject session history only if not already stored
+        if (!localStorage.getItem(sessionFlagKey)) {
+          // Fetch history directly from Flowise API
+          const response = await fetch(
+            `${apiHost}/api/v1/chatmessage/${realFlowId}?sessionId=${sessionId}`, {
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${gpt.flowiseConfig.flowise.token}`
+              }
             }
-          });
-        });
-        refreshSearchOptions();
-      } catch (err) {
-        console.error('Erro ao carregar chats:', err);
-      }
-    })();
+          );
+          if (!response.ok) throw new Error(`Status ${response.status}`);
+          const apiHistory = await response.json();
+          const formattedHistory = apiHistory.map(msg => ({
+            message: msg.content,
+            type: msg.role === 'userMessage' ? 'userMessage' : 'apiMessage',
+            dateTime: msg.createdDate || new Date().toISOString(),
+            messageId: msg.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substr(2, 9)),
+            fileUploads: msg.fileUploads || []
+          }));
+          // Store under session-specific keys
+          localStorage.setItem(sessionExtKey, JSON.stringify({ chatHistory: formattedHistory, chatId: sessionId }));
+          localStorage.setItem(sessionFlagKey, 'true');
+        }
+
+        // Copy session history into the base key so web.js picks it up
+        const baseExtKey = `${proxyFlowId}_EXTERNAL`;
+        const baseFlagKey = `${proxyFlowId}_historyInjected`;
+        const sessionData = localStorage.getItem(sessionExtKey);
+        if (sessionData) {
+          localStorage.setItem(baseExtKey, sessionData);
+          localStorage.setItem(baseFlagKey, 'true');
+        }
+        // === Build and initialize embed using a fresh cfg object ===
+        const cfg = {
+          chatflowid:  realFlowId,
+          apiHost:     apiHost,
+          token:       gpt.flowiseConfig.flowise.token,
+          headers: {
+            'x-user-email': AuthService.user.email,
+            'x-user-uuid':  AuthService.user.uid,
+            'x-user-jwt':   AuthService.token,
+            'x-gpt-id':     gpt.id
+          },
+          chatflowConfig: override,
+          theme:           window.flowiseConfig.theme,
+          observersConfig: {
+            observeLoading: async (loading) => {
+              if (loading) {
+                // Capture user input...
+                try {
+                  const userInput = document
+                    .querySelector('flowise-fullchatbot')
+                    .shadowRoot
+                    .querySelector('textarea').value;
+                  console.log('Sending chatmessage payload:', {
+                    chatflowid: cfg.chatflowid,
+                    sessionId: override.sessionId,
+                    role: 'user',
+                    message: userInput
+                  });
+                  await createChatMessage(
+                    AuthService,
+                    cfg.chatflowid,
+                    override.sessionId,
+                    'user',
+                    userInput
+                  );
+                  console.log('Chat message created successfully');
+                } catch (err) {
+                  console.error('Failed to create chat message', err);
+                }
+              } else {
+                // Remove loading spinner when chat content has loaded
+                spinner.remove();
+              }
+            }
+          }
+        };
+        // Atualiza título do chat com o nome do GPT
+        if (cfg.theme && cfg.theme.chatWindow) {
+          cfg.theme.chatWindow.title = gpt.name || cfg.theme.chatWindow.title;
+        }
+        const chatArea = document.getElementById('chat-area');
+        chatArea.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
+        Chatbot.initFull(cfg);
+        } catch (err) {
+          console.error('Erro ao carregar histórico:', err);
+          spinner.remove();
+        }
+      });
+    });
+    // open chat if chatId parameter is present in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const directChatId = urlParams.get('chatId');
+    if (directChatId) {
+      const directLi = Array.from(chatListEl.children).find(el => el.dataset.sessionId === directChatId);
+      if (directLi) directLi.click();
+    }
+    refreshSearchOptions();
+  } catch (err) {
+    console.error('Erro ao carregar chats:', err);
+  }
+})();
     AuthService.onAuthChange(user => {
       if (!user) {
         window.location.href = './login.html?redirect=chat.html';

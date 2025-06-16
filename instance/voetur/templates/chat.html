@@ -358,7 +358,7 @@
           <select id="chat-search" class="flex-grow-1"><option></option></select>
         </div>
         <div class="px-3 py-1">
-          <button id="new-chat" class="btn btn-outline-theme w-100">
+          <button id="new-conversation" class="btn btn-outline-theme w-100">
             <i class="bi bi-plus-lg me-2"></i>Nova conversa
           </button>
         </div>
@@ -707,6 +707,8 @@
       const li = document.createElement('li');
       // allow direct chat opening via URL
       li.dataset.sessionId = chat.id;
+      const chatGptKey = chat.fk_gpt_id || chat.gpt_id || chat.gptId;
+      li.dataset.gptKey = chatGptKey;
       // Discrete chat icon before each chat name
       const icon = document.createElement('i');
       icon.className = 'bi bi-chat-dots me-2';
@@ -964,6 +966,16 @@ document.getElementById('new-chat').addEventListener('click', () => {
   const defaultEl = document.getElementById(defaultGptId);
   if (defaultEl) {
     defaultEl.click();
+  }
+});
+// Ensure the "Nova conversa" button under the search box reuses the selected chat's GPT
+document.getElementById('new-conversation').addEventListener('click', () => {
+  const selectedLi = document.querySelector('#chat-list li.selected');
+  if (selectedLi) {
+    const gptKey = selectedLi.dataset.gptKey;
+    // Trigger GPT list item click to start a new session for that GPT
+    const providerEl = document.getElementById(gptKey);
+    if (providerEl) providerEl.click();
   }
 });
     document.getElementById('logout-btn').addEventListener('click', () => AuthService.logout());

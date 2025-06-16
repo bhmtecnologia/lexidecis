@@ -283,6 +283,11 @@
     #chat-list li:hover * {
       color: var(--theme-body-font-color) !important;
     }
+    /* Prevent hover color change on the options button */
+    #chat-list li:hover .chat-options-btn,
+    #chat-list li:hover .chat-options-btn * {
+      color: var(--font-color) !important;
+    }
 
     /* Provider icon style for AI providers sidebar list */
     .provider-icon {
@@ -543,14 +548,24 @@
         li.className = 'px-3 py-2 d-flex align-items-center justify-content-between';
         li.setAttribute('role', 'button');
         li.tabIndex = 0;
+        const isVideo = gpt.imageUrl.toLowerCase().endsWith('.mp4');
+        const mediaElem = isVideo
+          ? `<video src="${gpt.imageUrl}" class="provider-icon" autoplay loop muted playsinline></video>`
+          : `<img src="${gpt.imageUrl}" class="provider-icon" alt="${gpt.name} icon"/>`;
         li.innerHTML = `
           <div class="d-flex align-items-center">
-            <img src="${gpt.imageUrl}" class="provider-icon" alt="${gpt.name} icon"/>
+            ${mediaElem}
             <span class="ms-2">${gpt.name}</span>
           </div>
           <span class="badge small bg-light text-dark">${gpt.category || 'Sem categoria'}</span>
         `;
         li.addEventListener('click', async () => {
+          // Show loading spinner on GPT item
+          const spinner = document.createElement('div');
+          spinner.className = 'spinner-border spinner-border-sm text-primary me-2';
+          spinner.setAttribute('role', 'status');
+          spinner.innerHTML = '<span class="visually-hidden">Loading...</span>';
+          li.insertBefore(spinner, li.firstChild);
           let override = configCache[gpt.id];
           if (!override) {
             override = await getGptConfig(AuthService, gpt.id);
@@ -661,6 +676,8 @@
           chatArea.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
           // Initialize with new config
           Chatbot.initFull(cfg);
+          // Remove loading spinner once GPT is initialized
+          spinner.remove();
         });
         aiList.appendChild(li);
       });
@@ -729,6 +746,7 @@
             }
           })();
           const actions = document.createElement('div');
+          actions.className = 'ms-auto';
           actions.innerHTML = `<button class="chat-options-btn btn-icon" title="Opções"><i class="bi bi-three-dots"></i></button>`;
           li.appendChild(actions);
           chatListEl.appendChild(li);
@@ -856,6 +874,7 @@
               observersConfig: {
                 observeLoading: async (loading) => {
                   if (loading) {
+                    // Capture user input...
                     try {
                       const userInput = document
                         .querySelector('flowise-fullchatbot')
@@ -878,6 +897,9 @@
                     } catch (err) {
                       console.error('Failed to create chat message', err);
                     }
+                  } else {
+                    // Remove loading spinner when chat content has loaded
+                    spinner.remove();
                   }
                 }
               }
@@ -889,7 +911,6 @@
             const chatArea = document.getElementById('chat-area');
             chatArea.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
             Chatbot.initFull(cfg);
-            spinner.remove();
             } catch (err) {
               console.error('Erro ao carregar histórico:', err);
               spinner.remove();
@@ -1164,10 +1185,14 @@ document.getElementById('new-chat').addEventListener('click', () => {
 
         const cards = gpts.map(gpt => {
           const { name, description, category, imageUrl } = gpt;
+          const isCardVideo = imageUrl.toLowerCase().endsWith('.mp4');
+          const mediaTag = isCardVideo
+            ? `<video src="${imageUrl}" class="card-img-top img-fluid" autoplay loop muted playsinline></video>`
+            : `<img src="${imageUrl}" class="card-img-top img-fluid" alt="${name}">`;
           return `
             <div class="col-12 col-sm-6 col-md-6 col-lg-4 mb-4" data-cat="${category}">
               <div class="card h-100 shadow-sm">
-                <img src="${imageUrl}" class="card-img-top img-fluid" alt="${name}">
+                ${mediaTag}
                 <div class="card-body d-flex flex-column">
                   <h5 class="card-title">${name}</h5>
                   <p class="card-text flex-grow-1">${description}</p>

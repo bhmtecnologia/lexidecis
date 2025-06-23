@@ -364,7 +364,7 @@ export async function renderFinanceiroLancamentoCreatev6() {
                 <!-- Anexo(s) -->
                 <div class="mb-3">
                   <label for="arquivo" class="form-label">Inserir Anexo(s)</label>
-                  <input type="file" class="form-control" id="arquivo" accept="image/png,image/jpeg" multiple>
+                  <input type="file" class="form-control" id="arquivo" accept="image/*" capture="environment" multiple>
                   <small class="form-text text-muted">Máx. 3 anexos; 4MB por arquivo. PNG/JPEG.</small>
                 </div>
                 <!-- Justificativa -->

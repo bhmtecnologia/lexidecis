@@ -60,6 +60,21 @@ function resetFormFields() {
 
   // Fornecedor
   padBlankSelect("fornecedorSelect");
+  // Recarrega opções de Fornecedor a partir dos dados já carregados
+  const fornecedorSelect = document.getElementById("fornecedorSelect");
+  if (fornecedorSelect && window.fornecedoresData) {
+    fornecedorSelect.innerHTML = '<option value="">Selecione</option>';
+    window.fornecedoresData.forEach(f => {
+      const opt = document.createElement("option");
+      opt.value = f.uuid || f.id;
+      opt.text = `${f.nome} (${f.cnpj})`;
+      fornecedorSelect.add(opt);
+    });
+    // Atualiza Select2, se ativo
+    if (window.$ && $.fn.select2) {
+      $("#fornecedorSelect").trigger("change");
+    }
+  }
 
   // Centro de Custo
   // Removido reset do Centro de Custo para manter valor selecionado entre lançamentos
@@ -800,6 +815,20 @@ export async function renderFinanceiroLancamentoCreatev6() {
         scrollBtn.classList.remove('d-none');
       }
       if (info.tipo_documento === "Nota Fiscal") {
+        // Recarrega opções de Fornecedor antes de preencher seleção
+        const fornecedorSelectInit = document.getElementById("fornecedorSelect");
+        if (fornecedorSelectInit && window.fornecedoresData) {
+          fornecedorSelectInit.innerHTML = '<option value="">Selecione</option>';
+          window.fornecedoresData.forEach(f => {
+            const opt = document.createElement("option");
+            opt.value = f.uuid || f.id;
+            opt.text = `${f.nome} (${f.cnpj})`;
+            fornecedorSelectInit.add(opt);
+          });
+          if (window.$ && $.fn.select2) {
+            $("#fornecedorSelect").trigger("change");
+          }
+        }
         // ===== DEBUG LOGS: Preenchimento de Filial =====
         console.group("DEBUG: Preenchimento de Filial");
         console.log("Classification info:", info);
@@ -956,8 +985,8 @@ export async function renderFinanceiroLancamentoCreatev6() {
         }
 
         // Seletor do fornecedor (auto-preenchimento)
-        const fornecedorSelect = document.getElementById("fornecedorSelect");
-        if (fornecedorSelect) {
+        const fornecedorSelectRep = document.getElementById("fornecedorSelect");
+        if (fornecedorSelectRep) {
           const desiredCnpj = info.cnpj_fornecedor ? info.cnpj_fornecedor.replace(/\D/g, "") : "";
           // Tenta corresponder em lista já carregada
           let existingSupplier = (window.fornecedoresData || []).find(f => {
@@ -979,9 +1008,9 @@ export async function renderFinanceiroLancamentoCreatev6() {
           }
           // Se encontrou, preenche e trava o select
           if (existingSupplier) {
-            fornecedorSelect.innerHTML = `<option value="${existingSupplier.uuid || existingSupplier.id}">${existingSupplier.nome} (${existingSupplier.cnpj})</option>`;
-            fornecedorSelect.value = existingSupplier.uuid || existingSupplier.id;
-            fornecedorSelect.disabled = true;
+            fornecedorSelectRep.innerHTML = `<option value="${existingSupplier.uuid || existingSupplier.id}">${existingSupplier.nome} (${existingSupplier.cnpj})</option>`;
+            fornecedorSelectRep.value = existingSupplier.uuid || existingSupplier.id;
+            fornecedorSelectRep.disabled = true;
             const unlockFornecedor = document.getElementById("unlockFornecedor");
             if (unlockFornecedor) {
               unlockFornecedor.checked = false;
@@ -996,6 +1025,20 @@ export async function renderFinanceiroLancamentoCreatev6() {
 
         // ======= Fim do preenchimento das tabelas =======
       } else if (info.tipo_documento === "Conta a pagar") {
+        // Recarrega opções de Fornecedor antes de preencher seleção
+        const fornecedorSelectInit = document.getElementById("fornecedorSelect");
+        if (fornecedorSelectInit && window.fornecedoresData) {
+          fornecedorSelectInit.innerHTML = '<option value="">Selecione</option>';
+          window.fornecedoresData.forEach(f => {
+            const opt = document.createElement("option");
+            opt.value = f.uuid || f.id;
+            opt.text = `${f.nome} (${f.cnpj})`;
+            fornecedorSelectInit.add(opt);
+          });
+          if (window.$ && $.fn.select2) {
+            $("#fornecedorSelect").trigger("change");
+          }
+        }
         // Preenche Tipo de Documento (read-only)
         const tipoEl = document.getElementById("tipoDocumento");
         if (tipoEl) {

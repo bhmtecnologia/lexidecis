@@ -648,6 +648,15 @@ export async function renderFinanceiroLancamentoCreatev6() {
       }
       // Desabilita o botão de submit durante o upload dos boletos
       const submitBtn = document.querySelector("#lancamentoForm button[type=submit]");
+      // Exibe status de upload para o usuário
+      let statusEl = document.getElementById("uploadStatus");
+      if (!statusEl) {
+        statusEl = document.createElement("div");
+        statusEl.id = "uploadStatus";
+        statusEl.className = "form-text text-info mb-3";
+        submitBtn.parentElement.insertBefore(statusEl, submitBtn);
+      }
+      statusEl.textContent = "Upload de anexos em andamento... aguarde.";
       if (submitBtn) submitBtn.disabled = true;
       window.boletoUrls = [];
       // Limpa preview anterior
@@ -693,6 +702,8 @@ export async function renderFinanceiroLancamentoCreatev6() {
         previewEl.appendChild(link);
         previewEl.appendChild(document.createElement("br"));
       }
+      // Limpa status de upload
+      if (statusEl) statusEl.textContent = "";
       // Reabilita o botão criar lançamento após uploads de boleto
       if (submitBtn) submitBtn.disabled = false;
     });

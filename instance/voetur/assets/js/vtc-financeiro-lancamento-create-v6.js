@@ -1513,38 +1513,9 @@ export async function renderFinanceiroLancamentoCreatev6() {
       // Log de criação do lançamento
       addLog(`Lançamento criado por ${AuthService.user.email}`);
       await showAlert("Lançamento criado com sucesso! ID: " + result.id, "success");
-      lancForm.reset();
-      resetFormFields();
-      // Limpa input de arquivo de classificação para garantir novo change
-      const classifyInput = document.getElementById("arquivoClassify");
-      if (classifyInput) classifyInput.value = "";
-      // Reinicia fluxo: volta para upload de anexo
-      const formSection = document.getElementById("form-section");
-      const supplierSection = document.getElementById("supplier-registration-section");
-      const classificationSection = document.getElementById("classification-section");
-      if (formSection) formSection.classList.add("d-none");
-      if (supplierSection) supplierSection.classList.add("d-none");
-      if (classificationSection) classificationSection.classList.remove("d-none");
-      // Limpa logs e resultados
-      window.logEntries = [];
-      const logField = document.getElementById("logField");
-      if (logField) logField.value = "";
-      const classificationResult = document.getElementById("classificationResult");
-      if (classificationResult) classificationResult.textContent = "";
-      const attachmentLink = document.getElementById("attachmentLink");
-      if (attachmentLink) attachmentLink.innerHTML = "";
-      // Restaura título da página
-      const pageTitleEl = document.querySelector(".page-title h2");
-      if (pageTitleEl) pageTitleEl.textContent = "Financeiro - Lançamento Create v6";
-      // Limpa seção de revisão e reseta wizard para início
-      window.classificationResult = null;
-      window.auditInfo = null;
-      window.boletoUrls = [];
-      const reviewSection = document.getElementById("reviewSection");
-      if (reviewSection) reviewSection.innerHTML = "";
-      // Retorna ao passo inicial
-      currentStep = 0;
-      showWizardStep(0);
+      // Navega para a tela de gestor após criação
+      location.hash = "#vtc-financeiro-gestor";
+      return;
     } catch (err) {
       formError.innerHTML = `Erro ao criar lançamento: ${handleError(err, "CreateLancamentov6")}`;
     } finally {

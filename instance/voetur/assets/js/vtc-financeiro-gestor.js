@@ -401,52 +401,10 @@ export async function renderVtcFinanceiroGestor() {
           <label for="dataEmissaoInput" class="form-label">Data Emissão <span class="text-danger">*</span></label>
           <input type="date" id="dataEmissaoInput" name="data_emissao" class="form-control" value="${data.data_emissao ? data.data_emissao.split('T')[0] : ''}" required>
         </div>
-        ${Array.isArray(data.parcelas_financeiras) ? `
         <div class="mb-3">
-          <label class="form-label">Parcelas <span class="text-danger">*</span></label>
-          <table class="table table-sm" id="parcelasTable">
-            <thead>
-              <tr>
-                <th>Valor</th>
-                <th>Data Vencimento</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${data.parcelas_financeiras.map((p, idx) => `
-                <tr>
-                  <td><input type="text" name="parcelaValor[]" class="form-control mask-currency" value="${parseFloat(p.valor).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}" /></td>
-                  <td><input type="date" name="parcelaDataVenc[]" class="form-control" value="${p.data_vencimento}" /></td>
-                  <td><button type="button" class="btn btn-sm btn-danger remove-parcela">Remover</button></td>
-                </tr>`).join('')}
-            </tbody>
-          </table>
-          <button type="button" id="addParcelaBtn" class="btn btn-sm btn-secondary">Adicionar parcela</button>
-        </div>` : ''}
-        ${isNF ? `
-        <div class="mb-3">
-          <label class="form-label">Itens da Nota Fiscal <span class="text-danger">*</span></label>
-          <table class="table table-sm" id="itensTable">
-            <thead>
-              <tr>
-                <th>Descrição</th>
-                <th>Quantidade</th>
-                <th>Valor Unitário</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${Array.isArray(data.itens) ? data.itens.map((item, idx) => `
-                <tr>
-                  <td><input type="text" name="itemDescricao[]" class="form-control" value="${item.descricao || ''}" /></td>
-                  <td><input type="number" name="itemQuantidade[]" class="form-control" step="0.0001" value="${item.quantidade || ''}" /></td>
-                  <td><input type="text" name="itemValorUnitario[]" class="form-control mask-currency" value="${item.valor_unitario != null ? parseFloat(item.valor_unitario).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}" /></td>
-                  <td><button type="button" class="btn btn-sm btn-danger remove-item">Remover</button></td>
-                </tr>`).join('') : ''}
-            </tbody>
-          </table>
-          <button type="button" id="addItemBtn" class="btn btn-sm btn-secondary">Adicionar item</button>
-        </div>` : ''}
+          <label for="dataVencimentoInput" class="form-label">Data Vencimento <span class="text-danger">*</span></label>
+          <input type="date" id="dataVencimentoInput" name="data_vencimento" class="form-control" value="${data.data_vencimento ? data.data_vencimento.split('T')[0] : ''}" required>
+        </div>
         <div class="mb-3">
           <label for="justificativaInput" class="form-label">Justificativa <span class="text-danger">*</span></label>
           <textarea id="justificativaInput" name="justificativa" class="form-control" rows="3">${data.justificativa || ''}</textarea>
@@ -459,58 +417,7 @@ export async function renderVtcFinanceiroGestor() {
         <!-- add other common fields as needed -->
       `;
         $('#editFormContainer').html(formHtml);
-        // Hide or show remove buttons for NF items based on row count
-        function updateRemoveItemButtons() {
-          const rows = $('#itensTable tbody tr');
-          if (rows.length <= 1) {
-            $('#itensTable .remove-item').hide();
-          } else {
-            $('#itensTable .remove-item').show();
-          }
-        }
-        // Handler to add and remove NF item rows
-        $('#addItemBtn').on('click', function() {
-          $('#itensTable tbody').append(`
-            <tr>
-              <td><input type="text" name="itemDescricao[]" class="form-control" /></td>
-              <td><input type="number" name="itemQuantidade[]" class="form-control" step="0.0001" /></td>
-              <td><input type="text" name="itemValorUnitario[]" class="form-control mask-currency" /></td>
-              <td><button type="button" class="btn btn-sm btn-danger remove-item">Remover</button></td>
-            </tr>
-          `);
-          updateRemoveItemButtons();
-        });
-        $('#editFormContainer').on('click', '.remove-item', function() {
-          $(this).closest('tr').remove();
-          updateRemoveItemButtons();
-        });
-        updateRemoveItemButtons();
-
-        // Handlers for Parcelas table
-        // Hide or show remove buttons based on row count
-        function updateRemoveParcelaButtons() {
-          const rows = $('#parcelasTable tbody tr');
-          if (rows.length <= 1) {
-            $('#parcelasTable .remove-parcela').hide();
-          } else {
-            $('#parcelasTable .remove-parcela').show();
-          }
-        }
-        $('#addParcelaBtn').on('click', function() {
-          $('#parcelasTable tbody').append(`
-            <tr>
-              <td><input type="text" name="parcelaValor[]" class="form-control mask-currency" /></td>
-              <td><input type="date" name="parcelaDataVenc[]" class="form-control" /></td>
-              <td><button type="button" class="btn btn-sm btn-danger remove-parcela">Remover</button></td>
-            </tr>
-          `);
-          updateRemoveParcelaButtons();
-        });
-        $('#editFormContainer').on('click', '.remove-parcela', function() {
-          $(this).closest('tr').remove();
-          updateRemoveParcelaButtons();
-        });
-        updateRemoveParcelaButtons();
+        // Removed handlers for NF items and Parcelas table (add/remove rows), as those elements were removed.
         // Apply currency mask on inputs
         function formatCurrencyInput(el) {
           const oldValue = el.value;
@@ -563,7 +470,7 @@ export async function renderVtcFinanceiroGestor() {
           saveBtn.disabled = !valid;
         }
         // Attach listeners
-        $('#filialSelect, #fornecedorSelect, #centroCustoSelect, #formaPagamentoSelect, #dataEmissaoInput').on('change', updateSaveBtnState);
+        $('#filialSelect, #fornecedorSelect, #centroCustoSelect, #formaPagamentoSelect, #dataEmissaoInput, #dataVencimentoInput').on('change', updateSaveBtnState);
         $('#valorInput, #justificativaInput').on('input', updateSaveBtnState);
         $('#editFormContainer').on('input', 'input[name="itemDescricao[]"], input[name="itemQuantidade[]"], input[name="itemValorUnitario[]"]', updateSaveBtnState);
         // Initial state
@@ -895,7 +802,8 @@ export async function renderVtcFinanceiroGestor() {
       { el: document.getElementById('centroCustoSelect'), name: 'Centro de Custo' },
       { el: document.getElementById('formaPagamentoSelect'), name: 'Forma de Pagamento' },
       { el: document.getElementById('valorInput'), name: 'Valor Nominal' },
-      { el: document.getElementById('dataEmissaoInput'), name: 'Data Emissão' }
+      { el: document.getElementById('dataEmissaoInput'), name: 'Data Emissão' },
+      { el: document.getElementById('dataVencimentoInput'), name: 'Data Vencimento' }
     ];
     for (const field of requiredFields) {
       if (!field.el || !field.el.value || field.el.value.trim() === '') {
@@ -989,6 +897,8 @@ export async function renderVtcFinanceiroGestor() {
       payload.fornecedor_id = fSelect.value;
       payload.fornecedor_cnpj = selectedOption.getAttribute('data-cnpj') || '';
     }
+    // Add data_vencimento from form
+    payload.data_vencimento = document.getElementById('dataVencimentoInput').value;
     // Update status
     payload.status = 'Salvo';
     // Send update with full payload

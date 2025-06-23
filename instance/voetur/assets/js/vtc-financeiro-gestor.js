@@ -366,10 +366,6 @@ export async function renderVtcFinanceiroGestor() {
           <select id="filialSelect" name="filial_id" class="form-control select2"></select>
         </div>
         <div class="mb-3">
-          <label for="fornecedorSelect" class="form-label mb-0">Fornecedor <span class="text-danger">*</span></label>
-          <select id="fornecedorSelect" name="fornecedor_id" class="form-control select2"></select>
-        </div>
-        <div class="mb-3">
           <label for="centroCustoSelect" class="form-label mb-0">Centro de Custo <span class="text-danger">*</span></label>
           <select id="centroCustoSelect" name="centro_custo_id" class="form-control select2"></select>
         </div>
@@ -378,19 +374,16 @@ export async function renderVtcFinanceiroGestor() {
           <select id="projetoSelect" name="projeto_id" class="form-control select2"></select>
         </div>
         <div class="mb-3">
+          <label for="fornecedorSelect" class="form-label mb-0">Fornecedor <span class="text-danger">*</span></label>
+          <select id="fornecedorSelect" name="fornecedor_id" class="form-control select2"></select>
+        </div>
+        <div class="mb-3">
           <label for="formaPagamentoSelect" class="form-label">Forma de Pagamento <span class="text-danger">*</span></label>
           <select id="formaPagamentoSelect" name="forma_pagamento" class="form-control">
             <option value="">Selecione...</option>
             <option value="boleto" ${data.forma_pagamento === 'boleto' ? 'selected' : ''}>Boleto</option>
             <option value="pix" ${data.forma_pagamento === 'pix' ? 'selected' : ''}>Pix</option>
             <option value="deposito" ${data.forma_pagamento === 'deposito' ? 'selected' : ''}>Depósito</option>
-          </select>
-        </div>
-        <div class="mb-3">
-          <label for="moedaSelect" class="form-label">Moeda</label>
-          <select id="moedaSelect" name="moeda" class="form-control">
-            <option value="BRL" ${data.moeda === 'BRL' ? 'selected' : ''}>BRL</option>
-            <option value="USD" ${data.moeda === 'USD' ? 'selected' : ''}>USD</option>
           </select>
         </div>
         <div class="mb-3">

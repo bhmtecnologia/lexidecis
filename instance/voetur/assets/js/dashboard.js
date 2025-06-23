@@ -10,7 +10,7 @@ export async function renderDashboard() {
         <div class="card-body text-center">
           <h5 class="card-title">Bem-vindo!</h5>
           <p class="card-text">
-            Oteste portal está aaaem fase de testes. Caso encontre erros ou deseje enviar sugestões, entre em contato pelo e-mail:
+            Oteste portal está aaaem fase de testes. Caso encontre erros ou deseje enviar sugestões, entre em contato pelo e-mail2:
             <a href="mailto:suporte@bhm.tec.br">suporte@bhm.tec.br</a>.
           </p>
           <div class="br-container" style="padding: 1rem;">

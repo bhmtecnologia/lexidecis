@@ -245,12 +245,6 @@ export async function renderFinanceiroLancamentoCreatev6() {
               <div id="wizardIndicator" class="mb-3 text-center"><strong>Etapa 1 de 3</strong></div>
               <!-- Anexo Link -->
               <div id="attachmentLink" class="mb-3"></div>
-              <!-- Anexo(s) -->
-              <div class="mb-3 d-none">
-                <label for="arquivo" class="form-label">Inserir Anexo(s) <span style="color:red">*</span></label>
-                <input type="file" class="form-control" id="arquivo" accept="image/png,image/jpeg" multiple>
-                <small class="form-text text-muted">Máx. 4MB por arquivo. PNG/JPEG.</small>
-              </div>
               <!-- Step 1 -->
               <div class="wizard-step" data-step="1">
                 <!-- Log de Ações -->
@@ -366,6 +360,12 @@ export async function renderFinanceiroLancamentoCreatev6() {
                     <label for="dataVencimento" class="form-label">Data de Vencimento <span class="text-danger">*</span></label>
                     <input type="date" class="form-control" id="dataVencimento" required>
                   </div>
+                </div>
+                <!-- Anexo(s) -->
+                <div class="mb-3">
+                  <label for="arquivo" class="form-label">Inserir Anexo(s)</label>
+                  <input type="file" class="form-control" id="arquivo" accept="image/png,image/jpeg" multiple>
+                  <small class="form-text text-muted">Máx. 4MB por arquivo. PNG/JPEG.</small>
                 </div>
                 <!-- Justificativa -->
                 <div class="mb-3">
@@ -623,20 +623,12 @@ export async function renderFinanceiroLancamentoCreatev6() {
     }
   });
 
-  // Exibe campo de anexo para boletos e move o campo de anexo acima da justificativa
+  // Exibe campo de anexo (sempre visível)
   const formaEl = document.getElementById("formaPagamento");
   if (formaEl) {
     formaEl.addEventListener("change", () => {
       const anexGroup = document.querySelector("#arquivo").closest(".mb-3");
-      const justificativaField = document.getElementById("justificativa")?.closest(".mb-3");
-      if (formaEl.value === "Boleto") {
-        anexGroup.classList.remove("d-none");
-        if (justificativaField && anexGroup) {
-          justificativaField.parentElement.insertBefore(anexGroup, justificativaField);
-        }
-      } else {
-        anexGroup.classList.add("d-none");
-      }
+      anexGroup.classList.remove("d-none");
     });
   }
 
@@ -646,8 +638,8 @@ export async function renderFinanceiroLancamentoCreatev6() {
   if (boletoInput) {
     boletoInput.addEventListener("change", async (e) => {
       const files = Array.from(e.target.files);
-      if (files.length > 4) {
-        showAlert("Você pode anexar no máximo 4 anexos de boleto.", "warning");
+      if (files.length > 3) {
+        showAlert("Você pode anexar no máximo 3 anexos.", "warning");
         e.target.value = "";
         // Desabilita o botão de submit ao tentar selecionar muitos arquivos
         const submitBtn = document.querySelector("#lancamentoForm button[type=submit]");

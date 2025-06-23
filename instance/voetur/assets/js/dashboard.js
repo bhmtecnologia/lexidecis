@@ -15,7 +15,7 @@ export async function renderDashboard() {
           </p>
           <div class="br-container" style="padding: 1rem;">
             <div class="d-flex flex-wrap justify-content-center" style="gap: 1rem;">
-              <a role="button" href="#financeiro-lancamento-create-v3" class="br-button br-button--primary" style="flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.25rem;">
+              <a role="button" href="#vtc-financeiro-lancamento-create-v6" class="br-button br-button--primary" style="flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.25rem;">
                 <div style="width: 80px; height: 80px; background-color: #f2f2f2; border: 1px solid #ccc; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
                   <i class="bi bi-currency-dollar" style="font-size: 2.5rem;"></i>
                 </div>

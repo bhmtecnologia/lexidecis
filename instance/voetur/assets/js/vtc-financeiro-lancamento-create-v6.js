@@ -1341,9 +1341,14 @@ export async function renderFinanceiroLancamentoCreatev6() {
         // Limpa opções antigas, exceto placeholder
         fornecedorSelectEl.innerHTML = '<option value="">Selecione</option>';
         fornecedoresData.forEach(f => {
+          const name = f.nome || f.razaoSocial;
+          const cnpj = f.cnpj;
+          // Descarte registros sem nome e sem CNPJ
+          if (!name && !cnpj) return;
+          const displayName = name;
           const opt = document.createElement("option");
-          opt.value = f.uuid;
-          opt.text = `${f.nome} (${f.cnpj})`;
+          opt.value = f.uuid || '';
+          opt.text = `${displayName} (${cnpj || ''})`;
           fornecedorSelectEl.add(opt);
         });
         // Atualiza Select2, se estiver ativo

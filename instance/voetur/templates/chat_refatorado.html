@@ -1,0 +1,1918 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="LexiDecis v2 - Interface de Chat com IA">
+  <meta name="author" content="LexiDecis">
+  <title>LexiDecis v2</title>
+
+  <!-- ========================================
+       EXTERNAL DEPENDENCIES
+       ======================================== -->
+  
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" 
+        rel="stylesheet" 
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" 
+        crossorigin="anonymous">
+  
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" 
+        rel="stylesheet">
+  
+  <!-- Select2 for enhanced search functionality -->
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" 
+        rel="stylesheet">
+  
+  <!-- SimpleBar for custom scrollbars -->
+  <link rel="stylesheet" 
+        href="https://cdn.jsdelivr.net/npm/simplebar@6.2.3/dist/simplebar.min.css" />
+  
+  <!-- Tippy.js for tooltips -->
+  <link rel="stylesheet" 
+        href="https://unpkg.com/tippy.js@6/dist/tippy.css" />
+
+  <!-- jQuery (required for Select2) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  
+  <!-- Select2 JavaScript -->
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  
+  <!-- SimpleBar JavaScript -->
+  <script src="https://cdn.jsdelivr.net/npm/simplebar@6.2.3/dist/simplebar.min.js"></script>
+  
+  <!-- Popper.js for Tippy -->
+  <script src="https://unpkg.com/@popperjs/core@2"></script>
+  
+  <!-- Tippy.js JavaScript -->
+  <script src="https://unpkg.com/tippy.js@6"></script>
+
+  <!-- Application specific dependencies -->
+  <script src="../assets/js/status-indicator.js"></script>
+  <link id="color" rel="stylesheet" href="../assets/css/color-chat.css" media="screen" />
+
+  <!-- ========================================
+       CUSTOM STYLES
+       ======================================== -->
+  <style>
+    /* ========================================
+       CSS VARIABLES AND GLOBAL SETTINGS
+       ======================================== */
+    :root {
+      --sidebar-width: 280px;
+      --sidebar-mini-width: 44px;
+      --transition-duration: 0.3s;
+      --border-radius: 4px;
+      --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    }
+
+    /* ========================================
+       GLOBAL STYLES
+       ======================================== */
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--body-color);
+      color: var(--theme-body-font-color);
+      overflow: hidden;
+    }
+
+    .hidden { 
+      display: none !important; 
+    }
+
+    /* ========================================
+       MAIN LAYOUT STRUCTURE
+       ======================================== */
+    #wrapper {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      background: var(--body-color);
+    }
+
+    /* ========================================
+       SIDEBAR STYLES
+       ======================================== */
+    #chat-sidebar {
+      width: var(--sidebar-width);
+      min-width: 240px;
+      max-width: 340px;
+      background: var(--body-color);
+      border-right: 1px solid var(--shape-border);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      position: relative;
+      transition: margin-left var(--transition-duration) ease, 
+                  transform var(--transition-duration) ease, 
+                  width var(--transition-duration) ease;
+    }
+
+    /* Sidebar Header */
+    .sidebar-header {
+      padding: 0.75rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--shape-border);
+    }
+
+    .sidebar-header button {
+      margin-left: 0.25rem;
+    }
+
+    /* Sidebar Bottom (User Menu) */
+    .sidebar-bottom {
+      background: var(--bg-light);
+      padding: 0;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      border-top: 1px solid var(--shape-border);
+    }
+
+    #userMenuBtn {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: none;
+      border: none;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      color: var(--theme-body-font-color);
+      transition: background-color var(--transition-duration) ease;
+    }
+
+    #userMenuBtn:hover {
+      background: var(--table-hover-color);
+    }
+
+    #userMenuBtn i:last-child {
+      margin-left: auto;
+      transition: transform 0.2s ease;
+    }
+
+    .sidebar-bottom.open #userMenuBtn i:last-child {
+      transform: rotate(180deg);
+    }
+
+    /* User Menu Dropdown */
+    #userMenu {
+      position: absolute;
+      bottom: 100%;
+      left: 0;
+      width: 100%;
+      margin: 0;
+      padding: 0.25rem 0;
+      border: 1px solid var(--border-light-color);
+      border-radius: var(--border-radius);
+      background: var(--dropdown-bg-color);
+      box-shadow: var(--box-shadow);
+      list-style: none;
+      z-index: 1050;
+      transition: all 0.2s ease;
+    }
+
+    #userMenu.hidden { 
+      display: none !important; 
+    }
+
+    #userMenu .dropdown-item {
+      display: flex;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      width: 100%;
+      background: none;
+      border: none;
+      text-align: left;
+      cursor: pointer;
+      color: var(--theme-body-font-color);
+      transition: background-color var(--transition-duration) ease;
+    }
+
+    #userMenu .dropdown-item:hover {
+      background: var(--table-hover-color);
+    }
+
+    /* ========================================
+       SIDEBAR CONTENT STYLES
+       ======================================== */
+    
+    /* Search Box */
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-bottom: 1px solid var(--shape-border);
+    }
+
+    .search-box .search-icon {
+      font-size: 1rem;
+      color: var(--font-color);
+    }
+
+    /* Sidebar Lists */
+    #chat-sidebar ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    #chat-sidebar li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      transition: background-color var(--transition-duration) ease;
+    }
+
+    #chat-sidebar li:hover {
+      background: var(--table-hover-color);
+    }
+
+    #chat-sidebar li.selected {
+      background: var(--active-bg-color);
+    }
+
+    /* New Conversation and Explore GPTs Items */
+    #new-conversation,
+    #explore-gpt-item {
+      color: var(--theme-body-font-color);
+      background: none;
+      border: none;
+      background-color: transparent;
+    }
+
+    #new-conversation:hover,
+    #explore-gpt-item:hover {
+      background-color: var(--active-bg-color) !important;
+      color: var(--body-color) !important;
+    }
+
+    /* GPT Provider List */
+    #ai-providers-list li {
+      font-size: 0.875rem;
+    }
+
+    #ai-providers-list li:hover {
+      background-color: var(--active-bg-color) !important;
+      color: var(--theme-body-font-color) !important;
+    }
+
+    .provider-icon {
+      width: 1rem;
+      height: 1rem;
+      margin-right: 0.5rem;
+      object-fit: contain;
+    }
+
+    /* Chat List */
+    #chat-list li {
+      font-size: 0.875rem;
+      justify-content: flex-start !important;
+      padding: 0.3rem 0.6rem !important;
+      border-bottom: none !important;
+    }
+
+    #chat-list li:hover {
+      background-color: var(--active-bg-color) !important;
+    }
+
+    #chat-list li:hover * {
+      color: var(--theme-body-font-color) !important;
+    }
+
+    #chat-list li:hover .chat-options-btn,
+    #chat-list li:hover .chat-options-btn * {
+      color: var(--font-color) !important;
+    }
+
+    #chat-list li .badge {
+      background-color: var(--body-color) !important;
+      color: var(--font-color) !important;
+      border: 1px solid var(--font-color) !important;
+    }
+
+    /* Sidebar Scrollable Areas */
+    #chat-sidebar > .flex-grow-1.d-flex.flex-column.justify-content-start {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #chat-sidebar .flex-grow-1[data-simplebar] {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+    }
+
+    /* Modern Sidebar Divider */
+    #chat-sidebar hr {
+      border: none;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--theme-default), transparent);
+      margin: 0.5rem 1rem;
+      opacity: 0.7;
+    }
+
+    /* ========================================
+       MINI SIDEBAR STYLES
+       ======================================== */
+    #sidebar-mini {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      width: var(--sidebar-mini-width);
+      background: var(--body-color);
+      border-right: 1px solid var(--shape-border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 1rem;
+      z-index: 1044;
+      transition: left var(--transition-duration) ease, 
+                  opacity var(--transition-duration) ease;
+    }
+
+    #sidebar-mini .btn-icon {
+      font-size: 1.25rem;
+    }
+
+    #sidebar-mini .mt-auto { 
+      margin-top: auto; 
+    }
+
+    #sidebar-mini .mb-3 { 
+      margin-bottom: 1rem; 
+    }
+
+    body.with-mini-sidebar #wrapper {
+      margin-left: var(--sidebar-mini-width);
+      transition: margin-left var(--transition-duration) ease;
+    }
+
+    /* ========================================
+       BUTTON STYLES
+       ======================================== */
+    .btn-icon {
+      color: var(--font-color);
+      background: none;
+      border: none;
+      padding: 0.25rem;
+      font-size: 1rem;
+      cursor: pointer;
+      border-radius: var(--border-radius);
+      transition: background-color var(--transition-duration) ease, 
+                  color var(--transition-duration) ease;
+    }
+
+    .btn-icon:hover {
+      background: var(--table-hover-color);
+    }
+
+    .btn-theme {
+      background-color: var(--theme-default);
+      color: var(--theme-body-font-color);
+      border: none;
+      border-radius: var(--border-radius);
+      transition: background-color var(--transition-duration) ease;
+    }
+
+    .btn-theme:hover {
+      background-color: var(--active-bg-color);
+      color: var(--theme-body-font-color);
+    }
+
+    .btn-outline-theme {
+      background: none;
+      color: var(--theme-default);
+      border: 1px solid var(--theme-default);
+      border-radius: var(--border-radius);
+      transition: background-color var(--transition-duration) ease, 
+                  color var(--transition-duration) ease;
+    }
+
+    .btn-outline-theme:hover {
+      background-color: var(--active-bg-color);
+      color: var(--theme-body-font-color);
+    }
+
+    /* ========================================
+       CHAT AREA STYLES
+       ======================================== */
+    #chat-area {
+      flex: 1;
+      position: relative;
+      background: var(--light-background);
+      transition: margin-left var(--transition-duration) ease;
+    }
+
+    flowise-fullchatbot {
+      height: 100%;
+      width: 100%;
+      display: block;
+    }
+
+    /* ========================================
+       RESPONSIVE DESIGN
+       ======================================== */
+    @media (max-width: 768px) {
+      #chat-sidebar {
+        position: fixed;
+        top: 0;
+        left: -100%;
+        z-index: 1045;
+        transition: left var(--transition-duration) ease;
+      }
+
+      #chat-sidebar.show {
+        left: 0;
+      }
+
+      #sidebar-mini {
+        display: none;
+      }
+
+      body.with-mini-sidebar #wrapper {
+        margin-left: 0;
+      }
+    }
+
+    /* ========================================
+       LOADING AND ANIMATION STYLES
+       ======================================== */
+    .spinner-border-sm {
+      width: 1rem;
+      height: 1rem;
+    }
+
+    .fade-in {
+      animation: fadeIn 0.3s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .slide-in {
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(-100%); }
+      to { transform: translateX(0); }
+    }
+
+    /* ========================================
+       ACCESSIBILITY IMPROVEMENTS
+       ======================================== */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* Focus styles for better keyboard navigation */
+    .btn-icon:focus,
+    #chat-sidebar li:focus,
+    .dropdown-item:focus {
+      outline: 2px solid var(--theme-default);
+      outline-offset: 2px;
+    }
+
+    /* High contrast mode support */
+    @media (prefers-contrast: high) {
+      :root {
+        --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      }
+      
+      .btn-icon {
+        border: 1px solid currentColor;
+      }
+    }
+
+    /* Reduced motion support */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ========================================
+       MINI SIDEBAR (COLLAPSED STATE)
+       ======================================== -->
+  <div id="sidebar-mini" class="hidden" role="navigation" aria-label="Mini navegação">
+    <button id="mini-toggle" 
+            class="btn-icon" 
+            title="Mostrar conversas"
+            aria-label="Mostrar painel de conversas">
+      <i class="bi bi-chevron-right" aria-hidden="true"></i>
+    </button>
+    
+    <button id="mini-theme-toggle" 
+            class="btn-icon mt-3" 
+            title="Alternar tema"
+            aria-label="Alternar entre tema claro e escuro">
+    </button>
+    
+    <span data-openai-status 
+          class="btn-icon mt-3" 
+          title="Status da API OpenAI"
+          aria-label="Indicador de status da API OpenAI">
+    </span>
+    
+    <button id="mini-explore" 
+            class="btn-icon mt-3" 
+            title="Explorar GPTs" 
+            data-bs-toggle="modal" 
+            data-bs-target="#gptModal"
+            aria-label="Abrir modal para explorar GPTs disponíveis">
+      <i class="bi bi-grid-3x3-gap" aria-hidden="true"></i>
+    </button>
+    
+    <button id="mini-new" 
+            class="btn-icon mt-3" 
+            title="Novo chat"
+            aria-label="Iniciar nova conversa">
+      <i class="bi bi-plus-lg" aria-hidden="true"></i>
+    </button>
+    
+    <button id="mini-user" 
+            class="btn-icon mt-auto mb-3" 
+            title="Minha conta"
+            aria-label="Acessar menu da conta do usuário">
+      <i class="bi bi-person-circle" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  <!-- ========================================
+       MAIN WRAPPER
+       ======================================== -->
+  <div id="wrapper">
+    
+    <!-- ========================================
+         MAIN SIDEBAR
+         ======================================== -->
+    <nav id="chat-sidebar" 
+         class="d-flex flex-column" 
+         role="navigation" 
+         aria-label="Navegação principal">
+      
+      <div class="flex-grow-1 d-flex flex-column justify-content-start">
+        
+        <!-- Sidebar Header -->
+        <header class="sidebar-header">
+          <strong class="sr-only">LexiDecis v2</strong>
+          <span data-openai-status 
+                class="btn-icon me-2" 
+                title="Status da API OpenAI"
+                aria-label="Indicador de status da API OpenAI">
+          </span>
+          
+          <div class="ms-auto d-flex align-items-center">
+            <button id="theme-toggle" 
+                    class="btn-icon" 
+                    title="Alternar tema"
+                    aria-label="Alternar entre tema claro e escuro">
+              <i class="bi bi-moon-stars" aria-hidden="true"></i>
+            </button>
+            
+            <button id="explore-btn" 
+                    class="btn-icon" 
+                    title="Explorar GPTs" 
+                    data-bs-toggle="modal" 
+                    data-bs-target="#gptModal"
+                    aria-label="Abrir modal para explorar GPTs disponíveis">
+              <i class="bi bi-grid-3x3-gap" aria-hidden="true"></i>
+            </button>
+            
+            <button id="new-chat" 
+                    class="btn-icon" 
+                    title="Novo chat"
+                    aria-label="Iniciar nova conversa">
+              <i class="bi bi-plus-lg" aria-hidden="true"></i>
+            </button>
+            
+            <button id="toggle-list" 
+                    class="btn-icon" 
+                    title="Ocultar painel"
+                    aria-label="Ocultar painel lateral">
+              <i class="bi bi-chevron-left" aria-hidden="true"></i>
+            </button>
+          </div>
+        </header>
+
+        <!-- Search Box -->
+        <div class="search-box">
+          <i class="bi bi-search search-icon" aria-hidden="true"></i>
+          <select id="chat-search" 
+                  class="flex-grow-1"
+                  aria-label="Pesquisar conversas">
+            <option value="">Pesquisar conversas...</option>
+          </select>
+        </div>
+
+        <!-- New Conversation Button -->
+        <div id="new-conversation" 
+             class="px-3 py-2 d-flex align-items-center" 
+             role="button" 
+             tabindex="0"
+             aria-label="Iniciar nova conversa">
+          <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>
+          <span class="flex-grow-1">Nova conversa</span>
+        </div>
+
+        <!-- Explore GPTs Button -->
+        <ul class="list-unstyled m-0">
+          <li id="explore-gpt-item" 
+              class="px-3 py-2 d-flex align-items-center" 
+              role="button" 
+              tabindex="0" 
+              data-bs-toggle="modal" 
+              data-bs-target="#gptModal"
+              aria-label="Explorar GPTs disponíveis">
+            <i class="bi bi-grid-3x3-gap me-2" aria-hidden="true"></i>
+            <span class="flex-grow-1">Explore GPTs</span>
+          </li>
+        </ul>
+
+        <!-- GPTs Section -->
+        <div class="ps-4 py-0 d-flex align-items-center">
+          <button class="btn btn-link p-0 me-2" 
+                  data-bs-toggle="collapse" 
+                  data-bs-target="#gpts-collapse" 
+                  aria-expanded="true" 
+                  aria-controls="gpts-collapse"
+                  aria-label="Expandir/recolher lista de GPTs">
+            <i class="bi bi-chevron-down" aria-hidden="true"></i>
+          </button>
+          <div class="text-muted small fw-semibold">GPTs</div>
+        </div>
+        
+        <div id="gpts-collapse" class="collapse">
+          <div class="flex-grow-1" style="overflow-y: auto; max-height: 200px;">
+            <ul id="ai-providers-list" 
+                class="list-unstyled m-0"
+                role="list"
+                aria-label="Lista de GPTs disponíveis">
+            </ul>
+          </div>
+        </div>
+
+        <!-- Chats Section -->
+        <div class="d-flex align-items-center px-3 py-0 mt-3">
+          <div class="text-muted small fw-semibold flex-grow-1">Chats</div>
+        </div>
+        
+        <div class="flex-grow-1" 
+             data-simplebar 
+             style="overflow-y: auto; flex: 1; min-height: 0;">
+          <ul id="chat-list" 
+              class="mb-0 pt-0"
+              role="list"
+              aria-label="Lista de conversas">
+            <li id="chat-loading" 
+                class="px-3 py-2 text-muted"
+                aria-live="polite">
+              Carregando chats...
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- User Menu (Bottom) -->
+      <div class="sidebar-bottom" id="avatarBlock">
+        <button id="userMenuBtn"
+                aria-expanded="false"
+                aria-haspopup="true"
+                aria-label="Menu do usuário">
+          <i class="bi bi-person-circle fs-2 me-2" aria-hidden="true"></i>
+          <span class="fw-semibold" id="user-name">Usuário</span>
+          <i class="bi bi-chevron-up small" aria-hidden="true"></i>
+        </button>
+        
+        <ul id="userMenu" 
+            class="hidden"
+            role="menu"
+            aria-labelledby="userMenuBtn">
+          <li role="none">
+            <button class="dropdown-item" 
+                    id="logout-btn"
+                    role="menuitem"
+                    aria-label="Sair da conta">
+              <i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i>
+              Sair
+            </button>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- ========================================
+         CHAT AREA
+         ======================================== -->
+    <main id="chat-area" 
+          role="main" 
+          aria-label="Área de conversa">
+      <flowise-fullchatbot></flowise-fullchatbot>
+    </main>
+
+    <!-- ========================================
+         GPT EXPLORER MODAL
+         ======================================== -->
+    <div class="modal fade" 
+         id="gptModal" 
+         tabindex="-1" 
+         aria-labelledby="gptModalLabel" 
+         aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="gptModalLabel">Explore GPTs</h5>
+            <button type="button" 
+                    class="btn-close" 
+                    data-bs-dismiss="modal" 
+                    aria-label="Fechar modal">
+            </button>
+          </div>
+          <div class="modal-body" 
+               id="gptModalBody"
+               aria-live="polite">
+            Carregando...
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================
+       JAVASCRIPT MODULES
+       ======================================== -->
+
+
+  <script type="module">
+    /* ========================================
+       GLOBAL CONFIGURATION AND SETUP
+       ======================================== */
+    
+    // Intercept all fetch calls to include user identifiers
+    const originalFetch = window.fetch;
+    window.fetch = async (resource, init = {}) => {
+      const headers = new Headers(init.headers || {});
+      
+      if (AuthService.user) {
+        headers.set('x-user-email', AuthService.user.email);
+        headers.set('x-user-uuid', AuthService.user.uid);
+        
+        // Include the user's JWT in every request
+        let jwt = AuthService.token;
+        if (!jwt && AuthService.user && typeof AuthService.user.getIdToken === 'function') {
+          jwt = await AuthService.user.getIdToken();
+        }
+        
+        if (jwt) {
+          headers.set('x-user-jwt', jwt);
+        }
+        
+        // Include the GPT ID header
+        headers.set('x-gpt-id', '1');
+        
+        // Include the user's JWT as a Bearer token only if not already present
+        if (!headers.has('Authorization')) {
+          headers.set('Authorization', `Bearer ${jwt}`);
+        }
+      }
+      
+      return originalFetch(resource, { ...init, headers });
+    };
+
+    // Initialize Flowise embed configuration with LexiDecis theme
+    window.flowiseConfig = {
+      theme: {
+        disclaimer: {
+          title: 'Disclaimer',
+          message: 'By using this chatbot, you agree to the <a target="_blank" href="https://flowiseai.com/terms">Terms & Condition</a>',
+          textColor: 'black',
+          buttonColor: '#3b82f6',
+          buttonText: 'Start Chatting',
+          buttonTextColor: 'white',
+          blurredBackgroundColor: 'rgba(0, 0, 0, 0.4)',
+          backgroundColor: 'white',
+          denyButtonText: 'Cancel',
+          denyButtonBgColor: '#ef4444',
+        },
+        chatWindow: {
+          showTitle: true,
+          titleBackgroundColor: "var(--theme-default)",
+          welcomeMessage: "Sou a Lexi AI, com tecnologia ChatGPT 4o da OpenAI. Ideal para responder perguntas, gerar ideias e ajudar com clareza e rapidez. O que deseja saber?",
+          errorMessage: "Ops, reduza sua pergunta e tente novamente.",
+          backgroundColor: "transparent",
+          backgroundImage: 'https://v1.power.app.br/images/wallpaper-chat-01.jpg',
+          botMessage: {
+            backgroundColor: '#f7f8ff',
+            textColor: '#303235',
+            showAvatar: false,
+          },
+          userMessage: {
+            backgroundColor: "var(--body-color)",
+            textColor: "#292929",
+            showAvatar: false
+          },
+          textInput: {
+            placeholder: "Mensagem...",
+            backgroundColor: "var(--theme-default)",
+            textColor: "#292929",
+            sendButtonColor: "#ffffff",
+            maxChars: 100000,
+            maxCharsWarningMessage: "Você excedeu o limite de caracteres. Insira menos de 100000 caracteres.",
+            autoFocus: true,
+            sendMessageSound: true,
+            receiveMessageSound: true
+          },
+          feedback: {
+            color: "var(--theme-default)"
+          },
+          dateTimeToggle: {
+            date: true,
+            time: true
+          },
+          footer: {
+            textColor: "var(--theme-default)",
+            text: "Sempre verifique as respostas - ",
+            company: "LexiDecis",
+            companyLink: "https://lexidecis.com.br"
+          }
+        }
+      },
+      observersConfig: {
+        // Stub: will be overridden per session
+      }
+    };
+
+    // Set apiHost to current origin for initial page load and reload
+    window.flowiseConfig.apiHost = window.location.protocol + '//' + window.location.host;
+
+    // Import required modules
+    import AuthService from '../assets/js/auth.js';
+    import { listChats, listGpts, getGptConfig, createChatMessage } from "../assets/js/api.js";
+
+    /* ========================================
+       UTILITY FUNCTIONS
+       ======================================== */
+    
+    // Flowise chatflowId mapping helper
+    const chatflowIdMap = {
+      'FLOW1_CHAT': 'FLOW1_CHAT'
+    };
+    
+    function mapChatflowId(id) {
+      return chatflowIdMap[id] || id;
+    }
+
+    function isMobile() { 
+      return window.innerWidth <= 768; 
+    }
+
+    function showLoadingSpinner(element, position = 'start') {
+      const spinner = document.createElement('div');
+      spinner.className = 'spinner-border spinner-border-sm text-primary me-2';
+      spinner.setAttribute('role', 'status');
+      spinner.innerHTML = '<span class="visually-hidden">Carregando...</span>';
+      
+      if (position === 'start') {
+        element.insertBefore(spinner, element.firstChild);
+      } else {
+        element.appendChild(spinner);
+      }
+      
+      return spinner;
+    }
+
+    function removeLoadingSpinner(element) {
+      const spinner = element.querySelector('.spinner-border');
+      if (spinner) {
+        spinner.remove();
+      }
+    }
+
+    function normalizeApiHost(rawApiHost) {
+      let apiHost = (rawApiHost || '').replace(/\/$/, '');
+      if (!/^https?:\/\//.test(apiHost)) {
+        apiHost = window.location.protocol + '//' + apiHost;
+      }
+      return apiHost;
+    }
+
+    /* ========================================
+       THEME MANAGEMENT MODULE
+       ======================================== */
+    
+    class ThemeManager {
+      constructor() {
+        this.themeToggle = document.getElementById('theme-toggle');
+        this.miniThemeToggle = document.getElementById('mini-theme-toggle');
+        this.root = document.documentElement;
+        
+        this.init();
+      }
+
+      init() {
+        // Initialize mini toggle icon
+        this.miniThemeToggle.innerHTML = this.themeToggle.innerHTML;
+        
+        // Load saved theme or use system preference
+        const savedTheme = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+        if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+          this.root.classList.add('dark-only');
+        }
+        
+        this.updateThemeIcon();
+        this.bindEvents();
+      }
+
+      updateThemeIcon() {
+        const isDark = this.root.classList.contains('dark-only');
+        const iconHtml = isDark ? '<i class="bi bi-sun" aria-hidden="true"></i>' : '<i class="bi bi-moon-stars" aria-hidden="true"></i>';
+        
+        this.themeToggle.innerHTML = iconHtml;
+        this.miniThemeToggle.innerHTML = iconHtml;
+      }
+
+      toggleTheme() {
+        this.root.classList.toggle('dark-only');
+        const isDark = this.root.classList.contains('dark-only');
+        
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        this.updateThemeIcon();
+      }
+
+      bindEvents() {
+        this.themeToggle.addEventListener('click', () => this.toggleTheme());
+        this.miniThemeToggle.addEventListener('click', () => this.toggleTheme());
+      }
+    }
+
+    /* ========================================
+       SIDEBAR MANAGEMENT MODULE
+       ======================================== */
+    
+    class SidebarManager {
+      constructor() {
+        this.sidebar = document.getElementById('chat-sidebar');
+        this.toggleBtn = document.getElementById('toggle-list');
+        this.miniBar = document.getElementById('sidebar-mini');
+        this.miniToggle = document.getElementById('mini-toggle');
+        this.miniNew = document.getElementById('mini-new');
+        this.miniUser = document.getElementById('mini-user');
+        this.SIDEBAR_KEY = 'chatSidebarHidden';
+        
+        this.init();
+      }
+
+      init() {
+        // Set initial state based on screen size and saved preference
+        if (isMobile()) {
+          this.sidebar.classList.add('hidden');
+        } else if (localStorage.getItem(this.SIDEBAR_KEY) === 'true') {
+          this.sidebar.classList.add('hidden');
+        } else {
+          this.sidebar.classList.remove('hidden');
+        }
+        
+        this.updateUI();
+        this.bindEvents();
+      }
+
+      sidebarVisible() {
+        return !this.sidebar.classList.contains('hidden');
+      }
+
+      updateUI() {
+        const visible = this.sidebarVisible();
+        const chevronIcon = visible ? 'bi bi-chevron-left' : 'bi bi-chevron-right';
+        
+        this.toggleBtn.firstElementChild.className = chevronIcon;
+        this.miniBar.classList.toggle('hidden', visible);
+        document.body.classList.toggle('with-mini-sidebar', !visible);
+      }
+
+      toggleSidebar() {
+        this.sidebar.classList.toggle('hidden');
+        localStorage.setItem(this.SIDEBAR_KEY, this.sidebar.classList.contains('hidden'));
+        this.updateUI();
+      }
+
+      bindEvents() {
+        this.toggleBtn.addEventListener('click', () => this.toggleSidebar());
+        this.miniToggle.addEventListener('click', () => this.toggleSidebar());
+        this.miniNew.addEventListener('click', () => document.getElementById('new-chat').click());
+        this.miniUser.addEventListener('click', () => {
+          if (!this.sidebarVisible()) {
+            this.toggleSidebar();
+          }
+          document.getElementById('userMenuBtn').click();
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+          if (isMobile()) {
+            this.sidebar.classList.add('hidden');
+            localStorage.setItem(this.SIDEBAR_KEY, 'true');
+          } else {
+            this.sidebar.classList.remove('hidden');
+            localStorage.setItem(this.SIDEBAR_KEY, 'false');
+          }
+          this.updateUI();
+        });
+      }
+    }
+
+    /* ========================================
+       GPT MANAGEMENT MODULE
+       ======================================== */
+    
+    class GPTManager {
+      constructor() {
+        this.aiList = document.getElementById('ai-providers-list');
+        this.configCache = {};
+        this.gptMap = {};
+        this.defaultGptId = 'ed2af5a7-a9f0-4882-9dbc-a7f9dbb9b1e4';
+        
+        this.init();
+      }
+
+      async init() {
+        await this.waitForAuth();
+        await this.loadGPTList();
+        await this.initializeDefaultGPT();
+      }
+
+      async waitForAuth() {
+        return new Promise(resolve => {
+          const checkAuth = setInterval(() => {
+            if (AuthService.user) {
+              clearInterval(checkAuth);
+              resolve();
+            }
+          }, 100);
+        });
+      }
+
+      async loadGPTList() {
+        try {
+          const gptList = await listGpts(AuthService);
+          this.gptMap = Object.fromEntries(gptList.map(g => [g.id, g]));
+          
+          gptList.forEach(gpt => this.createGPTListItem(gpt));
+        } catch (error) {
+          console.error('Erro ao carregar lista de GPTs:', error);
+        }
+      }
+
+      createGPTListItem(gpt) {
+        const li = document.createElement('li');
+        li.id = gpt.id;
+        li.className = 'px-3 py-2 d-flex align-items-center justify-content-between';
+        li.setAttribute('role', 'button');
+        li.tabIndex = 0;
+        li.setAttribute('aria-label', `Selecionar GPT ${gpt.name}`);
+
+        const isVideo = gpt.imageUrl.toLowerCase().endsWith('.mp4');
+        const mediaElem = isVideo
+          ? `<video src="${gpt.imageUrl}" class="provider-icon" autoplay loop muted playsinline aria-hidden="true"></video>`
+          : `<img src="${gpt.imageUrl}" class="provider-icon" alt="${gpt.name} icon"/>`;
+
+        li.innerHTML = `
+          <div class="d-flex align-items-center">
+            ${mediaElem}
+            <span class="ms-2">${gpt.name}</span>
+          </div>
+          <span class="badge small bg-light text-dark">${gpt.category || 'Sem categoria'}</span>
+        `;
+
+        li.addEventListener('click', () => this.handleGPTSelection(gpt, li));
+        this.aiList.appendChild(li);
+      }
+
+      async handleGPTSelection(gpt, element) {
+        const spinner = showLoadingSpinner(element);
+        
+        try {
+          let override = await this.getGPTConfig(gpt.id);
+          
+          // Ensure sessionId is set for new chats
+          if (!override.sessionId) {
+            override.sessionId = crypto.randomUUID();
+            this.configCache[gpt.id] = override;
+          }
+
+          const config = await this.buildChatConfig(gpt, override);
+          await this.initializeChat(config);
+          
+        } catch (error) {
+          console.error('Erro ao selecionar GPT:', error);
+        } finally {
+          removeLoadingSpinner(element);
+        }
+      }
+
+      async getGPTConfig(gptId) {
+        if (this.configCache[gptId]) {
+          return this.configCache[gptId];
+        }
+
+        let override = await getGptConfig(AuthService, gptId);
+        
+        // Handle case where override is an array with a JSON string under an empty key
+        if (Array.isArray(override) && override.length > 0) {
+          const wrapper = override[0];
+          if (wrapper && typeof wrapper === 'object' && Object.prototype.hasOwnProperty.call(wrapper, '')) {
+            try {
+              override = JSON.parse(wrapper['']);
+            } catch (err) {
+              console.error('Error parsing chatflowConfig JSON string:', err);
+            }
+          }
+        }
+
+        this.configCache[gptId] = override;
+        return override;
+      }
+
+      async buildChatConfig(gpt, override) {
+        const baseFlowise = gpt.flowiseConfig.flowise;
+        const apiHost = normalizeApiHost(baseFlowise.apiHost);
+
+        // Initialize empty history in localStorage for new session
+        const newExtKey = `${baseFlowise.chatflowId}_EXTERNAL`;
+        const newFlagKey = `${baseFlowise.chatflowId}_historyInjected`;
+        
+        localStorage.removeItem(newExtKey);
+        localStorage.removeItem(newFlagKey);
+        localStorage.setItem(newExtKey, JSON.stringify({ 
+          chatHistory: [], 
+          chatId: override.sessionId 
+        }));
+        localStorage.setItem(newFlagKey, 'true');
+
+        const config = {
+          chatflowid: baseFlowise.chatflowId,
+          apiHost: apiHost,
+          token: baseFlowise.token,
+          headers: {
+            'x-user-email': AuthService.user.email,
+            'x-user-uuid': AuthService.user.uid,
+            'x-gpt-id': gpt.id,
+            'x-user-jwt': AuthService.token
+          },
+          theme: window.flowiseConfig.theme,
+          observersConfig: {
+            observeLoading: async (loading) => {
+              if (loading) {
+                await this.handleUserMessage(config, override);
+              }
+            }
+          },
+          chatflowConfig: override
+        };
+
+        // Set dynamic UI texts
+        if (config.theme && config.theme.chatWindow) {
+          config.theme.chatWindow.title = gpt.name || 'Escolha um GPT';
+          config.theme.chatWindow.welcomeMessage = gpt.description || 'Bem-vindo ao assistente';
+          config.theme.chatWindow.starterPrompts = this.parseStarterPrompts(gpt.starterPrompts);
+        }
+
+        return config;
+      }
+
+      parseStarterPrompts(prompts) {
+        if (!prompts) return ['Quem é você?'];
+        if (Array.isArray(prompts)) return prompts;
+        return prompts.includes(',')
+          ? prompts.split(',').map(p => p.trim())
+          : [prompts];
+      }
+
+      async handleUserMessage(config, override) {
+        try {
+          const userInput = document
+            .querySelector('flowise-fullchatbot')
+            .shadowRoot
+            .querySelector('textarea').value;
+
+          await createChatMessage(
+            AuthService,
+            config.chatflowid,
+            override.sessionId,
+            'user',
+            userInput
+          );
+        } catch (err) {
+          console.error('Failed to create chat message', err);
+        }
+      }
+
+      async initializeChat(config) {
+        const chatArea = document.getElementById('chat-area');
+        chatArea.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
+        
+        // Initialize with new config
+        Chatbot.initFull(config);
+      }
+
+      async initializeDefaultGPT() {
+        // Wait for gptMap to be populated
+        await new Promise(resolve => {
+          const checkMap = setInterval(() => {
+            if (this.gptMap[this.defaultGptId]) {
+              clearInterval(checkMap);
+              resolve();
+            }
+          }, 100);
+        });
+
+        try {
+          const gpt = this.gptMap[this.defaultGptId];
+          let override = await this.getGPTConfig(this.defaultGptId);
+
+          if (!override.sessionId) {
+            override.sessionId = crypto.randomUUID();
+          }
+
+          const config = await this.buildChatConfig(gpt, override);
+          await this.initializeChat(config);
+          
+        } catch (err) {
+          console.error('Erro inicializando chat padrão:', err);
+        }
+      }
+    }
+
+    /* ========================================
+       CHAT MANAGEMENT MODULE
+       ======================================== */
+    
+    class ChatManager {
+      constructor(gptManager) {
+        this.gptManager = gptManager;
+        this.chatListEl = document.getElementById('chat-list');
+        
+        this.init();
+      }
+
+      async init() {
+        await this.gptManager.waitForAuth();
+        await this.waitForGPTMap();
+        await this.loadChatHistory();
+        this.bindEvents();
+        this.handleDirectChatAccess();
+      }
+
+      async waitForGPTMap() {
+        return new Promise(resolve => {
+          const checkMap = setInterval(() => {
+            if (Object.keys(this.gptManager.gptMap).length > 0) {
+              clearInterval(checkMap);
+              resolve();
+            }
+          }, 50);
+        });
+      }
+
+      async loadChatHistory() {
+        this.chatListEl.innerHTML = '<li id="chat-loading" class="px-3 py-2 text-muted" aria-live="polite">Carregando chats...</li>';
+        
+        try {
+          let resp = await listChats(AuthService);
+          if (typeof resp === 'string') resp = JSON.parse(resp);
+          
+          const items = Array.isArray(resp) ? resp : resp.data ? [resp] : [];
+          const chatItems = items.flatMap(i => {
+            const raw = i.data;
+            return Array.isArray(raw) ? raw : typeof raw === 'string' ? JSON.parse(raw) : [raw];
+          });
+
+          this.chatListEl.innerHTML = '';
+          chatItems.forEach(chat => this.createChatListItem(chat));
+          
+          this.refreshSearchOptions();
+        } catch (err) {
+          console.error('Erro ao carregar chats:', err);
+          this.chatListEl.innerHTML = '<li class="px-3 py-2 text-muted">Erro ao carregar chats</li>';
+        }
+      }
+
+      createChatListItem(chat) {
+        const li = document.createElement('li');
+        li.dataset.sessionId = chat.id;
+        li.setAttribute('role', 'button');
+        li.setAttribute('tabindex', '0');
+        li.setAttribute('aria-label', `Conversa: ${chat.name || chat.id}`);
+        
+        const chatGptKey = chat.fk_gpt_id || chat.gpt_id || chat.gptId;
+        li.dataset.gptKey = chatGptKey;
+
+        // Chat icon
+        const icon = document.createElement('i');
+        icon.className = 'bi bi-chat-dots me-2';
+        icon.style.fontSize = '1rem';
+        icon.style.color = 'var(--font-color)';
+        icon.setAttribute('aria-hidden', 'true');
+        li.appendChild(icon);
+
+        // Chat name
+        const span = document.createElement('span');
+        span.textContent = chat.name || chat.id;
+        li.appendChild(span);
+
+        // Message count badge
+        const countBadge = document.createElement('span');
+        countBadge.className = 'badge bg-secondary ms-2';
+        countBadge.textContent = '...';
+        countBadge.setAttribute('aria-label', 'Número de mensagens');
+        span.appendChild(countBadge);
+
+        // Fetch and display message count
+        this.fetchMessageCount(chat, countBadge);
+
+        // Options button
+        const actions = document.createElement('div');
+        actions.className = 'ms-auto';
+        actions.innerHTML = `
+          <button class="chat-options-btn btn-icon" 
+                  title="Opções da conversa"
+                  aria-label="Opções da conversa">
+            <i class="bi bi-three-dots" aria-hidden="true"></i>
+          </button>
+        `;
+        li.appendChild(actions);
+
+        // Add tooltip for options
+        this.addChatOptionsTooltip(li);
+
+        // Add click handler
+        li.addEventListener('click', (e) => {
+          if (!e.target.closest('.chat-options-btn')) {
+            this.handleChatSelection(chat, li);
+          }
+        });
+
+        this.chatListEl.appendChild(li);
+      }
+
+      async fetchMessageCount(chat, badge) {
+        try {
+          const gptKey = chat.fk_gpt_id || chat.gpt_id || chat.gptId;
+          const gpt = this.gptManager.gptMap[gptKey];
+          const baseFlowise = gpt?.flowiseConfig?.flowise;
+          
+          if (!baseFlowise) return;
+
+          const apiHost = normalizeApiHost(baseFlowise.apiHost || window.location.origin);
+          const flowId = baseFlowise.chatflowId || gptKey;
+
+          const res = await fetch(
+            `${apiHost}/api/v1/chatmessage/${flowId}?sessionId=${chat.id}`,
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${baseFlowise.token}`
+              }
+            }
+          );
+
+          if (res.ok) {
+            const history = await res.json();
+            const count = Array.isArray(history) ? history.length : (history.data?.length || 0);
+            badge.textContent = count;
+            badge.setAttribute('aria-label', `${count} mensagens`);
+          }
+        } catch (err) {
+          console.error('Failed to fetch message count', err);
+          badge.textContent = '?';
+        }
+      }
+
+      addChatOptionsTooltip(li) {
+        tippy(li.querySelector('.chat-options-btn'), {
+          content: `
+            <ul class="list-unstyled m-0" role="menu">
+              <li><button class="dropdown-item" role="menuitem">Renomear</button></li>
+              <li><button class="dropdown-item" role="menuitem">Arquivar</button></li>
+              <li><button class="dropdown-item text-danger" role="menuitem">Excluir</button></li>
+            </ul>
+          `,
+          allowHTML: true,
+          interactive: true,
+          trigger: 'click',
+          placement: 'right-start'
+        });
+      }
+
+      async handleChatSelection(chat, element) {
+        const spinner = showLoadingSpinner(element);
+        
+        try {
+          // Mark visually selected item
+          document.querySelectorAll('#chat-sidebar li').forEach(elem => elem.classList.remove('selected'));
+          element.classList.add('selected');
+
+          // Update URL
+          const sessionId = chat.id;
+          window.history.replaceState(null, '', `${window.location.pathname}?chatId=${sessionId}`);
+
+          // Load chat configuration
+          const gptKey = chat.fk_gpt_id || chat.gpt_id || chat.gptId;
+          let override = await this.gptManager.getGPTConfig(gptKey);
+
+          // Update sessionId in override
+          override = { ...override, sessionId };
+          this.gptManager.configCache[gptKey] = override;
+
+          // Load chat history and initialize
+          await this.loadChatHistory(chat, override);
+          
+        } catch (err) {
+          console.error('Erro ao carregar histórico:', err);
+        } finally {
+          removeLoadingSpinner(element);
+        }
+      }
+
+      async loadChatHistory(chat, override) {
+        const gptKey = chat.fk_gpt_id || chat.gpt_id || chat.gptId;
+        const gpt = this.gptManager.gptMap[gptKey];
+        
+        if (!gpt) {
+          throw new Error(`GPT não encontrado: ${gptKey}`);
+        }
+
+        const baseFlowise = gpt.flowiseConfig.flowise;
+        const realFlowId = chat.chatflowId || baseFlowise.chatflowId || gptKey;
+        const proxyFlowId = mapChatflowId(realFlowId);
+        const apiHost = normalizeApiHost(baseFlowise.apiHost);
+
+        // Session-specific storage keys
+        const sessionExtKey = `${proxyFlowId}__${chat.id}_EXTERNAL`;
+        const sessionFlagKey = `${proxyFlowId}__${chat.id}_historyInjected`;
+
+        // Inject session history only if not already stored
+        if (!localStorage.getItem(sessionFlagKey)) {
+          await this.fetchAndStoreHistory(apiHost, realFlowId, chat.id, baseFlowise.token, sessionExtKey);
+          localStorage.setItem(sessionFlagKey, 'true');
+        }
+
+        // Copy session history into the base key so web.js picks it up
+        const baseExtKey = `${proxyFlowId}_EXTERNAL`;
+        const sessionData = localStorage.getItem(sessionExtKey);
+        if (sessionData) {
+          localStorage.setItem(baseExtKey, sessionData);
+          localStorage.setItem(`${proxyFlowId}_historyInjected`, 'true');
+        }
+
+        // Build and initialize chat configuration
+        const config = {
+          chatflowid: realFlowId,
+          apiHost: apiHost,
+          token: baseFlowise.token,
+          headers: {
+            'x-user-email': AuthService.user.email,
+            'x-user-uuid': AuthService.user.uid,
+            'x-user-jwt': AuthService.token,
+            'x-gpt-id': gpt.id
+          },
+          chatflowConfig: override,
+          theme: window.flowiseConfig.theme,
+          observersConfig: {
+            observeLoading: async (loading) => {
+              if (loading) {
+                await this.gptManager.handleUserMessage(config, override);
+              }
+            }
+          }
+        };
+
+        // Update chat window title
+        if (config.theme && config.theme.chatWindow) {
+          config.theme.chatWindow.title = gpt.name || config.theme.chatWindow.title;
+        }
+
+        // Initialize chat
+        const chatArea = document.getElementById('chat-area');
+        chatArea.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
+
+        // Import and initialize Flowise web component
+        await import('../assets/js/web.js').then(mod => mod.default.initFull(config));
+      }
+
+      async fetchAndStoreHistory(apiHost, flowId, sessionId, token, storageKey) {
+        const response = await fetch(
+          `${apiHost}/api/v1/chatmessage/${flowId}?sessionId=${sessionId}`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Status ${response.status}`);
+        }
+
+        const apiHistory = await response.json();
+        const formattedHistory = apiHistory.map(msg => ({
+          message: msg.content,
+          type: msg.role === 'userMessage' ? 'userMessage' : 'apiMessage',
+          dateTime: msg.createdDate || new Date().toISOString(),
+          messageId: msg.id || crypto.randomUUID(),
+          fileUploads: msg.fileUploads || []
+        }));
+
+        localStorage.setItem(storageKey, JSON.stringify({ 
+          chatHistory: formattedHistory, 
+          chatId: sessionId 
+        }));
+      }
+
+      handleDirectChatAccess() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const directChatId = urlParams.get('chatId');
+        let found = false;
+
+        if (directChatId) {
+          const directLi = Array.from(this.chatListEl.children)
+            .find(el => el.dataset.sessionId === directChatId);
+          
+          if (directLi) {
+            directLi.click();
+            found = true;
+          }
+        }
+
+        // If no valid chatId provided or not found, start a new conversation
+        if (!found) {
+          const newConv = document.getElementById('new-conversation');
+          if (newConv) newConv.click();
+        }
+      }
+
+      refreshSearchOptions() {
+        const $sel = $('#chat-search');
+        $sel.find('option').not(':first').remove();
+        
+        document.querySelectorAll('#chat-list li span').forEach(span => {
+          if (span.textContent && !span.classList.contains('badge')) {
+            $sel.append(new Option(span.textContent, span.textContent, false, false));
+          }
+        });
+        
+        $sel.val('').trigger('change');
+      }
+
+      bindEvents() {
+        // New chat button
+        document.getElementById('new-chat').addEventListener('click', () => {
+          document.querySelectorAll('#chat-sidebar li').forEach(li => li.classList.remove('selected'));
+          const defaultEl = document.getElementById(this.gptManager.defaultGptId);
+          if (defaultEl) {
+            defaultEl.click();
+          }
+        });
+
+        // New conversation button
+        document.getElementById('new-conversation').addEventListener('click', () => {
+          const selectedLi = document.querySelector('#chat-list li.selected');
+          if (selectedLi) {
+            const gptKey = selectedLi.dataset.gptKey;
+            const providerEl = document.getElementById(gptKey);
+            if (providerEl) providerEl.click();
+          }
+        });
+      }
+    }
+
+    /* ========================================
+       SEARCH FUNCTIONALITY MODULE
+       ======================================== */
+    
+    class SearchManager {
+      constructor(chatManager) {
+        this.chatManager = chatManager;
+        this.init();
+      }
+
+      init() {
+        $(document).ready(() => {
+          this.initializeSelect2();
+          this.bindEvents();
+        });
+      }
+
+      initializeSelect2() {
+        $('#chat-search').select2({
+          placeholder: 'Pesquisar conversas...',
+          allowClear: true,
+          width: '100%'
+        });
+      }
+
+      bindEvents() {
+        $('#chat-search').on('select2:select', (e) => {
+          const selectedName = e.params.data.id;
+          
+          document.querySelectorAll('#chat-list li').forEach(li => {
+            const span = li.querySelector('span');
+            if (span && span.textContent === selectedName) {
+              li.click();
+            }
+          });
+        });
+      }
+    }
+
+    /* ========================================
+       USER MENU MODULE
+       ======================================== */
+    
+    class UserMenuManager {
+      constructor() {
+        this.avatarBlock = document.getElementById('avatarBlock');
+        this.userMenu = document.getElementById('userMenu');
+        this.userBtn = document.getElementById('userMenuBtn');
+        
+        this.init();
+      }
+
+      init() {
+        this.bindEvents();
+        this.setupAuthListener();
+      }
+
+      bindEvents() {
+        this.userBtn.addEventListener('click', () => {
+          const isHidden = this.userMenu.classList.contains('hidden');
+          this.userMenu.classList.toggle('hidden');
+          this.avatarBlock.classList.toggle('open');
+          this.userBtn.setAttribute('aria-expanded', !isHidden);
+        });
+
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+          if (!this.avatarBlock.contains(e.target)) {
+            this.userMenu.classList.add('hidden');
+            this.avatarBlock.classList.remove('open');
+            this.userBtn.setAttribute('aria-expanded', 'false');
+          }
+        });
+
+        // Logout functionality
+        document.getElementById('logout-btn').addEventListener('click', () => {
+          AuthService.logout();
+        });
+      }
+
+      setupAuthListener() {
+        AuthService.onAuthChange(user => {
+          if (!user) {
+            window.location.href = './login.html?redirect=chat.html';
+          } else {
+            document.getElementById('user-name').textContent = user.email;
+          }
+        });
+      }
+    }
+
+    /* ========================================
+       GPT MODAL MODULE
+       ======================================== */
+    
+    class GPTModalManager {
+      constructor() {
+        this.gptModalEl = document.getElementById('gptModal');
+        this.init();
+      }
+
+      init() {
+        this.gptModalEl.addEventListener('show.bs.modal', () => this.loadGPTModal());
+      }
+
+      async loadGPTModal() {
+        const body = document.getElementById('gptModalBody');
+        body.innerHTML = `
+          <div id="gpt-categories" class="mb-3"></div>
+          <select id="gpt-search" style="width: 100%" aria-label="Pesquisar GPT"></select>
+          <div id="gpt-cards" class="row mt-3"></div>
+        `;
+
+        try {
+          const gpts = await listGpts(AuthService);
+          
+          if (!Array.isArray(gpts) || gpts.length === 0) {
+            body.innerHTML = '<p class="text-muted">Nenhum GPT disponível.</p>';
+            return;
+          }
+
+          this.setupGPTSearch(gpts);
+          this.setupGPTCategories(gpts);
+          this.createGPTCards(gpts);
+          
+        } catch (error) {
+          console.error('Erro ao carregar GPTs no modal:', error);
+          body.innerHTML = '<p class="text-danger">Erro ao carregar GPTs.</p>';
+        }
+      }
+
+      setupGPTSearch(gpts) {
+        const searchSelect = document.getElementById('gpt-search');
+        const categories = this.groupGPTsByCategory(gpts);
+
+        let groupHtml = '<option></option>';
+        for (const cat of Object.keys(categories)) {
+          groupHtml += `<optgroup label="${cat}">`;
+          categories[cat].forEach(g => {
+            groupHtml += `<option value="${g.name}" data-image-url="${g.imageUrl}">${g.name}</option>`;
+          });
+          groupHtml += `</optgroup>`;
+        }
+        searchSelect.innerHTML = groupHtml;
+
+        $(searchSelect).select2({
+          placeholder: 'Pesquisar GPT',
+          allowClear: true,
+          width: '100%',
+          dropdownParent: $('#gptModal'),
+          templateResult: this.formatGPTOption,
+          templateSelection: this.formatGPTSelection
+        });
+
+        // Filter cards on selection
+        $(searchSelect).on('change', function() {
+          const val = this.value;
+          document.querySelectorAll('#gpt-cards .col-12').forEach(col => {
+            const title = col.querySelector('.card-title').textContent;
+            col.style.display = (!val || title === val) ? '' : 'none';
+          });
+        });
+      }
+
+      formatGPTOption(data) {
+        if (!data.id) return data.text;
+        const imgUrl = $(data.element).data('image-url');
+        if (!imgUrl) return data.text;
+        
+        return $(`
+          <span>
+            <img src="${imgUrl}" 
+                 style="width:24px;height:24px;object-fit:cover;margin-right:8px;" 
+                 alt="${data.text} icon" />
+            ${data.text}
+          </span>
+        `);
+      }
+
+      formatGPTSelection(data) {
+        if (!data.id) return data.text;
+        const imgUrl = $(data.element).data('image-url');
+        if (!imgUrl) return data.text;
+        
+        return $(`
+          <span>
+            <img src="${imgUrl}" 
+                 style="width:20px;height:20px;object-fit:cover;margin-right:4px;" 
+                 alt="${data.text} icon" />
+            ${data.text}
+          </span>
+        `);
+      }
+
+      groupGPTsByCategory(gpts) {
+        const categories = {};
+        gpts.forEach(g => {
+          const cat = g.category || 'Sem categoria';
+          if (!categories[cat]) categories[cat] = [];
+          categories[cat].push(g);
+        });
+        return categories;
+      }
+
+      setupGPTCategories(gpts) {
+        const categories = this.groupGPTsByCategory(gpts);
+        const catContainer = document.getElementById('gpt-categories');
+        const allCats = ['Todos', ...Object.keys(categories)];
+        
+        catContainer.innerHTML = allCats.map(cat => `
+          <button type="button" 
+                  class="btn btn-outline-primary me-2 mb-2" 
+                  data-cat="${cat}"
+                  aria-label="Filtrar por categoria ${cat}">
+            ${cat}
+          </button>
+        `).join('');
+
+        // Add category filter functionality
+        catContainer.addEventListener('click', (e) => {
+          if (e.target.matches('button[data-cat]')) {
+            const selectedCat = e.target.dataset.cat;
+            this.filterGPTsByCategory(selectedCat, categories);
+            
+            // Update active button
+            catContainer.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+            e.target.classList.add('active');
+          }
+        });
+      }
+
+      filterGPTsByCategory(selectedCat, categories) {
+        document.querySelectorAll('#gpt-cards .col-12').forEach(col => {
+          const category = col.dataset.category || 'Sem categoria';
+          const shouldShow = selectedCat === 'Todos' || category === selectedCat;
+          col.style.display = shouldShow ? '' : 'none';
+        });
+      }
+
+      createGPTCards(gpts) {
+        const cardsContainer = document.getElementById('gpt-cards');
+        
+        const cards = gpts.map(gpt => {
+          const { name, description, category, imageUrl } = gpt;
+          const isCardVideo = imageUrl.toLowerCase().endsWith('.mp4');
+          const mediaTag = isCardVideo
+            ? `<video src="${imageUrl}" class="card-img-top" style="height: 200px; object-fit: cover;" autoplay loop muted playsinline></video>`
+            : `<img src="${imageUrl}" class="card-img-top" style="height: 200px; object-fit: cover;" alt="${name}">`;
+
+          return `
+            <div class="col-12 col-md-6 col-lg-4 mb-3" data-category="${category || 'Sem categoria'}">
+              <div class="card h-100">
+                ${mediaTag}
+                <div class="card-body d-flex flex-column">
+                  <h6 class="card-title">${name}</h6>
+                  <p class="card-text small text-muted flex-grow-1">${description || 'Sem descrição'}</p>
+                  <button class="btn btn-primary btn-sm mt-auto" 
+                          onclick="document.getElementById('${gpt.id}').click(); bootstrap.Modal.getInstance(document.getElementById('gptModal')).hide();"
+                          aria-label="Selecionar ${name}">
+                    Selecionar
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        cardsContainer.innerHTML = cards;
+      }
+    }
+
+    /* ========================================
+       APPLICATION INITIALIZATION
+       ======================================== */
+    
+    // Initialize all modules
+    const themeManager = new ThemeManager();
+    const sidebarManager = new SidebarManager();
+    const gptManager = new GPTManager();
+    const chatManager = new ChatManager(gptManager);
+    const searchManager = new SearchManager(chatManager);
+    const userMenuManager = new UserMenuManager();
+    const gptModalManager = new GPTModalManager();
+
+    // Make managers available globally for debugging
+    window.LexiDecisApp = {
+      themeManager,
+      sidebarManager,
+      gptManager,
+      chatManager,
+      searchManager,
+      userMenuManager,
+      gptModalManager
+    };
+
+    console.log('LexiDecis v2 initialized successfully');
+  </script>
+</body>
+</html>
+

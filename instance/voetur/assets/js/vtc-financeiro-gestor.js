@@ -272,7 +272,18 @@ export async function renderVtcFinanceiroGestor() {
           { data: 'filial_nome',       title: 'Filial',            defaultContent: '-' },
           { data: 'fornecedor_nome',   title: 'Fornecedor',        defaultContent: '-' },
           { data: 'valor_nominal',     title: 'Valor',             defaultContent: '-', render: v => isNaN(v) ? '-' : parseFloat(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) },
-          { data: 'data_emissao',      title: 'Data Emissão',      defaultContent: '-', render: d => d ? new Date(d).toLocaleDateString('pt-BR') : '-' },
+          {
+            data: 'data_emissao',
+            title: 'Data Emissão',
+            defaultContent: '-',
+            render: d => {
+              if (!d) return '-';
+              // Extract local date components to avoid timezone shift
+              const [year, month, day] = d.split('T')[0].split('-').map(Number);
+              const localDate = new Date(year, month - 1, day);
+              return localDate.toLocaleDateString('pt-BR');
+            },
+          },
           { data: 'updated_at',        title: 'Atualizado Em',     defaultContent: '-', render: u => u ? new Date(u).toLocaleString('pt-BR') : '-' },
           { data: 'forma_pagamento',   title: 'Forma de Pagamento', defaultContent: '-' },
           { data: 'anexos',            title: 'Anexos',            defaultContent: '-', render: a => formatAnexos(a) }

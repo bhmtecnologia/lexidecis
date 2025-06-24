@@ -215,7 +215,16 @@ export function initUnits(AuthService, API, DOM) {
   async function refreshUnits() {
     DOM.showOverlay();
     try {
-      const units = await API.getUnits(AuthService);
+      // Fetch both units and companies, then map company names into units
+      const [units, companies] = await Promise.all([
+        API.getUnits(AuthService),
+        API.getCompanies(AuthService)
+      ]);
+      // Build a lookup of company names by ID
+      const companyMap = {};
+      companies.forEach(c => { companyMap[c.id] = c.name; });
+      // Attach company_name to each unit for display
+      units.forEach(u => { u.company_name = companyMap[u.company_id] || '-'; });
       updateTable(units);
     } catch (error) {
       console.error("Erro ao buscar units:", error);

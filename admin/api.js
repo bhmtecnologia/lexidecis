@@ -282,3 +282,36 @@ export async function getGPTConfigs(AuthService, gptId) {
   
   return configs;
 }
+
+/**
+ * Atualiza os vínculos de GPTs de uma unit específica.
+ *
+ * @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
+ * @param {string} unitId - ID da unit cujos GPTs serão atualizados.
+ * @param {Array<string>} gptIds - Array de IDs de GPTs que devem ficar vinculados à unit.
+ * @returns {Promise<Object>} - Resposta da API confirmando a atualização.
+ * @throws {Error} Se o usuário não estiver autenticado ou se a API retornar um erro.
+ */
+export async function setUnitGPTs(AuthService, unitId, gptIds) {
+  const user = AuthService.user;
+  if (!user) throw new Error("Usuário não autenticado");
+  const token = await user.getIdToken();
+  const url = 'https://n8n.power.tec.br/webhook/lexidecis/units/gpts';
+  const payload = {
+    unit_id: unitId,
+    gpt_ids: gptIds
+  };
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error("Erro ao salvar vínculos de GPTs: " + errorText);
+  }
+  return await response.json();
+}

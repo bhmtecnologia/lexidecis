@@ -103,7 +103,7 @@ export function initUnits(AuthService, API, DOM) {
             await API.setUnitGPTs(AuthService, unitId, selectedIds);
             alert("Vínculos salvos com sucesso");
             row.child.hide();
-          } catch(err) {
+          } catch (err) {
             alert("Erro ao salvar vínculos: " + err.message);
           }
         });

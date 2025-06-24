@@ -14,58 +14,7 @@ export function initUnits(AuthService, API, DOM) {
   function initializeTable() {
     const dt = $("#data-table").DataTable({
       responsive: true,
-      order: [[1, "asc"]]
-    });
-
-    // Evento de clique na célula de expansão
-    $("#data-table tbody").on("click", "td.details-control", async function () {
-      const tr = $(this).closest("tr");
-      const row = $("#data-table").DataTable().row(tr);
-      const unitId = $(this).data("unitId");
-
-      // Se já está expandido, fecha
-      if (row.child.isShown()) {
-        row.child.hide();
-        $(this).html('<i class="bi bi-plus-square"></i>');
-      } else {
-        // Exibe conteúdo de carregamento enquanto busca os GPTs da unit
-        $(this).html('<i class="bi bi-arrow-repeat"></i>');
-        try {
-          // Chama a API passando o unitId
-          const gpts = await API.getGPTs(AuthService, unitId);
-          // Gera o HTML dos GPTs em formato de linhas de tabela (sem imagem)
-          let html = `<table class="table table-sm mb-0">
-                        <thead>
-                          <tr>
-                            <th>Nome</th>
-                            <th>Descrição</th>
-                            <th>Categoria</th>
-                          </tr>
-                        </thead>
-                        <tbody>`;
-          gpts.forEach(gpt => {
-            html += `
-              <tr class="gpt-row" data-gpt-id="${gpt.id}" style="cursor: pointer;">
-                <td>${gpt.name}</td>
-                <td>${gpt.description}</td>
-                <td>${gpt.category}</td>
-              </tr>
-            `;
-          });
-          html += `</tbody></table>`;
-          row.child(html).show();
-          $(this).html('<i class="bi bi-dash-square"></i>');
-
-          // Associa o clique nas linhas dos GPTs para abrir configurações
-          row.child().find(".gpt-row").on("click", async function() {
-            const gptId = $(this).data("gptId");
-            viewGPTConfig(gptId);
-          });
-        } catch (error) {
-          row.child(`<div class="text-danger">Erro ao carregar GPTs: ${error.message}</div>`).show();
-          $(this).html('<i class="bi bi-plus-square"></i>');
-        }
-      }
+      order: [[0, "asc"]]
     });
   }
 
@@ -78,12 +27,14 @@ export function initUnits(AuthService, API, DOM) {
       unitsData[unit.id] = unit;
       tableBody.append(`
         <tr>
-          <td class="details-control" data-unit-id="${unit.id}"><i class="bi bi-plus-square"></i></td>
           <td>${unit.name || '-'}</td>
           <td>${unit.company_name || '-'}</td>
           <td>${unit.id || '-'}</td>
           <td>
             <div class="btn-group" role="group">
+              <button class="btn btn-sm btn-secondary gpts-btn" data-unit-id="${unit.id}">
+                <i class="bi bi-list"></i> GPTs
+              </button>
               <button class="btn btn-sm btn-primary" onclick="editUnit('${unit.id}')">
                 <i class="bi bi-pencil-square"></i> Editar
               </button>
@@ -99,6 +50,70 @@ export function initUnits(AuthService, API, DOM) {
       initializeTable();
     }
   }
+
+  // Handle GPT listing on button click (dual-multiselect assignment)
+  $("#data-table tbody").on("click", ".gpts-btn", async function () {
+    const tr = $(this).closest("tr");
+    const row = $("#data-table").DataTable().row(tr);
+    if (row.child.isShown()) {
+      row.child.hide();
+    } else {
+      $(this).prop("disabled", true).html('<i class="bi bi-arrow-repeat"></i> GPTs');
+      try {
+        const unitId = $(this).data("unitId");
+        const assigned = await API.getGPTs(AuthService, unitId);
+        const all = await API.getGPTs(AuthService, 'all');
+        const available = all.filter(a => !assigned.some(u => u.id === a.id));
+        let html = `
+          <div class="d-flex">
+            <div class="me-3 flex-fill">
+              <label>Selecionados:</label>
+              <select id="assignedGPTs" class="form-select" multiple size="10">
+                ${assigned.map(g => `<option value="${g.id}">${g.name}</option>`).join('')}
+              </select>
+            </div>
+            <div class="d-flex flex-column justify-content-center">
+              <button id="btnAdd" class="btn btn-sm btn-primary mb-2">&gt;&gt;</button>
+              <button id="btnRemove" class="btn btn-sm btn-secondary">&lt;&lt;</button>
+            </div>
+            <div class="ms-3 flex-fill">
+              <label>Disponíveis:</label>
+              <select id="availableGPTs" class="form-select" multiple size="10">
+                ${available.map(g => `<option value="${g.id}">${g.name}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+          <div class="mt-3 text-end">
+            <button id="btnSaveGPTs" class="btn btn-sm btn-success">Salvar</button>
+          </div>
+        `;
+        row.child(html).show();
+        // Move items from available to assigned
+        $("#btnRemove").on("click", () => {
+          $("#availableGPTs option:selected").appendTo("#assignedGPTs");
+        });
+        // Move items from assigned back to available
+        $("#btnAdd").on("click", () => {
+          $("#assignedGPTs option:selected").appendTo("#availableGPTs");
+        });
+        // Save assignment
+        $("#btnSaveGPTs").on("click", async () => {
+          const selectedIds = $("#assignedGPTs option").map((i, o) => o.value).get();
+          try {
+            await API.setUnitGPTs(AuthService, unitId, selectedIds);
+            alert("Vínculos salvos com sucesso");
+            row.child.hide();
+          } catch(err) {
+            alert("Erro ao salvar vínculos: " + err.message);
+          }
+        });
+      } catch (error) {
+        row.child(`<div class="text-danger">Erro ao carregar GPTs: ${error.message}</div>`).show();
+      } finally {
+        $(this).prop("disabled", false).html('<i class="bi bi-list"></i> GPTs');
+      }
+    }
+  });
 
   // Manipula a criação de uma nova unit
   async function handleCreateUnit() {

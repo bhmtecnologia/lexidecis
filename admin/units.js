@@ -65,10 +65,10 @@ export function initUnits(AuthService, API, DOM) {
         const all = await API.getGPTs(AuthService, 'all');
         const available = all.filter(a => !assigned.some(u => u.id === a.id));
         let html = `
-          <div class="d-flex">
-            <div class="me-3 flex-fill">
+          <div class="d-flex align-items-stretch">
+            <div class="me-3 flex-fill d-flex flex-column">
               <label>Selecionados:</label>
-              <select id="assignedGPTs" class="form-select" multiple size="10">
+              <select id="assignedGPTs" class="form-select flex-grow-1" multiple>
                 ${assigned.map(g => `<option value="${g.id}">${g.name}</option>`).join('')}
               </select>
             </div>
@@ -76,9 +76,9 @@ export function initUnits(AuthService, API, DOM) {
               <button id="btnAdd" class="btn btn-sm btn-primary mb-2">&gt;&gt;</button>
               <button id="btnRemove" class="btn btn-sm btn-secondary">&lt;&lt;</button>
             </div>
-            <div class="ms-3 flex-fill">
+            <div class="ms-3 flex-fill d-flex flex-column">
               <label>Disponíveis:</label>
-              <select id="availableGPTs" class="form-select" multiple size="10">
+              <select id="availableGPTs" class="form-select flex-grow-1" multiple>
                 ${available.map(g => `<option value="${g.id}">${g.name}</option>`).join('')}
               </select>
             </div>

@@ -454,7 +454,7 @@ export async function renderFinanceiroLancamentoCreatev6() {
   // Inicializa Select2
   if (window.$ && $.fn.select2) {
     $("#filialSelect").select2({ placeholder: "Selecione uma filial", width: "100%" });
-    $("#fornecedorSelect").select2({ placeholder: "Selecione um fornecedor", width: "100%", minimumInputLength: 0, allowClear: true });
+    $("#fornecedorSelect").select2({ placeholder: "Selecione um fornecedor", width: "100%", minimumInputLength: 3, allowClear: true });
     $("#centroCustoSelect").select2({ placeholder: "Selecione um centro de custo", width: "100%" });
     $("#projetoSelect").select2({ placeholder: "Selecione um projeto", allowClear: true, width: "100%" });
   }
@@ -1011,7 +1011,7 @@ export async function renderFinanceiroLancamentoCreatev6() {
           }
           // Se encontrou, preenche e trava o select
           if (existingSupplier) {
-            fornecedorSelectRep.innerHTML = `<option value="${existingSupplier.uuid || existingSupplier.id}">${existingSupplier.nome} (${existingSupplier.cnpj})</option>`;
+            fornecedorSelectRep.innerHTML = `<option value="${existingSupplier.uuid || existingSupplier.id}">${existingSupplier.nome || existingSupplier.razaoSocial || info.fornecedor} (${existingSupplier.cnpj || info.cnpj_fornecedor})</option>`;
             fornecedorSelectRep.value = existingSupplier.uuid || existingSupplier.id;
             fornecedorSelectRep.disabled = true;
             const unlockFornecedor = document.getElementById("unlockFornecedor");
@@ -1238,22 +1238,13 @@ export async function renderFinanceiroLancamentoCreatev6() {
       addLog("Filial definida como " + (e.target.checked ? "Manual" : "Automática"));
     });
   }
-
-  // Fornecedor unlock manual/automatic: sync Select2 enabled state
   const unlockFornecedor = document.getElementById("unlockFornecedor");
   if (unlockFornecedor) {
-    unlockFornecedor.addEventListener("change", async e => {
-      // Show loading indicator while fetching suppliers
-      showLoadingOverlay("Carregando fornecedores...");
+    unlockFornecedor.addEventListener("change", e => {
       const sel = document.getElementById("fornecedorSelect");
       if (e.target.checked) {
-        // Refresh suppliers from API if needed
-        try {
-          window.fornecedoresData = await listFornecedores(AuthService);
-        } catch (err) {
-          console.error("Erro ao recarregar fornecedores no modo manual:", err);
-        }
-        // Manual mode: restore full list of suppliers
+        // Manual mode: enable and restore full list
+        sel.disabled = false;
         sel.innerHTML = '<option value="">Selecione</option>';
         (window.fornecedoresData || []).forEach(f => {
           const name = f.nome || f.razaoSocial || '';
@@ -1263,35 +1254,21 @@ export async function renderFinanceiroLancamentoCreatev6() {
           opt.text = `${name} (${cnpj})`;
           sel.add(opt);
         });
-        // Manual mode...
-        sel.disabled = false;
-        if (window.$ && $.fn.select2) {
-          // Reinitialize Select2 to pick up new options and minimumInputLength: 3
-          $("#fornecedorSelect")
-            .select2('destroy')
-            .select2({ placeholder: "Selecione um fornecedor", width: "100%", minimumInputLength: 3, allowClear: true })
-            .select2('open');
-          // Hide loading indicator after suppliers loaded
-          hideLoadingOverlay();
-        } else {
-          // Hide loading indicator after suppliers loaded (no select2)
-          hideLoadingOverlay();
-        }
       } else {
-        // Automatic mode...
+        // Automatic mode: keep only the auto-filled option
+        const currentValue = sel.value;
+        const currentText = sel.options[sel.selectedIndex]?.text || '';
+        sel.innerHTML = '';
+        const autoOpt = document.createElement("option");
+        autoOpt.value = currentValue;
+        autoOpt.text = currentText;
+        autoOpt.setAttribute('data-auto', 'true');
+        sel.add(autoOpt);
+        sel.value = currentValue;
         sel.disabled = true;
-        if (window.$ && $.fn.select2) {
-          $("#fornecedorSelect").prop("disabled", true).trigger("change.select2");
-        }
-        if (window.$ && $.fn.select2) {
-          $("#fornecedorSelect").trigger("change");
-        }
-        // Hide loading indicator in automatic mode
-        hideLoadingOverlay();
       }
-      if (!(window.$ && $.fn.select2)) {
-        // If select2 is not present, still trigger change for non-select2 UI
-        sel.dispatchEvent(new Event('change'));
+      if (window.$ && $.fn.select2) {
+        $("#fornecedorSelect").trigger("change");
       }
       addLog("Fornecedor definido como " + (e.target.checked ? "Manual" : "Automático"));
     });

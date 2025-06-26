@@ -454,7 +454,7 @@ export async function renderFinanceiroLancamentoCreatev6() {
   // Inicializa Select2
   if (window.$ && $.fn.select2) {
     $("#filialSelect").select2({ placeholder: "Selecione uma filial", width: "100%" });
-    $("#fornecedorSelect").select2({ placeholder: "Selecione um fornecedor", width: "100%", minimumInputLength: 0, allowClear: true });
+    $("#fornecedorSelect").select2({ placeholder: "Selecione um fornecedor", width: "100%", minimumInputLength: 3, allowClear: true });
     $("#centroCustoSelect").select2({ placeholder: "Selecione um centro de custo", width: "100%" });
     $("#projetoSelect").select2({ placeholder: "Selecione um projeto", allowClear: true, width: "100%" });
   }
@@ -1011,7 +1011,7 @@ export async function renderFinanceiroLancamentoCreatev6() {
           }
           // Se encontrou, preenche e trava o select
           if (existingSupplier) {
-            fornecedorSelectRep.innerHTML = `<option value="${existingSupplier.uuid || existingSupplier.id}">${existingSupplier.nome} (${existingSupplier.cnpj})</option>`;
+            fornecedorSelectRep.innerHTML = `<option value="${existingSupplier.uuid || existingSupplier.id}">${existingSupplier.nome || existingSupplier.razaoSocial || info.fornecedor} (${existingSupplier.cnpj || info.cnpj_fornecedor})</option>`;
             fornecedorSelectRep.value = existingSupplier.uuid || existingSupplier.id;
             fornecedorSelectRep.disabled = true;
             const unlockFornecedor = document.getElementById("unlockFornecedor");
@@ -1028,45 +1028,16 @@ export async function renderFinanceiroLancamentoCreatev6() {
 
         // ======= Fim do preenchimento das tabelas =======
       } else if (info.tipo_documento === "Conta a pagar") {
-        // Re-fetch suppliers from API filtered by CNPJ for Conta a pagar
+        // Recarrega opções de Fornecedor antes de preencher seleção
         const fornecedorSelectInit = document.getElementById("fornecedorSelect");
-        const unlockFornecedor = document.getElementById("unlockFornecedor");
-        if (fornecedorSelectInit) {
-          try {
-            window.fornecedoresData = await listFornecedores(AuthService, { cnpj: info.cnpj_fornecedor });
-          } catch (err) {
-            console.error("Erro ao recarregar fornecedores para Conta a pagar:", err);
-          }
-          // Find matching supplier
-          const desiredCnpj = info.cnpj_fornecedor ? info.cnpj_fornecedor.replace(/\D/g, "") : "";
-          const existingSupplier = (window.fornecedoresData || []).find(f => {
-            const cnpjClean = f.cnpj ? f.cnpj.replace(/\D/g, "") : "";
-            return cnpjClean === desiredCnpj;
+        if (fornecedorSelectInit && window.fornecedoresData) {
+          fornecedorSelectInit.innerHTML = '<option value="">Selecione</option>';
+          window.fornecedoresData.forEach(f => {
+            const opt = document.createElement("option");
+            opt.value = f.uuid || f.id;
+            opt.text = `${f.nome} (${f.cnpj})`;
+            fornecedorSelectInit.add(opt);
           });
-          // Populate select
-          if (existingSupplier) {
-            fornecedorSelectInit.innerHTML = `<option value="${existingSupplier.uuid || existingSupplier.id}">${existingSupplier.nome} (${existingSupplier.cnpj})</option>`;
-            fornecedorSelectInit.value = existingSupplier.uuid || existingSupplier.id;
-            fornecedorSelectInit.disabled = true;
-            if (unlockFornecedor) {
-              unlockFornecedor.checked = false;
-              unlockFornecedor.disabled = false;
-            }
-          } else {
-            // If not found, restore full list for manual selection
-            fornecedorSelectInit.innerHTML = '<option value="">Selecione</option>';
-            (window.fornecedoresData || []).forEach(f => {
-              const opt = document.createElement("option");
-              opt.value = f.uuid || f.id;
-              opt.text = `${f.nome} (${f.cnpj})`;
-              fornecedorSelectInit.add(opt);
-            });
-            fornecedorSelectInit.disabled = false;
-            if (unlockFornecedor) {
-              unlockFornecedor.checked = true;
-              unlockFornecedor.disabled = false;
-            }
-          }
           if (window.$ && $.fn.select2) {
             $("#fornecedorSelect").trigger("change");
           }
@@ -1156,15 +1127,31 @@ export async function renderFinanceiroLancamentoCreatev6() {
 
         // Preenche Fornecedor apenas se existir na lista de fornecedores
         const fornecedorSelect = document.getElementById("fornecedorSelect");
+        const unlockFornecedor = document.getElementById("unlockFornecedor");
         if (fornecedorSelect) {
           const fornecedores = window.fornecedoresData || [];
           const match = fornecedores.find(f =>
             (info.cnpj_fornecedor && f.cnpj === info.cnpj_fornecedor) ||
             f.nome === info.fornecedor
           );
-          if (match) {
-            // Seleciona fornecedor existente e bloqueia o campo
-            fornecedorSelect.value = match.id || match.uuid || match.nome;
+          // Se não encontrar fornecedor, reconsulta API filtrando por CNPJ
+          let existingSupplier = match;
+          if (!existingSupplier) {
+            try {
+              const retryList = await listFornecedores(AuthService, { cnpj: info.cnpj_fornecedor });
+              window.fornecedoresData = retryList;
+              existingSupplier = retryList.find(f =>
+                (info.cnpj_fornecedor && f.cnpj === info.cnpj_fornecedor) ||
+                f.nome === info.fornecedor
+              );
+            } catch (err) {
+              console.error("Erro ao reconsultar fornecedores:", err);
+            }
+          }
+          if (existingSupplier) {
+            // Preenche o select com única opção do fornecedor encontrado e bloqueia
+            fornecedorSelect.innerHTML = `<option value="${existingSupplier.uuid || existingSupplier.id}">${existingSupplier.nome} (${existingSupplier.cnpj})</option>`;
+            fornecedorSelect.value = existingSupplier.uuid || existingSupplier.id;
             fornecedorSelect.disabled = true;
             if (unlockFornecedor) {
               unlockFornecedor.checked = false;
@@ -1173,13 +1160,14 @@ export async function renderFinanceiroLancamentoCreatev6() {
             if (window.$ && $.fn.select2) $("#fornecedorSelect").trigger("change");
           } else {
             // Nenhum fornecedor encontrado: mantém campo em branco para seleção manual
+            fornecedorSelect.innerHTML = '<option value="">Selecione</option>';
             fornecedorSelect.value = "";
             fornecedorSelect.disabled = false;
             if (unlockFornecedor) {
               unlockFornecedor.checked = true;
-              // Mantém modo manual e não permite desmarcar
               unlockFornecedor.disabled = true;
             }
+            if (window.$ && $.fn.select2) $("#fornecedorSelect").trigger("change");
           }
         }
 
@@ -1266,7 +1254,41 @@ export async function renderFinanceiroLancamentoCreatev6() {
       addLog("Filial definida como " + (e.target.checked ? "Manual" : "Automática"));
     });
   }
-
+  const unlockFornecedor = document.getElementById("unlockFornecedor");
+  if (unlockFornecedor) {
+    unlockFornecedor.addEventListener("change", e => {
+      const sel = document.getElementById("fornecedorSelect");
+      if (e.target.checked) {
+        // Manual mode: enable and restore full list
+        sel.disabled = false;
+        sel.innerHTML = '<option value="">Selecione</option>';
+        (window.fornecedoresData || []).forEach(f => {
+          const name = f.nome || f.razaoSocial || '';
+          const cnpj = f.cnpj || '';
+          const opt = document.createElement("option");
+          opt.value = f.uuid || f.id || '';
+          opt.text = `${name} (${cnpj})`;
+          sel.add(opt);
+        });
+      } else {
+        // Automatic mode: keep only the auto-filled option
+        const currentValue = sel.value;
+        const currentText = sel.options[sel.selectedIndex]?.text || '';
+        sel.innerHTML = '';
+        const autoOpt = document.createElement("option");
+        autoOpt.value = currentValue;
+        autoOpt.text = currentText;
+        autoOpt.setAttribute('data-auto', 'true');
+        sel.add(autoOpt);
+        sel.value = currentValue;
+        sel.disabled = true;
+      }
+      if (window.$ && $.fn.select2) {
+        $("#fornecedorSelect").trigger("change");
+      }
+      addLog("Fornecedor definido como " + (e.target.checked ? "Manual" : "Automático"));
+    });
+  }
 
   // Carrega dados das APIs e exibe formulário
   AuthService.onAuthChange(user => {
@@ -1637,7 +1659,3 @@ registerRoute("#vtc-financeiro-lancamento-create-v6", renderFinanceiroLancamento
     });
   }
   initRemoveRow('.remove-item', updateItemRemoveButtons);
-
-
-// Remove duplicate unlockFornecedor handler (second occurrence) and its block
-// (No replacement needed; only the primary remains)

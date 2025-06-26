@@ -1042,6 +1042,32 @@ export async function renderFinanceiroLancamentoCreatev6() {
             $("#fornecedorSelect").trigger("change");
           }
         }
+        // Se não houver CNPJ extraído, habilita modo manual e recarrega lista completa de fornecedores
+        if (!info.cnpj_fornecedor) {
+          const unlockFornecedor = document.getElementById("unlockFornecedor");
+          if (unlockFornecedor) {
+            unlockFornecedor.checked = true;
+            // Fetch all suppliers for manual select
+            const sel = document.getElementById("fornecedorSelect");
+            sel.innerHTML = '<option value="">Selecione</option>';
+            try {
+              const allSuppliers = await listFornecedores(AuthService);
+              window.fornecedoresData = allSuppliers;
+              allSuppliers.forEach(f => {
+                const name = f.nome || f.razaoSocial || '';
+                const cnpj = f.cnpj || '';
+                const opt = document.createElement("option");
+                opt.value = f.uuid || f.id || '';
+                opt.text = `${name} (${cnpj})`;
+                sel.add(opt);
+              });
+            } catch (err) {
+              console.error("Erro ao carregar fornecedores manualmente (sem CNPJ):", err);
+            }
+            sel.disabled = false;
+            if (window.$ && $.fn.select2) $("#fornecedorSelect").trigger("change");
+          }
+        }
         // Preenche Tipo de Documento (read-only)
         const tipoEl = document.getElementById("tipoDocumento");
         if (tipoEl) {
@@ -1258,48 +1284,67 @@ export async function renderFinanceiroLancamentoCreatev6() {
   if (unlockFornecedor) {
     unlockFornecedor.addEventListener("change", async e => {
       const sel = document.getElementById("fornecedorSelect");
-      if (e.target.checked) {
-        // If manual toggle on Conta a pagar, fetch supplier by CNPJ and present only that option
-        if (window.classificationResult?.tipo_documento === "Conta a pagar") {
-          sel.innerHTML = '';
-          let retryList = [];
+      // Conta a pagar: lógica específica
+      if (window.classificationResult?.tipo_documento === "Conta a pagar") {
+        if (e.target.checked) {
+          // Manual mode for Conta a pagar: fetch full supplier list
+          sel.disabled = false;
+          sel.innerHTML = '<option value="">Selecione</option>';
           try {
-            retryList = await listFornecedores(AuthService, { cnpj: window.classificationResult.cnpj_fornecedor });
+            const allSuppliers = await listFornecedores(AuthService);
+            window.fornecedoresData = allSuppliers;
+            allSuppliers.forEach(f => {
+              const name = f.nome || f.razaoSocial || '';
+              const cnpj = f.cnpj || '';
+              const opt = document.createElement("option");
+              opt.value = f.uuid || f.id || '';
+              opt.text = `${name} (${cnpj})`;
+              sel.add(opt);
+            });
+          } catch (err) {
+            console.error("Erro ao carregar lista de fornecedores manualmente:", err);
+          }
+        } else {
+          // Automatic mode for Conta a pagar: fetch and display only CNPJ match
+          sel.innerHTML = '';
+          try {
+            const retryList = await listFornecedores(AuthService, { cnpj: window.classificationResult.cnpj_fornecedor });
             window.fornecedoresData = retryList;
             const supplier = retryList.find(f => f.cnpj === window.classificationResult.cnpj_fornecedor);
             if (supplier) {
               sel.innerHTML = `<option value="${supplier.uuid || supplier.id}">${supplier.nome} (${supplier.cnpj})</option>`;
               sel.value = supplier.uuid || supplier.id;
-              sel.disabled = false;
+              sel.disabled = true;
             }
           } catch (err) {
-            console.error("Erro ao consultar fornecedor manualmente:", err);
+            console.error("Erro ao consultar fornecedor automaticamente:", err);
           }
-          if (window.$ && $.fn.select2) $("#fornecedorSelect").trigger("change");
-          // ---- INÍCIO: exibe tela de cadastro se não houver CNPJ ou lista vazia ----
-          // Se não houver CNPJ ou sem resultados, exibe tela de cadastro de fornecedor
-          const supplierReg = document.getElementById("supplier-registration-section");
-          const formSec = document.getElementById("form-section");
-          // Se classificationResult.cnpj_fornecedor for null ou retryList vazia
-          if (!window.classificationResult.cnpj_fornecedor || !(retryList && retryList.length)) {
-            if (supplierReg) supplierReg.classList.remove("d-none");
-            if (formSec) formSec.classList.add("d-none");
-            return;
-          }
-          // ---- FIM: exibe tela de cadastro se não houver CNPJ ou lista vazia ----
-          return;
         }
-        // Manual mode: enable and restore full list
+        if (window.$ && $.fn.select2) {
+          $("#fornecedorSelect").trigger("change");
+        }
+        addLog("Fornecedor definido como " + (e.target.checked ? "Manual" : "Automático"));
+        return;
+      }
+      // ----------- Lógica genérica para outros tipos de documento -------------
+      if (e.target.checked) {
+        // Manual mode: fetch fresh supplier list from API and populate
         sel.disabled = false;
         sel.innerHTML = '<option value="">Selecione</option>';
-        (window.fornecedoresData || []).forEach(f => {
-          const name = f.nome || f.razaoSocial || '';
-          const cnpj = f.cnpj || '';
-          const opt = document.createElement("option");
-          opt.value = f.uuid || f.id || '';
-          opt.text = `${name} (${cnpj})`;
-          sel.add(opt);
-        });
+        try {
+          const allSuppliers = await listFornecedores(AuthService);
+          window.fornecedoresData = allSuppliers;
+          allSuppliers.forEach(f => {
+            const name = f.nome || f.razaoSocial || '';
+            const cnpj = f.cnpj || '';
+            const opt = document.createElement("option");
+            opt.value = f.uuid || f.id || '';
+            opt.text = `${name} (${cnpj})`;
+            sel.add(opt);
+          });
+        } catch (err) {
+          console.error("Erro ao carregar lista de fornecedores manualmente:", err);
+        }
       } else {
         // Automatic mode: keep only the auto-filled option
         const currentValue = sel.value;

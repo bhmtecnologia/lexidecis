@@ -1304,6 +1304,15 @@ export async function renderFinanceiroLancamentoCreatev6() {
           } catch (err) {
             console.error("Erro ao carregar lista de fornecedores manualmente:", err);
           }
+          // Reinitialize Select2 with minimumInputLength: 3 after repopulating options
+          if (window.$ && $.fn.select2) {
+            $("#fornecedorSelect").select2('destroy').select2({
+              placeholder: "Selecione um fornecedor",
+              width: "100%",
+              minimumInputLength: 3,
+              allowClear: true
+            });
+          }
         } else {
           // Automatic mode for Conta a pagar: fetch and display only CNPJ match
           sel.innerHTML = '';
@@ -1319,8 +1328,12 @@ export async function renderFinanceiroLancamentoCreatev6() {
           } catch (err) {
             console.error("Erro ao consultar fornecedor automaticamente:", err);
           }
+          if (window.$ && $.fn.select2) {
+            $("#fornecedorSelect").trigger("change");
+          }
         }
-        if (window.$ && $.fn.select2) {
+        // Always trigger change after updating options
+        if (window.$ && $.fn.select2 && !e.target.checked) {
           $("#fornecedorSelect").trigger("change");
         }
         addLog("Fornecedor definido como " + (e.target.checked ? "Manual" : "Automático"));
@@ -1345,6 +1358,15 @@ export async function renderFinanceiroLancamentoCreatev6() {
         } catch (err) {
           console.error("Erro ao carregar lista de fornecedores manualmente:", err);
         }
+        // Also reinitialize Select2 for generic manual mode (optional, for consistency)
+        if (window.$ && $.fn.select2) {
+          $("#fornecedorSelect").select2('destroy').select2({
+            placeholder: "Selecione um fornecedor",
+            width: "100%",
+            minimumInputLength: 3,
+            allowClear: true
+          });
+        }
       } else {
         // Automatic mode: keep only the auto-filled option
         const currentValue = sel.value;
@@ -1357,9 +1379,9 @@ export async function renderFinanceiroLancamentoCreatev6() {
         sel.add(autoOpt);
         sel.value = currentValue;
         sel.disabled = true;
-      }
-      if (window.$ && $.fn.select2) {
-        $("#fornecedorSelect").trigger("change");
+        if (window.$ && $.fn.select2) {
+          $("#fornecedorSelect").trigger("change");
+        }
       }
       addLog("Fornecedor definido como " + (e.target.checked ? "Manual" : "Automático"));
     });

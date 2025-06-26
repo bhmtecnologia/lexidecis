@@ -1256,9 +1256,39 @@ export async function renderFinanceiroLancamentoCreatev6() {
   }
   const unlockFornecedor = document.getElementById("unlockFornecedor");
   if (unlockFornecedor) {
-    unlockFornecedor.addEventListener("change", e => {
+    unlockFornecedor.addEventListener("change", async e => {
       const sel = document.getElementById("fornecedorSelect");
       if (e.target.checked) {
+        // If manual toggle on Conta a pagar, fetch supplier by CNPJ and present only that option
+        if (window.classificationResult?.tipo_documento === "Conta a pagar") {
+          sel.innerHTML = '';
+          let retryList = [];
+          try {
+            retryList = await listFornecedores(AuthService, { cnpj: window.classificationResult.cnpj_fornecedor });
+            window.fornecedoresData = retryList;
+            const supplier = retryList.find(f => f.cnpj === window.classificationResult.cnpj_fornecedor);
+            if (supplier) {
+              sel.innerHTML = `<option value="${supplier.uuid || supplier.id}">${supplier.nome} (${supplier.cnpj})</option>`;
+              sel.value = supplier.uuid || supplier.id;
+              sel.disabled = false;
+            }
+          } catch (err) {
+            console.error("Erro ao consultar fornecedor manualmente:", err);
+          }
+          if (window.$ && $.fn.select2) $("#fornecedorSelect").trigger("change");
+          // ---- INÍCIO: exibe tela de cadastro se não houver CNPJ ou lista vazia ----
+          // Se não houver CNPJ ou sem resultados, exibe tela de cadastro de fornecedor
+          const supplierReg = document.getElementById("supplier-registration-section");
+          const formSec = document.getElementById("form-section");
+          // Se classificationResult.cnpj_fornecedor for null ou retryList vazia
+          if (!window.classificationResult.cnpj_fornecedor || !(retryList && retryList.length)) {
+            if (supplierReg) supplierReg.classList.remove("d-none");
+            if (formSec) formSec.classList.add("d-none");
+            return;
+          }
+          // ---- FIM: exibe tela de cadastro se não houver CNPJ ou lista vazia ----
+          return;
+        }
         // Manual mode: enable and restore full list
         sel.disabled = false;
         sel.innerHTML = '<option value="">Selecione</option>';

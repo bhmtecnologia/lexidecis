@@ -767,13 +767,18 @@ export async function renderVtcFinanceiroGestor() {
 
     updateLancamento(AuthService, id, payload)
       .then(() => {
-        if (lancamentosTable) lancamentosTable.ajax.reload(null, false);
+        if (lancamentosTable) {
+          lancamentosTable.ajax.reload(() => {
+            // Restore button only after table has reloaded
+            btn.prop('disabled', false).html(originalHtml);
+          }, false);
+        } else {
+          btn.prop('disabled', false).html(originalHtml);
+        }
       })
       .catch(err => {
         console.error('Erro ao enviar lançamento:', err);
-      })
-      .finally(() => {
-        // Restore button state
+        // Restore button on error
         btn.prop('disabled', false).html(originalHtml);
       });
   });

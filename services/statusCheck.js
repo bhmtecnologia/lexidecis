@@ -113,7 +113,7 @@ export default class StatusCheck {
                 'Major System Outage': 'A OpenAI está enfrentando problemas significativos. As operações podem ser interrompidas.',
                 'Partially Degraded Service': 'Os serviços da OpenAI estão funcionando parcialmente. Algumas funcionalidades podem estar lentas ou indisponíveis.',
                 'Minor Service Outage': 'Pequenos problemas foram detectados nos serviços da OpenAI. Algumas funcionalidades podem estar temporariamente indisponíveis.',
-                'Partial System Degradation': 'Os sistemas da OpenAI estão sofrendo uma degradação parcial. Algumas operações podem ter desempenho reduzido.'
+                'Partial System Degradation': 'LexiDecis opera normalmente, mas a OpenAI está em degradação parcial que pode afetar alguns GPTs; continuar (usar OpenAI ou outro modelo) ou sair?'
             };
 
             const friendlyMessage = friendlyMessages[status] || 

@@ -454,7 +454,27 @@ export async function renderFinanceiroLancamentoCreatev6() {
   // Inicializa Select2
   if (window.$ && $.fn.select2) {
     $("#filialSelect").select2({ placeholder: "Selecione uma filial", width: "100%" });
-    $("#fornecedorSelect").select2({ placeholder: "Selecione um fornecedor", width: "100%", minimumInputLength: 3, allowClear: true });
+    $("#fornecedorSelect").select2({
+      placeholder: "Selecione um fornecedor",
+      width: "100%",
+      minimumInputLength: 3,
+      allowClear: true,
+      ajax: {
+        transport: (params, success, failure) => {
+          const term = params.data.q ? params.data.q.toLowerCase() : "";
+          const matches = (window.fornecedoresData || [])
+            .filter(f => f.nome.toLowerCase().includes(term))
+            .slice(0, 50);
+          success({
+            results: matches.map(f => ({
+              id: f.uuid || f.id,
+              text: `${f.nome} (${f.cnpj})`
+            }))
+          });
+        },
+        delay: 200
+      }
+    });
     $("#centroCustoSelect").select2({ placeholder: "Selecione um centro de custo", width: "100%" });
     $("#projetoSelect").select2({ placeholder: "Selecione um projeto", allowClear: true, width: "100%" });
   }

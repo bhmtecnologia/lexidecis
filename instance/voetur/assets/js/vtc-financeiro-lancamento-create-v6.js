@@ -241,160 +241,166 @@ export async function renderFinanceiroLancamentoCreatev6() {
       <div id="form-section" class="mt-4 d-none">
         <div class="card" style="border:1px solid var(--border-color);background:var(--white);color:var(--black);">
           <div class="card-body">
-            <form id="lancamentoForm">
-              <div id="wizardIndicator" class="mb-3 text-center"><strong>Etapa 1 de 3</strong></div>
-              <!-- Anexo Link -->
-              <div id="attachmentLink" class="mb-3"></div>
-              <!-- Step 1 -->
-              <div class="wizard-step" data-step="1">
-                <!-- Log de Ações -->
-                <div class="mb-3">
-                  <label for="logField" class="form-label">Log</label>
-                  <textarea class="form-control" id="logField" rows="5" readonly style="font-size:0.85em;"></textarea>
-                </div>
-                <!-- Mesmos campos da v2... -->
-                <!-- Tipo de Documento -->
-                <div class="mb-3">
-                  <label for="tipoDocumento" class="form-label">Tipo de Documento <span style="color:red">*</span></label>
-                  <select class="form-select" id="tipoDocumento" required>
-                    <option value="">Selecione</option>
-                    <option value="Nota Fiscal">Nota Fiscal</option>
-                    <option value="Conta a pagar">Conta a pagar</option>
-                    <option value="Fatura">Fatura</option>
-                    <option value="Boleto">Boleto</option>
-                    <option value="Reembolso">Reembolso</option>
-                    <option value="Outros">Outros</option>
-                  </select>
-                </div>
-                <!-- Filial -->
-                <div class="mb-3">
-                  <div class="d-flex justify-content-between align-items-center">
-                    <label for="filialSelect" class="form-label" data-bs-toggle="tooltip" title="Selecione a filial que contratou o serviço">Filial <span style="color:red">*</span></label>
-                    <div class="form-check form-switch mb-0">
-                      <input class="form-check-input" type="checkbox" id="unlockFilial">
-                      <label class="form-check-label" for="unlockFilial">Manual</label>
+            <div class="row">
+              <div class="col-md-6">
+                <form id="lancamentoForm">
+                  <div id="wizardIndicator" class="mb-3 text-center"><strong>Etapa 1 de 3</strong></div>
+                  <!-- Anexo Link -->
+                  <div id="attachmentLink" class="mb-3"></div>
+                  <!-- Step 1 -->
+                  <div class="wizard-step" data-step="1">
+                    <!-- Log de Ações -->
+                    <div class="mb-3">
+                      <label for="logField" class="form-label">Log</label>
+                      <textarea class="form-control" id="logField" rows="5" readonly style="font-size:0.85em;"></textarea>
                     </div>
-                  </div>
-                  <select class="form-control" id="filialSelect" required><option value="">Selecione</option></select>
-                </div>
-                <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <!-- Centro de Custo -->
-                    <label for="centroCustoSelect" class="form-label" data-bs-toggle="tooltip" title="Selecione o centro de custo correspondente a este lançamento">Centro de Custo <span class="text-danger">*</span></label>
-                    <select class="form-control" id="centroCustoSelect" required><option value="">Selecione</option></select>
-                  </div>
-                  <div class="col-md-6 mb-3">
-                    <!-- Projeto -->
-                    <label for="projetoSelect" class="form-label" data-bs-toggle="tooltip" title="Selecione o projeto associado, se houver">Projeto</label>
-                    <select class="form-control" id="projetoSelect"><option value="">Selecione</option></select>
-                  </div>
-                </div>
-              </div>
-              <div class="d-flex justify-content-between mt-3 step1-nav">
-                <button type="button" id="cancelBtn" class="btn btn-secondary">Cancelar</button>
-                <button type="button" id="wizardNext" class="btn btn-primary">Próximo</button>
-              </div>
-              <!-- Step 2 -->
-              <div class="wizard-step" data-step="2">
-                <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <!-- Fornecedor -->
-                    <div class="d-flex justify-content-between align-items-center">
-                      <label for="fornecedorSelect" class="form-label" data-bs-toggle="tooltip" title="Selecione ou insira o fornecedor registrado no sistema">Fornecedor <span class="text-danger">*</span></label>
-                      <div class="form-check form-switch mb-0">
-                        <input class="form-check-input" type="checkbox" id="unlockFornecedor">
-                        <label class="form-check-label" for="unlockFornecedor">Manual</label>
+                    <!-- Mesmos campos da v2... -->
+                    <!-- Tipo de Documento -->
+                    <div class="mb-3">
+                      <label for="tipoDocumento" class="form-label">Tipo de Documento <span style="color:red">*</span></label>
+                      <select class="form-select" id="tipoDocumento" required>
+                        <option value="">Selecione</option>
+                        <option value="Nota Fiscal">Nota Fiscal</option>
+                        <option value="Conta a pagar">Conta a pagar</option>
+                        <option value="Fatura">Fatura</option>
+                        <option value="Boleto">Boleto</option>
+                        <option value="Reembolso">Reembolso</option>
+                        <option value="Outros">Outros</option>
+                      </select>
+                    </div>
+                    <!-- Filial -->
+                    <div class="mb-3">
+                      <div class="d-flex justify-content-between align-items-center">
+                        <label for="filialSelect" class="form-label" data-bs-toggle="tooltip" title="Selecione a filial que contratou o serviço">Filial <span style="color:red">*</span></label>
+                        <div class="form-check form-switch mb-0">
+                          <input class="form-check-input" type="checkbox" id="unlockFilial">
+                          <label class="form-check-label" for="unlockFilial">Manual</label>
+                        </div>
+                      </div>
+                      <select class="form-control" id="filialSelect" required><option value="">Selecione</option></select>
+                    </div>
+                    <div class="row">
+                      <div class="col-md-6 mb-3">
+                        <!-- Centro de Custo -->
+                        <label for="centroCustoSelect" class="form-label" data-bs-toggle="tooltip" title="Selecione o centro de custo correspondente a este lançamento">Centro de Custo <span class="text-danger">*</span></label>
+                        <select class="form-control" id="centroCustoSelect" required><option value="">Selecione</option></select>
+                      </div>
+                      <div class="col-md-6 mb-3">
+                        <!-- Projeto -->
+                        <label for="projetoSelect" class="form-label" data-bs-toggle="tooltip" title="Selecione o projeto associado, se houver">Projeto</label>
+                        <select class="form-control" id="projetoSelect"><option value="">Selecione</option></select>
                       </div>
                     </div>
-                    <select class="form-control" id="fornecedorSelect" required><option value="">Selecione</option></select>
                   </div>
-                  <div class="col-md-6 mb-3">
-                    <!-- Forma de Pagamento -->
-                    <label for="formaPagamento" class="form-label">Forma de Pagamento <span class="text-danger">*</span></label>
-                    <select class="form-select" id="formaPagamento" required>
-                      <option value="">Selecione</option>
-                      <option value="Boleto">Boleto</option>
-                      <option value="Pix">Pix</option>
-                      <option value="deposito" selected>Depósito</option>
-                    </select>
+                  <div class="d-flex justify-content-between mt-3 step1-nav">
+                    <button type="button" id="cancelBtn" class="btn btn-secondary">Cancelar</button>
+                    <button type="button" id="wizardNext" class="btn btn-primary">Próximo</button>
                   </div>
-                </div>
-                <!-- Número do Documento, Valor Bruto, Data de Emissão, Data de Vencimento -->
-                <div class="row">
-                  <div class="col-md-3 mb-3">
-                    <!-- Número do Documento -->
-                    <div class="d-flex justify-content-between align-items-center">
-                      <label for="numeroDocumento" class="form-label" data-bs-toggle="tooltip" title="Número do documento fiscal ou referência">N° Documento <span class="text-danger">*</span></label>
-                      <div class="form-check form-switch mb-0">
-                        <input class="form-check-input" type="checkbox" id="unlockNumero">
-                        <label class="form-check-label" for="unlockNumero">Manual</label>
+                  <!-- Step 2 -->
+                  <div class="wizard-step" data-step="2">
+                    <div class="row">
+                      <div class="col-md-6 mb-3">
+                        <!-- Fornecedor -->
+                        <div class="d-flex justify-content-between align-items-center">
+                          <label for="fornecedorSelect" class="form-label" data-bs-toggle="tooltip" title="Selecione ou insira o fornecedor registrado no sistema">Fornecedor <span class="text-danger">*</span></label>
+                          <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" id="unlockFornecedor">
+                            <label class="form-check-label" for="unlockFornecedor">Manual</label>
+                          </div>
+                        </div>
+                        <select class="form-control" id="fornecedorSelect" required><option value="">Selecione</option></select>
+                      </div>
+                      <div class="col-md-6 mb-3">
+                        <!-- Forma de Pagamento -->
+                        <label for="formaPagamento" class="form-label">Forma de Pagamento <span class="text-danger">*</span></label>
+                        <select class="form-select" id="formaPagamento" required>
+                          <option value="">Selecione</option>
+                          <option value="Boleto">Boleto</option>
+                          <option value="Pix">Pix</option>
+                          <option value="deposito" selected>Depósito</option>
+                        </select>
                       </div>
                     </div>
-                    <input type="text" class="form-control" id="numeroDocumento" required placeholder="Digite o número do documento">
-                  </div>
-                  <div class="col-md-3 mb-3">
-                    <!-- Valor Bruto -->
-                    <div class="d-flex justify-content-between align-items-center">
-                      <label for="valor" class="form-label" data-bs-toggle="tooltip" title="Valor total bruto do documento">Valor Bruto <span class="text-danger">*</span></label>
-                      <div class="form-check form-switch mb-0">
-                        <input class="form-check-input" type="checkbox" id="unlockValor">
-                        <label class="form-check-label" for="unlockValor">Manual</label>
+                    <!-- Número do Documento, Valor Bruto, Data de Emissão, Data de Vencimento -->
+                    <div class="row">
+                      <div class="col-md-3 mb-3">
+                        <!-- Número do Documento -->
+                        <div class="d-flex justify-content-between align-items-center">
+                          <label for="numeroDocumento" class="form-label" data-bs-toggle="tooltip" title="Número do documento fiscal ou referência">N° Documento <span class="text-danger">*</span></label>
+                          <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" id="unlockNumero">
+                            <label class="form-check-label" for="unlockNumero">Manual</label>
+                          </div>
+                        </div>
+                        <input type="text" class="form-control" id="numeroDocumento" required placeholder="Digite o número do documento">
+                      </div>
+                      <div class="col-md-3 mb-3">
+                        <!-- Valor Bruto -->
+                        <div class="d-flex justify-content-between align-items-center">
+                          <label for="valor" class="form-label" data-bs-toggle="tooltip" title="Valor total bruto do documento">Valor Bruto <span class="text-danger">*</span></label>
+                          <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" id="unlockValor">
+                            <label class="form-check-label" for="unlockValor">Manual</label>
+                          </div>
+                        </div>
+                        <input type="text" class="form-control" id="valor" required placeholder="0,00">
+                      </div>
+                      <div class="col-md-3 mb-3">
+                        <!-- Data de Emissão -->
+                        <div class="d-flex justify-content-between align-items-center">
+                          <label for="dataEmissao" class="form-label" data-bs-toggle="tooltip" title="Data de emissão do documento">Data de Emissão <span class="text-danger">*</span></label>
+                          <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" id="unlockData">
+                            <label class="form-check-label" for="unlockData">Manual</label>
+                          </div>
+                        </div>
+                        <input type="date" class="form-control" id="dataEmissao" required>
+                        <small class="form-text text-muted">Não pode ser superior à data atual.</small>
+                      </div>
+                      <div class="col-md-3 mb-3">
+                        <!-- Data de Vencimento -->
+                        <label for="dataVencimento" class="form-label">Data de Vencimento <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="dataVencimento" required>
                       </div>
                     </div>
-                    <input type="text" class="form-control" id="valor" required placeholder="0,00">
-                  </div>
-                  <div class="col-md-3 mb-3">
-                    <!-- Data de Emissão -->
-                    <div class="d-flex justify-content-between align-items-center">
-                      <label for="dataEmissao" class="form-label" data-bs-toggle="tooltip" title="Data de emissão do documento">Data de Emissão <span class="text-danger">*</span></label>
-                      <div class="form-check form-switch mb-0">
-                        <input class="form-check-input" type="checkbox" id="unlockData">
-                        <label class="form-check-label" for="unlockData">Manual</label>
-                      </div>
+                    <!-- Anexo(s) -->
+                    <div class="mb-3">
+                      <label for="arquivo" class="form-label">Inserir Anexo(s)</label>
+                      <input type="file" class="form-control" id="arquivo" accept="image/*" capture="environment" multiple>
+                      <small class="form-text text-muted">Máx. 3 anexos; 4MB por arquivo. PNG/JPEG.</small>
                     </div>
-                    <input type="date" class="form-control" id="dataEmissao" required>
-                    <small class="form-text text-muted">Não pode ser superior à data atual.</small>
+                    <!-- Justificativa -->
+                    <div class="mb-3">
+                      <label for="justificativa" class="form-label">Justificativa <span style="color:red">*</span></label>
+                      <textarea class="form-control" id="justificativa" rows="3" required placeholder="Justifique o lançamento conforme PR-001."></textarea>
+                    </div>
+                    <div class="d-flex justify-content-between mt-3">
+                      <button type="button" id="wizardPrev" class="btn btn-secondary">Anterior</button>
+                      <button type="button" id="wizardNext" class="btn btn-primary">Próximo</button>
+                    </div>
                   </div>
-                  <div class="col-md-3 mb-3">
-                    <!-- Data de Vencimento -->
-                    <label for="dataVencimento" class="form-label">Data de Vencimento <span class="text-danger">*</span></label>
-                    <input type="date" class="form-control" id="dataVencimento" required>
+                <div id="formError" class="mt-2 text-danger" role="alert"></div>
+                <!-- Step 3: Revisão (read-only) -->
+                <div class="wizard-step" data-step="3">
+                  <h3 class="mb-3">Revisão do Lançamento</h3>
+                  <div id="reviewSection" class="card" style="border:1px solid var(--border-color);background:var(--white);color:var(--black); padding:1rem;">
+                    <!-- Será preenchido via JS -->
+                  </div>
+                  <div class="d-flex justify-content-between mt-3">
+                    <button type="button" id="wizardPrev" class="btn btn-secondary">Anterior</button>
+                    <button type="submit" id="wizardNext" class="btn btn-primary">Finalizar</button>
                   </div>
                 </div>
-                <!-- Anexo(s) -->
-                <div class="mb-3">
-                  <label for="arquivo" class="form-label">Inserir Anexo(s)</label>
-                  <input type="file" class="form-control" id="arquivo" accept="image/*" capture="environment" multiple>
-                  <small class="form-text text-muted">Máx. 3 anexos; 4MB por arquivo. PNG/JPEG.</small>
-                </div>
-                <!-- Justificativa -->
-                <div class="mb-3">
-                  <label for="justificativa" class="form-label">Justificativa <span style="color:red">*</span></label>
-                  <textarea class="form-control" id="justificativa" rows="3" required placeholder="Justifique o lançamento conforme PR-001."></textarea>
-                </div>
-                <div class="d-flex justify-content-between mt-3">
-                  <button type="button" id="wizardPrev" class="btn btn-secondary">Anterior</button>
-                  <button type="button" id="wizardNext" class="btn btn-primary">Próximo</button>
-                </div>
+                </form>
               </div>
-            <div id="formError" class="mt-2 text-danger" role="alert"></div>
-            <!-- Step 3: Revisão (read-only) -->
-            <div class="wizard-step" data-step="3">
-              <h3 class="mb-3">Revisão do Lançamento</h3>
-              <div id="reviewSection" class="card" style="border:1px solid var(--border-color);background:var(--white);color:var(--black); padding:1rem;">
-                <!-- Será preenchido via JS -->
-              </div>
-              <div class="d-flex justify-content-between mt-3">
-                <button type="button" id="wizardPrev" class="btn btn-secondary">Anterior</button>
-                <button type="submit" id="wizardNext" class="btn btn-primary">Finalizar</button>
-              </div>
-            </div>
-            </form>
-            <!-- Preview do Anexo em Card -->
-            <div class="card mt-4" style="border:1px solid var(--border-color);background:var(--white);color:var(--black);">
-              <div class="card-body">
-                <label class="form-label">Preview do Anexo</label>
-                <div id="attachmentPreview" class="mb-3"></div>
+              <div class="col-md-6">
+                <!-- Preview do Anexo -->
+                <div class="card mt-4 mt-md-0" style="border:1px solid var(--border-color);background:var(--white);color:var(--black);">
+                  <div class="card-body">
+                    <label class="form-label">Preview do Anexo</label>
+                    <div id="attachmentPreview" class="mb-3"></div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -918,7 +924,7 @@ export async function renderFinanceiroLancamentoCreatev6() {
           } else {
             valorEl.value = "";
           }
-          // Valor Bruto somente leitura até “Manual” ser ativado
+          // Valor Bruto somente leitura até "Manual" ser ativado
           valorEl.readOnly = true;
           valorEl.disabled = true;
           const unlockValor = document.getElementById("unlockValor");
@@ -1120,7 +1126,7 @@ export async function renderFinanceiroLancamentoCreatev6() {
           } else {
             valorEl.value = "";
           }
-          // Valor Bruto somente leitura até “Manual” ser ativado
+          // Valor Bruto somente leitura até "Manual" ser ativado
           valorEl.readOnly = true;
           valorEl.disabled = true;
           const unlockValor = document.getElementById("unlockValor");
@@ -1416,14 +1422,13 @@ export async function renderFinanceiroLancamentoCreatev6() {
     Promise.all([
       listFiliais(AuthService),
       listCentrosCustos(AuthService),
-      listProjetos(AuthService),
-      listFornecedores(AuthService)
+      listProjetos(AuthService)
+      // Removido: listFornecedores(AuthService)
     ])
-    .then(([filiaisData, centrosData, projetosData, fornecedoresData]) => {
+    .then(([filiaisData, centrosData, projetosData]) => {
       window.filiaisData = filiaisData;
       window.centrosData = centrosData;
       window.projetosData = projetosData;
-      window.fornecedoresData = fornecedoresData;
 
       // Preenche opções do select de Projetos
       const projetoSelectEl = document.getElementById("projetoSelect");
@@ -1494,29 +1499,8 @@ export async function renderFinanceiroLancamentoCreatev6() {
         }
       }
 
-      // Preenche opções do select de Fornecedores
-      const fornecedorSelectEl = document.getElementById("fornecedorSelect");
-      if (fornecedorSelectEl) {
-        // Limpa opções antigas, exceto placeholder
-        fornecedorSelectEl.innerHTML = '<option value="">Selecione</option>';
-        fornecedoresData.forEach(f => {
-          const name = f.nome || f.razaoSocial;
-          const cnpj = f.cnpj;
-          // Descarte registros sem nome e sem CNPJ
-          if (!name && !cnpj) return;
-          const displayName = name;
-          const opt = document.createElement("option");
-          opt.value = f.uuid || '';
-          opt.text = `${displayName} (${cnpj || ''})`;
-          fornecedorSelectEl.add(opt);
-        });
-        // Atualiza Select2, se estiver ativo
-        if (window.$ && $.fn.select2) {
-          $("#fornecedorSelect").trigger("change");
-        }
-      }
-
-      // Preencher selects (mesma lógica da v2)...
+      // Removido: Preenchimento inicial do select de Fornecedores
+      // O select de fornecedores será populado apenas após classificação ou modo manual
 
       // Data de Emissão padrão
       document.getElementById("dataEmissao").value = new Date().toISOString().split("T")[0];
@@ -1576,19 +1560,11 @@ export async function renderFinanceiroLancamentoCreatev6() {
       data_vencimento: document.getElementById("dataVencimento").value,
       // Converte valor total da nota (classification.valor_total_nota) para número pt-BR
       valor_nominal: (() => {
-        const rawVal = classification.valor_total_nota;
-        if (!rawVal) return 0;
-        let numVal;
-        if (rawVal.includes(',') && rawVal.includes('.')) {
-          // formato europeu: "1.234,56"
-          numVal = Number(rawVal.replace(/\./g, '').replace(',', '.'));
-        } else if (rawVal.includes(',')) {
-          // formato vírgula decimal: "1234,56"
-          numVal = Number(rawVal.replace(',', '.'));
-        } else {
-          // ponto decimal ou inteiro: "1234.56" ou "1234"
-          numVal = Number(rawVal);
-        }
+        // Sempre pega o valor do campo do formulário, pois pode ter sido editado manualmente
+        const valorInput = document.getElementById("valor").value;
+        if (!valorInput) return 0;
+        // Remove pontos de milhar e troca vírgula por ponto para converter para número
+        const numVal = Number(valorInput.replace(/\./g, '').replace(',', '.'));
         return numVal;
       })(),
       data_entrada: dataInclusao,

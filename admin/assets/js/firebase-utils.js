@@ -24,33 +24,63 @@ export async function createFirebaseUser(email, password) {
     console.log('[createFirebaseUser] 👤 Admin atual:', currentUserEmail);
     console.log('[createFirebaseUser] 🚀 Criando usuário:', email);
     
-    // Cria o novo usuário
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const newUser = userCredential.user;
+    // ⚠️ PROBLEMA: createUserWithEmailAndPassword automaticamente faz login com o novo usuário
+    // Isso desloga o admin atual. Precisamos de uma solução diferente.
     
-    // Logs detalhados do usuário criado
-    console.log('[createFirebaseUser] 🔥 Usuário Firebase criado!');
-    console.log('[createFirebaseUser] 🆔 UID REAL gerado:', newUser.uid);
-    console.log('[createFirebaseUser] 📧 Email:', newUser.email);
-    console.log('[createFirebaseUser] ✅ Dados completos:', {
-      uid: newUser.uid,
-      email: newUser.email,
-      emailVerified: newUser.emailVerified
+    // ❌ ESTRATÉGIA PROBLEMÁTICA (comentada):
+    // const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    // await signOut(auth); // Isso deixa TODOS deslogados
+    
+    // ✅ NOVA ESTRATÉGIA: Usar Firebase Admin SDK ou API REST
+    // Como não temos Admin SDK no cliente, vamos usar a API REST do Firebase
+    
+    console.log('[createFirebaseUser] 🔧 Usando Firebase REST API para evitar logout...');
+    
+    const apiKey = "AIzaSyD7Gh-UfV-LyueKtlUcY9nny_o-UWmlmJM"; // API key correta do Firebase
+    const url = `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`;
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: email,
+        password: password,
+        returnSecureToken: true
+      })
     });
     
-    // IMPORTANTE: Faz logout do usuário recém-criado
-    await signOut(auth);
-    console.log('[createFirebaseUser] 🔄 Logout do usuário recém-criado');
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error?.message || 'Erro na API Firebase');
+    }
+    
+    // Logs detalhados do usuário criado
+    console.log('[createFirebaseUser] 🔥 Usuário Firebase criado via REST API!');
+    console.log('[createFirebaseUser] 🆔 UID REAL gerado:', data.localId);
+    console.log('[createFirebaseUser] 📧 Email:', data.email);
+    console.log('[createFirebaseUser] ✅ Dados completos:', {
+      uid: data.localId,
+      email: data.email,
+      emailVerified: false // Novo usuário não está verificado
+    });
+    
+    // Verifica se o admin ainda está logado
+    const adminStillLoggedIn = auth.currentUser?.email === currentUserEmail;
+    console.log('[createFirebaseUser] 👤 Admin ainda logado:', adminStillLoggedIn);
     
     const result = {
-      uid: newUser.uid,
-      email: newUser.email,
-      emailVerified: newUser.emailVerified,
+      uid: data.localId, // UID REAL do Firebase
+      email: data.email,
+      emailVerified: false,
       created: true,
-      previousAdmin: currentUserEmail
+      previousAdmin: currentUserEmail,
+      adminStillLoggedIn: adminStillLoggedIn
     };
     
-    console.log('[createFirebaseUser] 🎯 Retornando UID:', result.uid);
+    console.log('[createFirebaseUser] 🎯 Retornando UID REAL:', result.uid);
     return result;
     
   } catch (error) {

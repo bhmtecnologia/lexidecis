@@ -492,25 +492,28 @@ export function initMain(AuthService, API, DOM) {
           
           console.log('[handleCreateUser] 🔗 Vinculando UID REAL do Firebase ao PostgreSQL...');
           console.log('[handleCreateUser] 🆔 UID que será salvo:', firebaseUser.uid);
+          console.log('[handleCreateUser] 👤 Admin ainda logado:', firebaseUser.adminStillLoggedIn);
           
-          // Aguarda alguns segundos para o sistema se estabilizar
-          console.log('[handleCreateUser] ⏱️ Aguardando 2 segundos para estabilizar...');
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          // Como o admin não foi deslogado, podemos salvar diretamente
+          const updatePayload = {
+            id: payload.id,
+            firebase_uid: firebaseUser.uid // UID REAL do Firebase via REST API
+          };
           
-          // Usa a função de retry para tentar salvar o firebase_uid
-          const updateSuccess = await tryUpdateFirebaseUid(payload.id, firebaseUser.uid);
+          console.log('[handleCreateUser] 📦 Fazendo update direto:', updatePayload);
           
-          if (updateSuccess) {
+          try {
+            await API.updateUser(AuthService, updatePayload);
             console.log('[handleCreateUser] ✅ SUCESSO: UID real do Firebase salvo no PostgreSQL!');
             console.log('[handleCreateUser] 🎉 Usuário ID:', payload.id);
             console.log('[handleCreateUser] 🔥 Firebase UID salvo:', firebaseUser.uid);
             console.log('[handleCreateUser] ✅ Processo completo finalizado!');
-          } else {
-            console.warn('[handleCreateUser] ⚠️ Falha ao salvar firebase_uid após múltiplas tentativas');
+          } catch (updateError) {
+            console.warn('[handleCreateUser] ⚠️ Erro ao salvar firebase_uid:', updateError);
             console.warn('[handleCreateUser] 🔥 UID que deveria ser salvo:', firebaseUser.uid);
             console.warn('[handleCreateUser] 📝 Usuário ID:', payload.id);
             
-            // Adiciona o UID à lista pendente para tentar salvar em background
+            // Se falhar, usa o sistema de retry como backup
             addPendingFirebaseUid(payload.id, firebaseUser.uid);
             
             // Mostra mensagem para o usuário sobre o erro
@@ -518,13 +521,13 @@ export function initMain(AuthService, API, DOM) {
               <strong>⚠️ Usuário criado parcialmente!</strong><br>
               - ✅ Usuário criado no PostgreSQL<br>
               - ✅ Usuário criado no Firebase<br>
-              - ❌ Erro ao vincular firebase_uid (após múltiplas tentativas)<br>
-              - 🔄 Tentativas automáticas em background ativas<br>
+              - ❌ Erro ao vincular firebase_uid<br>
+              - 🔄 Sistema tentará salvar automaticamente<br>
               <br>
               <strong>Firebase UID:</strong> <code>${firebaseUser.uid}</code><br>
               <strong>ID do usuário:</strong> <code>${payload.id}</code><br>
               <br>
-              <small>O sistema continuará tentando salvar o UID automaticamente em background.</small>
+              <small>O sistema continuará tentando salvar o UID automaticamente.</small>
             `;
             errorDiv.className = 'alert alert-warning';
             return; // Não fecha o modal para o usuário ver a mensagem

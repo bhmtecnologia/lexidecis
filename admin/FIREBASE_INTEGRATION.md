@@ -220,27 +220,36 @@ firebase_uid: newUser.uid  // <-- UID REAL gerado pelo Firebase
 - `[handleCreateUser] 🆔 UID que será salvo: [uid-real]`
 - `[handleCreateUser] 🔥 Firebase UID salvo: [uid-real]`
 
-## Processamento em Background
+## Solução Definitiva: Firebase REST API
 
-**Problema resolvido**: Admin sendo deslogado durante a criação de usuário.
+**Problema identificado**: `createUserWithEmailAndPassword()` automaticamente faz login com o novo usuário, deslogando o admin.
 
 **Solução implementada**:
-1. ✅ **Retry automático** - Até 3 tentativas imediatas
-2. ✅ **Background processing** - UIDs pendentes são processados a cada 30 segundos
-3. ✅ **Sem re-autenticação** - Evita logout do admin
-4. ✅ **Logs detalhados** - Mostra exatamente onde está falhando
+1. ✅ **Firebase REST API** - Cria usuários sem afetar a sessão atual
+2. ✅ **Admin permanece logado** - Não há logout durante o processo
+3. ✅ **UID real do Firebase** - Obtido via `data.localId` da API REST
+4. ✅ **Salvamento direto** - Sem necessidade de retry complexo
 
-**Funcionalidades**:
-- `tryUpdateFirebaseUid()` - Tenta salvar o UID com retry
-- `addPendingFirebaseUid()` - Adiciona UID à lista pendente
-- `processPendingFirebaseUids()` - Processa UIDs pendentes em background
-- **Limpeza automática** - Remove UIDs muito antigos (10 minutos)
+**Como funciona agora**:
+1. **PostgreSQL** - Cria usuário normalmente
+2. **Firebase REST API** - Cria usuário via `identitytoolkit.googleapis.com`
+3. **Captura UID real** - Obtém `data.localId` (UID real do Firebase)
+4. **Update direto** - Salva firebase_uid no PostgreSQL imediatamente
+5. **Admin continua logado** - Sem interrupção da sessão
 
-**Logs do processamento**:
-- `[tryUpdateFirebaseUid] Tentativa 1/3`
-- `[addPendingFirebaseUid] Adicionado UID pendente`
-- `[processPendingFirebaseUids] Processando UIDs pendentes`
-- `[processPendingFirebaseUids] ✅ UID salvo com sucesso`
+**Vantagens**:
+- ❌ **Elimina logout do admin** - Problema principal resolvido
+- ✅ **UID real do Firebase** - Não é gerado artificialmente
+- ✅ **Processo mais rápido** - Sem esperas desnecessárias
+- ✅ **Mais estável** - Sem problemas de re-autenticação
+- ✅ **Background processing** - Mantido como backup se necessário
+
+**Logs da nova implementação**:
+- `[createFirebaseUser] 🔧 Usando Firebase REST API para evitar logout`
+- `[createFirebaseUser] 🆔 UID REAL gerado: [uid-real]`
+- `[createFirebaseUser] 👤 Admin ainda logado: true`
+- `[handleCreateUser] 📦 Fazendo update direto`
+- `[handleCreateUser] ✅ SUCESSO: UID real do Firebase salvo no PostgreSQL!`
 
 ## Melhorias Futuras
 

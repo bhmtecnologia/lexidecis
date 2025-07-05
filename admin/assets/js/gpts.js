@@ -13,24 +13,58 @@ export function initGPTs(AuthService, API, DOM) {
     // Renderiza o conteúdo principal da aplicação
     function renderContent() {
       const content = document.getElementById('content');
-      content.innerHTML = `
-        <div class="container-fluid">
-          <div class="page-title d-flex justify-content-between align-items-center">
-            <div>
-              <h2>Administração de GPTs - Lexidecis</h2>
-              <p class="mb-0 text-title-gray">Lista de GPTs cadastrados</p>
+      
+      // Se já existe conteúdo na div content (como título e breadcrumbs), apenas adiciona a tabela
+      if (content && content.innerHTML.trim() === '') {
+        // Página sem layout pré-definido - renderiza tudo (compatibilidade com versões antigas)
+        content.innerHTML = `
+          <div class="container-fluid">
+            <div class="page-title d-flex justify-content-between align-items-center">
+              <div>
+                <h2>Administração de GPTs - Lexidecis</h2>
+                <p class="mb-0 text-title-gray">Lista de GPTs cadastrados</p>
+              </div>
+              <div>
+                          <button id="btnNewGpt" class="btn btn-secondary">
+              <i class="bi bi-plus-circle"></i> Novo GPT
+            </button>
+              </div>
             </div>
-            <div>
-              <button id="btnNewGpt" class="btn btn-success">
-                <i class="bi bi-plus-circle"></i> Novo GPT
-              </button>
+            <ol class="breadcrumb mt-2">
+              <li class="breadcrumb-item"><a href="index.html"><i class="bi bi-house-fill"></i></a></li>
+              <li class="breadcrumb-item">Administração</li>
+              <li class="breadcrumb-item active">GPTs Lexidecis</li>
+            </ol>
+            <div id="report-container" class="position-relative">
+              <div class="card">
+                <div class="card-body">
+                  <div class="table-responsive">
+                    <table id="gpt-table" class="display table table-bordered table-striped">
+                      <thead>
+                        <tr>
+                          <th>GPT</th>
+                          <th>Descrição</th>
+                          <th>Categoria</th>
+                          <th>ID</th>
+                          <th>Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+              <div id="report-overlay" class="d-none position-absolute top-0 start-0 w-100 h-100 bg-light bg-opacity-75 d-flex align-items-center justify-content-center" style="z-index: 1000;">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Carregando...</span>
+                </div>
+              </div>
             </div>
           </div>
-          <ol class="breadcrumb mt-2">
-            <li class="breadcrumb-item"><a href="index.html"><i class="bi bi-house-fill"></i></a></li>
-            <li class="breadcrumb-item">Administração</li>
-            <li class="breadcrumb-item active">GPTs Lexidecis</li>
-          </ol>
+        `;
+      } else {
+        // Página com layout pré-definido - apenas adiciona a tabela
+        content.innerHTML = `
           <div id="report-container" class="position-relative">
             <div class="card">
               <div class="card-body">
@@ -56,8 +90,8 @@ export function initGPTs(AuthService, API, DOM) {
               </div>
             </div>
           </div>
-        </div>
-      `;
+        `;
+      }
     }
 
     // Inicializa o DataTable para GPTs
@@ -359,8 +393,8 @@ export function initGPTs(AuthService, API, DOM) {
         renderContent();
         refreshGPTs();
         
-        // Configuração do botão de criação de novo GPT
-        const btnNewGpt = document.getElementById("btnNewGpt");
+        // Configuração do botão de criação de novo GPT (procurar por ambos os IDs possíveis)
+        const btnNewGpt = document.getElementById("btnNewGpt") || document.getElementById("createGptBtn");
         if (btnNewGpt) {
           btnNewGpt.addEventListener("click", async () => {
             try {

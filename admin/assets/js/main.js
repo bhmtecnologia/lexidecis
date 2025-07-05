@@ -40,7 +40,8 @@ export function initMain(AuthService, API, DOM) {
     waitForElementsAndSetupListeners();
 
     function waitForElementsAndSetupListeners() {
-      const btnNewUser = document.getElementById('btnNewUser');
+      // Procurar por ambos os IDs possíveis do botão "Novo Usuário"
+      const btnNewUser = document.getElementById('btnNewUser') || document.getElementById('createUserBtn');
       const btnSubmitCreate = document.getElementById('submitCreateUser');
       const btnSubmitEdit = document.getElementById('submitEditUser');
       const createUserModalElement = document.getElementById('createUserModal');
@@ -48,6 +49,7 @@ export function initMain(AuthService, API, DOM) {
       
       console.log('[waitForElementsAndSetupListeners] Verificando elementos:', {
         btnNewUser: !!btnNewUser,
+        btnNewUserId: btnNewUser ? btnNewUser.id : 'não encontrado',
         btnSubmitCreate: !!btnSubmitCreate,
         btnSubmitEdit: !!btnSubmitEdit,
         createUserModalElement: !!createUserModalElement,
@@ -63,8 +65,8 @@ export function initMain(AuthService, API, DOM) {
 
     // Função para configurar listeners de botões e elementos dinâmicos
     function setupEventListeners() {
-      // Botão Novo Usuário
-      const btnNewUser = document.getElementById('btnNewUser');
+      // Botão Novo Usuário (procurar por ambos os IDs possíveis)
+      const btnNewUser = document.getElementById('btnNewUser') || document.getElementById('createUserBtn');
       if (btnNewUser) {
         btnNewUser.addEventListener('click', async (e) => {
           e.preventDefault();
@@ -121,7 +123,7 @@ export function initMain(AuthService, API, DOM) {
           }
         });
       } else {
-        console.warn('[setupEventListeners] Botão #btnNewUser não encontrado no DOM.');
+        console.warn('[setupEventListeners] Botão Novo Usuário (#btnNewUser ou #createUserBtn) não encontrado no DOM.');
       }
       // Botão submitCreateUser
       const btnSubmitCreate = document.getElementById('submitCreateUser');

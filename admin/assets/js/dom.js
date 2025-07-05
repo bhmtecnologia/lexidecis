@@ -11,28 +11,68 @@ console.log("dom.js carregado");
 
 /**
  * Renderiza o conteúdo principal da aplicação.
- * Injeta o HTML da interface no elemento com id "content".
+ * Injeta apenas a tabela no elemento com id "content", sem sobrescrever o layout existente.
  */
 export function renderContent() {
   const content = document.getElementById('content');
-  content.innerHTML = `
-    <div class="container-fluid">
-      <div class="page-title d-flex justify-content-between align-items-center">
-        <div>
-          <h2>Administração de Usuários - Lexidecis</h2>
-          <p class="mb-0 text-title-gray">Lista de usuários cadastrados</p>
+  
+  // Se já existe conteúdo na div content (como título e breadcrumbs), apenas adiciona a tabela
+  if (content && content.innerHTML.trim() === '') {
+    // Página sem layout pré-definido - renderiza tudo (compatibilidade com versões antigas)
+    content.innerHTML = `
+      <div class="container-fluid">
+        <div class="page-title d-flex justify-content-between align-items-center">
+          <div>
+            <h2>Administração de Usuários - Lexidecis</h2>
+            <p class="mb-0 text-title-gray">Lista de usuários cadastrados</p>
+          </div>
+          <div>
+                       <button id="btnNewUser" class="btn btn-secondary">
+             <i class="bi bi-plus-circle"></i> Novo Usuário
+           </button>
+          </div>
         </div>
-        <div>
-          <button id="btnNewUser" class="btn btn-success">
-            <i class="bi bi-plus-circle"></i> Novo Usuário
-          </button>
+        <ol class="breadcrumb mt-2">
+          <li class="breadcrumb-item"><a href="index.html"><i class="bi bi-house-fill"></i></a></li>
+          <li class="breadcrumb-item">Administração</li>
+          <li class="breadcrumb-item active">Usuários Lexidecis</li>
+        </ol>
+        <div id="protected-section" class="mt-4 d-none">
+          <div id="report-container" class="position-relative">
+            <div class="card">
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table id="data-table" class="display table table-bordered table-striped">
+                    <thead>
+                      <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>ID</th>
+                        <th>É Admin</th>
+                        <th>Company</th>
+                        <th>Unit</th>
+                        <th>Remote JID</th>
+                        <th>Whatsapp</th>
+                        <th>Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <div id="report-overlay" class="d-none position-absolute top-0 start-0 w-100 h-100 bg-light bg-opacity-75 d-flex align-items-center justify-content-center" style="z-index: 1000;">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Carregando...</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <ol class="breadcrumb mt-2">
-        <li class="breadcrumb-item"><a href="index.html"><i class="bi bi-house-fill"></i></a></li>
-        <li class="breadcrumb-item">Administração</li>
-        <li class="breadcrumb-item active">Usuários Lexidecis</li>
-      </ol>
+    `;
+  } else {
+    // Página com layout pré-definido - apenas adiciona a tabela
+    content.innerHTML = `
       <div id="protected-section" class="mt-4 d-none">
         <div id="report-container" class="position-relative">
           <div class="card">
@@ -64,8 +104,8 @@ export function renderContent() {
           </div>
         </div>
       </div>
-    </div>
-  `;
+    `;
+  }
 }
 
 /**

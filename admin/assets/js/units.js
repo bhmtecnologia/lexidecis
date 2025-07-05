@@ -13,24 +13,57 @@ export function initUnits(AuthService, API, DOM) {
   // Renderiza o conteúdo principal da página de unidades
   function renderContent() {
     const content = document.getElementById('content');
-    content.innerHTML = `
-      <div class="container-fluid">
-        <div class="page-title d-flex justify-content-between align-items-center">
-          <div>
-            <h2>Administração de Unidades - Lexidecis</h2>
-            <p class="mb-0 text-title-gray">Lista de unidades cadastradas</p>
-          </div>
-          <div>
-            <button id="btnNewUnit" class="btn btn-success">
+    
+    // Se já existe conteúdo na div content (como título e breadcrumbs), apenas adiciona a tabela
+    if (content && content.innerHTML.trim() === '') {
+      // Página sem layout pré-definido - renderiza tudo (compatibilidade com versões antigas)
+      content.innerHTML = `
+        <div class="container-fluid">
+          <div class="page-title d-flex justify-content-between align-items-center">
+            <div>
+              <h2>Administração de Unidades - Lexidecis</h2>
+              <p class="mb-0 text-title-gray">Lista de unidades cadastradas</p>
+            </div>
+            <div>
+                        <button id="btnNewUnit" class="btn btn-secondary">
               <i class="bi bi-plus-circle"></i> Nova Unidade
             </button>
+            </div>
+          </div>
+          <ol class="breadcrumb mt-2">
+            <li class="breadcrumb-item"><a href="index.html"><i class="bi bi-house-fill"></i></a></li>
+            <li class="breadcrumb-item">Administração</li>
+            <li class="breadcrumb-item active">Unidades Lexidecis</li>
+          </ol>
+          <div id="report-container" class="position-relative">
+            <div class="card">
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table id="data-table" class="display table table-bordered table-striped">
+                    <thead>
+                      <tr>
+                        <th>Unidade</th>
+                        <th>Company</th>
+                        <th>ID</th>
+                        <th>Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <div id="report-overlay" class="d-none position-absolute top-0 start-0 w-100 h-100 bg-light bg-opacity-75 d-flex align-items-center justify-content-center" style="z-index: 1000;">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Carregando...</span>
+              </div>
+            </div>
           </div>
         </div>
-        <ol class="breadcrumb mt-2">
-          <li class="breadcrumb-item"><a href="index.html"><i class="bi bi-house-fill"></i></a></li>
-          <li class="breadcrumb-item">Administração</li>
-          <li class="breadcrumb-item active">Unidades Lexidecis</li>
-        </ol>
+      `;
+    } else {
+      // Página com layout pré-definido - apenas adiciona a tabela
+      content.innerHTML = `
         <div id="report-container" class="position-relative">
           <div class="card">
             <div class="card-body">
@@ -55,8 +88,8 @@ export function initUnits(AuthService, API, DOM) {
             </div>
           </div>
         </div>
-      </div>
-    `;
+      `;
+    }
   }
 
   // Chama renderContent no início
@@ -262,8 +295,8 @@ export function initUnits(AuthService, API, DOM) {
   document.getElementById('submitEditUnit').addEventListener('click', handleEditUnit);
 
   // Configura o evento do botão para abrir o modal de criação de nova unit
-  const btnNewUnit = document.getElementById('btnNewUnit');
-  if (btnNewUnit) {
+      const btnNewUnit = document.getElementById('btnNewUnit') || document.getElementById('createUnitBtn');
+    if (btnNewUnit) {
     btnNewUnit.addEventListener('click', async () => {
       try {
         // Primeiro, injeta/atualiza formulário dentro do modal

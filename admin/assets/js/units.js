@@ -10,11 +10,68 @@
 export function initUnits(AuthService, API, DOM) {
   let unitsData = {};
 
+  // Renderiza o conteúdo principal da página de unidades
+  function renderContent() {
+    const content = document.getElementById('content');
+    content.innerHTML = `
+      <div class="container-fluid">
+        <div class="page-title d-flex justify-content-between align-items-center">
+          <div>
+            <h2>Administração de Unidades - Lexidecis</h2>
+            <p class="mb-0 text-title-gray">Lista de unidades cadastradas</p>
+          </div>
+          <div>
+            <button id="btnNewUnit" class="btn btn-success">
+              <i class="bi bi-plus-circle"></i> Nova Unidade
+            </button>
+          </div>
+        </div>
+        <ol class="breadcrumb mt-2">
+          <li class="breadcrumb-item"><a href="index.html"><i class="bi bi-house-fill"></i></a></li>
+          <li class="breadcrumb-item">Administração</li>
+          <li class="breadcrumb-item active">Unidades Lexidecis</li>
+        </ol>
+        <div id="report-container" class="position-relative">
+          <div class="card">
+            <div class="card-body">
+              <div class="table-responsive">
+                <table id="data-table" class="display table table-bordered table-striped">
+                  <thead>
+                    <tr>
+                      <th>Unidade</th>
+                      <th>Company</th>
+                      <th>ID</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div id="report-overlay" class="d-none position-absolute top-0 start-0 w-100 h-100 bg-light bg-opacity-75 d-flex align-items-center justify-content-center" style="z-index: 1000;">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Carregando...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Chama renderContent no início
+  renderContent();
+
   // Inicializa o DataTable e associa o evento de expansão
   function initializeTable() {
     const dt = $("#data-table").DataTable({
       responsive: true,
-      order: [[0, "asc"]]
+      autoWidth: false,
+      ordering: true,
+      paging: true,
+      dom: 'lBfrtip',
+      buttons: ['copy', 'excel', 'csv', 'pdf'],
+      language: { url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json" }
     });
   }
 
@@ -65,20 +122,20 @@ export function initUnits(AuthService, API, DOM) {
         const all = await API.getGPTs(AuthService, 'all');
         const available = all.filter(a => !assigned.some(u => u.id === a.id));
         let html = `
-          <div class="d-flex align-items-stretch">
-            <div class="me-3 flex-fill d-flex flex-column">
+          <div class="gpts-flex-row">
+            <div class="gpts-flex-col">
               <label>Selecionados:</label>
-              <select id="assignedGPTs" class="form-select flex-grow-1" multiple>
+              <select id="assignedGPTs" class="form-select flex-grow-1" multiple size="6">
                 ${assigned.map(g => `<option value="${g.id}">${g.name}</option>`).join('')}
               </select>
             </div>
-            <div class="d-flex flex-column justify-content-center">
-              <button id="btnAdd" class="btn btn-sm btn-primary mb-2">&gt;&gt;</button>
+            <div class="gpts-flex-center">
+              <button id="btnAdd" class="btn btn-sm btn-primary mb-2">&gt;&gt;</button><br>
               <button id="btnRemove" class="btn btn-sm btn-secondary">&lt;&lt;</button>
             </div>
-            <div class="ms-3 flex-fill d-flex flex-column">
+            <div class="gpts-flex-col">
               <label>Disponíveis:</label>
-              <select id="availableGPTs" class="form-select flex-grow-1" multiple>
+              <select id="availableGPTs" class="form-select flex-grow-1" multiple size="6">
                 ${available.map(g => `<option value="${g.id}">${g.name}</option>`).join('')}
               </select>
             </div>
@@ -87,7 +144,7 @@ export function initUnits(AuthService, API, DOM) {
             <button id="btnSaveGPTs" class="btn btn-sm btn-success">Salvar</button>
           </div>
         `;
-        row.child(html).show();
+        row.child(`<td colspan="4">${html}</td>`).show();
         // Move items from available to assigned
         $("#btnRemove").on("click", () => {
           $("#availableGPTs option:selected").appendTo("#assignedGPTs");
@@ -202,14 +259,57 @@ export function initUnits(AuthService, API, DOM) {
 
   // Função global para remover uma unit após confirmação
   window.removeUnit = async function(unitId) {
-    if (!confirm("Tem certeza que deseja remover esta unidade?")) return;
-    try {
-      await API.deleteUnit(AuthService, unitId);
-      refreshUnits();
-    } catch (error) {
-      alert("Erro ao remover unidade: " + error.message);
-    }
+    showConfirmModal({
+      title: 'Remover Unidade',
+      message: 'Tem certeza que deseja remover esta unidade?',
+      onConfirm: async () => {
+        try {
+          await API.deleteUnit(AuthService, unitId);
+          refreshUnits();
+        } catch (error) {
+          alert("Erro ao remover unidade: " + error.message);
+        }
+      }
+    });
   };
+
+  // Função utilitária para exibir modal de confirmação (reutilizável)
+  function showConfirmModal({ title, message, onConfirm }) {
+    let modal = document.getElementById('confirmModal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'confirmModal';
+      modal.innerHTML = `
+        <div class="modal fade" tabindex="-1">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+              </div>
+              <div class="modal-body">
+                <p></p>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmBtn">Remover</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+    const modalEl = modal.querySelector('.modal');
+    modal.querySelector('.modal-title').textContent = title;
+    modal.querySelector('.modal-body p').textContent = message;
+    const bsModal = new bootstrap.Modal(modalEl);
+    modal.querySelector('#confirmBtn').onclick = () => {
+      bsModal.hide();
+      onConfirm();
+    };
+    bsModal.show();
+  }
 
   // Função para buscar e exibir as configurações de um GPT
   async function viewGPTConfig(gptId) {
@@ -250,7 +350,8 @@ export function initUnits(AuthService, API, DOM) {
 
   AuthService.onAuthChange((user) => {
     if (user) {
-      document.getElementById('protected-section').classList.remove('d-none');
+      const section = document.getElementById('protected-section');
+      if (section) section.classList.remove('d-none');
       refreshUnits();
     } else {
       window.location.href = "login.html?redirect=" + encodeURIComponent(window.location.href);
@@ -258,17 +359,48 @@ export function initUnits(AuthService, API, DOM) {
   });
 
   const themeToggle = document.getElementById('themeToggle');
-  themeToggle.addEventListener('click', function() {
-    document.body.classList.toggle('dark-mode');
-    themeToggle.textContent = document.body.classList.contains('dark-mode') ? 'Modo Claro' : 'Modo Escuro';
-    localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
-  });
+  if (themeToggle) {
+    themeToggle.addEventListener('click', function() {
+      document.body.classList.toggle('dark-mode');
+      themeToggle.textContent = document.body.classList.contains('dark-mode') ? 'Modo Claro' : 'Modo Escuro';
+      localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+    });
+  }
 
   window.addEventListener('DOMContentLoaded', function() {
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark') {
       document.body.classList.add('dark-mode');
-      themeToggle.textContent = 'Modo Claro';
+      if (themeToggle) themeToggle.textContent = 'Modo Claro';
     }
   });
+
+  // Ajuste no CSS:
+  const style = document.createElement('style');
+  style.textContent = `
+.gpts-flex-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 1.2rem;
+  min-width: 600px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.gpts-flex-row select {
+  min-width: 180px;
+  width: 100%;
+  min-height: 120px;
+  box-sizing: border-box;
+}
+.gpts-flex-center {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  height: 100%;
+}
+`;
+  document.head.appendChild(style);
 }

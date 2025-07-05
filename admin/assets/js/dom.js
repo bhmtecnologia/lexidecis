@@ -160,14 +160,16 @@ export function updateUserTable(users, usersDataObj) {
  * Exibe o overlay de carregamento.
  */
 export function showOverlay() {
-  document.getElementById('report-overlay').classList.remove('d-none');
+  const overlay = document.getElementById('report-overlay');
+  if (overlay) overlay.classList.remove('d-none');
 }
 
 /**
  * Oculta o overlay de carregamento.
  */
 export function hideOverlay() {
-  document.getElementById('report-overlay').classList.add('d-none');
+  const overlay = document.getElementById('report-overlay');
+  if (overlay) overlay.classList.add('d-none');
 }
 
 /**

@@ -196,10 +196,14 @@
   <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
   <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
   <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+  <script type="module" src="assets/js/auth-guard.js"></script>
+  <script src="assets/js/dom.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/gpts.js"></script>
   
   <!-- Inicialização da aplicação via módulos -->
   <script type="module">
-    import AuthService from "./auth.js";
+    import AuthService from "./assets/js/auth.js";
     import * as API from "./api.js";
     import * as DOM from "./dom.js";
     import { initGPTs } from "./gpts.js";

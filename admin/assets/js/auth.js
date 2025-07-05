@@ -25,6 +25,9 @@ const AuthService = {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       this.user = userCredential.user;
+      // Salva o token no localStorage
+      const token = await userCredential.user.getIdToken();
+      localStorage.setItem('authToken', token);
       this.saveUserSession(this.user);
       this.notifyObservers(this.user);
       return { success: true, user: this.user };
@@ -38,6 +41,7 @@ const AuthService = {
     try {
       await signOut(auth);
       this.user = null;
+      localStorage.removeItem('authToken');
       this.notifyObservers(null);
       return { success: true };
     } catch (error) {

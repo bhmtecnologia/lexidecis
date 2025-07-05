@@ -14,7 +14,12 @@ export function initGPTs(AuthService, API, DOM) {
     function initializeTable() {
       $("#gpt-table").DataTable({
         responsive: true,
-        order: [[0, "asc"]]
+        autoWidth: false,
+        ordering: true,
+        paging: true,
+        dom: 'lBfrtip',
+        buttons: ['copy', 'excel', 'csv', 'pdf'],
+        language: { url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json" }
       });
     }
   
@@ -140,15 +145,57 @@ export function initGPTs(AuthService, API, DOM) {
     };
   
     window.removeGpt = async function(gptId) {
-      if (!confirm("Tem certeza que deseja remover este GPT?")) return;
-      try {
-        // Supondo que exista API.deleteGPT seguindo o padrão
-        await API.deleteGPT(AuthService, gptId);
-        refreshGPTs();
-      } catch (error) {
-        alert("Erro ao remover GPT: " + error.message);
-      }
+      showConfirmModal({
+        title: 'Remover GPT',
+        message: 'Tem certeza que deseja remover este GPT?',
+        onConfirm: async () => {
+          try {
+            await API.deleteGPT(AuthService, gptId);
+            refreshGPTs();
+          } catch (error) {
+            alert("Erro ao remover GPT: " + error.message);
+          }
+        }
+      });
     };
+  
+    // Função utilitária para exibir modal de confirmação (reutilizável)
+    function showConfirmModal({ title, message, onConfirm }) {
+      let modal = document.getElementById('confirmModal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'confirmModal';
+        modal.innerHTML = `
+          <div class="modal fade" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title"></h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                  <p></p>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                  <button type="button" class="btn btn-danger" id="confirmBtn">Remover</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+      }
+      const modalEl = modal.querySelector('.modal');
+      modal.querySelector('.modal-title').textContent = title;
+      modal.querySelector('.modal-body p').textContent = message;
+      const bsModal = new bootstrap.Modal(modalEl);
+      modal.querySelector('#confirmBtn').onclick = () => {
+        bsModal.hide();
+        onConfirm();
+      };
+      bsModal.show();
+    }
   
     window.viewGptConfig = viewGptConfig;
   

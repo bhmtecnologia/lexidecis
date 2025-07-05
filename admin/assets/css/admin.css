@@ -1,0 +1,295 @@
+/* Estilos principais do painel administrativo LexiDecis */
+:root {
+  --primary: #228B22;
+  --primary-dark: #155a10;
+  --bg: #f4f6f8;
+  --white: #fff;
+  --gray: #e0e0e0;
+  --footer-bg: #e9ecef;
+  --text: #555;
+}
+html {
+  box-sizing: border-box;
+}
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+body {
+  font-family: 'Montserrat', Arial, sans-serif;
+  background: var(--bg);
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+header {
+  background: var(--primary);
+  color: var(--white);
+  padding: 2rem 0 1rem 0;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+header h1 {
+  margin: 0;
+  font-size: 2.2rem;
+  letter-spacing: 1px;
+}
+header p {
+  margin: 0.5rem 0 0 0;
+  font-size: 1.1rem;
+  font-weight: 400;
+}
+main {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+nav {
+  margin: 2.5rem 0 0 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+button, .btn, input[type="submit"], input[type="button"] {
+  cursor: pointer;
+  border-radius: 6px;
+  border: none;
+  outline: none;
+  transition: box-shadow 0.2s, background 0.2s, color 0.2s;
+  box-shadow: 0 1px 4px #0001;
+}
+button:focus, .btn:focus, input[type="submit"]:focus, input[type="button"]:focus, a:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(34,139,34,0.18);
+}
+
+input, select, textarea {
+  border-radius: 6px;
+  border: 1px solid var(--gray);
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(34,139,34,0.12);
+}
+
+.admin-link {
+  background: var(--white);
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(34,139,34,0.08);
+  padding: 2rem 3rem;
+  text-align: center;
+  text-decoration: none;
+  color: var(--primary);
+  font-size: 1.3rem;
+  font-weight: 700;
+  transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s, color 0.2s;
+  width: 320px;
+  border: 2px solid var(--gray);
+  outline: none;
+  display: block;
+  min-width: 180px;
+}
+.admin-link:focus {
+  border-color: var(--primary);
+  color: var(--primary-dark);
+  box-shadow: 0 0 0 3px rgba(34,139,34,0.15);
+}
+.admin-link:hover {
+  box-shadow: 0 4px 16px rgba(34,139,34,0.15);
+  transform: translateY(-2px) scale(1.03);
+  border-color: var(--primary);
+  color: var(--primary-dark);
+}
+footer {
+  margin-top: auto;
+  background: var(--footer-bg);
+  color: var(--text);
+  text-align: center;
+  padding: 1.2rem 0 0.7rem 0;
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+}
+
+/* Contraste para modo escuro */
+body.dark-mode {
+  background: #181818;
+  color: #f4f4f4;
+}
+body.dark-mode header, body.dark-mode footer {
+  background: #222;
+  color: #f4f4f4;
+}
+body.dark-mode .admin-link {
+  background: #232323;
+  color: #b6fcb6;
+  border-color: #333;
+}
+body.dark-mode .admin-link:focus, body.dark-mode .admin-link:hover {
+  color: #fff;
+  border-color: #1ed760;
+}
+
+/* --- Identidade visual moderna para users.html --- */
+
+/* Título e breadcrumb */
+.page-title {
+  margin-top: 2.2rem;
+  margin-bottom: 1.2rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1.5px solid #e0e0e0;
+}
+.page-title h2 {
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-weight: 700;
+  color: #228B22;
+  font-size: 2rem;
+  margin-bottom: 0.2rem;
+}
+.text-title-gray {
+  color: #6c757d;
+  font-size: 1.08rem;
+}
+.breadcrumb {
+  background: none;
+  padding: 0;
+  margin-bottom: 0.5rem;
+}
+.breadcrumb-item.active {
+  color: #228B22;
+  font-weight: 600;
+}
+.breadcrumb-item a {
+  color: #228B22;
+  text-decoration: none;
+}
+
+/* Card visual */
+.card {
+  border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(34,139,34,0.07);
+  border: 1.5px solid #e0e0e0;
+  background: #fff;
+}
+.card-body {
+  padding: 2rem 1.5rem 1.5rem 1.5rem;
+}
+
+/* Botão Novo Usuário */
+#btnNewUser {
+  background: linear-gradient(90deg, #228B22 60%, #39d353 120%);
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(34,139,34,0.10);
+  transition: background 0.18s, box-shadow 0.18s, color 0.18s;
+}
+#btnNewUser:hover {
+  background: linear-gradient(90deg, #39d353 60%, #228B22 120%);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(34,139,34,0.18);
+}
+
+/* Botões de ação na tabela */
+.btn-group .btn-primary {
+  background: #228B22;
+  border: none;
+  font-weight: 500;
+  border-radius: 6px 0 0 6px;
+}
+.btn-group .btn-danger {
+  background: #e74c3c;
+  border: none;
+  font-weight: 500;
+  border-radius: 0 6px 6px 0;
+}
+.btn-group .btn-primary:hover {
+  background: #39d353;
+}
+.btn-group .btn-danger:hover {
+  background: #c0392b;
+}
+
+/* Tabela moderna */
+#data-table {
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 1.04rem;
+}
+#data-table thead {
+  background: linear-gradient(90deg, #228B22 60%, #39d353 120%);
+  color: #fff;
+}
+#data-table th, #data-table td {
+  border: none;
+  padding: 0.75rem 0.7rem;
+}
+#data-table tbody tr {
+  transition: background 0.15s;
+}
+#data-table tbody tr:hover {
+  background: #eafbe6;
+}
+
+/* Modal visual */
+.modal-content {
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(34,139,34,0.13);
+  border: 1.5px solid #e0e0e0;
+}
+.modal-header {
+  border-radius: 16px 16px 0 0;
+}
+.modal-footer {
+  border-radius: 0 0 16px 16px;
+}
+
+/* Overlay de carregamento */
+#report-overlay .spinner-border {
+  width: 3rem;
+  height: 3rem;
+  color: #228B22;
+}
+
+/* Responsividade extra */
+@media (max-width: 700px) {
+  .card-body {
+    padding: 1rem 0.5rem 1rem 0.5rem;
+  }
+  .page-title h2 {
+    font-size: 1.3rem;
+  }
+  #btnNewUser {
+    font-size: 0.98rem;
+    padding: 0.5rem 0.7rem;
+  }
+}
+
+@media (max-width: 500px) {
+  .admin-link {
+    width: 90vw;
+    padding: 1.2rem 0.5rem;
+    font-size: 1.1rem;
+  }
+  nav {
+    gap: 1.2rem;
+  }
+  header h1 {
+    font-size: 1.3rem;
+  }
+  header img {
+    width: 28px !important;
+    height: 28px !important;
+  }
+} 

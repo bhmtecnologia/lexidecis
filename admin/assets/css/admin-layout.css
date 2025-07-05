@@ -269,34 +269,34 @@ body {
   transition: transform 0.3s ease;
 }
 .admin-sidebar.collapsed {
-  width: var(--sidebar-collapsed-width);
+  width: var(--sidebar-collapsed-width) !important;
 }
 .admin-sidebar.collapsed .admin-sidebar-link span {
-  display: none;
+  display: none !important;
 }
 .admin-sidebar.collapsed .admin-sidebar-footer {
-  display: none;
+  display: none !important;
 }
 .admin-sidebar.collapsed .sidebar-brand-text {
-  display: none;
+  display: none !important;
 }
 .admin-sidebar.collapsed .sidebar-collapse-btn i {
-  transform: rotate(180deg);
+  transform: rotate(180deg) !important;
 }
 .admin-sidebar.collapsed .sidebar-header {
-  padding: 1rem 0.75rem;
-  justify-content: center;
-  position: relative;
+  padding: 1rem 0.75rem !important;
+  justify-content: center !important;
+  position: relative !important;
 }
 .admin-sidebar.collapsed .sidebar-brand {
-  justify-content: center;
+  justify-content: center !important;
 }
 .admin-sidebar.collapsed .sidebar-collapse-btn {
-  position: absolute;
-  top: 50%;
-  right: 0.5rem;
-  transform: translateY(-50%);
-  z-index: 2;
+  position: absolute !important;
+  top: 50% !important;
+  right: 0.5rem !important;
+  transform: translateY(-50%) !important;
+  z-index: 2 !important;
 }
 
 .admin-sidebar.collapsed .sidebar-footer-content {

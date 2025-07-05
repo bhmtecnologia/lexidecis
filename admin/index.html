@@ -462,8 +462,69 @@
           box-shadow: 0 2px 16px rgba(107, 114, 128, 0.07);
           border: 1.5px solid var(--gray);
         }
+        
+        /* Teste do botão collapse */
+        .sidebar-collapse-btn {
+          background: rgba(255, 255, 255, 0.1) !important;
+          border: 1px solid rgba(255, 255, 255, 0.2) !important;
+          cursor: pointer !important;
+        }
+        
+        .sidebar-collapse-btn:hover {
+          background: rgba(255, 255, 255, 0.2) !important;
+        }
+        
+        /* Teste visual do collapsed */
+        .admin-sidebar.collapsed {
+          background: linear-gradient(135deg, #dc2626 60%, #991b1b 120%) !important;
+        }
       `;
       document.head.appendChild(style);
+
+      // Configurar botão de collapse IMEDIATAMENTE (backup)
+      function setupSidebarCollapse() {
+        const sidebar = document.getElementById('sidebar');
+        const sidebarCollapseBtn = document.getElementById('sidebarCollapseBtn');
+        
+        if (sidebarCollapseBtn && sidebar) {
+          console.log('✅ Configurando collapse da sidebar (backup)');
+          
+          // Remover listeners anteriores
+          sidebarCollapseBtn.removeEventListener('click', handleSidebarCollapse);
+          
+          function handleSidebarCollapse(e) {
+            console.log('🔄 Collapse clicado (backup)');
+            e.preventDefault();
+            e.stopPropagation();
+            
+            sidebar.classList.toggle('collapsed');
+            
+            const isCollapsed = sidebar.classList.contains('collapsed');
+            localStorage.setItem('sidebarCollapsed', isCollapsed);
+            
+            const tooltip = isCollapsed ? 'Expandir sidebar' : 'Recolher sidebar';
+            sidebarCollapseBtn.setAttribute('title', tooltip);
+            
+            console.log('🎯 Sidebar collapsed state:', isCollapsed);
+          }
+          
+          sidebarCollapseBtn.addEventListener('click', handleSidebarCollapse);
+        } else {
+          console.log('❌ Elementos collapse não encontrados (backup):', {
+            sidebar: !!sidebar,
+            sidebarCollapseBtn: !!sidebarCollapseBtn
+          });
+        }
+      }
+
+      // Tentar configurar imediatamente e após um delay
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupSidebarCollapse);
+      } else {
+        setupSidebarCollapse();
+      }
+      setTimeout(setupSidebarCollapse, 100);
+      setTimeout(setupSidebarCollapse, 500);
 
       // Aguardar autenticação e carregar métricas
       document.addEventListener('DOMContentLoaded', () => {
@@ -495,11 +556,13 @@
               logoutBtn.addEventListener('click', handleLogout);
             }
 
-            // Configurar sidebar toggle (mobile)
+            // Elementos da sidebar - declarar fora dos blocos condicionais
             const sidebarToggle = document.getElementById('sidebarToggle');
             const sidebar = document.getElementById('sidebar');
             const sidebarBackdrop = document.getElementById('sidebarBackdrop');
-            
+            const sidebarCollapseBtn = document.getElementById('sidebarCollapseBtn');
+
+            // Configurar sidebar toggle (mobile)
             if (sidebarToggle && sidebar && sidebarBackdrop) {
               sidebarToggle.addEventListener('click', () => {
                 const isOpen = sidebar.classList.contains('open');
@@ -535,9 +598,14 @@
             }
 
             // Configurar sidebar collapse (desktop)
-            const sidebarCollapseBtn = document.getElementById('sidebarCollapseBtn');
             if (sidebarCollapseBtn && sidebar) {
-              sidebarCollapseBtn.addEventListener('click', () => {
+              console.log('Configurando botão de collapse da sidebar'); // Debug
+              
+              sidebarCollapseBtn.addEventListener('click', (e) => {
+                console.log('Botão de collapse clicado'); // Debug
+                e.preventDefault();
+                e.stopPropagation();
+                
                 sidebar.classList.toggle('collapsed');
                 
                 // Salvar estado no localStorage
@@ -547,6 +615,8 @@
                 // Atualizar tooltip
                 const tooltip = isCollapsed ? 'Expandir sidebar' : 'Recolher sidebar';
                 sidebarCollapseBtn.setAttribute('title', tooltip);
+                
+                console.log('Sidebar collapsed:', isCollapsed); // Debug
               });
 
               // Restaurar estado salvo
@@ -554,7 +624,13 @@
               if (savedCollapsed === 'true') {
                 sidebar.classList.add('collapsed');
                 sidebarCollapseBtn.setAttribute('title', 'Expandir sidebar');
+                console.log('Estado collapsed restaurado do localStorage'); // Debug
               }
+            } else {
+              console.log('Elementos não encontrados:', { 
+                sidebarCollapseBtn: !!sidebarCollapseBtn, 
+                sidebar: !!sidebar 
+              }); // Debug
             }
           } else {
             // Redirecionar para login se não autenticado

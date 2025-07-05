@@ -18,6 +18,9 @@
     <button class="sidebar-toggle" id="sidebarToggle">
       <i class="bi bi-list"></i>
     </button>
+    <button class="sidebar-collapse-toggle" id="sidebarCollapseToggle">
+      <i class="bi bi-layout-sidebar-inset"></i>
+    </button>
     <div class="admin-topbar-logo">
       <i class="bi bi-shield-check-fill"></i>
       LexiDecis
@@ -47,15 +50,6 @@
 
   <!-- Sidebar -->
   <div class="admin-sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <div class="sidebar-brand">
-        <i class="bi bi-shield-check-fill"></i>
-        <span class="sidebar-brand-text">LexiDecis</span>
-      </div>
-      <button class="sidebar-collapse-btn" id="sidebarCollapseBtn" title="Recolher sidebar">
-        <i class="bi bi-chevron-double-left"></i>
-      </button>
-    </div>
     <nav class="admin-sidebar-nav">
       <ul>
         <li><a href="index.html" class="admin-sidebar-link active">
@@ -463,34 +457,18 @@
           border: 1.5px solid var(--gray);
         }
         
-        /* Forçar visibilidade do botão collapse */
-        .sidebar-collapse-btn {
-          background: rgba(255, 255, 255, 0.2) !important;
-          border: 2px solid rgba(255, 255, 255, 0.4) !important;
-          cursor: pointer !important;
-          color: white !important;
-          font-size: 1.3rem !important;
+        /* Garantir visibilidade do botão collapse no topbar */
+        .sidebar-collapse-toggle {
+          background: rgba(107, 114, 128, 0.1) !important;
+          border: 1px solid rgba(107, 114, 128, 0.2) !important;
+          color: var(--primary) !important;
+          display: flex !important;
           opacity: 1 !important;
-          display: flex !important;
-          visibility: visible !important;
-          position: relative !important;
-          z-index: 999 !important;
         }
         
-        .sidebar-collapse-btn:hover {
-          background: rgba(255, 255, 255, 0.3) !important;
-          transform: scale(1.1) !important;
-        }
-        
-        /* Garantir que o header da sidebar seja visível */
-        .sidebar-header {
-          background: rgba(0, 0, 0, 0.2) !important;
-          border-bottom: 2px solid rgba(255, 255, 255, 0.1) !important;
-          position: relative !important;
-          z-index: 5 !important;
-          display: flex !important;
-          justify-content: space-between !important;
-          align-items: center !important;
+        .sidebar-collapse-toggle:hover {
+          background: var(--accent-pastel-light) !important;
+          transform: scale(1.05) !important;
         }
         
         /* Teste visual do collapsed */
@@ -503,47 +481,16 @@
       // Configurar botão de collapse IMEDIATAMENTE (backup)
       function setupSidebarCollapse() {
         const sidebar = document.getElementById('sidebar');
-        let sidebarCollapseBtn = document.getElementById('sidebarCollapseBtn');
+        const sidebarCollapseToggle = document.getElementById('sidebarCollapseToggle');
         
-        // Se o botão não existir, criar dinamicamente
-        if (!sidebarCollapseBtn && sidebar) {
-          console.log('🔧 Criando botão de collapse dinamicamente');
-          
-          const sidebarHeader = sidebar.querySelector('.sidebar-header');
-          if (sidebarHeader) {
-            sidebarCollapseBtn = document.createElement('button');
-            sidebarCollapseBtn.id = 'sidebarCollapseBtn';
-            sidebarCollapseBtn.className = 'sidebar-collapse-btn';
-            sidebarCollapseBtn.title = 'Recolher sidebar';
-            sidebarCollapseBtn.innerHTML = '<i class="bi bi-chevron-double-left"></i>';
-            sidebarCollapseBtn.style.cssText = `
-              background: rgba(255, 255, 255, 0.2) !important;
-              border: 2px solid rgba(255, 255, 255, 0.4) !important;
-              color: white !important;
-              cursor: pointer !important;
-              padding: 0.5rem !important;
-              border-radius: 6px !important;
-              min-width: 32px !important;
-              height: 32px !important;
-              display: flex !important;
-              align-items: center !important;
-              justify-content: center !important;
-              position: relative !important;
-              z-index: 999 !important;
-            `;
-            sidebarHeader.appendChild(sidebarCollapseBtn);
-            console.log('✅ Botão criado dinamicamente');
-          }
-        }
-        
-        if (sidebarCollapseBtn && sidebar) {
-          console.log('✅ Configurando collapse da sidebar (backup)');
+        if (sidebarCollapseToggle && sidebar) {
+          console.log('✅ Configurando collapse da sidebar (topbar - backup)');
           
           // Remover listeners anteriores
-          sidebarCollapseBtn.removeEventListener('click', handleSidebarCollapse);
+          sidebarCollapseToggle.removeEventListener('click', handleSidebarCollapse);
           
           function handleSidebarCollapse(e) {
-            console.log('🔄 Collapse clicado (backup)');
+            console.log('🔄 Collapse clicado (topbar - backup)');
             e.preventDefault();
             e.stopPropagation();
             
@@ -553,16 +500,16 @@
             localStorage.setItem('sidebarCollapsed', isCollapsed);
             
             const tooltip = isCollapsed ? 'Expandir sidebar' : 'Recolher sidebar';
-            sidebarCollapseBtn.setAttribute('title', tooltip);
+            sidebarCollapseToggle.setAttribute('title', tooltip);
             
             console.log('🎯 Sidebar collapsed state:', isCollapsed);
           }
           
-          sidebarCollapseBtn.addEventListener('click', handleSidebarCollapse);
+          sidebarCollapseToggle.addEventListener('click', handleSidebarCollapse);
         } else {
           console.log('❌ Elementos collapse não encontrados (backup):', {
             sidebar: !!sidebar,
-            sidebarCollapseBtn: !!sidebarCollapseBtn
+            sidebarCollapseToggle: !!sidebarCollapseToggle
           });
         }
       }
@@ -610,7 +557,7 @@
             const sidebarToggle = document.getElementById('sidebarToggle');
             const sidebar = document.getElementById('sidebar');
             const sidebarBackdrop = document.getElementById('sidebarBackdrop');
-            const sidebarCollapseBtn = document.getElementById('sidebarCollapseBtn');
+            const sidebarCollapseToggle = document.getElementById('sidebarCollapseToggle');
 
             // Configurar sidebar toggle (mobile)
             if (sidebarToggle && sidebar && sidebarBackdrop) {
@@ -647,12 +594,12 @@
               });
             }
 
-            // Configurar sidebar collapse (desktop)
-            if (sidebarCollapseBtn && sidebar) {
-              console.log('Configurando botão de collapse da sidebar'); // Debug
+            // Configurar sidebar collapse (desktop) - botão no topbar
+            if (sidebarCollapseToggle && sidebar) {
+              console.log('Configurando botão de collapse da sidebar (topbar)'); // Debug
               
-              sidebarCollapseBtn.addEventListener('click', (e) => {
-                console.log('Botão de collapse clicado'); // Debug
+              sidebarCollapseToggle.addEventListener('click', (e) => {
+                console.log('Botão de collapse clicado (topbar)'); // Debug
                 e.preventDefault();
                 e.stopPropagation();
                 
@@ -664,7 +611,7 @@
                 
                 // Atualizar tooltip
                 const tooltip = isCollapsed ? 'Expandir sidebar' : 'Recolher sidebar';
-                sidebarCollapseBtn.setAttribute('title', tooltip);
+                sidebarCollapseToggle.setAttribute('title', tooltip);
                 
                 console.log('Sidebar collapsed:', isCollapsed); // Debug
               });
@@ -673,12 +620,12 @@
               const savedCollapsed = localStorage.getItem('sidebarCollapsed');
               if (savedCollapsed === 'true') {
                 sidebar.classList.add('collapsed');
-                sidebarCollapseBtn.setAttribute('title', 'Expandir sidebar');
+                sidebarCollapseToggle.setAttribute('title', 'Expandir sidebar');
                 console.log('Estado collapsed restaurado do localStorage'); // Debug
               }
             } else {
               console.log('Elementos não encontrados:', { 
-                sidebarCollapseBtn: !!sidebarCollapseBtn, 
+                sidebarCollapseToggle: !!sidebarCollapseToggle, 
                 sidebar: !!sidebar 
               }); // Debug
             }

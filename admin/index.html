@@ -463,15 +463,34 @@
           border: 1.5px solid var(--gray);
         }
         
-        /* Teste do botão collapse */
+        /* Forçar visibilidade do botão collapse */
         .sidebar-collapse-btn {
-          background: rgba(255, 255, 255, 0.1) !important;
-          border: 1px solid rgba(255, 255, 255, 0.2) !important;
+          background: rgba(255, 255, 255, 0.2) !important;
+          border: 2px solid rgba(255, 255, 255, 0.4) !important;
           cursor: pointer !important;
+          color: white !important;
+          font-size: 1.3rem !important;
+          opacity: 1 !important;
+          display: flex !important;
+          visibility: visible !important;
+          position: relative !important;
+          z-index: 999 !important;
         }
         
         .sidebar-collapse-btn:hover {
-          background: rgba(255, 255, 255, 0.2) !important;
+          background: rgba(255, 255, 255, 0.3) !important;
+          transform: scale(1.1) !important;
+        }
+        
+        /* Garantir que o header da sidebar seja visível */
+        .sidebar-header {
+          background: rgba(0, 0, 0, 0.2) !important;
+          border-bottom: 2px solid rgba(255, 255, 255, 0.1) !important;
+          position: relative !important;
+          z-index: 5 !important;
+          display: flex !important;
+          justify-content: space-between !important;
+          align-items: center !important;
         }
         
         /* Teste visual do collapsed */
@@ -484,7 +503,38 @@
       // Configurar botão de collapse IMEDIATAMENTE (backup)
       function setupSidebarCollapse() {
         const sidebar = document.getElementById('sidebar');
-        const sidebarCollapseBtn = document.getElementById('sidebarCollapseBtn');
+        let sidebarCollapseBtn = document.getElementById('sidebarCollapseBtn');
+        
+        // Se o botão não existir, criar dinamicamente
+        if (!sidebarCollapseBtn && sidebar) {
+          console.log('🔧 Criando botão de collapse dinamicamente');
+          
+          const sidebarHeader = sidebar.querySelector('.sidebar-header');
+          if (sidebarHeader) {
+            sidebarCollapseBtn = document.createElement('button');
+            sidebarCollapseBtn.id = 'sidebarCollapseBtn';
+            sidebarCollapseBtn.className = 'sidebar-collapse-btn';
+            sidebarCollapseBtn.title = 'Recolher sidebar';
+            sidebarCollapseBtn.innerHTML = '<i class="bi bi-chevron-double-left"></i>';
+            sidebarCollapseBtn.style.cssText = `
+              background: rgba(255, 255, 255, 0.2) !important;
+              border: 2px solid rgba(255, 255, 255, 0.4) !important;
+              color: white !important;
+              cursor: pointer !important;
+              padding: 0.5rem !important;
+              border-radius: 6px !important;
+              min-width: 32px !important;
+              height: 32px !important;
+              display: flex !important;
+              align-items: center !important;
+              justify-content: center !important;
+              position: relative !important;
+              z-index: 999 !important;
+            `;
+            sidebarHeader.appendChild(sidebarCollapseBtn);
+            console.log('✅ Botão criado dinamicamente');
+          }
+        }
         
         if (sidebarCollapseBtn && sidebar) {
           console.log('✅ Configurando collapse da sidebar (backup)');

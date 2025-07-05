@@ -47,6 +47,15 @@
 
   <!-- Sidebar -->
   <div class="admin-sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <i class="bi bi-shield-check-fill"></i>
+        <span class="sidebar-brand-text">LexiDecis</span>
+      </div>
+      <button class="sidebar-collapse-btn" id="sidebarCollapseBtn" title="Recolher sidebar">
+        <i class="bi bi-chevron-double-left"></i>
+      </button>
+    </div>
     <nav class="admin-sidebar-nav">
       <ul>
         <li><a href="index.html" class="admin-sidebar-link active">
@@ -486,7 +495,7 @@
               logoutBtn.addEventListener('click', handleLogout);
             }
 
-            // Configurar sidebar toggle
+            // Configurar sidebar toggle (mobile)
             const sidebarToggle = document.getElementById('sidebarToggle');
             const sidebar = document.getElementById('sidebar');
             const sidebarBackdrop = document.getElementById('sidebarBackdrop');
@@ -523,6 +532,29 @@
                   closeSidebar();
                 }
               });
+            }
+
+            // Configurar sidebar collapse (desktop)
+            const sidebarCollapseBtn = document.getElementById('sidebarCollapseBtn');
+            if (sidebarCollapseBtn && sidebar) {
+              sidebarCollapseBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('collapsed');
+                
+                // Salvar estado no localStorage
+                const isCollapsed = sidebar.classList.contains('collapsed');
+                localStorage.setItem('sidebarCollapsed', isCollapsed);
+                
+                // Atualizar tooltip
+                const tooltip = isCollapsed ? 'Expandir sidebar' : 'Recolher sidebar';
+                sidebarCollapseBtn.setAttribute('title', tooltip);
+              });
+
+              // Restaurar estado salvo
+              const savedCollapsed = localStorage.getItem('sidebarCollapsed');
+              if (savedCollapsed === 'true') {
+                sidebar.classList.add('collapsed');
+                sidebarCollapseBtn.setAttribute('title', 'Expandir sidebar');
+              }
             }
           } else {
             // Redirecionar para login se não autenticado

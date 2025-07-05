@@ -157,26 +157,21 @@
       { key: 'anthropic',  name: 'Anthropic' },
       { key: 'deepseek',   name: 'Deepseek' },
       { key: 'groq',       name: 'Groq' },
-      { key: 'flowise',    name: 'Motor de IA' },
-      { key: 'n8n',        name: 'Motor de Automação' }
+              { key: 'flowise',    name: 'AI Agents Engine' },
+      
     ];
     services.forEach(({ key, name }) => {
       document.querySelectorAll(`[data-${key}-status]`).forEach(el => {
         const span = document.createElement('span');
         el.appendChild(span);
         
-        // Tratamento especial para o Motor de IA (Flowise)
+        // Tratamento especial para o AI Agents Engine (Flowise)
         if (key === 'flowise') {
           const flowiseIndicator = new FlowiseStatusIndicator(span, name);
           span.addEventListener('mouseenter', () => flowiseIndicator.showTooltip());
           span.addEventListener('mouseleave', () => flowiseIndicator.hideTooltip());
           flowiseIndicator.start();
-        } else if (key === 'n8n') {
-          // Tratamento especial para o Motor de Automação (n8n)
-          const n8nIndicator = new N8nStatusIndicator(span, name);
-          span.addEventListener('mouseenter', () => n8nIndicator.showTooltip());
-          span.addEventListener('mouseleave', () => n8nIndicator.hideTooltip());
-          n8nIndicator.start();
+
         } else {
           const indicator = new StatusIndicator(
             span,
@@ -191,7 +186,7 @@
     });
   });
 
-  // 4) Classe específica para o Motor de IA (Flowise)
+  // 4) Classe específica para o AI Agents Engine (Flowise)
   class FlowiseStatusIndicator {
     constructor(spanElement, serviceName, pollingInterval = 30 * 1000) {
       this.serviceName = serviceName;
@@ -222,14 +217,14 @@
            const isFlowiseResponse = responseText.includes('Flowise') || responseText.includes('Build AI Agents');
            return {
              status: 'ok',
-             message: isFlowiseResponse ? 'Motor de IA funcionando normalmente' : 'Motor de IA respondendo',
-             response: isFlowiseResponse ? 'Flowise Dashboard' : responseText,
+             message: isFlowiseResponse ? 'AI Agents Engine funcionando normalmente' : 'AI Agents Engine respondendo',
+             response: isFlowiseResponse ? 'AI Agents Dashboard' : responseText,
              timestamp: new Date().toISOString()
            };
          } else {
           return {
             status: 'error',
-            message: `Motor de IA retornou status ${response.status}`,
+            message: `AI Agents Engine retornou status ${response.status}`,
             response: response.statusText,
             timestamp: new Date().toISOString()
           };
@@ -237,7 +232,7 @@
       } catch (error) {
         return {
           status: 'error',
-          message: 'Motor de IA não está respondendo',
+          message: 'AI Agents Engine não está respondendo',
           error: error.message,
           timestamp: new Date().toISOString()
         };
@@ -318,156 +313,8 @@
     }
   }
 
-  // 5) Classe específica para o Motor de Automação (n8n)
-  class N8nStatusIndicator {
-    constructor(spanElement, serviceName, pollingInterval = 30 * 1000) {
-      this.serviceName = serviceName;
-      this.container = spanElement;
-      this.interval = pollingInterval;
-      this._keepRunning = false;
-    }
 
-    sleep(ms) {
-      return new Promise(res => setTimeout(res, ms));
-    }
-
-    async fetchN8nStatus() {
-      try {
-        // Tentar usar o proxy
-        const proxyUrl = 'https://webhook.power.tec.br/webhook/status/v2?service=n8n';
-        
-        const response = await fetch(proxyUrl, {
-          method: 'GET',
-          mode: 'cors',
-          credentials: 'omit',
-          headers: {}
-        });
-        
-        if (response.ok) {
-          const text = await response.text();
-          
-          // Se retornou conteúdo, tenta fazer parse
-          if (text && text.trim()) {
-            try {
-              let data = JSON.parse(text);
-              
-              // Normalizar resposta do proxy
-              if (Array.isArray(data)) {
-                const item = data[0];
-                data = item.body || item.json || item;
-              }
-              
-              const { status, page } = data;
-              const { indicator, description } = status;
-              
-              const stateClass = indicator === 'none' ? 'ok' : indicator;
-              const isOk = stateClass === 'ok';
-              
-              return {
-                status: isOk ? 'ok' : 'error',
-                message: isOk ? 'Motor de Automação funcionando normalmente' : `Motor de Automação: ${description}`,
-                response: page ? page.name : 'n8n via proxy',
-                timestamp: new Date().toISOString()
-              };
-            } catch (parseError) {
-              throw new Error('Resposta inválida do proxy');
-            }
-          } else {
-            throw new Error('Serviço n8n não registrado no proxy');
-          }
-        } else {
-          throw new Error(`Proxy retornou HTTP ${response.status}`);
-        }
-      } catch (error) {
-        // Como fallback, assumir que está funcionando mas não monitorado
-        return {
-          status: 'ok',
-          message: 'Motor de Automação (status não monitorado)',
-          response: 'n8n - Monitoramento indisponível',
-          timestamp: new Date().toISOString(),
-          warning: 'Status não verificado automaticamente'
-        };
-      }
-    }
-
-    async updateOnce() {
-      try {
-        const statusData = await this.fetchN8nStatus();
-        
-        const updatedAt = new Date(statusData.timestamp)
-          .toLocaleString('pt-BR', {
-            day: '2-digit', month: '2-digit', year: 'numeric',
-            hour: '2-digit', minute: '2-digit'
-          });
-
-        if (statusData.status === 'ok') {
-          // Se tem warning, mostrar como minor (amarelo), senão ok (verde)
-          const statusClass = statusData.warning ? 'minor' : 'ok';
-          this.container.className = `status-indicator ${statusClass}`;
-          const warningText = statusData.warning ? `\n⚠️ ${statusData.warning}` : '';
-          this.container.dataset.tooltip = 
-            `${this.serviceName}: ${statusData.message}\nResposta: ${statusData.response}\nAtualizado em: ${updatedAt}${warningText}`;
-        } else {
-          this.container.className = 'status-indicator critical';
-          this.container.dataset.tooltip = 
-            `${this.serviceName}: ${statusData.message}\nErro: ${statusData.error || statusData.response || 'Desconhecido'}\nAtualizado em: ${updatedAt}`;
-        }
-      } catch (err) {
-        console.error(`Erro ao atualizar status ${this.serviceName}:`, err);
-        this.container.className = 'status-indicator minor';
-        this.container.dataset.tooltip = 
-          `${this.serviceName}: Status não monitorado\nAtualizado em: ${new Date().toLocaleString('pt-BR')}\n⚠️ Verificação automática indisponível`;
-      }
-    }
-
-    async start() {
-      if (this._keepRunning) return;
-      this._keepRunning = true;
-      while (this._keepRunning) {
-        await this.updateOnce();
-        await this.sleep(this.interval);
-      }
-    }
-
-    stop() {
-      this._keepRunning = false;
-    }
-
-    showTooltip() {
-      this.hideTooltip();
-      const text = this.container.dataset.tooltip;
-      if (!text) return;
-      const tip = document.createElement('div');
-      tip.className = 'status-tooltip';
-      tip.textContent = text;
-      document.body.appendChild(tip);
-      const rect = this.container.getBoundingClientRect();
-      const tipRect = tip.getBoundingClientRect();
-      // attempt above
-      let top = rect.top - tipRect.height - 6;
-      if (top < 0) {
-        // place below
-        top = rect.bottom + 6;
-      }
-      let left = rect.left + (rect.width - tipRect.width) / 2;
-      if (left < 0) left = 4;
-      if (left + tipRect.width > window.innerWidth) {
-        left = window.innerWidth - tipRect.width - 4;
-      }
-      tip.style.top = `${top + window.scrollY}px`;
-      tip.style.left = `${left + window.scrollX}px`;
-      this._tooltipEl = tip;
-    }
-
-    hideTooltip() {
-      if (this._tooltipEl) {
-        this._tooltipEl.remove();
-        this._tooltipEl = null;
-      }
-    }
-  }
 
   // Disponibilizar as classes globalmente se necessário
   window.FlowiseStatusIndicator = FlowiseStatusIndicator;
-  window.N8nStatusIndicator = N8nStatusIndicator;
 })();

@@ -407,9 +407,9 @@ export async function deleteGPT(AuthService, gptId) {
 }
 
 /**
- * Verifica o status do Motor de IA (Flowise) para saber se está funcionando.
+ * Verifica o status do AI Agents Engine (Flowise) para saber se está funcionando.
  *
- * @returns {Promise<Object>} - Uma promise que resolve com o status do motor de IA.
+ * @returns {Promise<Object>} - Uma promise que resolve com o status do AI Agents Engine.
  * @throws {Error} Se não conseguir conectar ou se o serviço estiver indisponível.
  */
 export async function checkFlowiseStatus() {
@@ -429,14 +429,14 @@ export async function checkFlowiseStatus() {
       const isFlowiseResponse = responseText.includes('Flowise') || responseText.includes('Build AI Agents');
       return {
         status: 'ok',
-        message: isFlowiseResponse ? 'Motor de IA funcionando normalmente' : 'Motor de IA respondendo',
-        response: isFlowiseResponse ? 'Flowise Dashboard' : responseText,
+        message: isFlowiseResponse ? 'AI Agents Engine funcionando normalmente' : 'AI Agents Engine respondendo',
+        response: isFlowiseResponse ? 'AI Agents Dashboard' : responseText,
         timestamp: new Date().toISOString()
       };
     } else {
       return {
         status: 'error',
-        message: `Motor de IA retornou status ${response.status}`,
+        message: `AI Agents Engine retornou status ${response.status}`,
         response: response.statusText,
         timestamp: new Date().toISOString()
       };
@@ -444,78 +444,10 @@ export async function checkFlowiseStatus() {
   } catch (error) {
     return {
       status: 'error',
-      message: 'Motor de IA não está respondendo',
+      message: 'AI Agents Engine não está respondendo',
       error: error.message,
       timestamp: new Date().toISOString()
     };
   }
 }
 
-/**
- * Verifica o status do Motor de Automação (n8n) para saber se está funcionando.
- * Usa um método customizado pois o n8n pode não estar no proxy de status.
- *
- * @returns {Promise<Object>} - Uma promise que resolve com o status do motor de automação.
- * @throws {Error} Se não conseguir conectar ou se o serviço estiver indisponível.
- */
-export async function checkN8nStatus() {
-  try {
-    // Primeiro, tentar usar o proxy
-    const proxyUrl = 'https://webhook.power.tec.br/webhook/status/v2?service=n8n';
-    
-    const response = await fetch(proxyUrl, {
-      method: 'GET',
-      mode: 'cors',
-      credentials: 'omit',
-      headers: {}
-    });
-    
-    if (response.ok) {
-      const text = await response.text();
-      
-      // Se retornou conteúdo, tenta fazer parse
-      if (text && text.trim()) {
-        try {
-          let data = JSON.parse(text);
-          
-          // Normalizar resposta do proxy
-          if (Array.isArray(data)) {
-            const item = data[0];
-            data = item.body || item.json || item;
-          }
-          
-          const { status, page } = data;
-          const { indicator, description } = status;
-          
-          const stateClass = indicator === 'none' ? 'ok' : indicator;
-          const isOk = stateClass === 'ok';
-          
-          return {
-            status: isOk ? 'ok' : 'error',
-            message: isOk ? 'Motor de Automação funcionando normalmente' : `Motor de Automação: ${description}`,
-            response: page ? page.name : 'n8n via proxy',
-            timestamp: new Date().toISOString()
-          };
-        } catch (parseError) {
-          // Se não conseguir fazer parse, considera como erro
-          throw new Error('Resposta inválida do proxy');
-        }
-      } else {
-        // Se o proxy retornou vazio, o serviço não está registrado
-        throw new Error('Serviço n8n não registrado no proxy');
-      }
-    } else {
-      throw new Error(`Proxy retornou HTTP ${response.status}`);
-    }
-  } catch (error) {
-    // Como fallback, assumir que está funcionando mas não monitorado
-    console.warn('N8n status check failed:', error.message);
-    return {
-      status: 'ok',
-      message: 'Motor de Automação (status não monitorado)',
-      response: 'n8n - Monitoramento indisponível',
-      timestamp: new Date().toISOString(),
-      warning: 'Status não verificado automaticamente'
-    };
-  }
-}

@@ -3,23 +3,28 @@
   --sidebar-width: 220px;
   --sidebar-collapsed-width: 60px;
   --topbar-height: 56px;
-  --primary: #228B22;
-  --primary-dark: #155a10;
-  --bg: #f4f6f8;
-  --white: #fff;
-  --gray: #e0e0e0;
-  --sidebar-bg: #212529;
-  --sidebar-active: #228B22;
-  --sidebar-text: #f4f4f4;
-  --sidebar-hover: #2e3338;
+  --primary: #6b7280;
+  --primary-dark: #4b5563;
+  --primary-light: #9ca3af;
+  --bg: #f8fafc;
+  --white: #ffffff;
+  --gray: #e5e7eb;
+  --gray-dark: #d1d5db;
+  --sidebar-bg: #1f2937;
+  --sidebar-active: #6b7280;
+  --sidebar-text: #f9fafb;
+  --sidebar-hover: #374151;
   --content-max-width: 1200px;
+  --accent-pastel: #f3e8ff;
+  --accent-pastel-dark: #e9d5ff;
+  --accent-pastel-light: #faf5ff;
 }
 body {
   margin: 0;
   padding: 0;
   background: var(--bg);
   font-family: 'Montserrat', Arial, sans-serif;
-  color: #222;
+  color: #374151;
 }
 .admin-topbar {
   position: fixed;
@@ -32,6 +37,7 @@ body {
   z-index: 1001;
   padding: 0 2rem;
   box-sizing: border-box;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 .admin-topbar-logo {
   display: flex;
@@ -46,7 +52,7 @@ body {
 }
 .admin-topbar-title {
   font-size: 1.1rem;
-  color: #555;
+  color: #6b7280;
   margin-left: 0.8rem;
   font-weight: 400;
 }
@@ -56,13 +62,13 @@ body {
   left: 0;
   width: var(--sidebar-width);
   height: calc(100vh - var(--topbar-height));
-  background: linear-gradient(135deg, #23272f 60%, #228B22 120%);
+  background: linear-gradient(135deg, #1f2937 60%, #374151 120%);
   color: var(--sidebar-text);
   display: flex;
   flex-direction: column;
   z-index: 1100;
   transition: width 0.3s cubic-bezier(.77,0,.18,1), left 0.2s;
-  box-shadow: 4px 0 24px 0 rgba(34,139,34,0.10), 0 1.5px 0 #228B22;
+  box-shadow: 4px 0 24px 0 rgba(107, 114, 128, 0.15);
   border-top-right-radius: 18px;
   border-bottom-right-radius: 18px;
   overflow: hidden;
@@ -105,10 +111,10 @@ body {
   box-shadow: none;
 }
 .admin-sidebar-link.active, .admin-sidebar-link:hover {
-  background: rgba(34,139,34,0.13);
-  border-left: 5px solid #39d353;
-  color: #39d353;
-  box-shadow: 0 2px 12px 0 rgba(34,139,34,0.10);
+  background: rgba(156, 163, 175, 0.15);
+  border-left: 5px solid var(--accent-pastel-dark);
+  color: var(--accent-pastel-light);
+  box-shadow: 0 2px 12px 0 rgba(156, 163, 175, 0.12);
 }
 .admin-sidebar-link.active::before {
   content: '';
@@ -118,8 +124,8 @@ body {
   bottom: 12px;
   width: 5px;
   border-radius: 6px;
-  background: linear-gradient(180deg, #39d353 0%, #228B22 100%);
-  box-shadow: 0 0 8px #39d35355;
+  background: linear-gradient(180deg, var(--accent-pastel-dark) 0%, #8b5cf6 100%);
+  box-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
 }
 .admin-sidebar-link i {
   font-size: 1.35rem;
@@ -131,9 +137,9 @@ body {
 .admin-sidebar-footer {
   padding: 1.1rem 1.5rem 1.3rem 1.5rem;
   font-size: 0.97rem;
-  color: #b6e2c6;
-  border-top: 1px solid #2e3338;
-  background: linear-gradient(90deg, #212529 60%, #228B22 120%);
+  color: var(--accent-pastel-light);
+  border-top: 1px solid #374151;
+  background: linear-gradient(90deg, #1f2937 60%, #374151 120%);
   border-bottom-right-radius: 16px;
   margin-top: 0.5rem;
   text-align: center;
@@ -160,7 +166,7 @@ body {
 .dashboard-card {
   background: var(--white);
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(34,139,34,0.08);
+  box-shadow: 0 2px 8px rgba(107, 114, 128, 0.08);
   padding: 2rem 2.5rem;
   text-align: center;
   text-decoration: none !important;
@@ -180,11 +186,12 @@ body {
   text-decoration: none !important;
 }
 .dashboard-card:hover {
-  box-shadow: 0 4px 16px rgba(34,139,34,0.15);
+  box-shadow: 0 4px 16px rgba(107, 114, 128, 0.15);
   transform: translateY(-2px) scale(1.03);
   border-color: var(--primary);
   color: var(--primary-dark);
   text-decoration: none !important;
+  background: var(--accent-pastel-light);
 }
 .dashboard-card-icon {
   font-size: 2.5rem;
@@ -198,7 +205,10 @@ body {
   font-size: 1.7rem;
   font-weight: 700;
   color: var(--primary-dark);
-  margin-top: 0.2rem;
+  background: var(--accent-pastel);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  margin-top: 0.5rem;
 }
 @media (max-width: 900px) {
   .admin-sidebar {

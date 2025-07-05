@@ -9,7 +9,57 @@
  */
 export function initGPTs(AuthService, API, DOM) {
     let gptsData = {};
-  
+
+    // Renderiza o conteúdo principal da aplicação
+    function renderContent() {
+      const content = document.getElementById('content');
+      content.innerHTML = `
+        <div class="page-title d-flex justify-content-between align-items-center">
+          <div>
+            <h2>Administração de GPTs - Lexidecis</h2>
+            <p class="mb-0 text-title-gray">Lista de GPTs cadastrados</p>
+          </div>
+          <div>
+            <button id="btnNewGpt" class="btn btn-success">
+              <i class="bi bi-plus-circle"></i> Novo GPT
+            </button>
+          </div>
+        </div>
+        <ol class="breadcrumb mt-2">
+          <li class="breadcrumb-item"><a href="index.html"><i class="bi bi-house-fill"></i></a></li>
+          <li class="breadcrumb-item">Administração</li>
+          <li class="breadcrumb-item active">GPTs Lexidecis</li>
+        </ol>
+        <div id="protected-section" class="mt-4 d-none">
+          <div id="report-container" class="position-relative">
+            <div class="card">
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table id="gpt-table" class="display table table-bordered table-striped">
+                    <thead>
+                      <tr>
+                        <th>GPT</th>
+                        <th>Descrição</th>
+                        <th>Categoria</th>
+                        <th>ID</th>
+                        <th>Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <div id="report-overlay" class="d-none position-absolute top-0 start-0 w-100 h-100 bg-light bg-opacity-75 d-flex align-items-center justify-content-center" style="z-index: 1000;">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Carregando...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
     // Inicializa o DataTable para GPTs
     function initializeTable() {
       $("#gpt-table").DataTable({
@@ -202,40 +252,25 @@ export function initGPTs(AuthService, API, DOM) {
     // Inicializa a atualização dos GPTs e verifica autenticação
     AuthService.onAuthChange((user) => {
       if (user) {
+        renderContent();
         document.getElementById("protected-section").classList.remove("d-none");
         refreshGPTs();
+        
+        // Configuração do botão de criação de novo GPT
+        const btnNewGpt = document.getElementById("btnNewGpt");
+        if (btnNewGpt) {
+          btnNewGpt.addEventListener("click", () => {
+            const createGptModalElement = document.getElementById("createGptModal");
+            const modal = new bootstrap.Modal(createGptModalElement);
+            modal.show();
+          });
+        }
+        
+        // Associa eventos dos botões dos modais de criação e edição
+        document.getElementById("submitCreateGpt").addEventListener("click", handleCreateGpt);
+        document.getElementById("submitEditGpt").addEventListener("click", handleEditGpt);
       } else {
         window.location.href = "login.html?redirect=" + encodeURIComponent(window.location.href);
-      }
-    });
-  
-    // Configuração do botão de criação de novo GPT
-    const btnNewGpt = document.getElementById("btnNewGpt");
-    if (btnNewGpt) {
-      btnNewGpt.addEventListener("click", () => {
-        const createGptModalElement = document.getElementById("createGptModal");
-        const modal = new bootstrap.Modal(createGptModalElement);
-        modal.show();
-      });
-    }
-  
-    // Associa eventos dos botões dos modais de criação e edição
-    document.getElementById("submitCreateGpt").addEventListener("click", handleCreateGpt);
-    document.getElementById("submitEditGpt").addEventListener("click", handleEditGpt);
-  
-    // Configura o botão de alternância de tema
-    const themeToggle = document.getElementById("themeToggle");
-    themeToggle.addEventListener("click", function() {
-      document.body.classList.toggle("dark-mode");
-      themeToggle.textContent = document.body.classList.contains("dark-mode") ? "Modo Claro" : "Modo Escuro";
-      localStorage.setItem("theme", document.body.classList.contains("dark-mode") ? "dark" : "light");
-    });
-  
-    window.addEventListener("DOMContentLoaded", function() {
-      const savedTheme = localStorage.getItem("theme");
-      if (savedTheme === "dark") {
-        document.body.classList.add("dark-mode");
-        themeToggle.textContent = "Modo Claro";
       }
     });
   }

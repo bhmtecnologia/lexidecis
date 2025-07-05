@@ -315,3 +315,93 @@ export async function setUnitGPTs(AuthService, unitId, gptIds) {
   }
   return await response.json();
 }
+
+/**
+ * Cria um novo GPT enviando os dados para a API.
+ *
+ * @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
+ * @param {Object} payload - Dados do novo GPT.
+ * @returns {Promise<Object>} - Uma promise que resolve com o objeto do novo GPT criado.
+ * @throws {Error} Se o usuário não estiver autenticado ou se a API retornar um erro.
+ */
+export async function createGPT(AuthService, payload) {
+  const user = AuthService.user;
+  if (!user) throw new Error("Usuário não autenticado");
+  const token = await user.getIdToken();
+  
+  const response = await fetch('https://webhook.power.tec.br/webhook/lexidecis/gpt/create', {
+    method: "POST",
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+  
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error("Erro ao criar GPT: " + errorText);
+  }
+  
+  return await response.json();
+}
+
+/**
+ * Atualiza os dados de um GPT existente enviando as alterações para a API.
+ *
+ * @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
+ * @param {Object} payload - Dados atualizados do GPT.
+ * @returns {Promise<Object>} - Uma promise que resolve com o objeto do GPT atualizado.
+ * @throws {Error} Se o usuário não estiver autenticado ou se a API retornar um erro.
+ */
+export async function updateGPT(AuthService, payload) {
+  const user = AuthService.user;
+  if (!user) throw new Error("Usuário não autenticado");
+  const token = await user.getIdToken();
+  
+  const response = await fetch('https://webhook.power.tec.br/webhook/lexidecis/gpt/update', {
+    method: "POST",
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+  
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error("Erro ao atualizar GPT: " + errorText);
+  }
+  
+  return await response.json();
+}
+
+/**
+ * Remove um GPT enviando uma requisição DELETE para a API.
+ *
+ * @param {Object} AuthService - Serviço de autenticação contendo o usuário atual.
+ * @param {string|number} gptId - ID do GPT a ser removido.
+ * @returns {Promise<Object>} - Uma promise que resolve com a resposta da API.
+ * @throws {Error} Se o usuário não estiver autenticado ou se a API retornar um erro.
+ */
+export async function deleteGPT(AuthService, gptId) {
+  const user = AuthService.user;
+  if (!user) throw new Error("Usuário não autenticado");
+  const token = await user.getIdToken();
+  
+  const response = await fetch('https://webhook.power.tec.br/webhook/lexidecis/gpt/delete', {
+    method: "DELETE",
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({ id: gptId })
+  });
+  
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error("Erro ao remover GPT: " + errorText);
+  }
+  
+  return await response.json();
+}

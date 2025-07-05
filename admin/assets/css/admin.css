@@ -1,12 +1,17 @@
 /* Estilos principais do painel administrativo LexiDecis */
 :root {
-  --primary: #228B22;
-  --primary-dark: #155a10;
-  --bg: #f4f6f8;
-  --white: #fff;
-  --gray: #e0e0e0;
-  --footer-bg: #e9ecef;
-  --text: #555;
+  --primary: #6b7280;
+  --primary-dark: #4b5563;
+  --primary-light: #9ca3af;
+  --bg: #f8fafc;
+  --white: #ffffff;
+  --gray: #e5e7eb;
+  --gray-dark: #d1d5db;
+  --footer-bg: #1f2937;
+  --text: #374151;
+  --accent-pastel: #f3e8ff;
+  --accent-pastel-dark: #e9d5ff;
+  --accent-pastel-light: #faf5ff;
 }
 html {
   box-sizing: border-box;
@@ -22,13 +27,14 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  color: var(--text);
 }
 header {
   background: var(--primary);
   color: var(--white);
   padding: 2rem 0 1rem 0;
   text-align: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 header h1 {
   margin: 0;
@@ -66,7 +72,7 @@ button, .btn, input[type="submit"], input[type="button"] {
 button:focus, .btn:focus, input[type="submit"]:focus, input[type="button"]:focus, a:focus {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
-  box-shadow: 0 0 0 3px rgba(34,139,34,0.18);
+  box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.18);
 }
 
 input, select, textarea {
@@ -78,13 +84,13 @@ input, select, textarea {
 }
 input:focus, select:focus, textarea:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(34,139,34,0.12);
+  box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.12);
 }
 
 .admin-link {
   background: var(--white);
   border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(34,139,34,0.08);
+  box-shadow: 0 2px 8px rgba(107, 114, 128, 0.08);
   padding: 2rem 3rem;
   text-align: center;
   text-decoration: none;
@@ -101,13 +107,14 @@ input:focus, select:focus, textarea:focus {
 .admin-link:focus {
   border-color: var(--primary);
   color: var(--primary-dark);
-  box-shadow: 0 0 0 3px rgba(34,139,34,0.15);
+  box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.15);
 }
 .admin-link:hover {
-  box-shadow: 0 4px 16px rgba(34,139,34,0.15);
+  box-shadow: 0 4px 16px rgba(107, 114, 128, 0.15);
   transform: translateY(-2px) scale(1.03);
   border-color: var(--primary);
   color: var(--primary-dark);
+  background: var(--accent-pastel-light);
 }
 footer {
   margin-top: auto;
@@ -121,21 +128,22 @@ footer {
 
 /* Contraste para modo escuro */
 body.dark-mode {
-  background: #181818;
-  color: #f4f4f4;
+  background: #1f2937;
+  color: #f9fafb;
 }
 body.dark-mode header, body.dark-mode footer {
-  background: #222;
-  color: #f4f4f4;
+  background: #374151;
+  color: #f9fafb;
 }
 body.dark-mode .admin-link {
-  background: #232323;
-  color: #b6fcb6;
-  border-color: #333;
+  background: #374151;
+  color: var(--accent-pastel-light);
+  border-color: #4b5563;
 }
 body.dark-mode .admin-link:focus, body.dark-mode .admin-link:hover {
-  color: #fff;
-  border-color: #1ed760;
+  color: #ffffff;
+  border-color: var(--accent-pastel-dark);
+  background: rgba(156, 163, 175, 0.1);
 }
 
 /* --- Identidade visual moderna para users.html --- */
@@ -145,17 +153,17 @@ body.dark-mode .admin-link:focus, body.dark-mode .admin-link:hover {
   margin-top: 2.2rem;
   margin-bottom: 1.2rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1.5px solid #e0e0e0;
+  border-bottom: 1.5px solid var(--gray);
 }
 .page-title h2 {
   font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 700;
-  color: #228B22;
+  color: var(--primary);
   font-size: 2rem;
   margin-bottom: 0.2rem;
 }
 .text-title-gray {
-  color: #6c757d;
+  color: var(--primary-light);
   font-size: 1.08rem;
 }
 .breadcrumb {
@@ -164,20 +172,20 @@ body.dark-mode .admin-link:focus, body.dark-mode .admin-link:hover {
   margin-bottom: 0.5rem;
 }
 .breadcrumb-item.active {
-  color: #228B22;
+  color: var(--primary);
   font-weight: 600;
 }
 .breadcrumb-item a {
-  color: #228B22;
+  color: var(--primary);
   text-decoration: none;
 }
 
 /* Card visual */
 .card {
   border-radius: 16px;
-  box-shadow: 0 2px 16px rgba(34,139,34,0.07);
-  border: 1.5px solid #e0e0e0;
-  background: #fff;
+  box-shadow: 0 2px 16px rgba(107, 114, 128, 0.07);
+  border: 1.5px solid var(--gray);
+  background: var(--white);
 }
 .card-body {
   padding: 2rem 1.5rem 1.5rem 1.5rem;
@@ -185,23 +193,23 @@ body.dark-mode .admin-link:focus, body.dark-mode .admin-link:hover {
 
 /* Botão Novo Usuário */
 #btnNewUser {
-  background: linear-gradient(90deg, #228B22 60%, #39d353 120%);
+  background: linear-gradient(90deg, var(--primary) 60%, var(--primary-light) 120%);
   color: #fff;
   font-weight: 600;
   border: none;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(34,139,34,0.10);
+  box-shadow: 0 2px 8px rgba(107, 114, 128, 0.10);
   transition: background 0.18s, box-shadow 0.18s, color 0.18s;
 }
 #btnNewUser:hover {
-  background: linear-gradient(90deg, #39d353 60%, #228B22 120%);
+  background: linear-gradient(90deg, var(--primary-light) 60%, var(--primary) 120%);
   color: #fff;
-  box-shadow: 0 4px 16px rgba(34,139,34,0.18);
+  box-shadow: 0 4px 16px rgba(107, 114, 128, 0.18);
 }
 
 /* Botões de ação na tabela */
 .btn-group .btn-primary {
-  background: #228B22;
+  background: var(--primary);
   border: none;
   font-weight: 500;
   border-radius: 6px 0 0 6px;
@@ -213,7 +221,7 @@ body.dark-mode .admin-link:focus, body.dark-mode .admin-link:hover {
   border-radius: 0 6px 6px 0;
 }
 .btn-group .btn-primary:hover {
-  background: #39d353;
+  background: var(--primary-light);
 }
 .btn-group .btn-danger:hover {
   background: #c0392b;
@@ -223,12 +231,13 @@ body.dark-mode .admin-link:focus, body.dark-mode .admin-link:hover {
 #data-table {
   border-radius: 12px;
   overflow: hidden;
-  background: #fff;
+  background: var(--white);
   font-family: 'Montserrat', Arial, sans-serif;
   font-size: 1.04rem;
+  color: var(--text);
 }
 #data-table thead {
-  background: linear-gradient(90deg, #228B22 60%, #39d353 120%);
+  background: linear-gradient(90deg, var(--primary) 60%, var(--primary-light) 120%);
   color: #fff;
 }
 #data-table th, #data-table td {
@@ -239,27 +248,55 @@ body.dark-mode .admin-link:focus, body.dark-mode .admin-link:hover {
   transition: background 0.15s;
 }
 #data-table tbody tr:hover {
-  background: #eafbe6;
+  background: var(--accent-pastel-light);
 }
 
-/* Modal visual */
+/* Modal visual - estilos customizados que não interferem com Bootstrap */
 .modal-content {
   border-radius: 16px;
-  box-shadow: 0 4px 24px rgba(34,139,34,0.13);
-  border: 1.5px solid #e0e0e0;
+  box-shadow: 0 4px 24px rgba(107, 114, 128, 0.13);
+  border: 1.5px solid var(--gray);
+  background: var(--white);
+  color: var(--text);
 }
 .modal-header {
   border-radius: 16px 16px 0 0;
+  border-bottom: 1px solid var(--gray);
+  background: var(--primary);
+  color: white;
 }
 .modal-footer {
   border-radius: 0 0 16px 16px;
+  border-top: 1px solid var(--gray);
+}
+
+/* Corrigir z-index do DataTables para não interferir com modais */
+.dataTables_wrapper {
+  z-index: 1 !important;
+}
+.dt-buttons {
+  z-index: 1 !important;
+}
+
+/* Estilos para inputs do formulário dentro do modal */
+.modal .form-control {
+  border: 1px solid var(--gray);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+.modal .form-control:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.12);
 }
 
 /* Overlay de carregamento */
 #report-overlay .spinner-border {
   width: 3rem;
   height: 3rem;
-  color: #228B22;
+  color: var(--primary);
 }
 
 /* Responsividade extra */

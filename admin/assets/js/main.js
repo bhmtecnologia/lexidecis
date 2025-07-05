@@ -22,6 +22,12 @@ export function initMain(AuthService, API, DOM) {
     // Renderiza o conteúdo principal da aplicação
     DOM.renderContent();
 
+    // Mostra a seção protegida imediatamente
+    const protectedSection = document.getElementById('protected-section');
+    if (protectedSection) {
+      protectedSection.classList.remove('d-none');
+    }
+
     // Inicializa DataTable após renderização do conteúdo
     if (window.jQuery && jQuery.fn.DataTable) {
       DOM.initializeDataTable && DOM.initializeDataTable();
@@ -39,6 +45,15 @@ export function initMain(AuthService, API, DOM) {
       const btnSubmitEdit = document.getElementById('submitEditUser');
       const createUserModalElement = document.getElementById('createUserModal');
       const editUserModalElement = document.getElementById('editUserModal');
+      
+      console.log('[waitForElementsAndSetupListeners] Verificando elementos:', {
+        btnNewUser: !!btnNewUser,
+        btnSubmitCreate: !!btnSubmitCreate,
+        btnSubmitEdit: !!btnSubmitEdit,
+        createUserModalElement: !!createUserModalElement,
+        editUserModalElement: !!editUserModalElement
+      });
+      
       if (btnNewUser && btnSubmitCreate && btnSubmitEdit && createUserModalElement && editUserModalElement) {
         setupEventListeners();
       } else {
@@ -50,29 +65,63 @@ export function initMain(AuthService, API, DOM) {
     function setupEventListeners() {
       // Botão Novo Usuário
       const btnNewUser = document.getElementById('btnNewUser');
-      if (btnNewUser && createUserModalElement) {
-        btnNewUser.addEventListener('click', async () => {
-          const createUserModal = new bootstrap.Modal(createUserModalElement);
-          createUserModal.show();
-          // Preenche os selects de units e companies no modal de criação
+      if (btnNewUser) {
+        btnNewUser.addEventListener('click', async (e) => {
+          e.preventDefault();
+          console.log('[btnNewUser] Clique detectado');
+          
           try {
-            const units = await API.getUnits(AuthService);
-            DOM.populateUnitsSelect('create_unit_id', units);
-          } catch (e) {
-            const select = document.getElementById('create_unit_id');
-            if (select) select.innerHTML = `<option value="">Erro ao carregar units</option>`;
-          }
-          try {
-            const companies = await API.getCompanies(AuthService);
-            DOM.populateCompaniesSelect('create_company_id', companies);
-          } catch (e) {
-            const select = document.getElementById('create_company_id');
-            if (select) select.innerHTML = `<option value="">Erro ao carregar companies</option>`;
+            // Primeiro, injeta/atualiza formulário dentro do modal
+            createUserForm();
+            
+            // Aguarda um pouco para garantir que o DOM foi atualizado
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            // popula selects (espera dados antes de abrir modal)
+            try {
+              const units = await API.getUnits(AuthService);
+              DOM.populateUnitsSelect('create_unit_id', units);
+            } catch (e) {
+              console.error('[btnNewUser] Erro ao carregar units:', e);
+              const sel = document.getElementById('create_unit_id');
+              if (sel) sel.innerHTML = '<option value="">Erro ao carregar units</option>';
+            }
+            
+            try {
+              const companies = await API.getCompanies(AuthService);
+              DOM.populateCompaniesSelect('create_company_id', companies);
+            } catch (e) {
+              console.error('[btnNewUser] Erro ao carregar companies:', e);
+              const sel = document.getElementById('create_company_id');
+              if (sel) sel.innerHTML = '<option value="">Erro ao carregar companies</option>';
+            }
+
+            // Garante que o modal existe e está pronto
+            const modalToShow = document.getElementById('createUserModal');
+            if (!modalToShow) {
+              console.error('[btnNewUser] Modal não encontrado após criação do formulário');
+              return;
+            }
+
+            // Verifica se o Bootstrap está disponível
+            if (typeof bootstrap === 'undefined') {
+              console.error('[btnNewUser] Bootstrap não está carregado');
+              alert('Erro: Bootstrap não está carregado');
+              return;
+            }
+
+            // Abre o modal usando a API padrão do Bootstrap
+            console.log('[btnNewUser] Abrindo modal...');
+            const modalInstance = new bootstrap.Modal(modalToShow);
+            modalInstance.show();
+            
+          } catch (error) {
+            console.error('[btnNewUser] Erro ao abrir modal:', error);
+            alert('Erro ao abrir formulário de criação de usuário');
           }
         });
       } else {
-        if (!btnNewUser) console.warn('[setupEventListeners] Botão #btnNewUser não encontrado no DOM.');
-        if (!createUserModalElement) console.warn('[setupEventListeners] Modal #createUserModal não encontrado no DOM.');
+        console.warn('[setupEventListeners] Botão #btnNewUser não encontrado no DOM.');
       }
       // Botão submitCreateUser
       const btnSubmitCreate = document.getElementById('submitCreateUser');
@@ -173,6 +222,88 @@ export function initMain(AuthService, API, DOM) {
     }
   
     /**
+     * Cria o formulário de criação de usuário no modal.
+     */
+    function createUserForm() {
+      console.log('[createUserForm] Iniciando criação do formulário');
+      
+      // Sempre injeta o formulário no modal correto
+      const createUserModalElement = document.getElementById('createUserModal');
+      if (!createUserModalElement) {
+        console.error('[createUserForm] Modal #createUserModal não encontrado');
+        return;
+      }
+      
+      const modalBody = createUserModalElement.querySelector('.modal-body');
+      if (!modalBody) {
+        console.error('[createUserForm] .modal-body não encontrado dentro do modal');
+        return;
+      }
+      
+      // Limpa o conteúdo anterior
+      modalBody.innerHTML = '';
+      
+      // Cria o formulário
+      const formHTML = `
+        <form id="createUserForm" class="needs-validation" novalidate>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="id" class="form-label">ID</label>
+              <input type="text" class="form-control" id="id" required>
+              <div class="invalid-feedback">Por favor, insira um ID válido.</div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="username" class="form-label">Username</label>
+              <input type="text" class="form-control" id="username" required>
+              <div class="invalid-feedback">Por favor, insira um username válido.</div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="email" class="form-label">Email</label>
+              <input type="email" class="form-control" id="email" required>
+              <div class="invalid-feedback">Por favor, insira um email válido.</div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="is_admin" class="form-label">É Admin</label>
+              <select class="form-control" id="is_admin" required>
+                <option value="false">Não</option>
+                <option value="true">Sim</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="create_company_id" class="form-label">Company</label>
+              <select class="form-control" id="create_company_id" required>
+                <option value="">Carregando...</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="create_unit_id" class="form-label">Unit</label>
+              <select class="form-control" id="create_unit_id" required>
+                <option value="">Carregando...</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="remote_jid" class="form-label">Remote JID</label>
+              <input type="text" class="form-control" id="remote_jid">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="whatsapp" class="form-label">WhatsApp</label>
+              <select class="form-control" id="whatsapp" required>
+                <option value="false">Não</option>
+                <option value="true">Sim</option>
+              </select>
+            </div>
+          </div>
+          <div id="createUserError" class="alert alert-danger d-none" role="alert"></div>
+        </form>
+      `;
+      
+      // Injeta o HTML no modal
+      modalBody.innerHTML = formHTML;
+      
+      console.log('[createUserForm] Formulário criado com sucesso');
+    }
+
+    /**
      * Manipula a criação de um novo usuário.
      */
     async function handleCreateUser() {
@@ -233,6 +364,59 @@ export function initMain(AuthService, API, DOM) {
     // Funções globais para uso nos botões de ação da tabela
   
     /**
+     * Cria o formulário de edição de usuário no modal.
+     */
+    function createEditUserForm() {
+      const modalBody = editUserModalElement.querySelector('.modal-body');
+      modalBody.innerHTML = `
+        <form id="editUserForm">
+          <input type="hidden" id="edit_user_id">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="edit_username" class="form-label">Username</label>
+              <input type="text" class="form-control" id="edit_username" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="edit_email" class="form-label">Email</label>
+              <input type="email" class="form-control" id="edit_email" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="edit_is_admin" class="form-label">É Admin</label>
+              <select class="form-control" id="edit_is_admin" required>
+                <option value="false">Não</option>
+                <option value="true">Sim</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="edit_company_id" class="form-label">Company</label>
+              <select class="form-control" id="edit_company_id" required>
+                <option value="">Carregando...</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="edit_unit_id" class="form-label">Unit</label>
+              <select class="form-control" id="edit_unit_id" required>
+                <option value="">Carregando...</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="edit_remote_jid" class="form-label">Remote JID</label>
+              <input type="text" class="form-control" id="edit_remote_jid">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="edit_whatsapp" class="form-label">WhatsApp</label>
+              <select class="form-control" id="edit_whatsapp" required>
+                <option value="false">Não</option>
+                <option value="true">Sim</option>
+              </select>
+            </div>
+          </div>
+          <div id="editUserError" class="text-danger d-none"></div>
+        </form>
+      `;
+    }
+
+    /**
      * Abre o modal de edição e preenche os campos com os dados do usuário.
      *
      * @param {string|number} userId - ID do usuário a ser editado.
@@ -240,42 +424,52 @@ export function initMain(AuthService, API, DOM) {
     window.editUser = async function(userId) {
       const user = usersData[userId];
       if (!user) return;
-      document.getElementById('edit_user_id').value = user.id || '';
-      document.getElementById('edit_username').value = user.username || '';
-      document.getElementById('edit_email').value = user.email || '';
-      document.getElementById('edit_is_admin').value = (typeof user.is_admin === 'boolean' && user.is_admin) ? "true" : "false";
       
-      // Preenche o select de companies com o valor atual
-      const currentCompanyId = user.company_id || "";
-      const companySelect = document.getElementById('edit_company_id');
-      companySelect.innerHTML = `<option value="${currentCompanyId}" selected>${user.company_name || "Selecione uma company"}</option>`;
-      companySelect.addEventListener('focus', async function() {
-        try {
-          const companies = await API.getCompanies(AuthService);
-          DOM.populateCompaniesSelect('edit_company_id', companies, currentCompanyId);
-        } catch(e) {
-          document.getElementById('edit_company_id').innerHTML = `<option value="">Erro ao carregar companies</option>`;
-        }
-      }, { once: true });
+      // Cria o formulário no modal
+      createEditUserForm();
       
-      // Preenche o select de units com o valor atual
-      const currentUnitId = user.unit_id || "";
-      const unitSelect = document.getElementById('edit_unit_id');
-      unitSelect.innerHTML = `<option value="${currentUnitId}" selected>${user.unit_name || "Selecione uma unit"}</option>`;
-      unitSelect.addEventListener('focus', async function() {
-        try {
-          const units = await API.getUnits(AuthService);
-          DOM.populateUnitsSelect('edit_unit_id', units, currentUnitId);
-        } catch(e) {
-          document.getElementById('edit_unit_id').innerHTML = `<option value="">Erro ao carregar units</option>`;
-        }
-      }, { once: true });
-      
-      document.getElementById('edit_remote_jid').value = user.remote_jid || '';
-      document.getElementById('edit_whatsapp').value = (typeof user.whatsapp === 'boolean' && user.whatsapp) ? "true" : "false";
-      
-      const editUserModal = new bootstrap.Modal(editUserModalElement);
-      editUserModal.show();
+      // Aguarda um momento para garantir que o DOM foi atualizado
+      setTimeout(() => {
+        document.getElementById('edit_user_id').value = user.id || '';
+        document.getElementById('edit_username').value = user.username || '';
+        document.getElementById('edit_email').value = user.email || '';
+        document.getElementById('edit_is_admin').value = (typeof user.is_admin === 'boolean' && user.is_admin) ? "true" : "false";
+        
+        // Preenche o select de companies com o valor atual
+        const currentCompanyId = user.company_id || "";
+        const companySelect = document.getElementById('edit_company_id');
+        companySelect.innerHTML = `<option value="${currentCompanyId}" selected>${user.company_name || "Selecione uma company"}</option>`;
+        companySelect.addEventListener('focus', async function() {
+          try {
+            const companies = await API.getCompanies(AuthService);
+            DOM.populateCompaniesSelect('edit_company_id', companies, currentCompanyId);
+          } catch(e) {
+            document.getElementById('edit_company_id').innerHTML = `<option value="">Erro ao carregar companies</option>`;
+          }
+        }, { once: true });
+        
+        // Preenche o select de units com o valor atual
+        const currentUnitId = user.unit_id || "";
+        const unitSelect = document.getElementById('edit_unit_id');
+        unitSelect.innerHTML = `<option value="${currentUnitId}" selected>${user.unit_name || "Selecione uma unit"}</option>`;
+        unitSelect.addEventListener('focus', async function() {
+          try {
+            const units = await API.getUnits(AuthService);
+            DOM.populateUnitsSelect('edit_unit_id', units, currentUnitId);
+          } catch(e) {
+            document.getElementById('edit_unit_id').innerHTML = `<option value="">Erro ao carregar units</option>`;
+          }
+        }, { once: true });
+        
+        document.getElementById('edit_remote_jid').value = user.remote_jid || '';
+        document.getElementById('edit_whatsapp').value = (typeof user.whatsapp === 'boolean' && user.whatsapp) ? "true" : "false";
+        
+        const editUserModal = new bootstrap.Modal(editUserModalElement, {
+          backdrop: 'static',
+          keyboard: false
+        });
+        editUserModal.show();
+      }, 100);
     };
   
     // Função global para remover um usuário após confirmação

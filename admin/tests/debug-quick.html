@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Quick - Firebase UID</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h4>🚨 Debug Rápido - UID Firebase</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <strong>PROBLEMA:</strong> Está vindo UID automático <code>aa22_943393</code> em vez do UID real do Firebase
+                </div>
+                
+                <div class="alert alert-info">
+                    <strong>INSTRUÇÃO:</strong> Abra o Console do Developer Tools (F12) para ver logs detalhados!
+                    <br>
+                    <small>1. Pressione F12 → Console<br>
+                    2. Use o botão "Teste Fluxo Real" para debug<br>
+                    3. Verifique os logs com prefixo [createFirebaseUser]</small>
+                </div>
+                
+                <button id="testFirebaseAPI" class="btn btn-primary">🔥 Teste Firebase REST API</button>
+                <button id="testFirebaseSDK" class="btn btn-warning">📱 Teste Firebase SDK</button>
+                <button id="testRealFlow" class="btn btn-success">🎯 Teste Fluxo Real</button>
+                <button id="clearLog" class="btn btn-secondary">🧹 Limpar</button>
+                
+                <hr>
+                
+                <div id="debugOutput" style="background: #1e1e1e; color: white; padding: 15px; font-family: monospace; font-size: 12px; height: 400px; overflow-y: auto; white-space: pre-wrap;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        function addLog(message) {
+            const output = document.getElementById('debugOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            output.textContent += `[${timestamp}] ${message}\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        // Teste Firebase REST API
+        document.getElementById('testFirebaseAPI').addEventListener('click', async () => {
+            addLog('=== TESTE FIREBASE REST API ===');
+            
+            try {
+                const testEmail = `teste${Date.now()}@debug.com`;
+                const testPassword = '123456';
+                
+                addLog(`Testando com email: ${testEmail}`);
+                
+                const apiKey = "AIzaSyD7Gh-UfV-LyueKtlUcY9nny_o-UWmlmJM";
+                const url = `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`;
+                
+                addLog(`URL: ${url}`);
+                addLog('Fazendo requisição POST...');
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: testEmail,
+                        password: testPassword,
+                        returnSecureToken: true
+                    })
+                });
+                
+                addLog(`Response status: ${response.status}`);
+                addLog(`Response ok: ${response.ok}`);
+                
+                const data = await response.json();
+                addLog('Response data:');
+                addLog(JSON.stringify(data, null, 2));
+                
+                if (response.ok && data.localId) {
+                    addLog('✅ SUCCESS: Firebase REST API funcionou!');
+                    addLog(`🔥 UID REAL capturado: ${data.localId}`);
+                    addLog(`📧 Email: ${data.email}`);
+                    addLog(`🔑 Token: ${data.idToken ? 'Presente' : 'Ausente'}`);
+                } else {
+                    addLog('❌ ERROR: Firebase REST API falhou');
+                    addLog(`Erro: ${data.error?.message || 'Erro desconhecido'}`);
+                }
+                
+            } catch (error) {
+                addLog('❌ EXCEPTION na REST API:');
+                addLog(error.message);
+                addLog(error.stack);
+            }
+        });
+        
+        // Teste Firebase SDK
+        document.getElementById('testFirebaseSDK').addEventListener('click', async () => {
+            addLog('=== TESTE FIREBASE SDK ===');
+            
+            try {
+                const testEmail = `teste${Date.now()}@debug.com`;
+                const testPassword = '123456';
+                
+                addLog(`Testando com email: ${testEmail}`);
+                
+                // Import Firebase
+                const { auth } = await import('./assets/js/firebase.js');
+                const { createUserWithEmailAndPassword } = await import("https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js");
+                
+                addLog('Firebase importado com sucesso');
+                addLog(`Auth atual: ${auth.currentUser?.email || 'Nenhum usuário logado'}`);
+                
+                // Cria usuário
+                addLog('Criando usuário com SDK...');
+                const userCredential = await createUserWithEmailAndPassword(auth, testEmail, testPassword);
+                const newUser = userCredential.user;
+                
+                addLog('✅ SUCCESS: Firebase SDK funcionou!');
+                addLog(`🔥 UID REAL capturado: ${newUser.uid}`);
+                addLog(`📧 Email: ${newUser.email}`);
+                addLog(`✅ Email verificado: ${newUser.emailVerified}`);
+                
+                addLog('ℹ️ NOTA: Este método desloga o admin atual!');
+                
+            } catch (error) {
+                addLog('❌ EXCEPTION no SDK:');
+                addLog(error.message);
+                addLog(error.stack);
+            }
+        });
+        
+        // Teste fluxo real
+        document.getElementById('testRealFlow').addEventListener('click', async () => {
+            addLog('=== TESTE FLUXO REAL ===');
+            
+            try {
+                const testEmail = `teste${Date.now()}@debug.com`;
+                const testPassword = '123456';
+                
+                addLog(`Testando com email: ${testEmail}`);
+                
+                // Import firebase-utils
+                const { createFirebaseUser } = await import('./assets/js/firebase-utils.js');
+                
+                addLog('firebase-utils.js importado com sucesso');
+                
+                // Chama a função real
+                addLog('Chamando createFirebaseUser...');
+                const result = await createFirebaseUser(testEmail, testPassword);
+                
+                addLog('✅ SUCCESS: Fluxo real funcionou!');
+                addLog(`🔥 UID REAL: ${result.uid}`);
+                addLog(`📧 Email: ${result.email}`);
+                addLog(`🎯 Tipo: ${typeof result.uid}`);
+                addLog(`📏 Tamanho: ${result.uid?.length}`);
+                addLog(`📦 Objeto completo:`);
+                addLog(JSON.stringify(result, null, 2));
+                
+            } catch (error) {
+                addLog('❌ EXCEPTION no fluxo real:');
+                addLog(error.message);
+                addLog(error.stack);
+            }
+        });
+        
+        // Limpar log
+        document.getElementById('clearLog').addEventListener('click', () => {
+            document.getElementById('debugOutput').textContent = '';
+            addLog('Log limpo - Pronto para novo teste');
+        });
+        
+        addLog('🚀 Debug carregado - Pronto para testar');
+        addLog('OBJETIVO: Identificar por que o UID real do Firebase não está sendo capturado');
+    </script>
+</body>
+</html> 

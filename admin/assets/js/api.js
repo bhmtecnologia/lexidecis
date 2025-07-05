@@ -97,9 +97,18 @@ export async function getCompanies(AuthService) {
 export async function fetchUsers(AuthService) {
   const user = AuthService.user;
   if (!user) throw new Error("Usuário não autenticado");
-  const token = await user.getIdToken();
   
-  const response = await fetch('https://webhook.power.tec.br/webhook/v1/users', {
+  console.log('[fetchUsers] 🔍 Iniciando busca de usuários...');
+  console.log('[fetchUsers] 👤 Usuário autenticado:', user.email);
+  
+  const token = await user.getIdToken();
+  console.log('[fetchUsers] 🔑 Token obtido:', token ? 'Presente' : 'Ausente');
+  console.log('[fetchUsers] 📏 Tamanho do token:', token?.length);
+  
+  const url = 'https://webhook.power.tec.br/webhook/v1/users';
+  console.log('[fetchUsers] 🔗 URL:', url);
+  
+  const response = await fetch(url, {
     method: "GET",
     headers: { 
       "Content-Type": "application/json",
@@ -107,17 +116,30 @@ export async function fetchUsers(AuthService) {
     }
   });
   
+  console.log('[fetchUsers] 📡 Response status:', response.status);
+  console.log('[fetchUsers] ✅ Response ok:', response.ok);
+  console.log('[fetchUsers] 📋 Response headers:', [...response.headers.entries()]);
+  
   const dataText = await response.text();
+  console.log('[fetchUsers] 📝 Raw response:', dataText);
+  console.log('[fetchUsers] 📏 Response length:', dataText.length);
+  
   let data;
   try {
     data = JSON.parse(dataText);
+    console.log('[fetchUsers] ✅ JSON parsed successfully');
+    console.log('[fetchUsers] 📊 Data type:', typeof data);
+    console.log('[fetchUsers] 📊 Data:', data);
   } catch (e) {
-    console.error("Erro ao converter resposta para JSON:", e);
-    console.error("Resposta recebida:", dataText);
+    console.error('[fetchUsers] ❌ Erro ao converter resposta para JSON:', e);
+    console.error('[fetchUsers] 📝 Resposta recebida:', dataText);
+    console.error('[fetchUsers] 📊 Response status:', response.status);
+    console.error('[fetchUsers] 📊 Response statusText:', response.statusText);
     throw new Error("Resposta da API inválida");
   }
   
   if (!Array.isArray(data)) data = [data];
+  console.log('[fetchUsers] 🎯 Final data:', data);
   return data;
 }
 

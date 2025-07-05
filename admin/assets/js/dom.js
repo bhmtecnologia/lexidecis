@@ -47,7 +47,7 @@ export function renderContent() {
                       <tr>
                         <th>Username</th>
                         <th>Email</th>
-                        <th>ID</th>
+                        <th>Firebase ID</th>
                         <th>É Admin</th>
                         <th>Company</th>
                         <th>Unit</th>
@@ -83,7 +83,7 @@ export function renderContent() {
                     <tr>
                       <th>Username</th>
                       <th>Email</th>
-                      <th>ID</th>
+                      <th>Firebase ID</th>
                       <th>É Admin</th>
                       <th>Company</th>
                       <th>Unit</th>
@@ -136,6 +136,21 @@ export function initializeDataTable() {
  * @param {Object} usersDataObj - Objeto para armazenar os dados dos usuários mapeados pelo ID.
  */
 export function updateUserTable(users, usersDataObj) {
+  console.log('[updateUserTable] 🔍 Dados recebidos:', users);
+  console.log('[updateUserTable] 📊 Quantidade de usuários:', users.length);
+  console.log('[updateUserTable] 🔥 Sistema simplificado: ID = Firebase UID');
+  
+  // Debug: verifica se os usuários têm IDs válidos do Firebase
+  users.forEach((user, index) => {
+    const isFirebaseUID = /^[a-zA-Z0-9]{28}$/.test(user.id);
+    console.log(`[updateUserTable] 👤 Usuário ${index + 1}:`, {
+      id: user.id,
+      email: user.email,
+      isFirebaseUID: isFirebaseUID,
+      idLength: user.id?.length
+    });
+  });
+  
   if ($.fn.DataTable.isDataTable("#data-table")) {
     const dt = $("#data-table").DataTable();
     dt.clear();
@@ -151,10 +166,17 @@ export function updateUserTable(users, usersDataObj) {
           </button>
         </div>
       `;
+      
+      // Verifica se o ID é um Firebase UID válido
+      const isFirebaseUID = /^[a-zA-Z0-9]{28}$/.test(user.id);
+      const idDisplay = isFirebaseUID ? 
+        `<span class="text-success" title="Firebase UID válido">${user.id}</span>` : 
+        `<span class="text-warning" title="ID legado">${user.id}</span>`;
+      
       return [
         user.username || '-',
         user.email || '-',
-        user.id || '-',
+        idDisplay,
         (typeof user.is_admin === 'boolean') ? (user.is_admin ? 'Sim' : 'Não') : '-',
         user.company_name || '-',
         user.unit_name || '-',
@@ -169,11 +191,18 @@ export function updateUserTable(users, usersDataObj) {
     tableBody.empty();
     users.forEach(user => {
       if (user.id) usersDataObj[user.id] = user;
+      
+      // Verifica se o ID é um Firebase UID válido
+      const isFirebaseUID = /^[a-zA-Z0-9]{28}$/.test(user.id);
+      const idDisplay = isFirebaseUID ? 
+        `<span class="text-success" title="Firebase UID válido">${user.id}</span>` : 
+        `<span class="text-warning" title="ID legado">${user.id}</span>`;
+      
       tableBody.append(`
         <tr>
           <td>${user.username || '-'}</td>
           <td>${user.email || '-'}</td>
-          <td>${user.id || '-'}</td>
+          <td>${idDisplay}</td>
           <td>${(typeof user.is_admin === 'boolean') ? (user.is_admin ? 'Sim' : 'Não') : '-'}</td>
           <td>${user.company_name || '-'}</td>
           <td>${user.unit_name || '-'}</td>

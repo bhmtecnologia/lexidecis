@@ -6,7 +6,7 @@
  *
  * @module main
  */
-import { createFirebaseUser, waitForReAuthentication, createUserWithRollback } from './firebase-utils.js';
+import { createFirebaseUserV2, processPendingFirebaseUids } from './firebase-utils-v2.js';
 
 export function initMain(AuthService, API, DOM) {
     let usersData = {};
@@ -24,6 +24,13 @@ export function initMain(AuthService, API, DOM) {
     // Renderiza o conteúdo principal da aplicação
     DOM.renderContent();
 
+    // Verifica se há UIDs pendentes do Firebase
+    const pendingUid = processPendingFirebaseUids();
+    if (pendingUid) {
+      console.log('[initMain] 🔍 UID pendente encontrado:', pendingUid);
+      alert(`✅ Login realizado!\n\n🔄 Processando usuário criado anteriormente:\n📧 ${pendingUid.email}\n🆔 UID: ${pendingUid.uid}`);
+    }
+
     // Mostra a seção protegida imediatamente
     const protectedSection = document.getElementById('protected-section');
     if (protectedSection) {
@@ -40,10 +47,6 @@ export function initMain(AuthService, API, DOM) {
 
     // Após renderizar, configurar todos os event listeners necessários
     waitForElementsAndSetupListeners();
-    
-    // Inicia o processamento de UIDs pendentes em background
-    const pendingUidsInterval = setInterval(processPendingFirebaseUids, 30000); // A cada 30 segundos
-    console.log('[initMain] Processamento de UIDs pendentes iniciado (a cada 30 segundos)');
 
     function waitForElementsAndSetupListeners() {
       // Procurar por ambos os IDs possíveis do botão "Novo Usuário"
@@ -192,42 +195,32 @@ export function initMain(AuthService, API, DOM) {
      * Busca os usuários na API, atualiza o mapeamento de units e atualiza a tabela.
      */
     async function refreshUsers() {
-      DOM.showOverlay();
+      console.log('[refreshUsers] 🔄 Buscando usuários...');
+      
       try {
-        const data = await API.fetchUsers(AuthService);
-        // Caso os registros venham apenas com unit_id, usamos a API de units para criar um mapeamento
-        const units = await API.getUnits(AuthService);
-        const unitMap = {};
-        if (Array.isArray(units)) {
-          units.forEach(unit => {
-            unitMap[unit.id] = unit.name;
-          });
-        } else {
-          unitMap[units.id] = units.name;
-        }
-        // Atualiza cada usuário: se não houver unit_name, usa o mapeamento
-        data.forEach(user => {
-          if (user.unit_id && !user.unit_name) {
-            user.unit_name = unitMap[user.unit_id] || "Unidade Desconhecida";
-          }
+        const users = await API.fetchUsers(AuthService);
+        console.log('[refreshUsers] 📥 Usuários recebidos da API:', users);
+        console.log('[refreshUsers] 📊 Quantidade:', users.length);
+        
+        // Não precisa mais contar firebase_uid pois agora o ID é o Firebase UID
+        console.log('[refreshUsers] 🔥 Sistema simplificado: ID = Firebase UID');
+        
+        // Atualiza o mapeamento de dados dos usuários
+        usersData = {};
+        users.forEach(user => {
+          usersData[user.id] = user;
         });
-        updateTable(data);
+        
+        // Atualiza a tabela
+        DOM.updateUserTable(users, usersData);
+        
       } catch (error) {
-        console.error("Erro ao buscar dados:", error);
-      } finally {
-        DOM.hideOverlay();
+        console.error('[refreshUsers] ❌ Erro ao buscar usuários:', error);
+        alert('Erro ao carregar usuários. Verifique sua conexão.');
       }
     }
   
-    /**
-     * Atualiza a tabela de usuários utilizando os dados obtidos.
-     *
-     * @param {Array} users - Array de objetos de usuário.
-     */
-    function updateTable(users) {
-      usersData = {};
-      DOM.updateUserTable(users, usersData);
-    }
+
   
     /**
      * Cria o formulário de criação de usuário no modal.
@@ -256,24 +249,18 @@ export function initMain(AuthService, API, DOM) {
         <form id="createUserForm" class="needs-validation" novalidate>
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label for="id" class="form-label">ID <small class="text-muted">(gerado automaticamente)</small></label>
-              <input type="text" class="form-control" id="id" readonly placeholder="Será gerado automaticamente">
-              <div class="invalid-feedback">ID gerado automaticamente.</div>
-            </div>
-            <div class="col-md-6 mb-3">
-              <label for="username" class="form-label">Username</label>
-              <input type="text" class="form-control" id="username" required>
-              <div class="invalid-feedback">Por favor, insira um username válido.</div>
-            </div>
-            <div class="col-md-6 mb-3">
-              <label for="email" class="form-label">Email</label>
+              <label for="email" class="form-label">Email *</label>
               <input type="email" class="form-control" id="email" required>
-              <div class="invalid-feedback">Por favor, insira um email válido.</div>
+              <small class="form-text text-muted">O Firebase UID será usado como ID automaticamente</small>
             </div>
             <div class="col-md-6 mb-3">
-              <label for="password" class="form-label">Senha</label>
+              <label for="password" class="form-label">Senha *</label>
               <input type="password" class="form-control" id="password" required minlength="6">
-              <div class="invalid-feedback">Por favor, insira uma senha com pelo menos 6 caracteres.</div>
+              <small class="form-text text-muted">Mínimo 6 caracteres</small>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="username" class="form-label">Username *</label>
+              <input type="text" class="form-control" id="username" required>
             </div>
             <div class="col-md-6 mb-3">
               <label for="is_admin" class="form-label">É Admin</label>
@@ -283,13 +270,13 @@ export function initMain(AuthService, API, DOM) {
               </select>
             </div>
             <div class="col-md-6 mb-3">
-              <label for="create_company_id" class="form-label">Company</label>
+              <label for="create_company_id" class="form-label">Company *</label>
               <select class="form-control" id="create_company_id" required>
                 <option value="">Carregando...</option>
               </select>
             </div>
             <div class="col-md-6 mb-3">
-              <label for="create_unit_id" class="form-label">Unit</label>
+              <label for="create_unit_id" class="form-label">Unit *</label>
               <select class="form-control" id="create_unit_id" required>
                 <option value="">Carregando...</option>
               </select>
@@ -306,264 +293,127 @@ export function initMain(AuthService, API, DOM) {
               </select>
             </div>
           </div>
-          <div id="createUserError" class="alert alert-danger d-none" role="alert"></div>
+          <div id="createUserError" class="text-danger d-none"></div>
         </form>
       `;
       
       // Injeta o HTML no modal
       modalBody.innerHTML = formHTML;
       
-      // Adiciona listener para gerar ID automaticamente baseado no email
-      const emailInput = document.getElementById('email');
-      const idInput = document.getElementById('id');
-      
-      emailInput.addEventListener('input', function() {
-        const email = emailInput.value.trim();
-        if (email) {
-          // Gera ID baseado no email + timestamp
-          const emailPrefix = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '');
-          const timestamp = Date.now().toString().slice(-6); // Últimos 6 dígitos do timestamp
-          const generatedId = `${emailPrefix}_${timestamp}`;
-          idInput.value = generatedId;
-        } else {
-          idInput.value = '';
-        }
-      });
-      
       console.log('[createUserForm] Formulário criado com sucesso');
     }
 
-    // Lista de UIDs pendentes para salvar
-    const pendingFirebaseUids = [];
-    
-    /**
-     * Adiciona um UID pendente para salvar em background
-     */
-    function addPendingFirebaseUid(userId, firebaseUid) {
-      pendingFirebaseUids.push({ userId, firebaseUid, timestamp: Date.now() });
-      console.log(`[addPendingFirebaseUid] Adicionado UID pendente:`, { userId, firebaseUid });
-    }
-    
-    /**
-     * Processa UIDs pendentes em background
-     */
-    async function processPendingFirebaseUids() {
-      if (pendingFirebaseUids.length === 0) return;
-      
-      console.log(`[processPendingFirebaseUids] Processando ${pendingFirebaseUids.length} UIDs pendentes...`);
-      
-      for (let i = pendingFirebaseUids.length - 1; i >= 0; i--) {
-        const pending = pendingFirebaseUids[i];
-        
-        try {
-          const success = await tryUpdateFirebaseUid(pending.userId, pending.firebaseUid, 1);
-          
-          if (success) {
-            console.log(`[processPendingFirebaseUids] ✅ UID salvo com sucesso:`, pending);
-            pendingFirebaseUids.splice(i, 1);
-          } else {
-            // Remove UIDs muito antigos (mais de 10 minutos)
-            const tenMinutesAgo = Date.now() - (10 * 60 * 1000);
-            if (pending.timestamp < tenMinutesAgo) {
-              console.log(`[processPendingFirebaseUids] ⚠️ UID muito antigo, removendo:`, pending);
-              pendingFirebaseUids.splice(i, 1);
-            }
-          }
-        } catch (error) {
-          console.warn(`[processPendingFirebaseUids] Erro ao processar UID:`, pending, error);
-        }
-      }
-    }
-    
-    /**
-     * Tenta salvar o firebase_uid no PostgreSQL com retry automático
-     */
-    async function tryUpdateFirebaseUid(userId, firebaseUid, maxRetries = 3) {
-      console.log(`[tryUpdateFirebaseUid] Tentando salvar firebase_uid para usuário ${userId}...`);
-      
-      for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        try {
-          console.log(`[tryUpdateFirebaseUid] Tentativa ${attempt}/${maxRetries}`);
-          
-          // Verifica se o AuthService ainda está válido
-          if (!AuthService.user) {
-            console.log(`[tryUpdateFirebaseUid] AuthService sem usuário, aguardando...`);
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            continue;
-          }
-          
-          const updatePayload = {
-            id: userId,
-            firebase_uid: firebaseUid
-          };
-          
-          console.log(`[tryUpdateFirebaseUid] Fazendo update:`, updatePayload);
-          await API.updateUser(AuthService, updatePayload);
-          
-          console.log(`[tryUpdateFirebaseUid] ✅ SUCESSO na tentativa ${attempt}!`);
-          return true;
-          
-        } catch (error) {
-          console.warn(`[tryUpdateFirebaseUid] ❌ Erro na tentativa ${attempt}:`, error);
-          
-          if (attempt < maxRetries) {
-            console.log(`[tryUpdateFirebaseUid] Aguardando 2 segundos antes da próxima tentativa...`);
-            await new Promise(resolve => setTimeout(resolve, 2000));
-          }
-        }
-      }
-      
-      console.error(`[tryUpdateFirebaseUid] ❌ Falha após ${maxRetries} tentativas`);
-      return false;
-    }
+
     
     /**
      * Manipula a criação de um novo usuário.
+     * Agora usa Firebase UID como ID principal - sistema simplificado!
      */
     async function handleCreateUser() {
       const errorDiv = document.getElementById('createUserError');
       errorDiv.classList.add('d-none');
-      
+
       // Coleta os dados do formulário
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
-      let userId = document.getElementById('id').value.trim();
-      
-      // Gera ID automaticamente se estiver vazio
-      if (!userId && email) {
-        const emailPrefix = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '');
-        const timestamp = Date.now().toString().slice(-6);
-        userId = `${emailPrefix}_${timestamp}`;
-        document.getElementById('id').value = userId;
-      }
-      
-      const payload = {
-        id: userId,
-        username: document.getElementById('username').value.trim(),
-        email: email,
-        is_admin: document.getElementById('is_admin').value === "true",
-        company_id: document.getElementById('create_company_id').value,
-        unit_id: document.getElementById('create_unit_id').value,
-        remote_jid: document.getElementById('remote_jid').value.trim() || null,
-        whatsapp: document.getElementById('whatsapp').value === "true"
-      };
-      
+      const username = document.getElementById('username').value.trim();
+
       // Validações básicas
-      if (!email || !password) {
-        errorDiv.textContent = 'Email e senha são obrigatórios.';
+      if (!email || !password || !username) {
+        errorDiv.textContent = 'Email, senha e username são obrigatórios.';
         errorDiv.classList.remove('d-none');
         return;
       }
-      
-      if (!userId) {
-        errorDiv.textContent = 'Erro ao gerar ID do usuário. Verifique se o email está preenchido.';
-        errorDiv.classList.remove('d-none');
-        return;
-      }
-      
+
       if (password.length < 6) {
         errorDiv.textContent = 'A senha deve ter pelo menos 6 caracteres.';
         errorDiv.classList.remove('d-none');
         return;
       }
-      
+
       try {
         // Exibe mensagem de carregamento
-        errorDiv.textContent = 'Criando usuário...';
+        errorDiv.textContent = 'Criando usuário no Firebase...';
         errorDiv.className = 'alert alert-info';
+
+        // PRIMEIRO: Cria usuário no Firebase e obtém o UID
+        console.log('[handleCreateUser] 🚀 Criando usuário no Firebase...');
+        const firebaseUser = await createFirebaseUserV2(email, password);
         
-        // PRIMEIRO: Tenta criar no banco SEM Firebase, para testar se a API funciona
-        console.log('[handleCreateUser] Testando criação no banco primeiro...');
-        console.log('[handleCreateUser] Payload:', payload);
-        
-                try {
-          // Testa se a API básica funciona
-          await API.createUser(AuthService, payload);
-          console.log('[handleCreateUser] ✅ API PostgreSQL funcionando!');
+        console.log('[handleCreateUser] ✅ Firebase UID obtido:', firebaseUser.uid);
+
+        // Verifica se o admin foi deslogado
+        if (firebaseUser.adminLoggedOut || firebaseUser.needsRelogin) {
+          console.log('[handleCreateUser] 🚨 Admin foi deslogado - redirecionando');
           
-          // Se chegou aqui, a API funciona. Agora vamos tentar com Firebase
-          console.log('[handleCreateUser] Agora criando no Firebase...');
-          
-          // Cria usuário no Firebase
-          const firebaseUser = await createFirebaseUser(email, password);
-          console.log('[handleCreateUser] ✅ Usuário criado no Firebase!');
-          console.log('[handleCreateUser] 🔥 UID REAL do Firebase:', firebaseUser.uid);
-          console.log('[handleCreateUser] 📧 Email Firebase:', firebaseUser.email);
-          
-          console.log('[handleCreateUser] 🔗 Vinculando UID REAL do Firebase ao PostgreSQL...');
-          console.log('[handleCreateUser] 🆔 UID que será salvo:', firebaseUser.uid);
-          console.log('[handleCreateUser] 👤 Admin ainda logado:', firebaseUser.adminStillLoggedIn);
-          
-          // Como o admin não foi deslogado, podemos salvar diretamente
-          const updatePayload = {
-            id: payload.id,
-            firebase_uid: firebaseUser.uid // UID REAL do Firebase via REST API
-          };
-          
-          console.log('[handleCreateUser] 📦 Fazendo update direto:', updatePayload);
-          
-          try {
-            await API.updateUser(AuthService, updatePayload);
-            console.log('[handleCreateUser] ✅ SUCESSO: UID real do Firebase salvo no PostgreSQL!');
-            console.log('[handleCreateUser] 🎉 Usuário ID:', payload.id);
-            console.log('[handleCreateUser] 🔥 Firebase UID salvo:', firebaseUser.uid);
-            console.log('[handleCreateUser] ✅ Processo completo finalizado!');
-          } catch (updateError) {
-            console.warn('[handleCreateUser] ⚠️ Erro ao salvar firebase_uid:', updateError);
-            console.warn('[handleCreateUser] 🔥 UID que deveria ser salvo:', firebaseUser.uid);
-            console.warn('[handleCreateUser] 📝 Usuário ID:', payload.id);
-            
-            // Se falhar, usa o sistema de retry como backup
-            addPendingFirebaseUid(payload.id, firebaseUser.uid);
-            
-            // Mostra mensagem para o usuário sobre o erro
-            errorDiv.innerHTML = `
-              <strong>⚠️ Usuário criado parcialmente!</strong><br>
-              - ✅ Usuário criado no PostgreSQL<br>
-              - ✅ Usuário criado no Firebase<br>
-              - ❌ Erro ao vincular firebase_uid<br>
-              - 🔄 Sistema tentará salvar automaticamente<br>
-              <br>
-              <strong>Firebase UID:</strong> <code>${firebaseUser.uid}</code><br>
-              <strong>ID do usuário:</strong> <code>${payload.id}</code><br>
-              <br>
-              <small>O sistema continuará tentando salvar o UID automaticamente.</small>
-            `;
-            errorDiv.className = 'alert alert-warning';
-            return; // Não fecha o modal para o usuário ver a mensagem
-          }
-          
-        } catch (apiError) {
-          console.error('[handleCreateUser] ❌ Erro na API PostgreSQL:', apiError);
-          
-          // Se houver erro na API, mostra mensagem específica
-          if (apiError.message.includes('firebase_uid')) {
-            throw new Error('A API PostgreSQL não aceita o campo firebase_uid. Verifique a configuração do backend.');
-          } else if (apiError.message.includes('401') || apiError.message.includes('auth')) {
-            throw new Error('Erro de autenticação. Faça login novamente.');
-          } else if (apiError.message.includes('400')) {
-            throw new Error('Dados inválidos enviados para a API. Verifique os campos obrigatórios.');
-          } else {
-            throw new Error(`Erro na API PostgreSQL: ${apiError.message}`);
-          }
+          errorDiv.innerHTML = `
+            <strong>⚠️ Admin foi deslogado durante a criação!</strong><br>
+            <br>
+            ✅ <strong>Usuário criado no Firebase com sucesso</strong><br>
+            🆔 <strong>Firebase UID:</strong> <code>${firebaseUser.uid}</code><br>
+            📧 <strong>Email:</strong> <code>${firebaseUser.email}</code><br>
+            <br>
+            🔄 <strong>Faça login novamente para completar o processo.</strong><br>
+            <br>
+            <button onclick="window.location.href='login.html'" class="btn btn-primary">
+              🔐 Fazer Login Novamente
+            </button>
+          `;
+          errorDiv.className = 'alert alert-warning';
+          return;
         }
+
+        // SEGUNDO: Cria usuário no PostgreSQL usando Firebase UID como ID
+        errorDiv.textContent = 'Salvando usuário no banco de dados...';
         
-        // Sucesso - fecha o modal e atualiza a lista
-        console.log('[handleCreateUser] ✅ SUCESSO: Usuário criado em ambos os sistemas!');
-        const modal = bootstrap.Modal.getInstance(createUserModalElement);
-        modal.hide();
-        refreshUsers();
+        const payload = {
+          id: firebaseUser.uid, // 🔥 Firebase UID como ID principal!
+          username: username,
+          email: email,
+          is_admin: document.getElementById('is_admin').value === "true",
+          company_id: document.getElementById('create_company_id').value,
+          unit_id: document.getElementById('create_unit_id').value,
+          remote_jid: document.getElementById('remote_jid').value.trim() || null,
+          whatsapp: document.getElementById('whatsapp').value === "true"
+        };
+
+        console.log('[handleCreateUser] 📦 Payload para PostgreSQL:', payload);
+        console.log('[handleCreateUser] 🎯 ID será:', firebaseUser.uid);
+
+        await API.createUser(AuthService, payload);
+
+        // Sucesso total!
+        console.log('[handleCreateUser] ✅ SUCESSO TOTAL!');
         
+        errorDiv.innerHTML = `
+          <strong>✅ Usuário criado com sucesso!</strong><br>
+          <br>
+          🆔 <strong>ID:</strong> <code>${firebaseUser.uid}</code><br>
+          📧 <strong>Email:</strong> <code>${firebaseUser.email}</code><br>
+          👤 <strong>Username:</strong> <code>${username}</code><br>
+        `;
+        errorDiv.className = 'alert alert-success';
+
+        // Fecha o modal após 2 segundos e atualiza a lista
+        setTimeout(() => {
+          const modal = bootstrap.Modal.getInstance(createUserModalElement);
+          modal.hide();
+          refreshUsers();
+        }, 2000);
+
       } catch (error) {
-        console.error('[handleCreateUser] Erro ao criar usuário:', error);
+        console.error('[handleCreateUser] ❌ Erro:', error);
         
-        // Tenta identificar em qual etapa o erro ocorreu
         let errorMessage = 'Erro desconhecido ao criar usuário.';
         
-        if (error.message.includes('Firebase') || error.message.includes('auth/')) {
-          errorMessage = `Erro no Firebase: ${error.message}`;
-        } else if (error.message.includes('webhook') || error.message.includes('API')) {
-          errorMessage = `Erro na API: ${error.message}`;
+        if (error.message.includes('EMAIL_EXISTS') || error.message.includes('email-already-in-use')) {
+          errorMessage = 'Este email já está em uso.';
+        } else if (error.message.includes('WEAK_PASSWORD')) {
+          errorMessage = 'Senha muito fraca. Use pelo menos 6 caracteres.';
+        } else if (error.message.includes('INVALID_EMAIL')) {
+          errorMessage = 'Email inválido.';
+        } else if (error.message.includes('auth')) {
+          errorMessage = 'Erro de autenticação. Faça login novamente.';
         } else {
           errorMessage = error.message;
         }

@@ -174,6 +174,18 @@ body {
   border-top-right-radius: 18px;
   border-bottom-right-radius: 18px;
   overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Reset específico para sidebar */
+.admin-sidebar * {
+  box-sizing: border-box;
+}
+
+.admin-sidebar ul, .admin-sidebar li {
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 .admin-sidebar.collapsed {
   width: var(--sidebar-collapsed-width);
@@ -185,15 +197,29 @@ body {
   display: none;
 }
 .admin-sidebar-nav {
-  list-style: none;
-  margin: 0; padding: 0.5rem 0 0 0;
   flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0 0 0;
+}
+.admin-sidebar-nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
 }
 .admin-sidebar-nav li {
   width: 100%;
+  margin: 0;
+  padding: 0;
+  display: block;
+}
+
+/* Estilo específico para o primeiro item (Dashboard) */
+.admin-sidebar-nav li:first-child .admin-sidebar-link {
+  margin-top: 0;
 }
 .admin-sidebar-link {
   display: flex;
@@ -211,6 +237,9 @@ body {
   white-space: nowrap;
   position: relative;
   box-shadow: none;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
 }
 .admin-sidebar-link.active, .admin-sidebar-link:hover {
   background: rgba(156, 163, 175, 0.15);
@@ -221,10 +250,11 @@ body {
 .admin-sidebar-link.active::before {
   content: '';
   position: absolute;
-  left: 0;
-  top: 12px;
-  bottom: 12px;
-  width: 5px;
+  left: -2px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 60%;
+  width: 4px;
   border-radius: 6px;
   background: linear-gradient(180deg, var(--accent-pastel-dark) 0%, #8b5cf6 100%);
   box-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
@@ -235,6 +265,20 @@ body {
 }
 .admin-sidebar-link span {
   transition: opacity 0.2s;
+  flex-shrink: 0;
+}
+
+/* Forçar reset para links da sidebar */
+.admin-sidebar .admin-sidebar-link {
+  display: flex !important;
+  align-items: center !important;
+  text-decoration: none !important;
+  color: var(--sidebar-text) !important;
+}
+
+.admin-sidebar .admin-sidebar-link:hover,
+.admin-sidebar .admin-sidebar-link:focus {
+  text-decoration: none !important;
 }
 .admin-sidebar-footer {
   padding: 1.1rem 1.5rem 1.3rem 1.5rem;

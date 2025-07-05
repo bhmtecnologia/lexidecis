@@ -6,6 +6,8 @@
  *
  * @module main
  */
+import { createFirebaseUser, waitForReAuthentication, createUserWithRollback } from './firebase-utils.js';
+
 export function initMain(AuthService, API, DOM) {
     let usersData = {};
     // Elementos globais usados em vários pontos
@@ -250,9 +252,9 @@ export function initMain(AuthService, API, DOM) {
         <form id="createUserForm" class="needs-validation" novalidate>
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label for="id" class="form-label">ID</label>
-              <input type="text" class="form-control" id="id" required>
-              <div class="invalid-feedback">Por favor, insira um ID válido.</div>
+              <label for="id" class="form-label">ID <small class="text-muted">(gerado automaticamente)</small></label>
+              <input type="text" class="form-control" id="id" readonly placeholder="Será gerado automaticamente">
+              <div class="invalid-feedback">ID gerado automaticamente.</div>
             </div>
             <div class="col-md-6 mb-3">
               <label for="username" class="form-label">Username</label>
@@ -263,6 +265,11 @@ export function initMain(AuthService, API, DOM) {
               <label for="email" class="form-label">Email</label>
               <input type="email" class="form-control" id="email" required>
               <div class="invalid-feedback">Por favor, insira um email válido.</div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="password" class="form-label">Senha</label>
+              <input type="password" class="form-control" id="password" required minlength="6">
+              <div class="invalid-feedback">Por favor, insira uma senha com pelo menos 6 caracteres.</div>
             </div>
             <div class="col-md-6 mb-3">
               <label for="is_admin" class="form-label">É Admin</label>
@@ -302,6 +309,23 @@ export function initMain(AuthService, API, DOM) {
       // Injeta o HTML no modal
       modalBody.innerHTML = formHTML;
       
+      // Adiciona listener para gerar ID automaticamente baseado no email
+      const emailInput = document.getElementById('email');
+      const idInput = document.getElementById('id');
+      
+      emailInput.addEventListener('input', function() {
+        const email = emailInput.value.trim();
+        if (email) {
+          // Gera ID baseado no email + timestamp
+          const emailPrefix = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '');
+          const timestamp = Date.now().toString().slice(-6); // Últimos 6 dígitos do timestamp
+          const generatedId = `${emailPrefix}_${timestamp}`;
+          idInput.value = generatedId;
+        } else {
+          idInput.value = '';
+        }
+      });
+      
       console.log('[createUserForm] Formulário criado com sucesso');
     }
 
@@ -311,24 +335,128 @@ export function initMain(AuthService, API, DOM) {
     async function handleCreateUser() {
       const errorDiv = document.getElementById('createUserError');
       errorDiv.classList.add('d-none');
+      
+      // Coleta os dados do formulário
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      let userId = document.getElementById('id').value.trim();
+      
+      // Gera ID automaticamente se estiver vazio
+      if (!userId && email) {
+        const emailPrefix = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '');
+        const timestamp = Date.now().toString().slice(-6);
+        userId = `${emailPrefix}_${timestamp}`;
+        document.getElementById('id').value = userId;
+      }
+      
       const payload = {
-        id: document.getElementById('id').value.trim(),
+        id: userId,
         username: document.getElementById('username').value.trim(),
-        email: document.getElementById('email').value.trim(),
+        email: email,
         is_admin: document.getElementById('is_admin').value === "true",
         company_id: document.getElementById('create_company_id').value,
         unit_id: document.getElementById('create_unit_id').value,
         remote_jid: document.getElementById('remote_jid').value.trim() || null,
         whatsapp: document.getElementById('whatsapp').value === "true"
       };
+      
+      // Validações básicas
+      if (!email || !password) {
+        errorDiv.textContent = 'Email e senha são obrigatórios.';
+        errorDiv.classList.remove('d-none');
+        return;
+      }
+      
+      if (!userId) {
+        errorDiv.textContent = 'Erro ao gerar ID do usuário. Verifique se o email está preenchido.';
+        errorDiv.classList.remove('d-none');
+        return;
+      }
+      
+      if (password.length < 6) {
+        errorDiv.textContent = 'A senha deve ter pelo menos 6 caracteres.';
+        errorDiv.classList.remove('d-none');
+        return;
+      }
+      
       try {
-        await API.createUser(AuthService, payload);
+        // Exibe mensagem de carregamento
+        errorDiv.textContent = 'Criando usuário...';
+        errorDiv.className = 'alert alert-info';
+        
+        // PRIMEIRO: Tenta criar no banco SEM Firebase, para testar se a API funciona
+        console.log('[handleCreateUser] Testando criação no banco primeiro...');
+        console.log('[handleCreateUser] Payload:', payload);
+        
+        try {
+          // Testa se a API básica funciona
+          await API.createUser(AuthService, payload);
+          console.log('[handleCreateUser] ✅ API PostgreSQL funcionando!');
+          
+          // Se chegou aqui, a API funciona. Agora vamos tentar com Firebase
+          console.log('[handleCreateUser] Agora criando no Firebase...');
+          
+          // Cria usuário no Firebase
+          const firebaseUser = await createFirebaseUser(email, password);
+          console.log('[handleCreateUser] ✅ Usuário criado no Firebase:', firebaseUser);
+          
+          // Aguarda re-autenticação
+          await waitForReAuthentication(5000);
+          console.log('[handleCreateUser] ✅ Re-autenticação concluída');
+          
+          // Agora atualiza o usuário no banco com o firebase_uid
+          const updatePayload = {
+            id: payload.id,
+            firebase_uid: firebaseUser.uid
+          };
+          
+                     console.log('[handleCreateUser] Atualizando usuário com firebase_uid...', updatePayload);
+           
+           try {
+             await API.updateUser(AuthService, updatePayload);
+             console.log('[handleCreateUser] ✅ Processo completo finalizado!');
+           } catch (updateError) {
+             console.warn('[handleCreateUser] ⚠️ Erro ao adicionar firebase_uid, mas usuário foi criado em ambos sistemas:', updateError);
+             // Não falha completamente, pois o usuário já foi criado em ambos sistemas
+           }
+          
+        } catch (apiError) {
+          console.error('[handleCreateUser] ❌ Erro na API PostgreSQL:', apiError);
+          
+          // Se houver erro na API, mostra mensagem específica
+          if (apiError.message.includes('firebase_uid')) {
+            throw new Error('A API PostgreSQL não aceita o campo firebase_uid. Verifique a configuração do backend.');
+          } else if (apiError.message.includes('401') || apiError.message.includes('auth')) {
+            throw new Error('Erro de autenticação. Faça login novamente.');
+          } else if (apiError.message.includes('400')) {
+            throw new Error('Dados inválidos enviados para a API. Verifique os campos obrigatórios.');
+          } else {
+            throw new Error(`Erro na API PostgreSQL: ${apiError.message}`);
+          }
+        }
+        
+        // Sucesso - fecha o modal e atualiza a lista
+        console.log('[handleCreateUser] ✅ SUCESSO: Usuário criado em ambos os sistemas!');
         const modal = bootstrap.Modal.getInstance(createUserModalElement);
         modal.hide();
         refreshUsers();
+        
       } catch (error) {
-        errorDiv.textContent = error.message;
-        errorDiv.classList.remove('d-none');
+        console.error('[handleCreateUser] Erro ao criar usuário:', error);
+        
+        // Tenta identificar em qual etapa o erro ocorreu
+        let errorMessage = 'Erro desconhecido ao criar usuário.';
+        
+        if (error.message.includes('Firebase') || error.message.includes('auth/')) {
+          errorMessage = `Erro no Firebase: ${error.message}`;
+        } else if (error.message.includes('webhook') || error.message.includes('API')) {
+          errorMessage = `Erro na API: ${error.message}`;
+        } else {
+          errorMessage = error.message;
+        }
+        
+        errorDiv.textContent = errorMessage;
+        errorDiv.className = 'alert alert-danger';
       }
     }
   

@@ -243,6 +243,28 @@ export function populateUnitsSelect(selectId, units, currentId = "", currentName
     html = `<option value="${currentId}" selected>${currentName || "Unidade Desconhecida"}</option>` + html;
   }
   select.innerHTML = html;
+  
+  // Inicializar Select2 se jQuery estiver disponível
+  if (window.jQuery && jQuery.fn.select2) {
+    // Destroi Select2 anterior se existir
+    if (jQuery(`#${selectId}`).hasClass('select2-hidden-accessible')) {
+      jQuery(`#${selectId}`).select2('destroy');
+    }
+    
+    // Inicializa Select2 com configurações personalizadas
+    jQuery(`#${selectId}`).select2({
+      placeholder: 'Selecione uma unit',
+      allowClear: true,
+      searchInputPlaceholder: 'Buscar unit...',
+      dropdownParent: jQuery(`#${selectId}`).closest('.modal').length ? jQuery(`#${selectId}`).closest('.modal') : jQuery('body'),
+      language: {
+        noResults: () => 'Nenhuma unit encontrada',
+        searching: () => 'Buscando...',
+        loadingMore: () => 'Carregando mais resultados...',
+        errorLoading: () => 'Erro ao carregar resultados'
+      }
+    });
+  }
 }
 
 /**
@@ -275,4 +297,26 @@ export function populateCompaniesSelect(selectId, companies, currentId = "", cur
     html = `<option value="${currentId}" selected>${currentName || "Company Desconhecida"}</option>` + html;
   }
   select.innerHTML = html;
+  
+  // Inicializar Select2 se jQuery estiver disponível
+  if (window.jQuery && jQuery.fn.select2) {
+    // Destroi Select2 anterior se existir
+    if (jQuery(`#${selectId}`).hasClass('select2-hidden-accessible')) {
+      jQuery(`#${selectId}`).select2('destroy');
+    }
+    
+    // Inicializa Select2 com configurações personalizadas
+    jQuery(`#${selectId}`).select2({
+      placeholder: 'Selecione uma company',
+      allowClear: true,
+      searchInputPlaceholder: 'Buscar company...',
+      dropdownParent: jQuery(`#${selectId}`).closest('.modal').length ? jQuery(`#${selectId}`).closest('.modal') : jQuery('body'),
+      language: {
+        noResults: () => 'Nenhuma company encontrada',
+        searching: () => 'Buscando...',
+        loadingMore: () => 'Carregando mais resultados...',
+        errorLoading: () => 'Erro ao carregar resultados'
+      }
+    });
+  }
 }

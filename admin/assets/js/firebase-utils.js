@@ -9,7 +9,7 @@ import { auth } from './firebase.js';
 import { createUserWithEmailAndPassword, signOut, signInWithEmailAndPassword, deleteUser } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
 
 /**
- * Cria um usuário no Firebase Authentication
+ * Cria um usuário no Firebase Authentication SEM fazer logout
  * 
  * @param {string} email - Email do usuário
  * @param {string} password - Senha do usuário
@@ -20,6 +20,9 @@ export async function createFirebaseUser(email, password) {
     // Salva o usuário atual antes de criar o novo
     const currentUser = auth.currentUser;
     const currentUserEmail = currentUser?.email;
+    
+    console.log('[createFirebaseUser] 👤 Admin atual:', currentUserEmail);
+    console.log('[createFirebaseUser] 🚀 Criando usuário:', email);
     
     // Cria o novo usuário
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -35,21 +38,16 @@ export async function createFirebaseUser(email, password) {
       emailVerified: newUser.emailVerified
     });
     
-    // Faz logout do usuário recém-criado
+    // IMPORTANTE: Faz logout do usuário recém-criado
     await signOut(auth);
-    
-    // Autentica novamente o usuário administrador se existia
-    if (currentUserEmail && currentUser) {
-      // Aqui você precisa da senha do admin para fazer login novamente
-      // Por segurança, vamos apenas aguardar o sistema se autenticar automaticamente
-      console.log('[createFirebaseUser] Usuário criado com sucesso. Aguardando re-autenticação automática...');
-    }
+    console.log('[createFirebaseUser] 🔄 Logout do usuário recém-criado');
     
     const result = {
       uid: newUser.uid,
       email: newUser.email,
       emailVerified: newUser.emailVerified,
-      created: true
+      created: true,
+      previousAdmin: currentUserEmail
     };
     
     console.log('[createFirebaseUser] 🎯 Retornando UID:', result.uid);

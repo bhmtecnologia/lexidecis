@@ -40,6 +40,10 @@ export function initMain(AuthService, API, DOM) {
 
     // Após renderizar, configurar todos os event listeners necessários
     waitForElementsAndSetupListeners();
+    
+    // Inicia o processamento de UIDs pendentes em background
+    const pendingUidsInterval = setInterval(processPendingFirebaseUids, 30000); // A cada 30 segundos
+    console.log('[initMain] Processamento de UIDs pendentes iniciado (a cada 30 segundos)');
 
     function waitForElementsAndSetupListeners() {
       // Procurar por ambos os IDs possíveis do botão "Novo Usuário"
@@ -329,6 +333,90 @@ export function initMain(AuthService, API, DOM) {
       console.log('[createUserForm] Formulário criado com sucesso');
     }
 
+    // Lista de UIDs pendentes para salvar
+    const pendingFirebaseUids = [];
+    
+    /**
+     * Adiciona um UID pendente para salvar em background
+     */
+    function addPendingFirebaseUid(userId, firebaseUid) {
+      pendingFirebaseUids.push({ userId, firebaseUid, timestamp: Date.now() });
+      console.log(`[addPendingFirebaseUid] Adicionado UID pendente:`, { userId, firebaseUid });
+    }
+    
+    /**
+     * Processa UIDs pendentes em background
+     */
+    async function processPendingFirebaseUids() {
+      if (pendingFirebaseUids.length === 0) return;
+      
+      console.log(`[processPendingFirebaseUids] Processando ${pendingFirebaseUids.length} UIDs pendentes...`);
+      
+      for (let i = pendingFirebaseUids.length - 1; i >= 0; i--) {
+        const pending = pendingFirebaseUids[i];
+        
+        try {
+          const success = await tryUpdateFirebaseUid(pending.userId, pending.firebaseUid, 1);
+          
+          if (success) {
+            console.log(`[processPendingFirebaseUids] ✅ UID salvo com sucesso:`, pending);
+            pendingFirebaseUids.splice(i, 1);
+          } else {
+            // Remove UIDs muito antigos (mais de 10 minutos)
+            const tenMinutesAgo = Date.now() - (10 * 60 * 1000);
+            if (pending.timestamp < tenMinutesAgo) {
+              console.log(`[processPendingFirebaseUids] ⚠️ UID muito antigo, removendo:`, pending);
+              pendingFirebaseUids.splice(i, 1);
+            }
+          }
+        } catch (error) {
+          console.warn(`[processPendingFirebaseUids] Erro ao processar UID:`, pending, error);
+        }
+      }
+    }
+    
+    /**
+     * Tenta salvar o firebase_uid no PostgreSQL com retry automático
+     */
+    async function tryUpdateFirebaseUid(userId, firebaseUid, maxRetries = 3) {
+      console.log(`[tryUpdateFirebaseUid] Tentando salvar firebase_uid para usuário ${userId}...`);
+      
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          console.log(`[tryUpdateFirebaseUid] Tentativa ${attempt}/${maxRetries}`);
+          
+          // Verifica se o AuthService ainda está válido
+          if (!AuthService.user) {
+            console.log(`[tryUpdateFirebaseUid] AuthService sem usuário, aguardando...`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            continue;
+          }
+          
+          const updatePayload = {
+            id: userId,
+            firebase_uid: firebaseUid
+          };
+          
+          console.log(`[tryUpdateFirebaseUid] Fazendo update:`, updatePayload);
+          await API.updateUser(AuthService, updatePayload);
+          
+          console.log(`[tryUpdateFirebaseUid] ✅ SUCESSO na tentativa ${attempt}!`);
+          return true;
+          
+        } catch (error) {
+          console.warn(`[tryUpdateFirebaseUid] ❌ Erro na tentativa ${attempt}:`, error);
+          
+          if (attempt < maxRetries) {
+            console.log(`[tryUpdateFirebaseUid] Aguardando 2 segundos antes da próxima tentativa...`);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          }
+        }
+      }
+      
+      console.error(`[tryUpdateFirebaseUid] ❌ Falha após ${maxRetries} tentativas`);
+      return false;
+    }
+    
     /**
      * Manipula a criação de um novo usuário.
      */
@@ -388,7 +476,7 @@ export function initMain(AuthService, API, DOM) {
         console.log('[handleCreateUser] Testando criação no banco primeiro...');
         console.log('[handleCreateUser] Payload:', payload);
         
-        try {
+                try {
           // Testa se a API básica funciona
           await API.createUser(AuthService, payload);
           console.log('[handleCreateUser] ✅ API PostgreSQL funcionando!');
@@ -402,31 +490,45 @@ export function initMain(AuthService, API, DOM) {
           console.log('[handleCreateUser] 🔥 UID REAL do Firebase:', firebaseUser.uid);
           console.log('[handleCreateUser] 📧 Email Firebase:', firebaseUser.email);
           
-          // Aguarda re-autenticação
-          await waitForReAuthentication(5000);
-          console.log('[handleCreateUser] ✅ Re-autenticação concluída');
-          
-          // Agora atualiza o usuário no banco com o firebase_uid REAL
-          const updatePayload = {
-            id: payload.id,
-            firebase_uid: firebaseUser.uid // <-- Este é o UID REAL do usuário criado no Firebase
-          };
-          
           console.log('[handleCreateUser] 🔗 Vinculando UID REAL do Firebase ao PostgreSQL...');
-          console.log('[handleCreateUser] 📦 Payload de atualização:', updatePayload);
           console.log('[handleCreateUser] 🆔 UID que será salvo:', firebaseUser.uid);
-           
-           try {
-             await API.updateUser(AuthService, updatePayload);
-             console.log('[handleCreateUser] ✅ SUCESSO: UID real do Firebase salvo no PostgreSQL!');
-             console.log('[handleCreateUser] 🎉 Usuário ID:', payload.id);
-             console.log('[handleCreateUser] 🔥 Firebase UID salvo:', firebaseUser.uid);
-             console.log('[handleCreateUser] ✅ Processo completo finalizado!');
-           } catch (updateError) {
-             console.warn('[handleCreateUser] ⚠️ Erro ao adicionar firebase_uid, mas usuário foi criado em ambos sistemas:', updateError);
-             console.warn('[handleCreateUser] 🔥 UID que deveria ser salvo:', firebaseUser.uid);
-             // Não falha completamente, pois o usuário já foi criado em ambos sistemas
-           }
+          
+          // Aguarda alguns segundos para o sistema se estabilizar
+          console.log('[handleCreateUser] ⏱️ Aguardando 2 segundos para estabilizar...');
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          // Usa a função de retry para tentar salvar o firebase_uid
+          const updateSuccess = await tryUpdateFirebaseUid(payload.id, firebaseUser.uid);
+          
+          if (updateSuccess) {
+            console.log('[handleCreateUser] ✅ SUCESSO: UID real do Firebase salvo no PostgreSQL!');
+            console.log('[handleCreateUser] 🎉 Usuário ID:', payload.id);
+            console.log('[handleCreateUser] 🔥 Firebase UID salvo:', firebaseUser.uid);
+            console.log('[handleCreateUser] ✅ Processo completo finalizado!');
+          } else {
+            console.warn('[handleCreateUser] ⚠️ Falha ao salvar firebase_uid após múltiplas tentativas');
+            console.warn('[handleCreateUser] 🔥 UID que deveria ser salvo:', firebaseUser.uid);
+            console.warn('[handleCreateUser] 📝 Usuário ID:', payload.id);
+            
+            // Adiciona o UID à lista pendente para tentar salvar em background
+            addPendingFirebaseUid(payload.id, firebaseUser.uid);
+            
+            // Mostra mensagem para o usuário sobre o erro
+            errorDiv.innerHTML = `
+              <strong>⚠️ Usuário criado parcialmente!</strong><br>
+              - ✅ Usuário criado no PostgreSQL<br>
+              - ✅ Usuário criado no Firebase<br>
+              - ❌ Erro ao vincular firebase_uid (após múltiplas tentativas)<br>
+              - 🔄 Tentativas automáticas em background ativas<br>
+              <br>
+              <strong>Firebase UID:</strong> <code>${firebaseUser.uid}</code><br>
+              <strong>ID do usuário:</strong> <code>${payload.id}</code><br>
+              <br>
+              <small>O sistema continuará tentando salvar o UID automaticamente em background.</small>
+            `;
+            errorDiv.className = 'alert alert-warning';
+            return; // Não fecha o modal para o usuário ver a mensagem
+          }
           
         } catch (apiError) {
           console.error('[handleCreateUser] ❌ Erro na API PostgreSQL:', apiError);

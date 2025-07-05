@@ -19,9 +19,10 @@ Quando um usuário é criado através da interface administrativa:
 1. **Validação** - Verifica se email e senha são válidos
 2. **PostgreSQL** - Cria o usuário no banco de dados próprio (SEM firebase_uid)
 3. **Firebase Auth** - Cria o usuário no Firebase Authentication
-4. **Re-autenticação** - Restaura a sessão do administrador
-5. **Atualização** - Adiciona o firebase_uid ao usuário no PostgreSQL via update
-6. **Logs detalhados** - Cada etapa é logada para facilitar debug
+4. **Estabilização** - Aguarda 2 segundos para o sistema se estabilizar
+5. **Atualização com Retry** - Tenta salvar o firebase_uid até 3 vezes
+6. **Background Processing** - Se falhar, adiciona à lista para retry automático
+7. **Logs detalhados** - Cada etapa é logada para facilitar debug
 
 ### 2. Tratamento de Erros
 
@@ -218,6 +219,28 @@ firebase_uid: newUser.uid  // <-- UID REAL gerado pelo Firebase
 - `[handleCreateUser] 🔥 UID REAL do Firebase: [uid-real]`
 - `[handleCreateUser] 🆔 UID que será salvo: [uid-real]`
 - `[handleCreateUser] 🔥 Firebase UID salvo: [uid-real]`
+
+## Processamento em Background
+
+**Problema resolvido**: Admin sendo deslogado durante a criação de usuário.
+
+**Solução implementada**:
+1. ✅ **Retry automático** - Até 3 tentativas imediatas
+2. ✅ **Background processing** - UIDs pendentes são processados a cada 30 segundos
+3. ✅ **Sem re-autenticação** - Evita logout do admin
+4. ✅ **Logs detalhados** - Mostra exatamente onde está falhando
+
+**Funcionalidades**:
+- `tryUpdateFirebaseUid()` - Tenta salvar o UID com retry
+- `addPendingFirebaseUid()` - Adiciona UID à lista pendente
+- `processPendingFirebaseUids()` - Processa UIDs pendentes em background
+- **Limpeza automática** - Remove UIDs muito antigos (10 minutos)
+
+**Logs do processamento**:
+- `[tryUpdateFirebaseUid] Tentativa 1/3`
+- `[addPendingFirebaseUid] Adicionado UID pendente`
+- `[processPendingFirebaseUids] Processando UIDs pendentes`
+- `[processPendingFirebaseUids] ✅ UID salvo com sucesso`
 
 ## Melhorias Futuras
 

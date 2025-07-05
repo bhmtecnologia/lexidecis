@@ -398,25 +398,33 @@ export function initMain(AuthService, API, DOM) {
           
           // Cria usuário no Firebase
           const firebaseUser = await createFirebaseUser(email, password);
-          console.log('[handleCreateUser] ✅ Usuário criado no Firebase:', firebaseUser);
+          console.log('[handleCreateUser] ✅ Usuário criado no Firebase!');
+          console.log('[handleCreateUser] 🔥 UID REAL do Firebase:', firebaseUser.uid);
+          console.log('[handleCreateUser] 📧 Email Firebase:', firebaseUser.email);
           
           // Aguarda re-autenticação
           await waitForReAuthentication(5000);
           console.log('[handleCreateUser] ✅ Re-autenticação concluída');
           
-          // Agora atualiza o usuário no banco com o firebase_uid
+          // Agora atualiza o usuário no banco com o firebase_uid REAL
           const updatePayload = {
             id: payload.id,
-            firebase_uid: firebaseUser.uid
+            firebase_uid: firebaseUser.uid // <-- Este é o UID REAL do usuário criado no Firebase
           };
           
-                     console.log('[handleCreateUser] Atualizando usuário com firebase_uid...', updatePayload);
+          console.log('[handleCreateUser] 🔗 Vinculando UID REAL do Firebase ao PostgreSQL...');
+          console.log('[handleCreateUser] 📦 Payload de atualização:', updatePayload);
+          console.log('[handleCreateUser] 🆔 UID que será salvo:', firebaseUser.uid);
            
            try {
              await API.updateUser(AuthService, updatePayload);
+             console.log('[handleCreateUser] ✅ SUCESSO: UID real do Firebase salvo no PostgreSQL!');
+             console.log('[handleCreateUser] 🎉 Usuário ID:', payload.id);
+             console.log('[handleCreateUser] 🔥 Firebase UID salvo:', firebaseUser.uid);
              console.log('[handleCreateUser] ✅ Processo completo finalizado!');
            } catch (updateError) {
              console.warn('[handleCreateUser] ⚠️ Erro ao adicionar firebase_uid, mas usuário foi criado em ambos sistemas:', updateError);
+             console.warn('[handleCreateUser] 🔥 UID que deveria ser salvo:', firebaseUser.uid);
              // Não falha completamente, pois o usuário já foi criado em ambos sistemas
            }
           

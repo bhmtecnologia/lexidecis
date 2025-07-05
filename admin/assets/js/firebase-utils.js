@@ -25,6 +25,16 @@ export async function createFirebaseUser(email, password) {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const newUser = userCredential.user;
     
+    // Logs detalhados do usuário criado
+    console.log('[createFirebaseUser] 🔥 Usuário Firebase criado!');
+    console.log('[createFirebaseUser] 🆔 UID REAL gerado:', newUser.uid);
+    console.log('[createFirebaseUser] 📧 Email:', newUser.email);
+    console.log('[createFirebaseUser] ✅ Dados completos:', {
+      uid: newUser.uid,
+      email: newUser.email,
+      emailVerified: newUser.emailVerified
+    });
+    
     // Faz logout do usuário recém-criado
     await signOut(auth);
     
@@ -35,12 +45,15 @@ export async function createFirebaseUser(email, password) {
       console.log('[createFirebaseUser] Usuário criado com sucesso. Aguardando re-autenticação automática...');
     }
     
-    return {
+    const result = {
       uid: newUser.uid,
       email: newUser.email,
       emailVerified: newUser.emailVerified,
       created: true
     };
+    
+    console.log('[createFirebaseUser] 🎯 Retornando UID:', result.uid);
+    return result;
     
   } catch (error) {
     console.error('[createFirebaseUser] Erro ao criar usuário:', error);

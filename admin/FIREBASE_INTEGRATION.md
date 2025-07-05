@@ -190,13 +190,34 @@ Em caso de erro após criação no Firebase:
 1. ✅ Criar usuário no PostgreSQL SEM firebase_uid
 2. ✅ Criar usuário no Firebase Authentication
 3. ✅ Re-autenticar administrador
-4. ✅ Atualizar usuário no PostgreSQL COM firebase_uid
+4. ✅ Atualizar usuário no PostgreSQL COM firebase_uid **REAL**
 
 **Vantagens**:
 - API PostgreSQL funciona normalmente
 - Firebase continua funcionando
 - Integração completa sem conflitos
 - Logs detalhados para debug fácil
+- **UID REAL do Firebase** é usado (não gerado artificialmente)
+
+## Confirmação do UID Real
+
+**Garantia técnica**: O sistema usa o UID **REAL** do Firebase, não um UUID gerado artificialmente.
+
+**Evidência no código**:
+```javascript
+// Firebase retorna o usuário real
+const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+const newUser = userCredential.user;
+
+// Usamos o UID REAL do Firebase
+firebase_uid: newUser.uid  // <-- UID REAL gerado pelo Firebase
+```
+
+**Logs para confirmação**:
+- `[createFirebaseUser] 🆔 UID REAL gerado: [uid-real]`
+- `[handleCreateUser] 🔥 UID REAL do Firebase: [uid-real]`
+- `[handleCreateUser] 🆔 UID que será salvo: [uid-real]`
+- `[handleCreateUser] 🔥 Firebase UID salvo: [uid-real]`
 
 ## Melhorias Futuras
 

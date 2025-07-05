@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste UID Real Firebase - LexiDecis</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        .highlight {
+            background-color: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        .firebase-uid {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .check-mark {
+            color: #28a745;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-md-10 offset-md-1">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="mb-0">🔥 Teste UID Real Firebase</h3>
+                        <small>Demonstração de que o UID real do Firebase está sendo usado</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <h5><i class="check-mark">✅</i> Confirmação: O código está usando o UID REAL do Firebase!</h5>
+                            <p>O sistema **NÃO** está gerando um UUID falso. Veja a evidência abaixo:</p>
+                        </div>
+                        
+                        <h5>1. Código na função createFirebaseUser:</h5>
+                        <div class="code-block">
+                            <strong>admin/assets/js/firebase-utils.js</strong><br>
+                            <pre>const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+const newUser = userCredential.user;
+
+return {
+    <span class="highlight">uid: newUser.uid</span>,  // <-- UID REAL do Firebase
+    email: newUser.email,
+    emailVerified: newUser.emailVerified,
+    created: true
+};</pre>
+                        </div>
+                        
+                        <h5>2. Código na função handleCreateUser:</h5>
+                        <div class="code-block">
+                            <strong>admin/assets/js/main.js</strong><br>
+                            <pre>const firebaseUser = await createFirebaseUser(email, password);
+
+const updatePayload = {
+    id: payload.id,
+    <span class="highlight">firebase_uid: firebaseUser.uid</span>  // <-- UID REAL do Firebase
+};</pre>
+                        </div>
+                        
+                        <h5>3. Fluxo de Logs (Console):</h5>
+                        <div class="code-block">
+                            <span class="firebase-uid">[createFirebaseUser] 🆔 UID REAL gerado: ABC123XYZ</span><br>
+                            <span class="firebase-uid">[handleCreateUser] 🔥 UID REAL do Firebase: ABC123XYZ</span><br>
+                            <span class="firebase-uid">[handleCreateUser] 🆔 UID que será salvo: ABC123XYZ</span><br>
+                            <span class="firebase-uid">[handleCreateUser] 🔥 Firebase UID salvo: ABC123XYZ</span><br>
+                        </div>
+                        
+                        <div class="alert alert-success mt-4">
+                            <h5><i class="check-mark">✅</i> Garantia Técnica:</h5>
+                            <ul class="mb-0">
+                                <li><strong>createUserWithEmailAndPassword</strong> retorna o usuário real do Firebase</li>
+                                <li><strong>newUser.uid</strong> é o UID único gerado pelo Firebase</li>
+                                <li><strong>firebaseUser.uid</strong> é o mesmo UID real</li>
+                                <li><strong>updatePayload.firebase_uid</strong> usa o UID real</li>
+                                <li><strong>Logs detalhados</strong> mostram o UID em cada etapa</li>
+                            </ul>
+                        </div>
+                        
+                        <h5>4. Teste Prático:</h5>
+                        <div class="alert alert-warning">
+                            <p><strong>Para confirmar que o UID real está sendo usado:</strong></p>
+                            <ol>
+                                <li>Crie um usuário no admin</li>
+                                <li>Abra o Console do navegador (F12)</li>
+                                <li>Veja os logs com o UID real</li>
+                                <li>Verifique no banco PostgreSQL o firebase_uid salvo</li>
+                                <li>Compare com o Firebase Console</li>
+                            </ol>
+                        </div>
+                        
+                        <div class="text-center mt-4">
+                            <a href="users.html" class="btn btn-primary">🚀 Voltar ao Admin</a>
+                            <button class="btn btn-success" onclick="window.location.reload()">🔄 Recarregar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

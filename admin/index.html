@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="assets/css/admin-layout.css">
   <link rel="stylesheet" href="assets/css/admin.css">
   <script src="assets/js/layout.js" defer></script>
+  <script src="assets/js/status-indicator.js" defer></script>
   <script type="module" src="assets/js/auth-guard.js"></script>
 </head>
 <body>
@@ -51,7 +52,138 @@
           </a>
         </div>
         
-        <div class="dashboard-stats mt-5">
+        <!-- Status das LLs (Large Language Models) -->
+        <div class="dashboard-llm-status mt-5">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">
+                <i class="bi bi-cpu-fill"></i> Status dos Serviços de IA
+                <small class="text-muted">(Monitoramento em Tempo Real)</small>
+              </h5>
+              <div class="llm-status-grid">
+                <div class="llm-service-card" data-openai-status>
+                  <div class="llm-service-icon">
+                    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/openai/openai-original.svg" alt="OpenAI" onerror="this.style.display='none'">
+                    <i class="bi bi-robot" style="display:none;"></i>
+                  </div>
+                  <div class="llm-service-info">
+                    <div class="llm-service-name">OpenAI</div>
+                    <div class="llm-service-desc">GPT, DALL-E, Whisper</div>
+                  </div>
+                  <div class="llm-service-status">
+                    <!-- Status indicator será injetado aqui -->
+                  </div>
+                </div>
+
+                <div class="llm-service-card" data-gemini-status>
+                  <div class="llm-service-icon">
+                    <i class="bi bi-gem"></i>
+                  </div>
+                  <div class="llm-service-info">
+                    <div class="llm-service-name">Google Gemini</div>
+                    <div class="llm-service-desc">Bard, Gemini Pro</div>
+                  </div>
+                  <div class="llm-service-status">
+                    <!-- Status indicator será injetado aqui -->
+                  </div>
+                </div>
+
+                <div class="llm-service-card" data-anthropic-status>
+                  <div class="llm-service-icon">
+                    <i class="bi bi-chat-square-text"></i>
+                  </div>
+                  <div class="llm-service-info">
+                    <div class="llm-service-name">Anthropic</div>
+                    <div class="llm-service-desc">Claude, Claude Sonnet</div>
+                  </div>
+                  <div class="llm-service-status">
+                    <!-- Status indicator será injetado aqui -->
+                  </div>
+                </div>
+
+                <div class="llm-service-card" data-deepseek-status>
+                  <div class="llm-service-icon">
+                    <i class="bi bi-search"></i>
+                  </div>
+                  <div class="llm-service-info">
+                    <div class="llm-service-name">DeepSeek</div>
+                    <div class="llm-service-desc">DeepSeek Coder</div>
+                  </div>
+                  <div class="llm-service-status">
+                    <!-- Status indicator será injetado aqui -->
+                  </div>
+                </div>
+
+                <div class="llm-service-card" data-groq-status>
+                  <div class="llm-service-icon">
+                    <i class="bi bi-lightning-fill"></i>
+                  </div>
+                  <div class="llm-service-info">
+                    <div class="llm-service-name">Groq</div>
+                    <div class="llm-service-desc">Llama, Mixtral</div>
+                  </div>
+                  <div class="llm-service-status">
+                    <!-- Status indicator será injetado aqui -->
+                  </div>
+                </div>
+
+                <div class="llm-service-card" data-flowise-status>
+                  <div class="llm-service-icon">
+                    <i class="bi bi-diagram-3-fill"></i>
+                  </div>
+                  <div class="llm-service-info">
+                    <div class="llm-service-name">Motor de IA</div>
+                    <div class="llm-service-desc">Flowise Engine</div>
+                  </div>
+                  <div class="llm-service-status">
+                    <!-- Status indicator será injetado aqui -->
+                  </div>
+                </div>
+
+                <div class="llm-service-card" data-n8n-status>
+                  <div class="llm-service-icon">
+                    <i class="bi bi-gear-fill"></i>
+                  </div>
+                  <div class="llm-service-info">
+                    <div class="llm-service-name">Motor de Automação</div>
+                    <div class="llm-service-desc">n8n Workflow</div>
+                  </div>
+                  <div class="llm-service-status">
+                    <!-- Status indicator será injetado aqui -->
+                  </div>
+                </div>
+              </div>
+              
+              <div class="llm-status-legend mt-4">
+                <h6 class="mb-3">Legenda de Status:</h6>
+                <div class="status-legend-grid">
+                  <div class="legend-item">
+                    <span class="status-indicator ok"></span>
+                    <span>Operacional</span>
+                  </div>
+                  <div class="legend-item">
+                    <span class="status-indicator minor"></span>
+                    <span>Degradação Menor</span>
+                  </div>
+                  <div class="legend-item">
+                    <span class="status-indicator major"></span>
+                    <span>Interrupção Parcial</span>
+                  </div>
+                  <div class="legend-item">
+                    <span class="status-indicator critical"></span>
+                    <span>Indisponível</span>
+                  </div>
+                  <div class="legend-item">
+                    <span class="status-indicator maintenance"></span>
+                    <span>Manutenção</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-stats mt-4">
           <div class="row">
             <div class="col-md-6">
               <div class="card">
@@ -263,6 +395,62 @@
           }
         });
       });
+    </script>
+
+    <!-- Script para demonstrar uso da API dos Motores -->
+    <script type="module">
+      import * as API from "./assets/js/api.js";
+      
+      // Função para verificar status do Motor de IA manualmente
+      async function checkAiEngineStatus() {
+        try {
+          const status = await API.checkFlowiseStatus();
+          console.log('Status do Motor de IA:', status);
+          
+          // Exemplo de como usar o status
+          if (status.status === 'ok') {
+            console.log('✅ Motor de IA está funcionando:', status.message);
+            // Aqui você poderia atualizar algum elemento da interface
+          } else {
+            console.log('❌ Motor de IA com problema:', status.message);
+            // Aqui você poderia mostrar um alerta ou notificação
+          }
+        } catch (error) {
+          console.error('Erro ao verificar Motor de IA:', error);
+        }
+      }
+
+      // Função para verificar status do Motor de Automação manualmente
+      async function checkAutomationEngineStatus() {
+        try {
+          const status = await API.checkN8nStatus();
+          console.log('Status do Motor de Automação:', status);
+          
+          // Exemplo de como usar o status
+          if (status.status === 'ok') {
+            console.log('✅ Motor de Automação está funcionando:', status.message);
+            // Aqui você poderia atualizar algum elemento da interface
+          } else {
+            console.log('❌ Motor de Automação com problema:', status.message);
+            // Aqui você poderia mostrar um alerta ou notificação
+          }
+        } catch (error) {
+          console.error('Erro ao verificar Motor de Automação:', error);
+        }
+      }
+
+      // Verificar status inicial após carregar
+      document.addEventListener('DOMContentLoaded', () => {
+        // Aguardar um pouco para não sobrecarregar o carregamento
+        setTimeout(() => {
+          checkAiEngineStatus();
+          checkAutomationEngineStatus();
+        }, 2000);
+      });
+
+      // Disponibilizar funções globalmente para testes
+      window.checkAiEngineStatus = checkAiEngineStatus;
+      window.checkAutomationEngineStatus = checkAutomationEngineStatus;
     </script>
 </body>
 </html> 

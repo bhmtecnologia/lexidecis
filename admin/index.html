@@ -13,6 +13,32 @@
   <script type="module" src="assets/js/auth-guard.js"></script>
 </head>
 <body>
+  <!-- Topbar -->
+  <div class="admin-topbar">
+    <div class="admin-topbar-logo">
+      <i class="bi bi-shield-check-fill"></i>
+      LexiDecis
+    </div>
+    <div class="admin-topbar-title">
+      Dashboard Administrativo
+    </div>
+    <div class="admin-topbar-spacer"></div>
+    <div class="admin-topbar-user">
+      <div class="user-info">
+        <div class="user-avatar">
+          <i class="bi bi-person-circle"></i>
+        </div>
+        <div class="user-details">
+          <div class="user-name" id="currentUserName">Carregando...</div>
+          <div class="user-role">Administrador</div>
+        </div>
+      </div>
+      <button id="logoutBtn" class="logout-btn" title="Fazer logout">
+        <i class="bi bi-box-arrow-right"></i>
+      </button>
+    </div>
+  </div>
+
   <div class="admin-content">
     <div class="container-fluid">
       <div class="page-title d-flex justify-content-between align-items-center">
@@ -129,29 +155,18 @@
 
                 <div class="llm-service-card" data-flowise-status>
                   <div class="llm-service-icon">
-                    <i class="bi bi-diagram-3-fill"></i>
+                    <i class="bi bi-cpu-fill"></i>
                   </div>
                   <div class="llm-service-info">
-                    <div class="llm-service-name">Motor de IA</div>
-                    <div class="llm-service-desc">Flowise Engine</div>
+                    <div class="llm-service-name">AI Agents Engine</div>
+                    <div class="llm-service-desc">LangChain, LlamaIndex, Agents</div>
                   </div>
                   <div class="llm-service-status">
                     <!-- Status indicator será injetado aqui -->
                   </div>
                 </div>
 
-                <div class="llm-service-card" data-n8n-status>
-                  <div class="llm-service-icon">
-                    <i class="bi bi-gear-fill"></i>
-                  </div>
-                  <div class="llm-service-info">
-                    <div class="llm-service-name">Motor de Automação</div>
-                    <div class="llm-service-desc">n8n Workflow</div>
-                  </div>
-                  <div class="llm-service-status">
-                    <!-- Status indicator será injetado aqui -->
-                  </div>
-                </div>
+
               </div>
               
               <div class="llm-status-legend mt-4">
@@ -307,6 +322,42 @@
         }, duration / steps);
       }
 
+      // Função para atualizar informações do usuário
+      function updateUserInfo(user) {
+        const userNameElement = document.getElementById('currentUserName');
+        if (userNameElement) {
+          // Usar displayName se disponível, senão usar o email
+          const displayName = user.displayName || user.email?.split('@')[0] || 'Usuário';
+          userNameElement.textContent = displayName;
+        }
+      }
+
+      // Função para fazer logout
+      async function handleLogout() {
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+          logoutBtn.disabled = true;
+          logoutBtn.innerHTML = '<i class="bi bi-arrow-repeat spinner"></i>';
+          
+          try {
+            const result = await AuthService.logout();
+            if (result.success) {
+              // Redirecionar para a página de login
+              window.location.href = "login.html";
+            } else {
+              throw new Error(result.error || 'Erro ao fazer logout');
+            }
+          } catch (error) {
+            console.error('Erro ao fazer logout:', error);
+            alert('Erro ao fazer logout. Tente novamente.');
+            
+            // Restaurar botão
+            logoutBtn.disabled = false;
+            logoutBtn.innerHTML = '<i class="bi bi-box-arrow-right"></i>';
+          }
+        }
+      }
+
       // Adicionar CSS para estilos adicionais
       const style = document.createElement('style');
       style.textContent = `
@@ -372,6 +423,8 @@
       document.addEventListener('DOMContentLoaded', () => {
         AuthService.onAuthChange((user) => {
           if (user) {
+            // Atualizar informações do usuário no topbar
+            updateUserInfo(user);
             updateDashboardMetrics();
             
             // Configurar botão de atualizar
@@ -389,6 +442,12 @@
                 });
               });
             }
+
+            // Configurar botão de logout
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+              logoutBtn.addEventListener('click', handleLogout);
+            }
           } else {
             // Redirecionar para login se não autenticado
             window.location.href = "login.html?redirect=" + encodeURIComponent(window.location.href);
@@ -401,56 +460,37 @@
     <script type="module">
       import * as API from "./assets/js/api.js";
       
-      // Função para verificar status do Motor de IA manualmente
+      // Função para verificar status do AI Agents Engine manualmente
       async function checkAiEngineStatus() {
         try {
           const status = await API.checkFlowiseStatus();
-          console.log('Status do Motor de IA:', status);
+          console.log('Status do AI Agents Engine:', status);
           
           // Exemplo de como usar o status
           if (status.status === 'ok') {
-            console.log('✅ Motor de IA está funcionando:', status.message);
+            console.log('✅ AI Agents Engine está funcionando:', status.message);
             // Aqui você poderia atualizar algum elemento da interface
           } else {
-            console.log('❌ Motor de IA com problema:', status.message);
+            console.log('❌ AI Agents Engine com problema:', status.message);
             // Aqui você poderia mostrar um alerta ou notificação
           }
         } catch (error) {
-          console.error('Erro ao verificar Motor de IA:', error);
+          console.error('Erro ao verificar AI Agents Engine:', error);
         }
       }
 
-      // Função para verificar status do Motor de Automação manualmente
-      async function checkAutomationEngineStatus() {
-        try {
-          const status = await API.checkN8nStatus();
-          console.log('Status do Motor de Automação:', status);
-          
-          // Exemplo de como usar o status
-          if (status.status === 'ok') {
-            console.log('✅ Motor de Automação está funcionando:', status.message);
-            // Aqui você poderia atualizar algum elemento da interface
-          } else {
-            console.log('❌ Motor de Automação com problema:', status.message);
-            // Aqui você poderia mostrar um alerta ou notificação
-          }
-        } catch (error) {
-          console.error('Erro ao verificar Motor de Automação:', error);
-        }
-      }
+
 
       // Verificar status inicial após carregar
       document.addEventListener('DOMContentLoaded', () => {
         // Aguardar um pouco para não sobrecarregar o carregamento
         setTimeout(() => {
           checkAiEngineStatus();
-          checkAutomationEngineStatus();
         }, 2000);
       });
 
       // Disponibilizar funções globalmente para testes
       window.checkAiEngineStatus = checkAiEngineStatus;
-      window.checkAutomationEngineStatus = checkAutomationEngineStatus;
     </script>
 </body>
 </html> 

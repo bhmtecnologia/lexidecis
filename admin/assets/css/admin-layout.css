@@ -56,6 +56,84 @@ body {
   margin-left: 0.8rem;
   font-weight: 400;
 }
+
+.admin-topbar-spacer {
+  flex: 1;
+}
+
+.admin-topbar-user {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.2rem;
+  box-shadow: 0 2px 8px rgba(107, 114, 128, 0.2);
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.user-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--primary-dark);
+  line-height: 1.2;
+}
+
+.user-role {
+  font-size: 0.8rem;
+  color: var(--primary-light);
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.logout-btn {
+  background: none;
+  border: 2px solid var(--gray);
+  color: var(--primary);
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 36px;
+}
+
+.logout-btn:hover {
+  background: var(--accent-pastel-light);
+  border-color: var(--primary);
+  color: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(107, 114, 128, 0.15);
+}
+
+.logout-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(107, 114, 128, 0.1);
+}
 .admin-sidebar {
   position: fixed;
   top: var(--topbar-height);
@@ -148,8 +226,8 @@ body {
 }
 .admin-content {
   margin-top: var(--topbar-height);
-  margin-left: var(--sidebar-width);
-  padding: 0 2rem 2rem 2rem;
+  margin-left: 0;
+  padding: 2rem 2rem 2rem 2rem;
   min-height: calc(100vh - var(--topbar-height));
   box-sizing: border-box;
   max-width: var(--content-max-width);
@@ -260,6 +338,20 @@ body {
   .admin-topbar-title {
     font-size: 0.95rem;
     margin-left: 0.4rem;
+  }
+  .user-details {
+    display: none;
+  }
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+  }
+  .logout-btn {
+    padding: 0.4rem 0.6rem;
+    min-width: 36px;
+    height: 32px;
+    font-size: 1rem;
   }
 }
 @media (max-width: 400px) {

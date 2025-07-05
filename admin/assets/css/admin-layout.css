@@ -177,15 +177,25 @@ body {
   box-sizing: border-box;
 }
 
-/* Reset específico para sidebar */
+/* Reset específico para sidebar - sobrescreve Bootstrap e outros estilos */
 .admin-sidebar * {
   box-sizing: border-box;
 }
 
 .admin-sidebar ul, .admin-sidebar li {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+  list-style: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.admin-sidebar a {
+  text-decoration: none !important;
+}
+
+.admin-sidebar a:hover,
+.admin-sidebar a:focus,
+.admin-sidebar a:active {
+  text-decoration: none !important;
 }
 .admin-sidebar.collapsed {
   width: var(--sidebar-collapsed-width);
@@ -262,6 +272,9 @@ body {
 .admin-sidebar-link i {
   font-size: 1.35rem;
   filter: drop-shadow(0 1px 2px #0002);
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
 }
 .admin-sidebar-link span {
   transition: opacity 0.2s;

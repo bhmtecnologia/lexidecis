@@ -207,6 +207,38 @@ body.dark-mode .admin-link:focus, body.dark-mode .admin-link:hover {
   box-shadow: 0 4px 16px rgba(107, 114, 128, 0.18);
 }
 
+/* Botão Nova Unidade */
+#btnNewUnit {
+  background: linear-gradient(90deg, var(--primary) 60%, var(--primary-light) 120%);
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(107, 114, 128, 0.10);
+  transition: background 0.18s, box-shadow 0.18s, color 0.18s;
+}
+#btnNewUnit:hover {
+  background: linear-gradient(90deg, var(--primary-light) 60%, var(--primary) 120%);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(107, 114, 128, 0.18);
+}
+
+/* Botão Novo GPT */
+#btnNewGpt {
+  background: linear-gradient(90deg, var(--primary) 60%, var(--primary-light) 120%);
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(107, 114, 128, 0.10);
+  transition: background 0.18s, box-shadow 0.18s, color 0.18s;
+}
+#btnNewGpt:hover {
+  background: linear-gradient(90deg, var(--primary-light) 60%, var(--primary) 120%);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(107, 114, 128, 0.18);
+}
+
 /* Botões de ação na tabela */
 .btn-group .btn-primary {
   background: var(--primary);
@@ -228,7 +260,7 @@ body.dark-mode .admin-link:focus, body.dark-mode .admin-link:hover {
 }
 
 /* Tabela moderna */
-#data-table {
+#data-table, #gpt-table {
   border-radius: 12px;
   overflow: hidden;
   background: var(--white);
@@ -236,18 +268,18 @@ body.dark-mode .admin-link:focus, body.dark-mode .admin-link:hover {
   font-size: 1.04rem;
   color: var(--text);
 }
-#data-table thead {
+#data-table thead, #gpt-table thead {
   background: linear-gradient(90deg, var(--primary) 60%, var(--primary-light) 120%);
   color: #fff;
 }
-#data-table th, #data-table td {
+#data-table th, #data-table td, #gpt-table th, #gpt-table td {
   border: none;
   padding: 0.75rem 0.7rem;
 }
-#data-table tbody tr {
+#data-table tbody tr, #gpt-table tbody tr {
   transition: background 0.15s;
 }
-#data-table tbody tr:hover {
+#data-table tbody tr:hover, #gpt-table tbody tr:hover {
   background: var(--accent-pastel-light);
 }
 
@@ -260,14 +292,34 @@ body.dark-mode .admin-link:focus, body.dark-mode .admin-link:hover {
   color: var(--text);
 }
 .modal-header {
-  border-radius: 16px 16px 0 0;
-  border-bottom: 1px solid var(--gray);
-  background: var(--primary);
-  color: white;
+  border-radius: 16px 16px 0 0 !important;
+  border-bottom: 1px solid var(--gray) !important;
+  background: var(--primary) !important;
+  color: white !important;
+  background-color: var(--primary) !important;
 }
 .modal-footer {
   border-radius: 0 0 16px 16px;
   border-top: 1px solid var(--gray);
+}
+
+/* Garantir estilos específicos para modais de GPT */
+#createGptModal .modal-header,
+#editGptModal .modal-header,
+#gptConfigModal .modal-header {
+  border-radius: 16px 16px 0 0 !important;
+  border-bottom: 1px solid var(--gray) !important;
+  background: var(--primary) !important;
+  background-color: var(--primary) !important;
+  color: white !important;
+}
+
+#createGptModal .modal-content,
+#editGptModal .modal-content,
+#gptConfigModal .modal-content {
+  border-radius: 16px !important;
+  box-shadow: 0 4px 24px rgba(107, 114, 128, 0.13) !important;
+  border: 1.5px solid var(--gray) !important;
 }
 
 /* Corrigir z-index do DataTables para não interferir com modais */
@@ -308,6 +360,14 @@ body.dark-mode .admin-link:focus, body.dark-mode .admin-link:hover {
     font-size: 1.3rem;
   }
   #btnNewUser {
+    font-size: 0.98rem;
+    padding: 0.5rem 0.7rem;
+  }
+  #btnNewUnit {
+    font-size: 0.98rem;
+    padding: 0.5rem 0.7rem;
+  }
+  #btnNewGpt {
     font-size: 0.98rem;
     padding: 0.5rem 0.7rem;
   }

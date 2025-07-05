@@ -14,23 +14,23 @@ export function initGPTs(AuthService, API, DOM) {
     function renderContent() {
       const content = document.getElementById('content');
       content.innerHTML = `
-        <div class="page-title d-flex justify-content-between align-items-center">
-          <div>
-            <h2>Administração de GPTs - Lexidecis</h2>
-            <p class="mb-0 text-title-gray">Lista de GPTs cadastrados</p>
+        <div class="container-fluid">
+          <div class="page-title d-flex justify-content-between align-items-center">
+            <div>
+              <h2>Administração de GPTs - Lexidecis</h2>
+              <p class="mb-0 text-title-gray">Lista de GPTs cadastrados</p>
+            </div>
+            <div>
+              <button id="btnNewGpt" class="btn btn-success">
+                <i class="bi bi-plus-circle"></i> Novo GPT
+              </button>
+            </div>
           </div>
-          <div>
-            <button id="btnNewGpt" class="btn btn-success">
-              <i class="bi bi-plus-circle"></i> Novo GPT
-            </button>
-          </div>
-        </div>
-        <ol class="breadcrumb mt-2">
-          <li class="breadcrumb-item"><a href="index.html"><i class="bi bi-house-fill"></i></a></li>
-          <li class="breadcrumb-item">Administração</li>
-          <li class="breadcrumb-item active">GPTs Lexidecis</li>
-        </ol>
-        <div id="protected-section" class="mt-4 d-none">
+          <ol class="breadcrumb mt-2">
+            <li class="breadcrumb-item"><a href="index.html"><i class="bi bi-house-fill"></i></a></li>
+            <li class="breadcrumb-item">Administração</li>
+            <li class="breadcrumb-item active">GPTs Lexidecis</li>
+          </ol>
           <div id="report-container" class="position-relative">
             <div class="card">
               <div class="card-body">
@@ -121,6 +121,53 @@ export function initGPTs(AuthService, API, DOM) {
       }
     }
   
+    // Função para criar o formulário de novo GPT
+    function createGPTForm() {
+      const createGptModalElement = document.getElementById('createGptModal');
+      if (!createGptModalElement) {
+        console.error('[createGPTForm] Modal #createGptModal não encontrado');
+        return;
+      }
+      
+      const modalBody = createGptModalElement.querySelector('.modal-body');
+      if (!modalBody) {
+        console.error('[createGPTForm] .modal-body não encontrado dentro do modal');
+        return;
+      }
+      
+      // Limpa o conteúdo anterior
+      modalBody.innerHTML = '';
+      
+      // Cria o formulário
+      const formHTML = `
+        <form id="createGptForm" class="needs-validation" novalidate>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="gpt_name" class="form-label">Nome do GPT</label>
+              <input type="text" class="form-control" id="gpt_name" required>
+              <div class="invalid-feedback">Por favor, insira um nome válido.</div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="gpt_category" class="form-label">Categoria</label>
+              <input type="text" class="form-control" id="gpt_category" required>
+              <div class="invalid-feedback">Por favor, insira uma categoria válida.</div>
+            </div>
+            <div class="col-md-12 mb-3">
+              <label for="gpt_description" class="form-label">Descrição</label>
+              <textarea class="form-control" id="gpt_description" rows="3" required></textarea>
+              <div class="invalid-feedback">Por favor, insira uma descrição válida.</div>
+            </div>
+          </div>
+          <div id="createGptError" class="alert alert-danger d-none" role="alert"></div>
+        </form>
+      `;
+      
+      // Injeta o HTML no modal
+      modalBody.innerHTML = formHTML;
+      
+      console.log('[createGPTForm] Formulário criado com sucesso');
+    }
+
     // Manipula a criação de um novo GPT
     async function handleCreateGpt() {
       const errorDiv = document.getElementById("createGptError");
@@ -143,6 +190,54 @@ export function initGPTs(AuthService, API, DOM) {
       }
     }
   
+    // Função para criar o formulário de edição de GPT
+    function createEditGPTForm() {
+      const editGptModalElement = document.getElementById('editGptModal');
+      if (!editGptModalElement) {
+        console.error('[createEditGPTForm] Modal #editGptModal não encontrado');
+        return;
+      }
+      
+      const modalBody = editGptModalElement.querySelector('.modal-body');
+      if (!modalBody) {
+        console.error('[createEditGPTForm] .modal-body não encontrado dentro do modal');
+        return;
+      }
+      
+      // Limpa o conteúdo anterior
+      modalBody.innerHTML = '';
+      
+      // Cria o formulário
+      const formHTML = `
+        <form id="editGptForm" class="needs-validation" novalidate>
+          <input type="hidden" id="edit_gpt_id">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="edit_gpt_name" class="form-label">Nome do GPT</label>
+              <input type="text" class="form-control" id="edit_gpt_name" required>
+              <div class="invalid-feedback">Por favor, insira um nome válido.</div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="edit_gpt_category" class="form-label">Categoria</label>
+              <input type="text" class="form-control" id="edit_gpt_category" required>
+              <div class="invalid-feedback">Por favor, insira uma categoria válida.</div>
+            </div>
+            <div class="col-md-12 mb-3">
+              <label for="edit_gpt_description" class="form-label">Descrição</label>
+              <textarea class="form-control" id="edit_gpt_description" rows="3" required></textarea>
+              <div class="invalid-feedback">Por favor, insira uma descrição válida.</div>
+            </div>
+          </div>
+          <div id="editGptError" class="alert alert-danger d-none" role="alert"></div>
+        </form>
+      `;
+      
+      // Injeta o HTML no modal
+      modalBody.innerHTML = formHTML;
+      
+      console.log('[createEditGPTForm] Formulário criado com sucesso');
+    }
+
     // Manipula a edição de um GPT existente
     async function handleEditGpt() {
       const errorDiv = document.getElementById("editGptError");
@@ -185,10 +280,19 @@ export function initGPTs(AuthService, API, DOM) {
     window.editGpt = async function(gptId) {
       const gpt = gptsData[gptId];
       if (!gpt) return;
+      
+      // Primeiro, cria o formulário
+      createEditGPTForm();
+      
+      // Aguarda um pouco para garantir que o DOM foi atualizado
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Preenche os dados
       document.getElementById("edit_gpt_id").value = gpt.id || "";
       document.getElementById("edit_gpt_name").value = gpt.name || "";
       document.getElementById("edit_gpt_category").value = gpt.category || "";
       document.getElementById("edit_gpt_description").value = gpt.description || "";
+      
       const editGptModalElement = document.getElementById("editGptModal");
       const modal = new bootstrap.Modal(editGptModalElement);
       modal.show();
@@ -253,16 +357,41 @@ export function initGPTs(AuthService, API, DOM) {
     AuthService.onAuthChange((user) => {
       if (user) {
         renderContent();
-        document.getElementById("protected-section").classList.remove("d-none");
         refreshGPTs();
         
         // Configuração do botão de criação de novo GPT
         const btnNewGpt = document.getElementById("btnNewGpt");
         if (btnNewGpt) {
-          btnNewGpt.addEventListener("click", () => {
-            const createGptModalElement = document.getElementById("createGptModal");
-            const modal = new bootstrap.Modal(createGptModalElement);
-            modal.show();
+          btnNewGpt.addEventListener("click", async () => {
+            try {
+              // Primeiro, injeta/atualiza formulário dentro do modal
+              createGPTForm();
+              
+              // Aguarda um pouco para garantir que o DOM foi atualizado
+              await new Promise(resolve => setTimeout(resolve, 100));
+
+              // Garante que o modal existe e está pronto
+              const modalToShow = document.getElementById("createGptModal");
+              if (!modalToShow) {
+                console.error('[btnNewGpt] Modal não encontrado após criação do formulário');
+                return;
+              }
+
+              // Verifica se o Bootstrap está disponível
+              if (typeof bootstrap === 'undefined') {
+                console.error('[btnNewGpt] Bootstrap não está carregado');
+                alert('Erro: Bootstrap não está carregado');
+                return;
+              }
+
+              // Abre o modal usando a API padrão do Bootstrap
+              const createGptModal = new bootstrap.Modal(modalToShow);
+              createGptModal.show();
+              
+            } catch (error) {
+              console.error('[btnNewGpt] Erro ao abrir modal:', error);
+              alert('Erro ao abrir formulário de criação de GPT');
+            }
           });
         }
         

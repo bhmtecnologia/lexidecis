@@ -213,6 +213,50 @@ export function initUnits(AuthService, API, DOM) {
     }
   }
 
+  // Função para criar o formulário de nova unidade
+  function createUnitForm() {
+    const createUnitModalElement = document.getElementById('createUnitModal');
+    if (!createUnitModalElement) {
+      console.error('[createUnitForm] Modal #createUnitModal não encontrado');
+      return;
+    }
+    
+    const modalBody = createUnitModalElement.querySelector('.modal-body');
+    if (!modalBody) {
+      console.error('[createUnitForm] .modal-body não encontrado dentro do modal');
+      return;
+    }
+    
+    // Limpa o conteúdo anterior
+    modalBody.innerHTML = '';
+    
+    // Cria o formulário
+    const formHTML = `
+      <form id="createUnitForm" class="needs-validation" novalidate>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="unit_name" class="form-label">Nome da Unidade</label>
+            <input type="text" class="form-control" id="unit_name" required>
+            <div class="invalid-feedback">Por favor, insira um nome válido.</div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="company_id" class="form-label">Company</label>
+            <select class="form-control" id="company_id" required>
+              <option value="">Carregando...</option>
+            </select>
+            <div class="invalid-feedback">Por favor, selecione uma company.</div>
+          </div>
+        </div>
+        <div id="createUnitError" class="alert alert-danger d-none" role="alert"></div>
+      </form>
+    `;
+    
+    // Injeta o HTML no modal
+    modalBody.innerHTML = formHTML;
+    
+    console.log('[createUnitForm] Formulário criado com sucesso');
+  }
+
   // Configura os eventos dos botões dos modais
   document.getElementById('submitCreateUnit').addEventListener('click', handleCreateUnit);
   document.getElementById('submitEditUnit').addEventListener('click', handleEditUnit);
@@ -221,22 +265,105 @@ export function initUnits(AuthService, API, DOM) {
   const btnNewUnit = document.getElementById('btnNewUnit');
   if (btnNewUnit) {
     btnNewUnit.addEventListener('click', async () => {
-      const createUnitModalElement = document.getElementById('createUnitModal');
-      const createUnitModal = new bootstrap.Modal(createUnitModalElement);
-      createUnitModal.show();
       try {
-        const companies = await API.getCompanies(AuthService);
-        DOM.populateCompaniesSelect('company_id', companies);
-      } catch (e) {
-        document.getElementById('company_id').innerHTML = `<option value="">Erro ao carregar companies</option>`;
+        // Primeiro, injeta/atualiza formulário dentro do modal
+        createUnitForm();
+        
+        // Aguarda um pouco para garantir que o DOM foi atualizado
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Carrega companies
+        try {
+          const companies = await API.getCompanies(AuthService);
+          DOM.populateCompaniesSelect('company_id', companies);
+        } catch (e) {
+          console.error('[btnNewUnit] Erro ao carregar companies:', e);
+          const sel = document.getElementById('company_id');
+          if (sel) sel.innerHTML = '<option value="">Erro ao carregar companies</option>';
+        }
+
+        // Garante que o modal existe e está pronto
+        const modalToShow = document.getElementById('createUnitModal');
+        if (!modalToShow) {
+          console.error('[btnNewUnit] Modal não encontrado após criação do formulário');
+          return;
+        }
+
+        // Verifica se o Bootstrap está disponível
+        if (typeof bootstrap === 'undefined') {
+          console.error('[btnNewUnit] Bootstrap não está carregado');
+          alert('Erro: Bootstrap não está carregado');
+          return;
+        }
+
+        // Abre o modal usando a API padrão do Bootstrap
+        const createUnitModal = new bootstrap.Modal(modalToShow);
+        createUnitModal.show();
+        
+      } catch (error) {
+        console.error('[btnNewUnit] Erro ao abrir modal:', error);
+        alert('Erro ao abrir formulário de criação de unidade');
       }
     });
+  }
+
+  // Função para criar o formulário de edição de unidade
+  function createEditUnitForm() {
+    const editUnitModalElement = document.getElementById('editUnitModal');
+    if (!editUnitModalElement) {
+      console.error('[createEditUnitForm] Modal #editUnitModal não encontrado');
+      return;
+    }
+    
+    const modalBody = editUnitModalElement.querySelector('.modal-body');
+    if (!modalBody) {
+      console.error('[createEditUnitForm] .modal-body não encontrado dentro do modal');
+      return;
+    }
+    
+    // Limpa o conteúdo anterior
+    modalBody.innerHTML = '';
+    
+    // Cria o formulário
+    const formHTML = `
+      <form id="editUnitForm" class="needs-validation" novalidate>
+        <input type="hidden" id="edit_unit_id">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="edit_unit_name" class="form-label">Nome da Unidade</label>
+            <input type="text" class="form-control" id="edit_unit_name" required>
+            <div class="invalid-feedback">Por favor, insira um nome válido.</div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="edit_company_id" class="form-label">Company</label>
+            <select class="form-control" id="edit_company_id" required>
+              <option value="">Carregando...</option>
+            </select>
+            <div class="invalid-feedback">Por favor, selecione uma company.</div>
+          </div>
+        </div>
+        <div id="editUnitError" class="alert alert-danger d-none" role="alert"></div>
+      </form>
+    `;
+    
+    // Injeta o HTML no modal
+    modalBody.innerHTML = formHTML;
+    
+    console.log('[createEditUnitForm] Formulário criado com sucesso');
   }
 
   // Função global para abrir o modal de edição e preencher os dados da unit
   window.editUnit = async function(unitId) {
     const unit = unitsData[unitId];
     if (!unit) return;
+    
+    // Primeiro, cria o formulário
+    createEditUnitForm();
+    
+    // Aguarda um pouco para garantir que o DOM foi atualizado
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Preenche os dados
     document.getElementById('edit_unit_id').value = unit.id || '';
     document.getElementById('edit_unit_name').value = unit.name || '';
 

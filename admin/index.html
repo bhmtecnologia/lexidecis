@@ -15,6 +15,9 @@
 <body>
   <!-- Topbar -->
   <div class="admin-topbar">
+    <button class="sidebar-toggle" id="sidebarToggle">
+      <i class="bi bi-list"></i>
+    </button>
     <div class="admin-topbar-logo">
       <i class="bi bi-shield-check-fill"></i>
       LexiDecis
@@ -36,6 +39,40 @@
       <button id="logoutBtn" class="logout-btn" title="Fazer logout">
         <i class="bi bi-box-arrow-right"></i>
       </button>
+    </div>
+  </div>
+
+  <!-- Sidebar backdrop for mobile -->
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+  <!-- Sidebar -->
+  <div class="admin-sidebar" id="sidebar">
+    <nav class="admin-sidebar-nav">
+      <ul>
+        <li><a href="index.html" class="admin-sidebar-link active">
+          <i class="bi bi-house-fill"></i>
+          <span>Dashboard</span>
+        </a></li>
+        <li><a href="users.html" class="admin-sidebar-link">
+          <i class="bi bi-people-fill"></i>
+          <span>Usuários</span>
+        </a></li>
+        <li><a href="units.html" class="admin-sidebar-link">
+          <i class="bi bi-building-fill"></i>
+          <span>Unidades</span>
+        </a></li>
+        <li><a href="gpts.html" class="admin-sidebar-link">
+          <i class="bi bi-cpu-fill"></i>
+          <span>GPTs</span>
+        </a></li>
+      </ul>
+    </nav>
+    <div class="admin-sidebar-footer">
+      <div class="sidebar-footer-content">
+        <i class="bi bi-shield-check-fill"></i>
+        <div>LexiDecis Admin</div>
+        <div class="sidebar-version">v2.0</div>
+      </div>
     </div>
   </div>
 
@@ -447,6 +484,45 @@
             const logoutBtn = document.getElementById('logoutBtn');
             if (logoutBtn) {
               logoutBtn.addEventListener('click', handleLogout);
+            }
+
+            // Configurar sidebar toggle
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+            
+            if (sidebarToggle && sidebar && sidebarBackdrop) {
+              sidebarToggle.addEventListener('click', () => {
+                const isOpen = sidebar.classList.contains('open');
+                if (isOpen) {
+                  closeSidebar();
+                } else {
+                  openSidebar();
+                }
+              });
+
+              // Fechar sidebar ao clicar no backdrop
+              sidebarBackdrop.addEventListener('click', closeSidebar);
+
+              // Funções para abrir/fechar sidebar
+              function openSidebar() {
+                sidebar.classList.add('open');
+                if (window.innerWidth <= 900) {
+                  sidebarBackdrop.classList.add('show');
+                }
+              }
+
+              function closeSidebar() {
+                sidebar.classList.remove('open');
+                sidebarBackdrop.classList.remove('show');
+              }
+
+              // Fechar sidebar quando redimensionar para desktop
+              window.addEventListener('resize', () => {
+                if (window.innerWidth > 900) {
+                  closeSidebar();
+                }
+              });
             }
           } else {
             // Redirecionar para login se não autenticado

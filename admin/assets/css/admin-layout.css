@@ -39,6 +39,30 @@ body {
   box-sizing: border-box;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
+
+.sidebar-toggle {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--primary);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 6px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s, transform 0.2s;
+  margin-right: 1rem;
+}
+
+.sidebar-toggle:hover {
+  background: var(--accent-pastel-light);
+  transform: scale(1.1);
+}
+
+.sidebar-toggle:active {
+  transform: scale(0.95);
+}
 .admin-topbar-logo {
   display: flex;
   align-items: center;
@@ -224,14 +248,56 @@ body {
   letter-spacing: 0.03em;
   opacity: 0.85;
 }
+
+.sidebar-footer-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.sidebar-footer-content i {
+  font-size: 1.2rem;
+  color: var(--accent-pastel-dark);
+}
+
+.sidebar-footer-content div:first-of-type {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.sidebar-version {
+  font-size: 0.8rem;
+  color: var(--primary-light);
+  opacity: 0.7;
+}
+
+.sidebar-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1150;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+}
+
+.sidebar-backdrop.show {
+  opacity: 1;
+  visibility: visible;
+}
 .admin-content {
   margin-top: var(--topbar-height);
-  margin-left: 0;
+  margin-left: var(--sidebar-width);
   padding: 2rem 2rem 2rem 2rem;
   min-height: calc(100vh - var(--topbar-height));
   box-sizing: border-box;
-  max-width: var(--content-max-width);
-  width: 100%;
+  max-width: calc(var(--content-max-width) - var(--sidebar-width));
+  width: calc(100% - var(--sidebar-width));
+  transition: margin-left 0.3s cubic-bezier(.77,0,.18,1), width 0.3s cubic-bezier(.77,0,.18,1);
 }
 .dashboard-cards {
   display: flex;
@@ -289,16 +355,22 @@ body {
   margin-top: 0.5rem;
 }
 @media (max-width: 900px) {
+  .sidebar-toggle {
+    display: flex;
+  }
   .admin-sidebar {
     left: -220px;
     transition: left 0.2s;
     box-shadow: 4px 0 24px 0 rgba(34,139,34,0.18);
+    z-index: 1200;
   }
   .admin-sidebar.open {
     left: 0;
   }
   .admin-content {
     margin-left: 0;
+    width: 100%;
+    max-width: var(--content-max-width);
   }
   .admin-topbar {
     padding: 0 0.7rem;

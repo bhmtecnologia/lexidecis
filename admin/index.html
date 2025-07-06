@@ -18,9 +18,6 @@
     <button class="sidebar-toggle" id="sidebarToggle">
       <i class="bi bi-list"></i>
     </button>
-    <button class="sidebar-collapse-toggle" id="sidebarCollapseToggle">
-      <i class="bi bi-layout-sidebar-inset"></i>
-    </button>
     <div class="admin-topbar-logo">
       <i class="bi bi-shield-check-fill"></i>
       LexiDecis
@@ -457,21 +454,7 @@
           border: 1.5px solid var(--gray);
         }
         
-        /* Garantir visibilidade do botão collapse no topbar */
-        .sidebar-collapse-toggle {
-          background: rgba(107, 114, 128, 0.1) !important;
-          border: 1px solid rgba(107, 114, 128, 0.2) !important;
-          color: var(--primary) !important;
-          display: flex !important;
-          opacity: 1 !important;
-        }
-        
-        .sidebar-collapse-toggle:hover {
-          background: var(--accent-pastel-light) !important;
-          transform: scale(1.05) !important;
-        }
-        
-        /* Sidebar collapse funcionando corretamente - problema resolvido */
+        /* Sidebar unificado funcionando corretamente */
       `;
       document.head.appendChild(style);
 
@@ -479,7 +462,7 @@
 
       // Aguardar autenticação e carregar métricas
       document.addEventListener('DOMContentLoaded', () => {
-        AuthService.onAuthChange((user) => {
+        AuthService.onAuthChange(async (user) => {
           if (user) {
             // Atualizar informações do usuário no topbar
             updateUserInfo(user);
@@ -507,69 +490,9 @@
               logoutBtn.addEventListener('click', handleLogout);
             }
 
-            // Elementos da sidebar - declarar fora dos blocos condicionais
-            const sidebarToggle = document.getElementById('sidebarToggle');
-            const sidebar = document.getElementById('sidebar');
-            const sidebarBackdrop = document.getElementById('sidebarBackdrop');
-            const sidebarCollapseToggle = document.getElementById('sidebarCollapseToggle');
-
-            // Configurar sidebar toggle (mobile)
-            if (sidebarToggle && sidebar && sidebarBackdrop) {
-              sidebarToggle.addEventListener('click', () => {
-                const isOpen = sidebar.classList.contains('open');
-                if (isOpen) {
-                  closeSidebar();
-                } else {
-                  openSidebar();
-                }
-              });
-
-              // Fechar sidebar ao clicar no backdrop
-              sidebarBackdrop.addEventListener('click', closeSidebar);
-
-              // Funções para abrir/fechar sidebar
-              function openSidebar() {
-                sidebar.classList.add('open');
-                if (window.innerWidth <= 900) {
-                  sidebarBackdrop.classList.add('show');
-                }
-              }
-
-              function closeSidebar() {
-                sidebar.classList.remove('open');
-                sidebarBackdrop.classList.remove('show');
-              }
-
-              // Fechar sidebar quando redimensionar para desktop
-              window.addEventListener('resize', () => {
-                if (window.innerWidth > 900) {
-                  closeSidebar();
-                }
-              });
-            }
-
-            // Configurar sidebar collapse (desktop) - versão final
-            if (sidebarCollapseToggle && sidebar) {
-              console.log('✅ Sidebar collapse configurado com sucesso');
-              
-              sidebarCollapseToggle.addEventListener('click', function() {
-                sidebar.classList.toggle('collapsed');
-                
-                const isCollapsed = sidebar.classList.contains('collapsed');
-                localStorage.setItem('sidebarCollapsed', isCollapsed);
-                
-                console.log('🎯 Sidebar', isCollapsed ? 'colapsada' : 'expandida');
-              });
-
-              // Restaurar estado salvo
-              const savedCollapsed = localStorage.getItem('sidebarCollapsed');
-              if (savedCollapsed === 'true') {
-                sidebar.classList.add('collapsed');
-                console.log('🔄 Estado collapsed restaurado do localStorage');
-              }
-              
-              console.log('🎉 Sidebar funcionando corretamente - problema das duas sidebars resolvido!');
-            }
+            // Inicializar sidebar usando o SidebarManager
+            const { initSidebar } = await import('./assets/js/sidebar.js');
+            const sidebarManager = initSidebar();
           } else {
             // Redirecionar para login se não autenticado
             window.location.href = "login.html?redirect=" + encodeURIComponent(window.location.href);

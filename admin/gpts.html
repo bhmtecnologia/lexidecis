@@ -19,9 +19,6 @@
     <button class="sidebar-toggle" id="sidebarToggle">
       <i class="bi bi-list"></i>
     </button>
-    <button class="sidebar-collapse-toggle" id="sidebarCollapseToggle">
-      <i class="bi bi-layout-sidebar-inset"></i>
-    </button>
     <div class="admin-topbar-logo">
       <i class="bi bi-shield-check-fill"></i>
       LexiDecis
@@ -206,7 +203,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      AuthService.onAuthChange((user) => {
+      AuthService.onAuthChange(async (user) => {
         if (user) {
           // Atualizar informações do usuário no topbar
           updateUserInfo(user);
@@ -220,62 +217,9 @@
             logoutBtn.addEventListener('click', handleLogout);
           }
 
-          // Configurar sidebar
-          const sidebarToggle = document.getElementById('sidebarToggle');
-          const sidebar = document.getElementById('sidebar');
-          const sidebarBackdrop = document.getElementById('sidebarBackdrop');
-          const sidebarCollapseToggle = document.getElementById('sidebarCollapseToggle');
-
-          // Configurar sidebar toggle (mobile)
-          if (sidebarToggle && sidebar && sidebarBackdrop) {
-            sidebarToggle.addEventListener('click', () => {
-              const isOpen = sidebar.classList.contains('open');
-              if (isOpen) {
-                closeSidebar();
-              } else {
-                openSidebar();
-              }
-            });
-
-            // Fechar sidebar ao clicar no backdrop
-            sidebarBackdrop.addEventListener('click', closeSidebar);
-
-            // Funções para abrir/fechar sidebar
-            function openSidebar() {
-              sidebar.classList.add('open');
-              if (window.innerWidth <= 900) {
-                sidebarBackdrop.classList.add('show');
-              }
-            }
-
-            function closeSidebar() {
-              sidebar.classList.remove('open');
-              sidebarBackdrop.classList.remove('show');
-            }
-
-            // Fechar sidebar quando redimensionar para desktop
-            window.addEventListener('resize', () => {
-              if (window.innerWidth > 900) {
-                closeSidebar();
-              }
-            });
-          }
-
-          // Configurar sidebar collapse (desktop)
-          if (sidebarCollapseToggle && sidebar) {
-            sidebarCollapseToggle.addEventListener('click', function() {
-              sidebar.classList.toggle('collapsed');
-              
-              const isCollapsed = sidebar.classList.contains('collapsed');
-              localStorage.setItem('sidebarCollapsed', isCollapsed);
-            });
-
-            // Restaurar estado salvo
-            const savedCollapsed = localStorage.getItem('sidebarCollapsed');
-            if (savedCollapsed === 'true') {
-              sidebar.classList.add('collapsed');
-            }
-          }
+          // Inicializar sidebar usando o SidebarManager
+          const { initSidebar } = await import('./assets/js/sidebar.js');
+          const sidebarManager = initSidebar();
         } else {
           // Redirecionar para login se não autenticado
           window.location.href = "login.html?redirect=" + encodeURIComponent(window.location.href);

@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 Teste do Sistema de Tratamento de Erros - LexiDecis</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .log-output {
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            height: 300px;
+            overflow-y: auto;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        .error-demo {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success-demo {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .stats-box {
+            background: #e3f2fd;
+            border: 1px solid #90caf9;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container my-5">
+        <h1 class="text-center mb-4">🧪 Sistema de Tratamento de Erros - Testes</h1>
+        
+        <!-- Console de Logs -->
+        <div class="test-section">
+            <h3>📋 Console de Logs</h3>
+            <div id="log-output" class="log-output"></div>
+            <button id="clear-logs" class="btn btn-secondary mt-2">Limpar Logs</button>
+        </div>
+
+        <!-- Estatísticas em Tempo Real -->
+        <div class="test-section">
+            <h3>📊 Estatísticas de Erros</h3>
+            <div id="error-stats" class="stats-box">
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Total:</strong> <span id="total-errors">0</span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Recentes:</strong> <span id="recent-errors">0</span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Críticos:</strong> <span id="critical-errors">0</span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Rede:</strong> <span id="network-errors">0</span>
+                    </div>
+                </div>
+            </div>
+            <button id="update-stats" class="btn btn-info">Atualizar Estatísticas</button>
+        </div>
+
+        <!-- Testes de Erro de Rede -->
+        <div class="test-section">
+            <h3>🌐 Testes de Erro de Rede</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <button id="test-network-error" class="btn btn-warning w-100 mb-2">
+                        Simular Erro de Rede
+                    </button>
+                    <button id="test-timeout" class="btn btn-warning w-100 mb-2">
+                        Simular Timeout
+                    </button>
+                    <button id="test-retry" class="btn btn-warning w-100 mb-2">
+                        Testar Retry Automático
+                    </button>
+                </div>
+                <div class="col-md-6">
+                    <div id="network-result" class="error-demo d-none">
+                        <strong>Resultado:</strong> <span id="network-message"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Testes de Autenticação -->
+        <div class="test-section">
+            <h3>🔐 Testes de Autenticação</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <button id="test-auth-error" class="btn btn-danger w-100 mb-2">
+                        Simular Erro de Auth
+                    </button>
+                    <button id="test-expired-token" class="btn btn-danger w-100 mb-2">
+                        Simular Token Expirado
+                    </button>
+                    <button id="test-invalid-user" class="btn btn-danger w-100 mb-2">
+                        Simular Usuário Inválido
+                    </button>
+                </div>
+                <div class="col-md-6">
+                    <div id="auth-result" class="error-demo d-none">
+                        <strong>Resultado:</strong> <span id="auth-message"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Testes de API -->
+        <div class="test-section">
+            <h3>🔗 Testes de API</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <button id="test-api-500" class="btn btn-secondary w-100 mb-2">
+                        Simular Erro 500
+                    </button>
+                    <button id="test-api-404" class="btn btn-secondary w-100 mb-2">
+                        Simular Erro 404
+                    </button>
+                    <button id="test-api-429" class="btn btn-secondary w-100 mb-2">
+                        Simular Rate Limit
+                    </button>
+                </div>
+                <div class="col-md-6">
+                    <div id="api-result" class="error-demo d-none">
+                        <strong>Resultado:</strong> <span id="api-message"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Testes de Fallback -->
+        <div class="test-section">
+            <h3>🔄 Testes de Fallback</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <button id="test-fallback-success" class="btn btn-success w-100 mb-2">
+                        Testar Fallback Funcionando
+                    </button>
+                    <button id="test-fallback-chain" class="btn btn-success w-100 mb-2">
+                        Testar Cadeia de Fallbacks
+                    </button>
+                    <button id="test-cache-fallback" class="btn btn-success w-100 mb-2">
+                        Testar Cache como Fallback
+                    </button>
+                </div>
+                <div class="col-md-6">
+                    <div id="fallback-result" class="success-demo d-none">
+                        <strong>Resultado:</strong> <span id="fallback-message"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Testes de Validação -->
+        <div class="test-section">
+            <h3>✅ Testes de Validação</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <button id="test-validation-email" class="btn btn-info w-100 mb-2">
+                        Testar Validação de Email
+                    </button>
+                    <button id="test-validation-password" class="btn btn-info w-100 mb-2">
+                        Testar Validação de Senha
+                    </button>
+                    <button id="test-validation-required" class="btn btn-info w-100 mb-2">
+                        Testar Campos Obrigatórios
+                    </button>
+                </div>
+                <div class="col-md-6">
+                    <div id="validation-result" class="error-demo d-none">
+                        <strong>Resultado:</strong> <span id="validation-message"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Testes de Monitoramento -->
+        <div class="test-section">
+            <h3>📈 Testes de Monitoramento</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <button id="test-error-queue" class="btn btn-primary w-100 mb-2">
+                        Ver Fila de Erros
+                    </button>
+                    <button id="test-error-patterns" class="btn btn-primary w-100 mb-2">
+                        Analisar Padrões
+                    </button>
+                    <button id="clear-error-queue" class="btn btn-outline-primary w-100 mb-2">
+                        Limpar Fila de Erros
+                    </button>
+                </div>
+                <div class="col-md-6">
+                    <div id="monitoring-result" class="stats-box d-none">
+                        <div id="monitoring-message"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Teste de Stress -->
+        <div class="test-section">
+            <h3>⚡ Teste de Stress</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <button id="test-stress-errors" class="btn btn-dark w-100 mb-2">
+                        Gerar 50 Erros Simultâneos
+                    </button>
+                    <button id="test-memory-leak" class="btn btn-dark w-100 mb-2">
+                        Testar Vazamento de Memória
+                    </button>
+                    <button id="test-performance" class="btn btn-dark w-100 mb-2">
+                        Testar Performance
+                    </button>
+                </div>
+                <div class="col-md-6">
+                    <div id="stress-result" class="stats-box d-none">
+                        <div id="stress-message"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instruções -->
+        <div class="test-section">
+            <h3>📝 Instruções</h3>
+            <ul>
+                <li><strong>Console de Logs:</strong> Observe os logs estruturados em tempo real</li>
+                <li><strong>Estatísticas:</strong> Monitore métricas de erro em tempo real</li>
+                <li><strong>Testes por Categoria:</strong> Teste diferentes tipos de erro</li>
+                <li><strong>Fallbacks:</strong> Verifique se os fallbacks funcionam corretamente</li>
+                <li><strong>Monitoramento:</strong> Analise padrões e estatísticas</li>
+                <li><strong>Stress:</strong> Teste limites e performance do sistema</li>
+            </ul>
+        </div>
+    </div>
+
+    <script type="module">
+        // Importar o sistema de tratamento de erros
+        import { 
+            handleError, 
+            safeExecute, 
+            withRetry, 
+            ERROR_TYPES, 
+            ERROR_SEVERITY,
+            errorHandler
+        } from './errorHandler.js';
+
+        // Elementos do DOM
+        const logOutput = document.getElementById('log-output');
+        const clearLogsBtn = document.getElementById('clear-logs');
+        
+        // Estatísticas
+        const totalErrors = document.getElementById('total-errors');
+        const recentErrors = document.getElementById('recent-errors');
+        const criticalErrors = document.getElementById('critical-errors');
+        const networkErrors = document.getElementById('network-errors');
+        const updateStatsBtn = document.getElementById('update-stats');
+
+        // Resultados
+        const networkResult = document.getElementById('network-result');
+        const networkMessage = document.getElementById('network-message');
+        const authResult = document.getElementById('auth-result');
+        const authMessage = document.getElementById('auth-message');
+        const apiResult = document.getElementById('api-result');
+        const apiMessage = document.getElementById('api-message');
+        const fallbackResult = document.getElementById('fallback-result');
+        const fallbackMessage = document.getElementById('fallback-message');
+        const validationResult = document.getElementById('validation-result');
+        const validationMessage = document.getElementById('validation-message');
+        const monitoringResult = document.getElementById('monitoring-result');
+        const monitoringMessage = document.getElementById('monitoring-message');
+        const stressResult = document.getElementById('stress-result');
+        const stressMessage = document.getElementById('stress-message');
+
+        // Interceptar console.log para mostrar no nosso console
+        const originalLog = console.log;
+        const originalWarn = console.warn;
+        const originalError = console.error;
+        const originalGroup = console.group;
+        const originalGroupEnd = console.groupEnd;
+
+        function addToLog(message, type = 'log') {
+            const timestamp = new Date().toLocaleTimeString();
+            const colorClass = type === 'error' ? 'color: #ff6b6b' : 
+                               type === 'warn' ? 'color: #ffd93d' : 
+                               'color: #00ff00';
+            
+            logOutput.innerHTML += `<div style="${colorClass}">[${timestamp}] ${message}</div>`;
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+
+        console.log = (...args) => {
+            originalLog.apply(console, args);
+            addToLog(args.join(' '), 'log');
+        };
+
+        console.warn = (...args) => {
+            originalWarn.apply(console, args);
+            addToLog(args.join(' '), 'warn');
+        };
+
+        console.error = (...args) => {
+            originalError.apply(console, args);
+            addToLog(args.join(' '), 'error');
+        };
+
+        console.group = (...args) => {
+            originalGroup.apply(console, args);
+            addToLog(`▼ ${args.join(' ')}`, 'log');
+        };
+
+        console.groupEnd = () => {
+            originalGroupEnd.apply(console);
+            addToLog('▲ Fim do grupo', 'log');
+        };
+
+        // Limpar logs
+        clearLogsBtn.addEventListener('click', () => {
+            logOutput.innerHTML = '';
+            console.log('Console limpo');
+        });
+
+        // Atualizar estatísticas
+        function updateStats() {
+            const stats = errorHandler.getErrorStats();
+            totalErrors.textContent = stats.total;
+            recentErrors.textContent = stats.recent;
+            criticalErrors.textContent = stats.bySeverity?.critical || 0;
+            networkErrors.textContent = stats.byType?.NETWORK_ERROR || 0;
+        }
+
+        updateStatsBtn.addEventListener('click', updateStats);
+
+        // Função para mostrar resultado
+        function showResult(resultElement, messageElement, message, isSuccess = false) {
+            resultElement.className = isSuccess ? 'success-demo' : 'error-demo';
+            messageElement.textContent = message;
+            resultElement.classList.remove('d-none');
+            setTimeout(() => {
+                resultElement.classList.add('d-none');
+            }, 5000);
+        }
+
+        // === TESTES DE ERRO DE REDE ===
+        document.getElementById('test-network-error').addEventListener('click', async () => {
+            console.log('🧪 Testando erro de rede...');
+            
+            try {
+                const error = new Error('Falha na conexão com a internet');
+                error.type = ERROR_TYPES.NETWORK;
+                handleError(error, ERROR_SEVERITY.HIGH, {
+                    component: 'test-network',
+                    action: 'simulate-network-error'
+                });
+                
+                showResult(networkResult, networkMessage, 'Erro de rede simulado com sucesso!');
+                updateStats();
+            } catch (e) {
+                console.error('Erro no teste:', e);
+            }
+        });
+
+        document.getElementById('test-timeout').addEventListener('click', async () => {
+            console.log('🧪 Testando timeout...');
+            
+            try {
+                const error = new Error('Timeout após 30 segundos');
+                error.type = ERROR_TYPES.TIMEOUT;
+                handleError(error, ERROR_SEVERITY.MEDIUM, {
+                    component: 'test-timeout',
+                    action: 'simulate-timeout'
+                });
+                
+                showResult(networkResult, networkMessage, 'Timeout simulado com sucesso!');
+                updateStats();
+            } catch (e) {
+                console.error('Erro no teste:', e);
+            }
+        });
+
+        document.getElementById('test-retry').addEventListener('click', async () => {
+            console.log('🧪 Testando retry automático...');
+            
+            let attempts = 0;
+            const result = await withRetry(async () => {
+                attempts++;
+                if (attempts < 3) {
+                    const error = new Error(`Tentativa ${attempts} falhou`);
+                    error.type = ERROR_TYPES.NETWORK;
+                    throw error;
+                }
+                return { success: true, attempts };
+            }, {
+                maxRetries: 3,
+                retryDelay: 1000
+            });
+            
+            showResult(networkResult, networkMessage, `Retry bem-sucedido após ${result.attempts} tentativas!`, true);
+            updateStats();
+        });
+
+        // === TESTES DE AUTENTICAÇÃO ===
+        document.getElementById('test-auth-error').addEventListener('click', async () => {
+            console.log('🧪 Testando erro de autenticação...');
+            
+            const error = new Error('Credenciais inválidas');
+            error.type = ERROR_TYPES.AUTH;
+            handleError(error, ERROR_SEVERITY.HIGH, {
+                component: 'test-auth',
+                action: 'simulate-auth-error'
+            });
+            
+            showResult(authResult, authMessage, 'Erro de autenticação simulado!');
+            updateStats();
+        });
+
+        document.getElementById('test-expired-token').addEventListener('click', async () => {
+            console.log('🧪 Testando token expirado...');
+            
+            const error = new Error('Token JWT expirado');
+            error.type = ERROR_TYPES.AUTH;
+            error.code = 'auth/user-token-expired';
+            handleError(error, ERROR_SEVERITY.HIGH, {
+                component: 'test-auth',
+                action: 'simulate-expired-token'
+            });
+            
+            showResult(authResult, authMessage, 'Token expirado simulado!');
+            updateStats();
+        });
+
+        document.getElementById('test-invalid-user').addEventListener('click', async () => {
+            console.log('🧪 Testando usuário inválido...');
+            
+            const error = new Error('Usuário não encontrado');
+            error.type = ERROR_TYPES.AUTH;
+            error.code = 'auth/user-not-found';
+            handleError(error, ERROR_SEVERITY.MEDIUM, {
+                component: 'test-auth',
+                action: 'simulate-invalid-user'
+            });
+            
+            showResult(authResult, authMessage, 'Usuário inválido simulado!');
+            updateStats();
+        });
+
+        // === TESTES DE API ===
+        document.getElementById('test-api-500').addEventListener('click', async () => {
+            console.log('🧪 Testando erro 500...');
+            
+            const error = new Error('Erro interno do servidor');
+            error.type = ERROR_TYPES.API;
+            error.status = 500;
+            handleError(error, ERROR_SEVERITY.HIGH, {
+                component: 'test-api',
+                action: 'simulate-500-error'
+            });
+            
+            showResult(apiResult, apiMessage, 'Erro 500 simulado!');
+            updateStats();
+        });
+
+        document.getElementById('test-api-404').addEventListener('click', async () => {
+            console.log('🧪 Testando erro 404...');
+            
+            const error = new Error('Recurso não encontrado');
+            error.type = ERROR_TYPES.API;
+            error.status = 404;
+            handleError(error, ERROR_SEVERITY.LOW, {
+                component: 'test-api',
+                action: 'simulate-404-error'
+            });
+            
+            showResult(apiResult, apiMessage, 'Erro 404 simulado!');
+            updateStats();
+        });
+
+        document.getElementById('test-api-429').addEventListener('click', async () => {
+            console.log('🧪 Testando rate limit...');
+            
+            const error = new Error('Muitas requisições');
+            error.type = ERROR_TYPES.API;
+            error.status = 429;
+            handleError(error, ERROR_SEVERITY.MEDIUM, {
+                component: 'test-api',
+                action: 'simulate-rate-limit'
+            });
+            
+            showResult(apiResult, apiMessage, 'Rate limit simulado!');
+            updateStats();
+        });
+
+        // === TESTES DE FALLBACK ===
+        document.getElementById('test-fallback-success').addEventListener('click', async () => {
+            console.log('🧪 Testando fallback funcionando...');
+            
+            const result = await safeExecute(
+                async () => {
+                    throw new Error('Operação principal falhou');
+                },
+                async () => {
+                    console.log('Fallback executado com sucesso!');
+                    return { success: true, source: 'fallback' };
+                },
+                { component: 'test-fallback', action: 'test-success' }
+            );
+            
+            showResult(fallbackResult, fallbackMessage, `Fallback funcionou! Resultado: ${JSON.stringify(result)}`, true);
+            updateStats();
+        });
+
+        document.getElementById('test-fallback-chain').addEventListener('click', async () => {
+            console.log('🧪 Testando cadeia de fallbacks...');
+            
+            // Simular múltiplos fallbacks
+            const result = await safeExecute(
+                () => { throw new Error('Operação 1 falhou'); },
+                () => safeExecute(
+                    () => { throw new Error('Operação 2 falhou'); },
+                    () => ({ success: true, source: 'fallback-chain' }),
+                    { component: 'test-fallback-chain', action: 'fallback-2' }
+                ),
+                { component: 'test-fallback-chain', action: 'fallback-1' }
+            );
+            
+            showResult(fallbackResult, fallbackMessage, `Cadeia de fallbacks funcionou! ${JSON.stringify(result)}`, true);
+            updateStats();
+        });
+
+        document.getElementById('test-cache-fallback').addEventListener('click', async () => {
+            console.log('🧪 Testando cache como fallback...');
+            
+            // Simular dados no cache
+            localStorage.setItem('test-cache', JSON.stringify({ data: 'cached data', timestamp: Date.now() }));
+            
+            const result = await safeExecute(
+                () => { throw new Error('API indisponível'); },
+                () => {
+                    const cached = localStorage.getItem('test-cache');
+                    return cached ? JSON.parse(cached) : null;
+                },
+                { component: 'test-cache', action: 'use-cache-fallback' }
+            );
+            
+            showResult(fallbackResult, fallbackMessage, `Cache usado como fallback! ${JSON.stringify(result)}`, true);
+            updateStats();
+        });
+
+        // === TESTES DE VALIDAÇÃO ===
+        document.getElementById('test-validation-email').addEventListener('click', async () => {
+            console.log('🧪 Testando validação de email...');
+            
+            const error = new Error('Email deve ter um formato válido');
+            error.type = ERROR_TYPES.VALIDATION;
+            handleError(error, ERROR_SEVERITY.LOW, {
+                component: 'test-validation',
+                action: 'validate-email',
+                email: 'email-invalido'
+            });
+            
+            showResult(validationResult, validationMessage, 'Validação de email testada!');
+            updateStats();
+        });
+
+        document.getElementById('test-validation-password').addEventListener('click', async () => {
+            console.log('🧪 Testando validação de senha...');
+            
+            const error = new Error('Senha deve ter pelo menos 6 caracteres');
+            error.type = ERROR_TYPES.VALIDATION;
+            handleError(error, ERROR_SEVERITY.LOW, {
+                component: 'test-validation',
+                action: 'validate-password',
+                passwordLength: 3
+            });
+            
+            showResult(validationResult, validationMessage, 'Validação de senha testada!');
+            updateStats();
+        });
+
+        document.getElementById('test-validation-required').addEventListener('click', async () => {
+            console.log('🧪 Testando campos obrigatórios...');
+            
+            const error = new Error('Campos obrigatórios não preenchidos');
+            error.type = ERROR_TYPES.VALIDATION;
+            handleError(error, ERROR_SEVERITY.LOW, {
+                component: 'test-validation',
+                action: 'validate-required',
+                missingFields: ['email', 'password']
+            });
+            
+            showResult(validationResult, validationMessage, 'Validação de campos obrigatórios testada!');
+            updateStats();
+        });
+
+        // === TESTES DE MONITORAMENTO ===
+        document.getElementById('test-error-queue').addEventListener('click', async () => {
+            console.log('🧪 Verificando fila de erros...');
+            
+            const queue = errorHandler.getErrorQueue();
+            const recent = queue.slice(-5); // últimos 5 erros
+            
+            monitoringMessage.innerHTML = `
+                <strong>Fila de Erros:</strong><br>
+                <small>Total: ${queue.length}</small><br>
+                <small>Últimos 5:</small><br>
+                ${recent.map(e => `<small>• ${e.type}: ${e.message}</small>`).join('<br>')}
+            `;
+            
+            monitoringResult.classList.remove('d-none');
+            setTimeout(() => monitoringResult.classList.add('d-none'), 10000);
+        });
+
+        document.getElementById('test-error-patterns').addEventListener('click', async () => {
+            console.log('🧪 Analisando padrões de erro...');
+            
+            const stats = errorHandler.getErrorStats();
+            
+            monitoringMessage.innerHTML = `
+                <strong>Padrões de Erro:</strong><br>
+                <small>Total: ${stats.total}</small><br>
+                <small>Recentes: ${stats.recent}</small><br>
+                <strong>Por Tipo:</strong><br>
+                ${Object.entries(stats.byType).map(([type, count]) => `<small>• ${type}: ${count}</small>`).join('<br>')}<br>
+                <strong>Por Severidade:</strong><br>
+                ${Object.entries(stats.bySeverity).map(([severity, count]) => `<small>• ${severity}: ${count}</small>`).join('<br>')}
+            `;
+            
+            monitoringResult.classList.remove('d-none');
+            setTimeout(() => monitoringResult.classList.add('d-none'), 10000);
+        });
+
+        document.getElementById('clear-error-queue').addEventListener('click', async () => {
+            console.log('🧪 Limpando fila de erros...');
+            
+            errorHandler.clearErrorQueue();
+            updateStats();
+            
+            monitoringMessage.innerHTML = '<strong>Fila de erros limpa!</strong>';
+            monitoringResult.classList.remove('d-none');
+            setTimeout(() => monitoringResult.classList.add('d-none'), 3000);
+        });
+
+        // === TESTES DE STRESS ===
+        document.getElementById('test-stress-errors').addEventListener('click', async () => {
+            console.log('🧪 Gerando 50 erros simultâneos...');
+            
+            const startTime = Date.now();
+            const promises = [];
+            
+            for (let i = 0; i < 50; i++) {
+                promises.push(
+                    safeExecute(
+                        () => {
+                            const error = new Error(`Erro de stress ${i + 1}`);
+                            error.type = i % 2 === 0 ? ERROR_TYPES.NETWORK : ERROR_TYPES.API;
+                            throw error;
+                        },
+                        () => ({ handled: true, index: i }),
+                        { component: 'stress-test', action: 'bulk-error', index: i }
+                    )
+                );
+            }
+            
+            await Promise.all(promises);
+            const endTime = Date.now();
+            
+            stressMessage.innerHTML = `
+                <strong>Teste de Stress Concluído!</strong><br>
+                <small>50 erros processados em ${endTime - startTime}ms</small><br>
+                <small>Performance: ${(50 / (endTime - startTime) * 1000).toFixed(2)} erros/segundo</small>
+            `;
+            
+            stressResult.classList.remove('d-none');
+            setTimeout(() => stressResult.classList.add('d-none'), 10000);
+            updateStats();
+        });
+
+        document.getElementById('test-memory-leak').addEventListener('click', async () => {
+            console.log('🧪 Testando vazamento de memória...');
+            
+            const initialMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
+            
+            // Gerar muitos erros para testar se a fila limita corretamente
+            for (let i = 0; i < 150; i++) {
+                const error = new Error(`Erro de memória ${i}`);
+                error.type = ERROR_TYPES.UNKNOWN;
+                handleError(error, ERROR_SEVERITY.LOW, {
+                    component: 'memory-test',
+                    action: 'generate-error',
+                    index: i
+                }, false); // sem feedback visual
+            }
+            
+            const queue = errorHandler.getErrorQueue();
+            const finalMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
+            
+            stressMessage.innerHTML = `
+                <strong>Teste de Memória:</strong><br>
+                <small>Erros gerados: 150</small><br>
+                <small>Fila mantida em: ${queue.length}</small><br>
+                <small>Memória inicial: ${(initialMemory / 1024 / 1024).toFixed(2)} MB</small><br>
+                <small>Memória final: ${(finalMemory / 1024 / 1024).toFixed(2)} MB</small>
+            `;
+            
+            stressResult.classList.remove('d-none');
+            setTimeout(() => stressResult.classList.add('d-none'), 10000);
+            updateStats();
+        });
+
+        document.getElementById('test-performance').addEventListener('click', async () => {
+            console.log('🧪 Testando performance...');
+            
+            const iterations = 1000;
+            const startTime = performance.now();
+            
+            for (let i = 0; i < iterations; i++) {
+                const error = new Error(`Performance test ${i}`);
+                error.type = ERROR_TYPES.UNKNOWN;
+                handleError(error, ERROR_SEVERITY.LOW, {
+                    component: 'performance-test',
+                    action: 'measure-performance',
+                    iteration: i
+                }, false);
+            }
+            
+            const endTime = performance.now();
+            const avgTime = (endTime - startTime) / iterations;
+            
+            stressMessage.innerHTML = `
+                <strong>Teste de Performance:</strong><br>
+                <small>Iterações: ${iterations}</small><br>
+                <small>Tempo total: ${(endTime - startTime).toFixed(2)}ms</small><br>
+                <small>Tempo médio: ${avgTime.toFixed(4)}ms por erro</small><br>
+                <small>Throughput: ${(iterations / (endTime - startTime) * 1000).toFixed(2)} erros/segundo</small>
+            `;
+            
+            stressResult.classList.remove('d-none');
+            setTimeout(() => stressResult.classList.add('d-none'), 10000);
+            updateStats();
+        });
+
+        // Inicializar
+        console.log('🧪 Sistema de testes inicializado!');
+        console.log('Clique nos botões para testar diferentes funcionalidades.');
+        updateStats();
+    </script>
+</body>
+</html> 

@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LexiDecis v2</title>
+
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+  <!-- Bootstrap Icons (apenas para os ícones) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- Select2 (pesquisa) -->
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+
+  <script src="./assets/js/status-indicator.js"></script>
+  <!-- CSS Principal -->
+  <link id="color" rel="stylesheet" href="./assets/css/color-chat.css" media="screen" />
+
+  <style>
+    :root {
+      --sidebar-w: 280px;
+    }
+    .hidden { display: none !important; }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: var(--body-color);
+      color: var(--theme-body-font-color);
+    }
+
+    /* ===== Layout principal ===== */
+    #wrapper {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      background: var(--body-color);
+    }
+
+    #chat-sidebar {
+      width: var(--sidebar-w);
+      min-width: 240px;
+      max-width: 340px;
+      background: var(--body-color);
+      border-right: 1px solid var(--shape-border);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      position: relative;
+      transition: margin-left 0.3s ease, transform 0.3s ease, width 0.3s ease;
+    }
+
+    .sidebar-header button {
+      margin-left: .25rem;
+    }
+
+    .sidebar-bottom {
+      background: var(--bg-light);
+      padding: 0;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      min-height: 50px;
+    }
+
+    #userMenuBtn {
+      width: 100%;
+      padding: .5rem 1rem;
+      background: none;
+      border: none;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    #userMenuBtn i:last-child {
+      margin-left: auto;
+      transition: transform .2s;
+    }
+    .sidebar-bottom.open #userMenuBtn i:last-child {
+      transform: rotate(180deg);
+    }
+
+    /* Dropdown look & feel (Select2‑like) */
+    #userMenu {
+      position: absolute;
+      bottom: 100%;
+      left: 0;
+      width: 100%;
+      margin: 0;
+      padding: .25rem 0;
+      border: 1px solid var(--border-light-color);
+      border-radius: 4px;
+      background: var(--dropdown-bg-color);
+      box-shadow: 0 2px 4px rgba(0,0,0,.08);
+      list-style: none;
+      z-index: 1050;
+      transition: all 0.2s ease;
+    }
+    #userMenu.hidden { display: none !important; }
+    #userMenu .dropdown-item {
+      display: flex;
+      align-items: center;
+      padding: .5rem 1rem;
+      width: 100%;
+      background: none;
+      border: none;
+      text-align: left;
+      cursor: pointer;
+      color: var(--theme-body-font-color);
+    }
+    #userMenu .dropdown-item:hover {
+      background: var(--table-hover-color);
+    }
+
+    #chat-sidebar header {
+      padding: .75rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    #chat-sidebar ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    #chat-sidebar li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: .5rem 1rem;
+      border-bottom: 1px solid var(--shape-border);
+    }
+    #chat-sidebar li:hover {
+      background: var(--table-hover-color);
+    }
+
+    /* Destaque do item selecionado */
+    #chat-sidebar li.selected {
+      background: var(--active-bg-color);
+    }
+
+    /* Cursor pointer ao passar sobre Lexi AI */
+    #lexi-ai-item {
+      cursor: pointer;
+    }
+    /* Alterar cor de fundo ao passar o mouse sobre Lexi AI */
+    #lexi-ai-item:hover {
+      background: var(--active-bg-color);
+    }
+    /* Make Explore GPTs look clickable */
+    #explore-gpt-item {
+      cursor: pointer;
+    }
+    #explore-gpt-item:hover {
+      background: var(--active-bg-color);
+    }
+
+    /* Hover style for dynamic GPT list items */
+    #ai-providers-list li:hover {
+      background-color: var(--active-bg-color) !important;
+      color: var(--theme-body-font-color) !important;
+    }
+
+    .btn-icon {
+      color: var(--font-color);
+      background: none;
+      border: none;
+      padding: .25rem;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    #chat-area {
+      flex: 1;
+      position: relative;
+      background: var(--light-background);
+      transition: margin-left 0.3s ease;
+    }
+
+    flowise-fullchatbot {
+      height: 100%;
+      width: 100%;
+      display: block;
+    }
+
+    /* === Mini‑sidebar (desktop, quando oculto) === */
+    #sidebar-mini {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      width: 44px;
+      background: var(--body-color);
+      border-right: 1px solid var(--shape-border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 1rem;
+      z-index: 1044;
+      transition: left 0.3s ease, opacity 0.3s ease;
+    }
+    #sidebar-mini .btn-icon {
+      font-size: 1.1rem;
+    }
+    #sidebar-mini .mt-auto { margin-top: auto; }
+    #sidebar-mini .mb-3   { margin-bottom: 1rem; }
+
+    body.with-mini-sidebar #wrapper {
+      margin-left: 44px; /* mesma largura da mini-sidebar */
+      transition: margin-left 0.3s ease;
+    }
+
+    /* Search box layout with icon outside select */
+    .search-box {
+      display: flex;
+      align-items: center;
+      /* border-bottom: 1px solid var(--shape-border); */
+      gap: 0.5rem;
+    }
+    .search-box .search-icon {
+      font-size: 1rem;
+      color: var(--font-color);
+    }
+    /* Ensure sidebar content and chat list can scroll */
+    #chat-sidebar > .flex-grow-1.d-flex.flex-column.justify-content-start {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    #chat-sidebar .flex-grow-1[data-simplebar] {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+    }
+    /* Theme buttons matching default theme colors */
+    .btn-theme {
+      background-color: var(--theme-default);
+      color: var(--theme-body-font-color);
+      border: none;
+    }
+    .btn-theme:hover {
+      background-color: var(--active-bg-color);
+      color: var(--theme-body-font-color);
+    }
+    .btn-outline-theme {
+      background: none;
+      color: var(--theme-default);
+      border: 1px solid var(--theme-default);
+    }
+    .btn-outline-theme:hover {
+      background-color: var(--active-bg-color);
+      color: var(--theme-body-font-color);
+    }
+
+    /* Override Lexi AI and Explore GPTs button to match theme text-only style */
+    #lexi-ai-item,
+    #explore-gpt-item {
+      color: var(--theme-body-font-color);
+      background: none;
+      border: none;
+      background-color: transparent;
+    }
+    #lexi-ai-item:hover,
+    #explore-gpt-item:hover {
+      background-color: var(--active-bg-color) !important;
+      color: var(--body-color) !important;
+    }
+
+    /* Hover style for chat list items - updated to only set background, and set inner text/icons to theme-body-font-color */
+    #chat-list li:hover {
+      background-color: var(--active-bg-color) !important;
+    }
+    #chat-list li:hover * {
+      color: var(--theme-body-font-color) !important;
+    }
+    /* Prevent hover color change on the options button */
+    #chat-list li:hover .chat-options-btn,
+    #chat-list li:hover .chat-options-btn * {
+      color: var(--font-color) !important;
+    }
+
+    /* Provider icon style for AI providers sidebar list */
+    .provider-icon {
+      width: 1rem;
+      height: 1rem;
+      margin-right: 0.5rem;
+      object-fit: contain;
+    }
+
+    /* Smaller font size for chat list items */
+    #chat-list li {
+      font-size: 0.875rem;
+    }
+    /* Left-align chat items */
+    #chat-list li {
+      justify-content: flex-start !important;
+    }
+    /* Match GPT list font size to chat list */
+    #ai-providers-list li {
+      font-size: 0.875rem;
+    }
+
+    /* Modern sidebar divider */
+    #chat-sidebar hr {
+      border: none;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--theme-default), transparent);
+      margin: 0.5rem 1rem;
+      opacity: 0.7;
+    }
+    #chat-list li { cursor: pointer; }
+
+    /* Remove divider between chat list items */
+    #chat-list li {
+      border-bottom: none !important;
+    }
+
+    /* Remove divider below Nova conversa */
+    #new-conversation {
+      border-bottom: none !important;
+    }
+
+    /* Remove divider between Nova conversa and Explore GPTs */
+    #new-conversation,
+    #explore-gpt-item {
+      border-bottom: none !important;
+    }
+
+    /* Reduce spacing between chat items by 40% */
+    #chat-list li {
+      padding: 0.3rem 0.6rem !important;
+    }
+
+    /* Custom message count badge: inverted colors with border */
+    #chat-list li .badge {
+      background-color: var(--body-color) !important;
+      color: var(--font-color) !important;
+      border: 1px solid var(--font-color) !important;
+    }
+
+    /* User profile section styling */
+    #user-name {
+      font-size: 0.8rem !important;
+      max-width: 140px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Tippy.js tooltip styling for chat options */
+    .tippy-box,
+    .tippy-box[data-theme~='custom'] {
+      z-index: 9999 !important;
+      background: var(--dropdown-bg-color, #fff) !important;
+      border: 1px solid var(--border-light-color, #dee2e6) !important;
+      border-radius: 6px !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+      max-width: 200px !important;
+      padding: 0 !important;
+    }
+
+    .tippy-box .tippy-content,
+    .tippy-box[data-theme~='custom'] .tippy-content {
+      padding: 0 !important;
+    }
+
+    .tippy-box .list-unstyled,
+    .tippy-box[data-theme~='custom'] .list-unstyled {
+      margin: 0 !important;
+      padding: 4px 0 !important;
+      list-style: none !important;
+    }
+
+    .tippy-box .dropdown-item,
+    .tippy-box[data-theme~='custom'] .dropdown-item {
+      display: block !important;
+      width: 100% !important;
+      padding: 8px 16px !important;
+      color: var(--theme-body-font-color, #333) !important;
+      background: none !important;
+      border: none !important;
+      text-align: left !important;
+      cursor: pointer !important;
+      transition: background-color 0.2s !important;
+      font-size: 14px !important;
+      line-height: 1.5 !important;
+    }
+
+    .tippy-box .dropdown-item:hover,
+    .tippy-box[data-theme~='custom'] .dropdown-item:hover {
+      background: var(--table-hover-color, #f8f9fa) !important;
+    }
+
+    .tippy-box .dropdown-item.text-danger,
+    .tippy-box[data-theme~='custom'] .dropdown-item.text-danger {
+      color: #dc3545 !important;
+    }
+
+    .tippy-box .dropdown-item.text-danger:hover,
+    .tippy-box[data-theme~='custom'] .dropdown-item.text-danger:hover {
+      background: rgba(220, 53, 69, 0.1) !important;
+    }
+
+    /* Ensure tippy arrow is properly styled */
+    .tippy-arrow,
+    .tippy-box[data-theme~='custom'] .tippy-arrow {
+      color: var(--dropdown-bg-color, #fff) !important;
+    }
+
+    /* Additional fixes for menu positioning */
+    .tippy-popper {
+      z-index: 9999 !important;
+    }
+
+    /* Ensure chat options button is properly positioned */
+    .chat-options-btn {
+      position: relative !important;
+      z-index: 10 !important;
+    }
+  </style>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simplebar@6.2.3/dist/simplebar.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/simplebar@6.2.3/dist/simplebar.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css" />
+  <script src="https://unpkg.com/@popperjs/core@2"></script>
+  <script src="https://unpkg.com/tippy.js@6"></script>
+  <!-- Custom modal CSS removed (now using Bootstrap modal) -->
+</head>
+<body>
+  <div id="sidebar-mini" class="hidden">
+    <button id="mini-toggle" class="btn-icon" title="Mostrar conversas"><i class="bi bi-chevron-right"></i></button>
+    <button id="mini-theme-toggle" class="btn-icon mt-3" title="Alternar tema"></button>
+    <span data-openai-status class="btn-icon mt-3" title="OpenAI API Status"></span>
+    <button id="mini-explore" class="btn-icon mt-3" title="Explore GPTs" data-bs-toggle="modal" data-bs-target="#gptModal">
+      <i class="bi bi-grid-3x3-gap"></i>
+    </button>
+    <button id="mini-new"    class="btn-icon mt-3" title="Novo chat"><i class="bi bi-plus-lg"></i></button>
+    <button id="mini-user"   class="btn-icon mt-auto mb-3" title="Minha conta"><i class="bi bi-person-circle"></i></button>
+  </div>
+  <div id="wrapper">
+    <nav id="chat-sidebar" class="d-flex flex-column">
+      <div class="flex-grow-1 d-flex flex-column justify-content-start">
+        <header class="sidebar-header">
+          <strong></strong><span data-openai-status class="btn-icon me-2" title="OpenAI API Status"></span>
+          <div class="ms-auto d-flex align-items-center">
+            <button id="theme-toggle" class="btn-icon" title="Alternar tema"><i class="bi bi-moon-stars"></i></button>
+            <button id="explore-btn" class="btn-icon" title="Explore GPTs" data-bs-toggle="modal" data-bs-target="#gptModal"><i class="bi bi-grid-3x3-gap"></i></button>
+            <button id="new-chat" class="btn-icon" title="Novo chat"><i class="bi bi-plus-lg"></i></button>
+            <button id="toggle-list" class="btn-icon" title="Ocultar"><i class="bi bi-chevron-left"></i></button>
+          </div>
+        </header>
+        <div class="px-3 py-2 search-box">
+          <i class="bi bi-search search-icon"></i>
+          <select id="chat-search" class="flex-grow-1"><option></option></select>
+        </div>
+        <li id="new-conversation" class="px-3 py-2 d-flex align-items-center" role="button" tabindex="0">
+          <i class="bi bi-plus-lg me-2"></i><span class="flex-grow-1">Nova conversa</span>
+        </li>
+        <ul class="list-unstyled m-0">
+          <li id="explore-gpt-item" class="px-3 py-2 d-flex align-items-center" role="button" tabindex="0" data-bs-toggle="modal" data-bs-target="#gptModal"><i class="bi bi-grid-3x3-gap me-2"></i><span class="flex-grow-1">Explore GPTs</span></li>
+        </ul>
+        <div class="ps-4 py-0 d-flex align-items-center">
+          <button class="btn btn-link p-0 me-2" data-bs-toggle="collapse" data-bs-target="#gpts-collapse" aria-expanded="true" aria-controls="gpts-collapse">
+            <i class="bi bi-chevron-down"></i>
+          </button>
+          <div class="text-muted small fw-semibold">GPTs</div>
+        </div>
+        <div id="gpts-collapse" class="collapse">
+          <div class="flex-grow-1" style="overflow-y: auto; max-height: 200px;">
+          <ul id="ai-providers-list" class="list-unstyled m-0"></ul>
+        </div>
+        </div>
+        
+        <div class="d-flex align-items-center px-3 py-0 mt-3">
+          <div class="text-muted small fw-semibold flex-grow-1">Chats</div>
+        </div>
+        <div class="flex-grow-1" data-simplebar style="overflow-y: auto; flex: 1; min-height: 0; z-index: 1;">
+          <ul id="chat-list" class="mb-0 pt-0"><li id="chat-loading" class="px-3 py-2 text-muted">Carregando chats...</li></ul>
+        </div>
+      </div>
+      <div class="sidebar-bottom" id="avatarBlock">
+        <button id="userMenuBtn"><i class="bi bi-person-circle fs-5 me-2"></i><span class="fw-normal small" id="user-name"></span><i class="bi bi-chevron-up small"></i></button>
+        <ul id="userMenu" class="hidden">
+          <li><button class="dropdown-item" id="logout-btn"><i class="bi bi-box-arrow-right me-2"></i>Sair</button></li>
+        </ul>
+      </div>
+    </nav>
+    <section id="chat-area"><flowise-fullchatbot></flowise-fullchatbot></section>
+    <!-- GPT Explorer Modal -->
+    <div class="modal fade" id="gptModal" tabindex="-1" aria-labelledby="gptModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="gptModalLabel">Explore GPTs</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          </div>
+          <div class="modal-body" id="gptModalBody">Carregando...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="module">
+    // Intercept all fetch calls to include user identifiers
+    const _origFetch = window.fetch;
+    window.fetch = async (resource, init = {}) => {
+      const headers = new Headers(init.headers || {});
+      if (AuthService.user) {
+        headers.set('x-user-email', AuthService.user.email);
+        headers.set('x-user-uuid',  AuthService.user.uid);
+        // Include the user's JWT in every request
+        let jwt = AuthService.token;
+        // If AuthService.user provides getIdToken(), use it
+        if (!jwt && AuthService.user && typeof AuthService.user.getIdToken === 'function') {
+          jwt = await AuthService.user.getIdToken();
+        }
+        if (jwt) {
+          headers.set('x-user-jwt', jwt);
+        }
+        // Include the GPT ID header
+        headers.set('x-gpt-id', '1');
+        // Include the user's JWT as a Bearer token only if not already present
+        if (!headers.has('Authorization')) {
+          headers.set('Authorization', `Bearer ${jwt}`);
+        }
+      }
+      return _origFetch(resource, { ...init, headers });
+    };
+    // Initialize Flowise embed configuration with LexiDecis theme and observers stub
+    window.flowiseConfig = {
+      theme: {
+        disclaimer: {
+          title: 'Disclaimer',
+          message: 'By using this chatbot, you agree to the <a target="_blank" href="https://flowiseai.com/terms">Terms & Condition</a>',
+          textColor: 'black',
+          buttonColor: '#3b82f6',
+          buttonText: 'Start Chatting',
+          buttonTextColor: 'white',
+          blurredBackgroundColor: 'rgba(0, 0, 0, 0.4)', //The color of the blurred background that overlays the chat interface
+          backgroundColor: 'white',
+          denyButtonText: 'Cancel',
+          denyButtonBgColor: '#ef4444',
+        },
+
+        chatWindow: {
+          showTitle: true,
+          titleBackgroundColor: "var(--theme-default)",
+          welcomeMessage: "Sou a Lexi AI, com tecnologia ChatGPT 4o da OpenAI. Ideal para responder perguntas, gerar ideias e ajudar com clareza e rapidez. O que deseja saber?",
+          errorMessage: "Ops, reduza sua pergunta e tente novamente.",
+          backgroundColor: "transparent",
+          backgroundImage: 'https://v1.power.app.br/images/wallpaper-chat-01.jpg', // If set, this will overlap the background color of the chat window.
+          botMessage: {
+          backgroundColor: '#f7f8ff',
+          textColor: '#303235',
+          showAvatar: false,
+          //avatarSrc: 'https://raw.githubusercontent.com/zahidkhawaja/langchain-chat-nextjs/main/public/parroticon.png',
+        },
+          userMessage: {
+            backgroundColor: "var(--body-color)",
+            textColor: "#292929",
+            showAvatar: false
+          },
+          textInput: {
+            placeholder: "Mensagem...",
+            backgroundColor: "var(--theme-default)",
+            textColor: "#292929",
+            sendButtonColor: "#ffffff",
+            maxChars: 100000,
+            maxCharsWarningMessage: "Você excedeu o limite de caracteres. Insira menos de 100000 caracteres.",
+            autoFocus: true,
+            sendMessageSound: true,
+            receiveMessageSound: true
+          },
+          feedback: {
+            color: "var(--theme-default)"
+          },
+          dateTimeToggle: {
+            date: true,
+            time: true
+          },
+          footer: {
+            textColor: "var(--theme-default)",
+            text: "Sempre verifique as respostas - ",
+            company: "LexiDecis",
+            companyLink: "https://lexidecis.com.br"
+          }
+        }
+      },
+      observersConfig: {
+        // Stub: will be overridden per session
+      }
+    };
+    // Set apiHost to current origin for initial page load and reload
+    window.flowiseConfig.apiHost = window.location.protocol + '//' + window.location.host;
+    import AuthService from './assets/js/auth.js';
+    import { listChats, listGpts, getGptConfig, createChatMessage } from "./assets/js/api.js";
+
+    // === Flowise chatflowId mapping helper ===
+    const chatflowIdMap = {
+      'FLOW1_CHAT': 'FLOW1_CHAT'
+    };
+    function mapChatflowId(id) {
+      return chatflowIdMap[id] || id;
+    }
+    const themeToggle = document.getElementById('theme-toggle');
+    const miniThemeToggle = document.getElementById('mini-theme-toggle');
+    // Initialize mini toggle icon
+    miniThemeToggle.innerHTML = themeToggle.innerHTML;
+    // Toggle theme when clicking mini toggle
+    miniThemeToggle.addEventListener('click', () => themeToggle.click());
+    const root = document.documentElement;
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) root.classList.add('dark-only');
+    themeToggle.innerHTML = root.classList.contains('dark-only') ? '<i class="bi bi-sun"></i>' : '<i class="bi bi-moon-stars"></i>';
+    themeToggle.addEventListener('click', () => {
+      root.classList.toggle('dark-only');
+      const isDark = root.classList.contains('dark-only');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      themeToggle.innerHTML = isDark ? '<i class="bi bi-sun"></i>' : '<i class="bi bi-moon-stars"></i>';
+      miniThemeToggle.innerHTML = themeToggle.innerHTML;
+    });
+
+    // === Build dynamic AI provider list ===
+    // === Build dynamic AI provider list ===
+    const aiList = document.getElementById('ai-providers-list');
+    const configCache = {};
+    // Make gptMap available to chat history loader
+    let gptMap = {};
+    (async () => {
+      await new Promise(resolve => {
+        const checkAuth = setInterval(() => {
+          if (AuthService.user) { clearInterval(checkAuth); resolve(); }
+        }, 100);
+      });
+      const gptList = await listGpts(AuthService);
+      gptMap = Object.fromEntries(gptList.map(g => [g.id, g]));
+      gptList.forEach(gpt => {
+        const li = document.createElement('li');
+        li.id = gpt.id;
+        li.className = 'px-3 py-2 d-flex align-items-center justify-content-between';
+        li.setAttribute('role', 'button');
+        li.tabIndex = 0;
+        const isVideo = gpt.imageUrl.toLowerCase().endsWith('.mp4');
+        const mediaElem = isVideo
+          ? `<video src="${gpt.imageUrl}" class="provider-icon" autoplay loop muted playsinline></video>`
+          : `<img src="${gpt.imageUrl}" class="provider-icon" alt="${gpt.name} icon"/>`;
+        li.innerHTML = `
+          <div class="d-flex align-items-center">
+            ${mediaElem}
+            <span class="ms-2">${gpt.name}</span>
+          </div>
+          <span class="badge small bg-light text-dark">${gpt.category || 'Sem categoria'}</span>
+        `;
+        li.addEventListener('click', async () => {
+          // Show loading spinner on GPT item
+          const spinner = document.createElement('div');
+          spinner.className = 'spinner-border spinner-border-sm text-primary me-2';
+          spinner.setAttribute('role', 'status');
+          spinner.innerHTML = '<span class="visually-hidden">Loading...</span>';
+          li.insertBefore(spinner, li.firstChild);
+          let override = configCache[gpt.id];
+          if (!override) {
+            override = await getGptConfig(AuthService, gpt.id);
+            configCache[gpt.id] = override; // now a flat object
+          }
+          // Handle case where override is an array with a JSON string under an empty key
+          if (Array.isArray(override) && override.length > 0) {
+            const wrapper = override[0];
+            if (wrapper && typeof wrapper === 'object' && Object.prototype.hasOwnProperty.call(wrapper, '')) {
+              try {
+                override = JSON.parse(wrapper['']);
+                configCache[gpt.id] = override;
+              } catch (err) {
+                console.error('Error parsing chatflowConfig JSON string:', err);
+              }
+            }
+          }
+          // Ensure sessionId is set: generate only for new chats
+          if (!override.sessionId) {
+            const sessionId = crypto.randomUUID();
+            override = { sessionId, ...override };
+            configCache[gpt.id] = override;
+          }
+          // Use base Flowise config from the GPT metadata
+          const baseFlowise = gpt.flowiseConfig.flowise;
+          // Normalize API host to avoid double slashes
+          const rawApiHost = baseFlowise.apiHost || '';
+          let apiHost = rawApiHost.replace(/\/$/, '');
+          // Normalize apiHost: if missing protocol (e.g., ":3000" or "localhost:3000"), prepend current origin protocol and host
+          if (!/^https?:\/\//.test(apiHost)) {
+            apiHost = window.location.protocol + '//' + apiHost;
+          }
+          // === Initialize empty history in localStorage for new session ===
+          const newExtKey = `${baseFlowise.chatflowId}_EXTERNAL`;
+          const newFlagKey = `${baseFlowise.chatflowId}_historyInjected`;
+          // Always clear previous history and start fresh for a new chat
+          localStorage.removeItem(newExtKey);
+          localStorage.removeItem(newFlagKey);
+          localStorage.setItem(newExtKey, JSON.stringify({ chatHistory: [], chatId: override.sessionId }));
+          localStorage.setItem(newFlagKey, 'true');
+          // Build config with chatflowConfig nested
+          const cfg = {
+            chatflowid: baseFlowise.chatflowId,
+            apiHost:          apiHost,
+            token:            baseFlowise.token,
+            headers: {
+              'x-user-email': AuthService.user.email,
+              'x-user-uuid':  AuthService.user.uid,
+              'x-gpt-id':     gpt.id,
+              'x-user-jwt':   AuthService.token
+            },
+            theme:            window.flowiseConfig.theme,
+            observersConfig: {
+              observeLoading: async (loading) => {
+                if (loading) {
+                  // Capture user input from the chatbot's textarea
+                  try {
+                    const userInput = document
+                      .querySelector('flowise-fullchatbot')
+                      .shadowRoot
+                      .querySelector('textarea').value;
+                    console.log('Sending chatmessage payload:', {
+                      chatflowid: cfg.chatflowid,
+                      sessionId: override.sessionId,
+                      role: 'user',
+                      message: userInput
+                    });
+                    await createChatMessage(
+                      AuthService,
+                      cfg.chatflowid,
+                      override.sessionId,
+                      'user',
+                      userInput
+                    );
+                    console.log('Chat message created successfully');
+                  } catch (err) {
+                    console.error('Failed to create chat message', err);
+                  }
+                }
+              }
+            },
+            chatflowConfig:   override
+          };
+          // Definir título dinâmico no chat baseado no GPT selecionado
+          if (cfg.theme && cfg.theme.chatWindow) {
+            cfg.theme.chatWindow.title = gpt.name || 'Escolha um GPT';
+          }
+          // Definir mensagem de boas-vindas dinâmica
+          if (cfg.theme && cfg.theme.chatWindow) {
+            cfg.theme.chatWindow.welcomeMessage = gpt.description || 'Bem-vindo ao assistente';
+          }
+          // Definir prompts iniciais dinâmicos
+          if (cfg.theme && cfg.theme.chatWindow) {
+            cfg.theme.chatWindow.starterPrompts = (() => {
+              const prompts = gpt.starterPrompts;
+              if (!prompts) return ['Quem é você?'];
+              if (Array.isArray(prompts)) return prompts;
+              return prompts.includes(',')
+                ? prompts.split(',').map(p => p.trim())
+                : [prompts];
+            })();
+          }
+          console.log('GPT Override for', gpt.id, override);
+          console.log('Config object passed to Chatbot.initFull:', cfg);
+          console.log('Full Chatbot.initFull payload (JSON):', JSON.stringify(cfg, null, 2));
+          // Ensure the chatbot container exists
+          const chatArea = document.getElementById('chat-area');
+          chatArea.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
+          // Initialize with new config
+          Chatbot.initFull(cfg);
+          // Remove loading spinner once GPT is initialized
+          spinner.remove();
+        });
+        aiList.appendChild(li);
+      });
+    })();
+(async () => {
+  await new Promise(resolve => {
+    const checkAuth = setInterval(() => {
+      if (AuthService.user) { clearInterval(checkAuth); resolve(); }
+    }, 100);
+  });
+  // Wait for GPT list to be loaded before fetching counts
+  await new Promise(resolve => {
+    const checkMap = setInterval(() => {
+      if (Object.keys(gptMap).length > 0) { clearInterval(checkMap); resolve(); }
+    }, 50);
+  });
+  const chatListEl = document.getElementById('chat-list');
+  chatListEl.innerHTML = '<li id="chat-loading" class="px-3 py-2 text-muted">Carregando chats...</li>';
+  try {
+    let resp = await listChats(AuthService);
+    if (typeof resp === 'string') resp = JSON.parse(resp);
+    const items = Array.isArray(resp) ? resp : resp.data ? [resp] : [];
+    const chatItems = items.flatMap(i => {
+      const raw = i.data;
+      return Array.isArray(raw) ? raw : typeof raw === 'string' ? JSON.parse(raw) : [raw];
+    });
+    chatListEl.innerHTML = '';
+    chatItems.forEach(chat => {
+      const li = document.createElement('li');
+      // allow direct chat opening via URL
+      li.dataset.sessionId = chat.id;
+      const chatGptKey = chat.fk_gpt_id || chat.gpt_id || chat.gptId;
+      li.dataset.gptKey = chatGptKey;
+      // Discrete chat icon before each chat name
+      const icon = document.createElement('i');
+      icon.className = 'bi bi-chat-dots me-2';
+      icon.style.fontSize = '1rem';
+      icon.style.color = 'var(--font-color)';
+      li.appendChild(icon);
+      const span = document.createElement('span');
+      span.textContent = chat.name || chat.id;
+      li.appendChild(span);
+      // Placeholder badge for message count
+      const countBadge = document.createElement('span');
+      countBadge.className = 'badge bg-secondary ms-2';
+      countBadge.textContent = '...';
+      span.appendChild(countBadge);
+      // Fetch and display message count
+      (async () => {
+        try {
+          const gptKey = chat.fk_gpt_id || chat.gpt_id || chat.gptId;
+          const gpt = gptMap[gptKey];
+          const baseFlowise = gpt?.flowiseConfig?.flowise;
+          // Determine API host, with fallback to current origin
+          let apiHost = baseFlowise?.apiHost || window.flowiseConfig.apiHost || window.location.origin;
+          apiHost = (apiHost || '').replace(/\/$/, '');
+          let normApiHost = apiHost;
+          if (!/^https?:\/\//.test(normApiHost)) {
+            normApiHost = window.location.protocol + '//' + normApiHost;
+          }
+          const flowId = baseFlowise?.chatflowId || gptKey;
+          const res = await fetch(
+            `${normApiHost}/api/v1/chatmessage/${flowId}?sessionId=${chat.id}`,
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${baseFlowise?.token}`
+              }
+            }
+          );
+          if (res.ok) {
+            const history = await res.json();
+            const count = Array.isArray(history)
+              ? history.length
+              : (history.data?.length || 0);
+            // Update placeholder badge with actual count
+            const countBadge = span.querySelector('.badge');
+            if (countBadge) countBadge.textContent = count;
+          }
+        } catch (err) {
+          console.error('Failed to fetch message count', err);
+        }
+      })();
+      const actions = document.createElement('div');
+      actions.className = 'ms-auto';
+      actions.innerHTML = `<button class="chat-options-btn btn-icon" title="Opções"><i class="bi bi-three-dots"></i></button>`;
+      li.appendChild(actions);
+      chatListEl.appendChild(li);
+      const tippyInstance = tippy(li.querySelector('.chat-options-btn'), {
+        content: `
+          <ul class="list-unstyled m-0">
+            <li><button class="dropdown-item" data-action="rename">Renomear</button></li>
+            <li><button class="dropdown-item" data-action="archive">Arquivar</button></li>
+            <li><button class="dropdown-item text-danger" data-action="delete">Excluir</button></li>
+          </ul>
+        `,
+        allowHTML: true,
+        interactive: true,
+        trigger: 'click',
+        placement: 'right-start',
+        zIndex: 9999,
+        appendTo: document.body,
+        offset: [0, 5],
+        animation: 'fade',
+        theme: 'custom',
+        hideOnClick: false,
+        arrow: true,
+        flipOnUpdate: true,
+        boundary: 'viewport',
+        onShown(instance) {
+          // Add event listeners to the buttons
+          const buttons = instance.popper.querySelectorAll('.dropdown-item');
+          console.log('Tippy shown, found buttons:', buttons.length);
+          buttons.forEach(button => {
+            button.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const action = e.target.dataset.action;
+              const chatId = chat.id;
+              
+              switch(action) {
+                case 'rename':
+                  const newName = prompt('Digite o novo nome do chat:', chat.name || chat.id);
+                  if (newName && newName.trim()) {
+                    // TODO: Implement rename functionality
+                    console.log('Renaming chat', chatId, 'to', newName);
+                  }
+                  break;
+                case 'archive':
+                  // TODO: Implement archive functionality
+                  console.log('Archiving chat', chatId);
+                  break;
+                case 'delete':
+                  if (confirm('Tem certeza que deseja excluir este chat?')) {
+                    // TODO: Implement delete functionality
+                    console.log('Deleting chat', chatId);
+                  }
+                  break;
+              }
+              
+              instance.hide();
+            });
+          });
+        },
+        onClickOutside(instance) {
+          instance.hide();
+        }
+      });
+      // Clique para carregar histórico usando chatflowId mapping
+      li.addEventListener('click', async (e) => {
+        // Prevent triggering if clicking on the options button
+        if (e.target.closest('.chat-options-btn')) {
+          return;
+        }
+        // Show loading spinner on selected chat
+        const spinner = document.createElement('div');
+        spinner.className = 'spinner-border spinner-border-sm text-primary me-2';
+        spinner.setAttribute('role', 'status');
+        spinner.innerHTML = '<span class="visually-hidden">Loading...</span>';
+        li.insertBefore(spinner, li.firstChild);
+        // Marca visualmente o item selecionado
+        document.querySelectorAll('#chat-sidebar li').forEach(elem => elem.classList.remove('selected'));
+        li.classList.add('selected');
+
+        const sessionId = chat.id;
+        // update URL to include this chatId
+        window.history.replaceState(null, '', `${window.location.pathname}?chatId=${sessionId}`);
+        // Use the GPT ID from the chat object (support different naming)
+        const gptKey = chat.fk_gpt_id || chat.gpt_id || chat.gptId;
+        // Debug logs for GPT config retrieval
+        console.log('Debug: chat object has fk_gpt_id =', chat.fk_gpt_id, 'gpt_id =', chat.gpt_id);
+        console.log('Debug: available GPT configs in cache:', Object.keys(configCache));
+        let override = configCache[gptKey];
+        if (!override) {
+          override = await getGptConfig(AuthService, gptKey);
+          configCache[gptKey] = override;
+        }
+        // If override is wrapped as an array with a JSON string under empty key, parse it
+        if (!Array.isArray(override) && override[0] && typeof override[0] === 'object' && override[0]['']) {
+          try {
+            const parsed = JSON.parse(override[0]['']);
+            override = parsed;
+            configCache[gptKey] = override;
+            console.log('Parsed wrapped override for GPT key', gptKey, '=', override);
+          } catch (err) {
+            console.error('Error parsing wrapped override for GPT key', gptKey, err);
+          }
+        }
+        // Ensure sessionId is updated in the override
+        override = { ...override, sessionId };
+        configCache[gptKey] = override;
+        // Debug log after setting override
+        console.log('Debug: override for GPT key', gptKey, '=', override);
+        try {
+        // Determine the actual Flowise chatflowId for this GPT
+        const gpt = gptMap[gptKey];
+        // Respect the chat's own flowiseConfig.chatflowId if provided, otherwise fallback to the GPT metadata
+        const realFlowId = chat.chatflowId
+          || (gpt && gpt.flowiseConfig && gpt.flowiseConfig.flowise && gpt.flowiseConfig.flowise.chatflowId)
+          || gptKey;
+        // Use proxy-mapped chatflow ID only, without sessionId
+        const proxyFlowId = mapChatflowId(realFlowId);
+        // Determine API host for this GPT
+        const rawApiHost = gpt && gpt.flowiseConfig && gpt.flowiseConfig.flowise
+          ? gpt.flowiseConfig.flowise.apiHost
+          : window.flowiseConfig.apiHost;
+        let apiHost = rawApiHost.replace(/\/$/, '');
+        // Normalize apiHost: if missing protocol (e.g., ":3000" or "localhost:3000"), prepend current origin protocol and host
+        if (!/^https?:\/\//.test(apiHost)) {
+          apiHost = window.location.protocol + '//' + apiHost;
+        }
+        const flowId = `${proxyFlowId}_${sessionId}`;
+        // Session-specific storage keys
+        const sessionExtKey = `${proxyFlowId}__${sessionId}_EXTERNAL`;
+        const sessionFlagKey = `${proxyFlowId}__${sessionId}_historyInjected`;
+
+        // Inject session history only if not already stored
+        if (!localStorage.getItem(sessionFlagKey)) {
+          // Fetch history directly from Flowise API
+          const response = await fetch(
+            `${apiHost}/api/v1/chatmessage/${realFlowId}?sessionId=${sessionId}`, {
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${gpt.flowiseConfig.flowise.token}`
+              }
+            }
+          );
+          if (!response.ok) throw new Error(`Status ${response.status}`);
+          const apiHistory = await response.json();
+          const formattedHistory = apiHistory.map(msg => ({
+            message: msg.content,
+            type: msg.role === 'userMessage' ? 'userMessage' : 'apiMessage',
+            dateTime: msg.createdDate || new Date().toISOString(),
+            messageId: msg.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substr(2, 9)),
+            fileUploads: msg.fileUploads || []
+          }));
+          // Store under session-specific keys
+          localStorage.setItem(sessionExtKey, JSON.stringify({ chatHistory: formattedHistory, chatId: sessionId }));
+          localStorage.setItem(sessionFlagKey, 'true');
+        }
+
+        // Copy session history into the base key so web.js picks it up
+        const baseExtKey = `${proxyFlowId}_EXTERNAL`;
+        const baseFlagKey = `${proxyFlowId}_historyInjected`;
+        const sessionData = localStorage.getItem(sessionExtKey);
+        if (sessionData) {
+          localStorage.setItem(baseExtKey, sessionData);
+          localStorage.setItem(baseFlagKey, 'true');
+        }
+        // === Build and initialize embed using a fresh cfg object ===
+        const cfg = {
+          chatflowid:  realFlowId,
+          apiHost:     apiHost,
+          token:       gpt.flowiseConfig.flowise.token,
+          headers: {
+            'x-user-email': AuthService.user.email,
+            'x-user-uuid':  AuthService.user.uid,
+            'x-user-jwt':   AuthService.token,
+            'x-gpt-id':     gpt.id
+          },
+          chatflowConfig: override,
+          theme:           window.flowiseConfig.theme,
+          observersConfig: {
+            observeLoading: async (loading) => {
+              if (loading) {
+                // Capture user input...
+                try {
+                  const userInput = document
+                    .querySelector('flowise-fullchatbot')
+                    .shadowRoot
+                    .querySelector('textarea').value;
+                  console.log('Sending chatmessage payload:', {
+                    chatflowid: cfg.chatflowid,
+                    sessionId: override.sessionId,
+                    role: 'user',
+                    message: userInput
+                  });
+                  await createChatMessage(
+                    AuthService,
+                    cfg.chatflowid,
+                    override.sessionId,
+                    'user',
+                    userInput
+                  );
+                  console.log('Chat message created successfully');
+                } catch (err) {
+                  console.error('Failed to create chat message', err);
+                }
+              } else {
+                // Remove loading spinner when chat content has loaded
+                spinner.remove();
+              }
+            }
+          }
+        };
+        // Atualiza título do chat com o nome do GPT
+        if (cfg.theme && cfg.theme.chatWindow) {
+          cfg.theme.chatWindow.title = gpt.name || cfg.theme.chatWindow.title;
+        }
+        const chatArea = document.getElementById('chat-area');
+        chatArea.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
+        // If no previous history exists, start chat without streaming
+        const extKey = `${cfg.chatflowid}_EXTERNAL`;
+        if (!localStorage.getItem(extKey)) {
+          await import('./assets/js/web.js').then(mod => mod.default.initFull(cfg));
+          spinner.remove();
+          return;
+        }
+        // Import Flowise web component from local assets
+        await import('./assets/js/web.js').then(mod => mod.default.initFull(cfg));
+        } catch (err) {
+          console.error('Erro ao carregar histórico:', err);
+          spinner.remove();
+        }
+      });
+    });
+    // open chat if chatId parameter is present in URL, fallback to new conversation if not found
+    const urlParams = new URLSearchParams(window.location.search);
+    const directChatId = urlParams.get('chatId');
+    let found = false;
+    if (directChatId) {
+      const directLi = Array.from(chatListEl.children)
+        .find(el => el.dataset.sessionId === directChatId);
+      if (directLi) {
+        directLi.click();
+        found = true;
+      }
+    }
+    // If no valid chatId provided or not found, start a new conversation
+    if (!found) {
+      const newConv = document.getElementById('new-conversation');
+      if (newConv) newConv.click();
+    }
+    refreshSearchOptions();
+  } catch (err) {
+    console.error('Erro ao carregar chats:', err);
+  }
+})();
+    AuthService.onAuthChange(user => {
+      if (!user) {
+        window.location.href = './login.html?redirect=chat.html';
+      } else {
+        document.getElementById('user-name').textContent = user.email;
+      }
+    });
+    const sidebar    = document.getElementById('chat-sidebar');
+    const toggleBtn  = document.getElementById('toggle-list');
+    const miniBar    = document.getElementById('sidebar-mini');
+    const miniToggle = document.getElementById('mini-toggle');
+    const miniNew    = document.getElementById('mini-new');
+    const miniUser   = document.getElementById('mini-user');
+document.getElementById('new-chat').addEventListener('click', () => {
+  // Clear current selection
+  document.querySelectorAll('#chat-sidebar li').forEach(li => li.classList.remove('selected'));
+  // Trigger default GPT selection to initialize via its own click handler
+  const defaultEl = document.getElementById(defaultGptId);
+  if (defaultEl) {
+    defaultEl.click();
+  }
+});
+// Ensure the "Nova conversa" button under the search box reuses the selected chat's GPT
+document.getElementById('new-conversation').addEventListener('click', () => {
+  const selectedLi = document.querySelector('#chat-list li.selected');
+  if (selectedLi) {
+    const gptKey = selectedLi.dataset.gptKey;
+    // Trigger GPT list item click to start a new session for that GPT
+    const providerEl = document.getElementById(gptKey);
+    if (providerEl) providerEl.click();
+  }
+});
+    document.getElementById('logout-btn').addEventListener('click', () => AuthService.logout());
+    const SIDEBAR_KEY = 'chatSidebarHidden';
+    function refreshSearchOptions() {
+      const $sel = $('#chat-search');
+      $sel.find('option').not(':first').remove();
+      document.querySelectorAll('#chat-list li span').forEach(span => $sel.append(new Option(span.textContent, span.textContent, false, false)));
+      $sel.val('').trigger('change');
+    }
+    $(function(){
+      refreshSearchOptions();
+      $('#chat-search').select2({ placeholder: 'Pesquisar', allowClear: true, width: '100%' });
+      // When a chat is selected from the search dropdown, trigger loading that chat
+      $('#chat-search').on('select2:select', function(e) {
+        const selectedName = e.params.data.id;
+        document.querySelectorAll('#chat-list li').forEach(li => {
+          const span = li.querySelector('span');
+          if (span && span.textContent === selectedName) {
+            li.click();
+          }
+        });
+      });
+    });
+    function isMobile() { return window.innerWidth <= 768; }
+    function sidebarVisible() { return !sidebar.classList.contains('hidden'); }
+    function updateUI() {
+      const visible = sidebarVisible();
+      toggleBtn.firstElementChild.className = visible ? 'bi bi-chevron-left' : 'bi bi-chevron-right';
+      miniBar.classList.toggle('hidden', visible);
+      document.body.classList.toggle('with-mini-sidebar', !visible);
+    }
+    function toggleSidebar() {
+      sidebar.classList.toggle('hidden');
+      localStorage.setItem(SIDEBAR_KEY, sidebar.classList.contains('hidden'));
+      updateUI();
+    }
+    if (window.innerWidth <= 768) sidebar.classList.add('hidden');
+    else if (localStorage.getItem(SIDEBAR_KEY) === 'true') sidebar.classList.add('hidden');
+    else sidebar.classList.remove('hidden');
+    toggleBtn.addEventListener('click', toggleSidebar);
+    miniToggle.addEventListener('click', toggleSidebar);
+    miniNew.addEventListener('click', () => document.getElementById('new-chat').click());
+    miniUser.addEventListener('click', () => { if (!sidebarVisible()) toggleSidebar(); document.getElementById('userMenuBtn').click(); });
+    window.addEventListener('resize', () => {
+      if (window.innerWidth <= 768) { sidebar.classList.add('hidden'); localStorage.setItem(SIDEBAR_KEY, 'true'); }
+      else { sidebar.classList.remove('hidden'); localStorage.setItem(SIDEBAR_KEY, 'false'); }
+      updateUI();
+    });
+    updateUI();
+    // Default GPT override ID (replace with the GPT ID from your API)
+    const defaultGptId = 'ed2af5a7-a9f0-4882-9dbc-a7f9dbb9b1e4';
+    // Initialize default GPT chat using its own API host
+    (async () => {
+      // Wait for AuthService to be ready
+      await new Promise(resolve => {
+        const checkAuth = setInterval(() => {
+          if (AuthService.user) {
+            clearInterval(checkAuth);
+            resolve();
+          }
+        }, 100);
+      });
+      // Wait for gptMap to be populated
+      await new Promise(resolve => {
+        const checkMap = setInterval(() => {
+          if (gptMap[defaultGptId]) {
+            clearInterval(checkMap);
+            resolve();
+          }
+        }, 100);
+      });
+      try {
+        const gpt = gptMap[defaultGptId];
+        // Fetch override config
+        let override = await getGptConfig(AuthService, defaultGptId);
+        // Handle array wrapper
+        if (Array.isArray(override) && override.length > 0 && override[0] && typeof override[0] === 'object' && Object.prototype.hasOwnProperty.call(override[0], '')) {
+          try {
+            override = JSON.parse(override[0]['']);
+          } catch {}
+        }
+        // Ensure sessionId
+        if (!override.sessionId) {
+          override.sessionId = crypto.randomUUID();
+        }
+        // Base Flowise config
+        const baseFlowise = gpt.flowiseConfig.flowise;
+        const rawApiHost = baseFlowise.apiHost || '';
+        let apiHost = rawApiHost.replace(/\/$/, '');
+        // Normalize apiHost: if missing protocol (e.g., ":3000" or "localhost:3000"), prepend current origin protocol and host
+        if (!/^https?:\/\//.test(apiHost)) {
+          apiHost = window.location.protocol + '//' + apiHost;
+        }
+        // Initialize empty history
+        const extKey = `${baseFlowise.chatflowId}_EXTERNAL`;
+        const flagKey = `${baseFlowise.chatflowId}_historyInjected`;
+        localStorage.removeItem(extKey);
+        localStorage.removeItem(flagKey);
+        localStorage.setItem(extKey, JSON.stringify({ chatHistory: [], chatId: override.sessionId }));
+        localStorage.setItem(flagKey, 'true');
+        // Build config object
+        const cfg = {
+          chatflowid:    baseFlowise.chatflowId,
+          apiHost:       apiHost,
+          token:         baseFlowise.token,
+          headers:       {
+            'x-user-email': AuthService.user.email,
+            'x-user-uuid':  AuthService.user.uid,
+            'x-user-jwt':   AuthService.token,
+            'x-gpt-id':     defaultGptId
+          },
+          theme:         window.flowiseConfig.theme,
+          observersConfig: {
+            observeLoading: async (loading) => {
+              if (loading) {
+                try {
+                  const userInput = document
+                    .querySelector('flowise-fullchatbot')
+                    .shadowRoot
+                    .querySelector('textarea').value;
+                  console.log('Sending chatmessage payload:', {
+                    chatflowid: cfg.chatflowid,
+                    sessionId: override.sessionId,
+                    role: 'user',
+                    message: userInput
+                  });
+                  await createChatMessage(AuthService, cfg.chatflowid, override.sessionId, 'user', userInput);
+                  console.log('Chat message created successfully');
+                } catch (err) {
+                  console.error('Failed to create chat message', err);
+                }
+              }
+            }
+          },
+          chatflowConfig: override
+        };
+        // Dynamic UI texts
+        cfg.theme.chatWindow.title           = gpt.name || 'Escolha um GPT';
+        cfg.theme.chatWindow.welcomeMessage  = gpt.description || 'Bem-vindo ao assistente';
+        cfg.theme.chatWindow.starterPrompts  = (() => {
+          const prompts = gpt.starterPrompts;
+          if (!prompts) return ['Quem é você?'];
+          if (Array.isArray(prompts)) return prompts;
+          return prompts.includes(',') ? prompts.split(',').map(p => p.trim()) : [prompts];
+        })();
+        // Replace chat container and init
+        const chatArea = document.getElementById('chat-area');
+        chatArea.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
+        // Guard: If no previous history exists, start chat without streaming
+        const extKeyDefault = `${cfg.chatflowid}_EXTERNAL`;
+        if (!localStorage.getItem(extKeyDefault)) {
+          await import('./assets/js/web.js').then(mod => mod.default.initFull(cfg));
+          return;
+        }
+        // Import Flowise web component from local assets
+        await import('./assets/js/web.js').then(mod => mod.default.initFull(cfg));
+      } catch (err) {
+        console.error('Erro inicializando chat padrão:', err);
+      }
+    })();
+    const avatarBlock = document.getElementById('avatarBlock');
+    const userMenu    = document.getElementById('userMenu');
+    const userBtn     = document.getElementById('userMenuBtn');
+    userBtn.addEventListener('click', () => { userMenu.classList.toggle('hidden'); avatarBlock.classList.toggle('open'); });
+    document.addEventListener('click', e => { if (!avatarBlock.contains(e.target)) { userMenu.classList.add('hidden'); avatarBlock.classList.remove('open'); } });
+
+    // GPT Explorer Modal logic (Bootstrap 5 modal integration)
+    const gptModalEl = document.getElementById('gptModal');
+    gptModalEl.addEventListener('show.bs.modal', async () => {
+      const body = document.getElementById('gptModalBody');
+      body.innerHTML = `
+        <div id="gpt-categories" class="mb-3"></div>
+        <select id="gpt-search" style="width: 100%"></select>
+        <div id="gpt-cards" class="row mt-3"></div>
+      `;
+      try {
+        const gpts = await listGpts(AuthService);
+        if (!Array.isArray(gpts) || gpts.length === 0) {
+          body.innerHTML = '<p class="text-muted">Nenhum GPT disponível.</p>';
+          return;
+        }
+        // Populate search dropdown
+        const searchSelect = document.getElementById('gpt-search');
+        // Group GPTs by category
+        const categories = {};
+        gpts.forEach(g => {
+          const cat = g.category || 'Sem categoria';
+          if (!categories[cat]) categories[cat] = [];
+          categories[cat].push(g);
+        });
+        // Build category buttons (inclui Todos)
+        const catContainer = document.getElementById('gpt-categories');
+        const allCats = ['Todos', ...Object.keys(categories)];
+        catContainer.innerHTML = allCats.map(cat => `
+          <button type="button" class="btn btn-outline-primary me-2 mb-2" data-cat="${cat}">
+            ${cat}
+          </button>
+        `).join('');
+        // Build grouped options
+        let groupHtml = '<option></option>';
+        for (const cat of Object.keys(categories)) {
+          groupHtml += `<optgroup label="${cat}">`;
+          categories[cat].forEach(g => {
+            groupHtml += `<option value="${g.name}" data-image-url="${g.imageUrl}">${g.name}</option>`;
+          });
+          groupHtml += `</optgroup>`;
+        }
+        searchSelect.innerHTML = groupHtml;
+        $(searchSelect).select2({
+          placeholder: 'Pesquisar GPT',
+          allowClear: true,
+          width: '100%',
+          dropdownParent: $('#gptModal'),
+          templateResult: function(data) {
+            if (!data.id) return data.text;
+            const imgUrl = $(data.element).data('image-url');
+            if (!imgUrl) return data.text;
+            const $result = $(`
+              <span><img src="${imgUrl}" style="width:24px;height:24px;object-fit:cover;margin-right:8px;" />${data.text}</span>
+            `);
+            return $result;
+          },
+          templateSelection: function(data) {
+            if (!data.id) return data.text;
+            const imgUrl = $(data.element).data('image-url');
+            if (!imgUrl) return data.text;
+            const $selection = $(`
+              <span><img src="${imgUrl}" style="width:20px;height:20px;object-fit:cover;margin-right:4px;" />${data.text}</span>
+            `);
+            return $selection;
+          }
+        });
+
+        // Filter cards on selection
+        $(searchSelect).on('change', function() {
+          const val = this.value;
+          document.querySelectorAll('#gpt-cards .col-12').forEach(col => {
+            const title = col.querySelector('.card-title').textContent;
+            col.style.display = (!val || title === val) ? '' : 'none';
+          });
+        });
+
+        const cards = gpts.map(gpt => {
+          const { name, description, category, imageUrl } = gpt;
+          const isCardVideo = imageUrl.toLowerCase().endsWith('.mp4');
+          const mediaTag = isCardVideo
+            ? `<video src="${imageUrl}" class="card-img-top img-fluid" autoplay loop muted playsinline></video>`
+            : `<img src="${imageUrl}" class="card-img-top img-fluid" alt="${name}">`;
+          return `
+            <div class="col-12 col-sm-6 col-md-6 col-lg-4 mb-4" data-cat="${category}">
+              <div class="card h-100 shadow-sm">
+                ${mediaTag}
+                <div class="card-body d-flex flex-column">
+                  <h5 class="card-title">${name}</h5>
+                  <p class="card-text flex-grow-1">${description}</p>
+                  <p class="card-text"><small class="text-muted">${category}</small></p>
+                </div>
+              </div>
+            </div>`;
+        }).join('');
+        document.getElementById('gpt-cards').innerHTML = cards;
+        // Make GPT cards clickable
+        document.querySelectorAll('#gpt-cards .col-12').forEach(col => {
+          col.style.cursor = 'pointer';
+          col.addEventListener('click', () => {
+            const name = col.querySelector('.card-title').textContent;
+            const gpt = gpts.find(g => g.name === name);
+            if (gpt) {
+              // Hide the modal
+              const modalEl = document.getElementById('gptModal');
+              const bsModal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+              bsModal.hide();
+              // Trigger GPT selection in the sidebar
+              document.getElementById(gpt.id).click();
+            }
+          });
+        });
+        // Category filter buttons
+        document.querySelectorAll('#gpt-categories button').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const sel = btn.getAttribute('data-cat');
+            // Highlight active
+            document.querySelectorAll('#gpt-categories button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            // Reset search
+            $('#gpt-search').val(null).trigger('change');
+            // Filter cards
+            document.querySelectorAll('#gpt-cards [data-cat]').forEach(col => {
+              col.style.display = (sel === 'Todos' || col.getAttribute('data-cat') === sel) ? '' : 'none';
+            });
+          });
+        });
+        // Activate "Todos" by default
+        document.querySelector('#gpt-categories button[data-cat="Todos"]').classList.add('active');
+      } catch (error) {
+        console.error('Erro ao carregar GPTs:', error);
+        body.innerHTML = '<p class="text-danger">Falha ao carregar GPTs. Tente novamente mais tarde.</p>';
+      }
+    });
+  </script>
+</body>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+</html>

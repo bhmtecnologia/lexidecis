@@ -1,0 +1,126 @@
+/**
+ * Variáveis CSS do tema
+ */
+:root {
+  /* Layout */
+  --sidebar-w: 280px;
+  
+  /* Cores principais */
+  --body-color: #f8f9fa;
+  --theme-body-font-color: #212529;
+  --shape-border: #dee2e6;
+  --bg-light: #ffffff;
+  --light-background: #ffffff;
+  --font-color: #495057;
+  
+  /* Cores de interação */
+  --active-bg-color: #e9ecef;
+  --table-hover-color: #f8f9fa;
+  --border-light-color: #dee2e6;
+  --dropdown-bg-color: #ffffff;
+  
+  /* Cores de tema escuro (opcional) */
+  --dark-body-color: #1a1a1a;
+  --dark-theme-body-font-color: #ffffff;
+  --dark-shape-border: #333333;
+  --dark-bg-light: #2d2d2d;
+  --dark-light-background: #242424;
+  --dark-font-color: #ffffff;
+  --dark-active-bg-color: #3d3d3d;
+  --dark-table-hover-color: #2d2d2d;
+  --dark-border-light-color: #333333;
+  --dark-dropdown-bg-color: #2d2d2d;
+  
+  /* Tipografia */
+  --font-family-base: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-size-base: 1rem;
+  --font-size-sm: 0.875rem;
+  --font-size-lg: 1.125rem;
+  --line-height-base: 1.5;
+  
+  /* Espaçamentos */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-xxl: 3rem;
+  
+  /* Bordas */
+  --border-radius-sm: 0.25rem;
+  --border-radius-md: 0.5rem;
+  --border-radius-lg: 1rem;
+  --border-width: 1px;
+  
+  /* Sombras */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+  
+  /* Transições */
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.3s ease;
+  --transition-slow: 0.5s ease;
+  
+  /* Z-indexes */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+  --z-toast: 1080;
+}
+
+/* Tema escuro */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --body-color: var(--dark-body-color);
+    --theme-body-font-color: var(--dark-theme-body-font-color);
+    --shape-border: var(--dark-shape-border);
+    --bg-light: var(--dark-bg-light);
+    --light-background: var(--dark-light-background);
+    --font-color: var(--dark-font-color);
+    --active-bg-color: var(--dark-active-bg-color);
+    --table-hover-color: var(--dark-table-hover-color);
+    --border-light-color: var(--dark-border-light-color);
+    --dropdown-bg-color: var(--dark-dropdown-bg-color);
+  }
+}
+
+/* Classes utilitárias */
+.hidden {
+  display: none !important;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.transition-base {
+  transition: var(--transition-base);
+}
+
+.transition-fast {
+  transition: var(--transition-fast);
+}
+
+.transition-slow {
+  transition: var(--transition-slow);
+} 

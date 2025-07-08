@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Análise de Fretes</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Dashboard de Análise de Precificação de Fretes</h1>
+            <p>Visualização: Destino → Semana → Produto</p>
+        </header>
+
+        <main>
+            <section class="kpi-section">
+                <h2>Resumo Geral</h2>
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <h3>Valor Total (R$)</h3>
+                        <p id="total-valor">R$ 0,00</p>
+                    </div>
+                    <div class="kpi-card">
+                        <h3>Peso Total (kg)</h3>
+                        <p id="total-peso">0 kg</p>
+                    </div>
+                    <div class="kpi-card" style="display: none;">
+                        <h3>Volume Total (m³)</h3>
+                        <p id="total-volume">0 m³</p>
+                    </div>
+                    <div class="kpi-card">
+                        <h3>Quantidade Total</h3>
+                        <p id="total-quantidade">0</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="simulator-section">
+                <h2>Simulador de Preço de Frete</h2>
+                <div class="simulator-info">
+                    <div class="destination-selector">
+                        <label for="destino-select"><strong>Selecionar Destino:</strong></label>
+                        <select id="destino-select">
+                            <option value="">Carregando destinos...</option>
+                        </select>
+                    </div>
+                    <div class="distance-input">
+                        <label for="distancia-manual"><strong>Distância Manual (km):</strong></label>
+                        <input type="number" id="distancia-manual" step="0.1" min="0" placeholder="Digite a distância">
+                        <button id="aplicar-distancia">Aplicar Distância</button>
+                        <button id="salvar-distancia" class="save-btn">Salvar para Destino</button>
+                        <button id="reset-distancia" class="reset-btn">Reset</button>
+                    </div>
+                    <div class="calculation-mode">
+                        <label><strong>Modo de Cálculo:</strong></label>
+                        <div class="mode-options">
+                            <label class="mode-option">
+                                <input type="radio" name="calculation-mode" value="tara" checked>
+                                <span>Tara do Veículo</span>
+                            </label>
+                            <label class="mode-option">
+                                <input type="radio" name="calculation-mode" value="peso-real">
+                                <span>Peso Real da Mercadoria</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="destination-info">
+                        <p><strong>Origem:</strong> Aeroporto de BSB</p>
+                        <p><strong>Distância:</strong> <span id="distancia-atual">27,5 km</span> <span id="distancia-indicator" class="distancia-indicator"></span></p>
+                        <p><strong>Preços por kg:</strong> Pequeno: R$ 0,85 | Médio: R$ 1,90 | Grande: R$ 2,90</p>
+                    </div>
+                </div>
+                <div class="vehicle-types">
+                    <h3>Tipos de Veículo</h3>
+                    <div class="vehicle-grid">
+                        <div class="vehicle-card">
+                            <h4>Pequeno</h4>
+                            <p>Capacidade: 600 kg</p>
+                            <div class="price-input">
+                                <label>Preço por kg: R$</label>
+                                <input type="number" id="preco-pequeno" value="0.85" step="0.01" min="0">
+                            </div>
+                            <p id="frete-pequeno">Frete: R$ 14.025,00</p>
+                            <p id="calculo-pequeno">(600 kg × R$ 0,85 × 27,5 km)</p>
+                        </div>
+                        <div class="vehicle-card">
+                            <h4>Médio</h4>
+                            <p>Capacidade: 1.500 kg</p>
+                            <div class="price-input">
+                                <label>Preço por kg: R$</label>
+                                <input type="number" id="preco-medio" value="1.90" step="0.01" min="0">
+                            </div>
+                            <p id="frete-medio">Frete: R$ 78.375,00</p>
+                            <p id="calculo-medio">(1.500 kg × R$ 1,90 × 27,5 km)</p>
+                        </div>
+                        <div class="vehicle-card">
+                            <h4>Grande</h4>
+                            <p>Capacidade: 3.000 kg</p>
+                            <div class="price-input">
+                                <label>Preço por kg: R$</label>
+                                <input type="number" id="preco-grande" value="2.90" step="0.01" min="0">
+                            </div>
+                            <p id="frete-grande">Frete: R$ 239.250,00</p>
+                            <p id="calculo-grande">(3.000 kg × R$ 2,90 × 27,5 km)</p>
+                        </div>
+                    </div>
+                    <div class="apply-button">
+                        <button id="aplicar-precos">Aplicar Preços</button>
+                        <button id="limpar-distancias" class="clear-btn">Limpar Distâncias Salvas</button>
+                    </div>
+                </div>
+                <div id="frete-calculation"></div>
+            </section>
+
+            <section class="table-section">
+                <h2>Destino → Semana → Produto</h2>
+                <div class="table-wrapper">
+                    <table id="data-table-week">
+                        <thead>
+                            <tr></tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Desenvolvido como ferramenta de apoio à decisão.</p>
+        </footer>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html> 

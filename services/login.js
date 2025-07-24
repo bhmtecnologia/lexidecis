@@ -1,7 +1,25 @@
 //login.js
 
-import { login, resetPassword, verifyAuthState, getJwt } from './auth.js'; // Importa funções do auth.js
+import './auth.js';
 import { showAlert } from './alertManager.js'; // Importa a função showAlert
+
+// --- INÍCIO: Autenticação Google ---
+import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+
+const googleBtn = document.getElementById('google-login-btn');
+if (googleBtn) {
+    googleBtn.addEventListener('click', async () => {
+        const auth = getAuth(); // Usa a instância já inicializada
+        const provider = new GoogleAuthProvider();
+        try {
+            await signInWithPopup(auth, provider);
+            window.location.href = '/pages/chat.html';
+        } catch (error) {
+            alert('Erro ao autenticar com Google: ' + (error.message || error));
+        }
+    });
+}
+// --- FIM: Autenticação Google ---
 
 document.addEventListener("DOMContentLoaded", () => {
     verifyAuthState(); // Verifica a sessão ao carregar a página

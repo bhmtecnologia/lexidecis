@@ -177,6 +177,7 @@ export default class GPTManager {
         let lastFocusedElement;
         gptModalElement.addEventListener('show.bs.modal', () => {
             lastFocusedElement = document.activeElement;
+            gptModalElement.setAttribute('aria-hidden', 'false'); // Corrige acessibilidade ao abrir
         });
         gptModalElement.addEventListener('shown.bs.modal', () => {
             const searchInput = document.getElementById('gpt-search');
@@ -186,6 +187,7 @@ export default class GPTManager {
             }
         });
         gptModalElement.addEventListener('hidden.bs.modal', () => {
+            gptModalElement.setAttribute('aria-hidden', 'true'); // Corrige acessibilidade ao fechar
             const chatInput = document.querySelector('textarea.text-input');
             if (chatInput) {
                 chatInput.focus();

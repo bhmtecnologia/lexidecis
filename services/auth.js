@@ -11,7 +11,7 @@ function debugLog(...args) {
 import { showAlert } from './alertManager.js'; // Importe a função showAlert
 import { 
     initializeApp 
-} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { 
     getAuth, 
     signInWithEmailAndPassword, 
@@ -22,21 +22,21 @@ import {
     onAuthStateChanged, 
     EmailAuthProvider, 
     reauthenticateWithCredential 
-} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { 
     getAnalytics, 
     logEvent 
-} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-analytics.js";
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
 // **Importações para o Firestore**
 import { 
     getFirestore, 
     doc, 
     setDoc, 
     serverTimestamp 
-} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // Configuração do Firebase
-const firebaseConfig = {
+export const firebaseConfig = {
     apiKey: "AIzaSyD7Gh-UfV-LyueKtlUcY9nny_o-UWmlmJM",
     authDomain: "lexidecis.firebaseapp.com",
     projectId: "lexidecis",

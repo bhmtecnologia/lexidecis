@@ -1,10 +1,15 @@
 //login.js
 
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { firebaseConfig } from './auth.js';
+if (!getApps().length) {
+  initializeApp(firebaseConfig);
+}
 import './auth.js';
 import { showAlert } from './alertManager.js'; // Importa a função showAlert
 
 // --- INÍCIO: Autenticação Google ---
-import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, OAuthProvider } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const googleBtn = document.getElementById('google-login-btn');
 if (googleBtn) {
@@ -19,7 +24,21 @@ if (googleBtn) {
         }
     });
 }
-// --- FIM: Autenticação Google ---
+// --- INÍCIO: Autenticação Microsoft ---
+const microsoftBtn = document.getElementById('microsoft-login-btn');
+if (microsoftBtn) {
+    microsoftBtn.addEventListener('click', async () => {
+        const auth = getAuth();
+        const provider = new OAuthProvider('microsoft.com');
+        try {
+            await signInWithPopup(auth, provider);
+            window.location.href = '/pages/chat.html';
+        } catch (error) {
+            alert('Erro ao autenticar com Microsoft: ' + (error.message || error));
+        }
+    });
+}
+// --- FIM: Autenticação Microsoft ---
 
 document.addEventListener("DOMContentLoaded", () => {
     verifyAuthState(); // Verifica a sessão ao carregar a página

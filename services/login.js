@@ -7,6 +7,7 @@ if (!getApps().length) {
 }
 import './auth.js';
 import { showAlert } from './alertManager.js'; // Importa a função showAlert
+import { login, getJwt } from './auth.js';
 
 // --- INÍCIO: Autenticação Google ---
 import { getAuth, GoogleAuthProvider, signInWithPopup, OAuthProvider } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";

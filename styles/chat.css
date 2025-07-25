@@ -362,10 +362,18 @@ body.sidebar-active .content {
     color: var(--dropdown-menu-text) !important; /* Garante texto branco */
 }
 
+/* Contraste para itens do dropdown ao passar o mouse */
 .dropdown-menu .dropdown-item:hover,
 .dropdown-menu .dropdown-item:focus {
-    background-color: var(--dropdown-item-hover-bg) !important; /* Fundo ao passar o mouse */
-    color: var(--dropdown-menu-text) !important; /* Mantém o texto branco */
+    background-color: var(--dropdown-item-hover-bg) !important;
+    color: var(--dropdown-item-hover-text, #000) !important; /* Texto escuro por padrão */
+}
+
+/* Contraste especial para Excluir (text-danger) ao passar o mouse */
+.dropdown-menu .dropdown-item.text-danger:hover,
+.dropdown-menu .dropdown-item.text-danger:focus {
+    color: #dc3545 !important; /* Vermelho Bootstrap */
+    background-color: var(--dropdown-item-hover-bg, #f1f2f3) !important;
 }
 
 /* ===========================

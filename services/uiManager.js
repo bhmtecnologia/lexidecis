@@ -186,16 +186,8 @@ class UIManager {
             if (!this.stateManager.currentSessionId) {
                 const newSessionId = this.gptManager.generateSessionId();
                 this.stateManager.setSessionId(newSessionId);
-
-                const defaultChatName = this.stateManager.selectedGPT.name || 'Novo chat';
-                const defaultChat = {
-                    id: newSessionId,
-                    name: defaultChatName,
-                    date: new Date().toISOString(),
-                    fk_gpt_id: this.stateManager.selectedGPT.id || null
-                };
-                this.stateManager.addChat(defaultChat);
-                this.chatManager.populateChatMenu(this.stateManager.chats);
+                // Removido: adição automática do chat à lista
+                // O chat só será adicionado após o envio da primeira mensagem
             }
 
             // Limpar histórico injetado
@@ -344,6 +336,20 @@ class UIManager {
 
     logUserInput(userInput) {
         this.debugLog({ userInput });
+        // Adiciona o chat à lista apenas no primeiro envio de mensagem
+        const sessionId = this.stateManager.currentSessionId;
+        const chats = this.stateManager.getChats();
+        const chatJaExiste = chats.some(chat => chat.id === sessionId);
+        if (!chatJaExiste && this.stateManager.selectedGPT) {
+            const novoChat = {
+                id: sessionId,
+                name: this.stateManager.selectedGPT.name || 'Novo chat',
+                date: new Date().toISOString(),
+                fk_gpt_id: this.stateManager.selectedGPT.id || null
+            };
+            this.stateManager.addChat(novoChat);
+            this.chatManager.populateChatMenu(this.stateManager.chats);
+        }
     }
 
     logMessages(messages) {

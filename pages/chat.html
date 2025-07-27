@@ -14,305 +14,17 @@
     <link rel="stylesheet" href="../styles/chat.css">
     <link rel="stylesheet" href="../styles/gptManager.css">
     <link rel="stylesheet" href="../styles/loadingScreen.css">
-    <style>
-        /* Estilos base para garantir compatibilidade com iOS */
-        html, body {
-            /* Garantir que o viewport seja respeitado no iOS */
-            height: 100%;
-            overflow-x: hidden;
-            /* Prevenir zoom e scroll horizontal no iOS */
-            -webkit-text-size-adjust: 100%;
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        /* Garantir que a sidebar ocupe 100% da altura */
-        .sidebar {
-            height: 100vh !important;
-            height: -webkit-fill-available !important;
-            min-height: 100vh !important;
-            min-height: -webkit-fill-available !important;
-            display: flex !important;
-            flex-direction: column !important;
-        }
-        
-        /* Estilos para o toggle da sidebar em telas pequenas */
-        @media (max-width: 767px) {
-            body {
-                /* Garantir que o body respeite os limites do viewport no iOS */
-                height: 100vh;
-                height: -webkit-fill-available;
-                overflow: hidden;
-                position: fixed;
-                width: 100%;
-            }
-            
-            #sidebarMenu {
-                transform: translateX(-100%);
-                transition: transform 0.3s ease;
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 250px;
-                z-index: 9999;
-                /* Garantir que a sidebar ocupe 100% da altura */
-                height: 100vh;
-                height: -webkit-fill-available;
-                min-height: 100vh;
-                min-height: -webkit-fill-available;
-                overflow-y: auto;
-                -webkit-overflow-scrolling: touch;
-                /* Forçar altura total */
-                bottom: 0;
-                display: flex;
-                flex-direction: column;
-            }
-            #sidebarMenu.active {
-                transform: translateX(0%);
-            }
-            #toggle-sidebar-btn {
-                display: block;
-            }
-            #sidebarOverlay {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0,0,0,0.5);
-                z-index: 9998;
-            }
-            #sidebarOverlay.active {
-                display: block;
-            }
-            
-            /* Garantir que o user menu seja sempre visível */
-            .user-menu-container {
-                position: relative;
-                z-index: 10000;
-            }
-            
-            .user-menu-dropdown {
-                position: absolute;
-                bottom: 100%;
-                left: 0;
-                right: 0;
-                max-height: 300px;
-                overflow-y: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-        }
-        @media (min-width: 768px) {
-            #toggle-sidebar-btn {
-                display: none; /* Não mostrar o botão em telas maiores */
-            }
-        }
-
-        /* Ajustes no botão toggle */
-        #toggle-sidebar-btn {
-            position: fixed;
-            z-index: 10000;
-            top: 10px;
-            right: 10px;
-            font-size: 1.2rem;
-        }
-
-        /* Estilos para o status indicator */
-        .status-indicator {
-            position: relative;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            display: inline-block;
-        }
-
-        /* Estilos para o avatar do usuário */
-        .user-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background-color: #fd7e14;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 14px;
-        }
-
-        /* Estilos para o menu do usuário */
-        .user-menu-container {
-            position: relative;
-            /* Garantir que o container seja sempre visível */
-            z-index: 10000;
-        }
-
-        .user-menu-trigger {
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 6px;
-            transition: background-color 0.2s ease;
-        }
-
-        .user-menu-trigger:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-
-        .user-menu-dropdown {
-            position: absolute;
-            bottom: 100%;
-            left: 0;
-            right: 0;
-            background-color: #343a40;
-            border: 1px solid #495057;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            z-index: 1000;
-            display: none;
-            margin-bottom: 8px;
-        }
-
-        .user-menu-dropdown.show {
-            display: block;
-        }
-
-        .user-menu-item {
-            padding: 8px 12px;
-            color: white;
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-            font-size: 12px;
-        }
-
-        .user-menu-item:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-
-        .user-menu-item.user-menu-logout:hover {
-            background-color: #dc3545;
-        }
-
-        .user-menu-item#config-button:hover {
-            background-color: #17a2b8;
-        }
-
-        .user-menu-item#admin-button:hover {
-            background-color: #6f42c1;
-        }
-
-        .user-menu-divider {
-            margin: 4px 0;
-            border-color: #495057;
-        }
-
-        .user-menu-item i {
-            font-size: 14px;
-        }
-
-        /* Estilos específicos para mobile iOS */
-        @media (max-width: 767px) {
-            /* Garantir que o user menu seja sempre acessível */
-            .user-menu-trigger {
-                position: relative;
-                z-index: 10001;
-                /* Garantir que o trigger seja sempre clicável */
-                min-height: 44px;
-                display: flex;
-                align-items: center;
-                padding: 8px;
-            }
-            
-            .user-menu-dropdown {
-                /* Ajustar posicionamento para mobile */
-                position: absolute;
-                bottom: 100%;
-                left: 0;
-                right: 0;
-                max-height: 250px;
-                overflow-y: auto;
-                -webkit-overflow-scrolling: touch;
-                /* Garantir que o menu apareça acima de tudo */
-                z-index: 10002;
-            }
-            
-            /* Garantir que a sidebar tenha scroll adequado */
-            #sidebarMenu {
-                display: flex;
-                flex-direction: column;
-            }
-            
-            /* Garantir que o user menu fique sempre no final da sidebar */
-            .user-menu-container {
-                margin-top: auto;
-                padding-bottom: 20px;
-                /* Forçar que fique no final */
-                position: sticky;
-                bottom: 0;
-                background-color: #212529;
-                border-top: 1px solid #495057;
-            }
-            
-            /* Garantir que a lista de chats ocupe o espaço disponível */
-            .chat-list {
-                flex: 1;
-                overflow-y: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-            
-            /* Garantir que a sidebar tenha altura total */
-            .sidebar {
-                height: 100vh !important;
-                height: -webkit-fill-available !important;
-                min-height: 100vh !important;
-                min-height: -webkit-fill-available !important;
-            }
-        }
-
-        /* Estilos para o modal do admin */
-        .modal-xl {
-            max-width: 95%;
-        }
-
-        .modal-body {
-            padding: 0;
-        }
-
-        #adminIframe {
-            border: none;
-            width: 100%;
-            height: 600px;
-        }
-
-        .modal-content {
-            background-color: #f8f9fa;
-        }
-
-        .modal-header {
-            background-color: #343a40;
-            color: white;
-            border-bottom: 1px solid #495057;
-        }
-
-        .modal-footer {
-            background-color: #f8f9fa;
-            border-top: 1px solid #dee2e6;
-        }
-    </style>
+    <link rel="stylesheet" href="../styles/sidebar.css">
 </head>
 <body>
 
     <!-- Botão para dispositivos móveis -->
-    <button id="toggle-sidebar-btn" class="btn btn-primary">
+    <button id="toggle-sidebar-btn" class="btn btn-primary lexi-toggle-sidebar-btn">
         <i class="bi bi-list"></i>
     </button>
 
     <!-- Sidebar -->
-    <nav id="sidebarMenu" class="sidebar d-flex flex-column p-3 bg-dark" style="height: 100vh; height: -webkit-fill-available;">
+    <nav id="sidebarMenu" class="lexi-sidebar sidebar d-flex flex-column p-3 bg-dark" style="height: 100vh; height: -webkit-fill-available;">
         <!-- Barra de Ícones como Botões -->
         <div class="d-flex justify-content-around mb-3">
             <button id="profile-icon" class="btn btn-link text-white" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Perfil">
@@ -328,54 +40,50 @@
 
         <!-- Campo de pesquisa -->
         <div class="input-group mb-3">
-            <span class="input-group-text" id="search-icon"><i class="bi bi-search"></i></span>
-            <input type="text" class="form-control" id="search-input" placeholder="Buscar" aria-label="Pesquisar chats" aria-describedby="search-icon">
-            <button class="btn btn-outline-secondary" type="button" id="clear-search-button">&times;</button>
+            <span class="input-group-text lexi-search-icon" id="search-icon"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control lexi-search-input" id="search-input" placeholder="Buscar" aria-label="Pesquisar chats" aria-describedby="search-icon">
+            <button class="btn btn-outline-secondary lexi-clear-search-btn" type="button" id="clear-search-button">&times;</button>
         </div>
 
         <!-- Lista de chats -->
-        <ul id="chat-list" class="list-group chat-list overflow-auto custom-chat-list-height">
+        <ul id="chat-list" class="list-group lexi-chat-list overflow-auto custom-chat-list-height bg-dark">
             <!-- Lista será populada dinamicamente -->
         </ul>
-
-        <hr class="bg-white">
 
         <!-- Botões e campos na sidebar -->
         <ul class="nav nav-pills flex-column overflow-auto mb-auto">
             <!-- Menu items podem ser adicionados aqui no futuro -->
         </ul>
 
-        <hr class="bg-white">
-
         <!-- User Menu -->
-        <div class="user-menu-container">
+        <div class="lexi-user-menu-container">
             <!-- Avatar do usuário (botão do menu) -->
-            <div class="d-flex align-items-center user-menu-trigger" id="user-menu-trigger">
-                <div class="user-avatar me-2" id="user-avatar">T</div>
+            <div class="d-flex align-items-center lexi-user-menu-trigger" id="user-menu-trigger">
+                <div class="lexi-user-avatar me-2" id="user-avatar">T</div>
                 <span class="text-white" id="user-display-name">TI</span>
                 <i class="bi bi-chevron-down text-white ms-auto"></i>
             </div>
 
             <!-- Menu dropdown -->
-            <div class="user-menu-dropdown" id="user-menu-dropdown">
-                <div class="user-menu-item">
+            <div class="lexi-user-menu-dropdown" id="user-menu-dropdown">
+                <div class="lexi-user-menu-item">
                     <i class="bi bi-envelope me-2"></i>
                     <span id="user-email">usuario@exemplo.com</span>
                 </div>
-                <div class="user-menu-item" id="config-button">
+                <div class="lexi-user-menu-item" id="config-button">
                     <i class="bi bi-gear me-2"></i>
                     <span>Configurações</span>
                 </div>
-                <div class="user-menu-item" id="admin-button">
+                <div class="lexi-user-menu-item" id="admin-button">
                     <i class="bi bi-person-gear me-2"></i>
                     <span>Painel do Admin</span>
                 </div>
-                <div class="user-menu-item user-menu-logout" id="logout-button">
+                <div class="lexi-user-menu-item lexi-user-menu-logout" id="logout-button">
                     <i class="bi bi-box-arrow-right me-2"></i>
                     <span>Sair</span>
                 </div>
-                <hr class="user-menu-divider">
-                <div class="user-menu-item">
+                <hr class="lexi-user-menu-divider">
+                <div class="lexi-user-menu-item">
                     <i class="bi bi-circle-fill text-success me-2"></i>
                     <span>Usuários Ativos: 1</span>
                 </div>
@@ -384,7 +92,7 @@
     </nav>
 
     <!-- Overlay para sidebar em dispositivos móveis -->
-    <div id="sidebarOverlay"></div>
+    <div id="sidebarOverlay" class="lexi-sidebar-overlay"></div>
 
     <!-- Conteúdo Principal -->
     <div class="content">

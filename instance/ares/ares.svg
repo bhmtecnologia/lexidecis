@@ -1,0 +1,15 @@
+<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+  <!-- Círculos interconectados em formato de estrela -->
+  <circle cx="30" cy="10" r="10" fill="#20B2AA"/>
+  <circle cx="10" cy="25" r="10" fill="#20B2AA"/>
+  <circle cx="50" cy="25" r="10" fill="#20B2AA"/>
+  <circle cx="25" cy="40" r="10" fill="#20B2AA"/>
+  <circle cx="35" cy="50" r="10" fill="#20B2AA"/>
+  
+  <!-- Linhas de conexão entre os círculos -->
+  <line x1="30" y1="10" x2="10" y2="25" stroke="#20B2AA" stroke-width="2"/>
+  <line x1="30" y1="10" x2="50" y2="25" stroke="#20B2AA" stroke-width="2"/>
+  <line x1="10" y1="25" x2="25" y2="40" stroke="#20B2AA" stroke-width="2"/>
+  <line x1="50" y1="25" x2="35" y2="50" stroke="#20B2AA" stroke-width="2"/>
+  <line x1="25" y1="40" x2="35" y2="50" stroke="#20B2AA" stroke-width="2"/>
+</svg> 

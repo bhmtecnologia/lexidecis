@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Relatório de Temperatura e Umidade</title>
+  <style>
+    body { 
+      font-family: "Times New Roman", Times, serif; 
+      margin: 60px 40px 40px 40px; 
+      background-color: white;
+      color: black;
+    }
+    .header {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 0px;
+      padding: 2px 15px 2px 0;
+      position: relative;
+    }
+    
+    .header::before {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 32px;
+      width: 2px;
+      height: calc(100% - 30px);
+      background-color: #305c5c;
+      border-radius: 1px 0 0 1px;
+    }
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2px;
+      position: relative;
+      z-index: 1;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      justify-content: flex-start;
+      margin-left: 75px;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      margin-right: 30px;
+    }
+    .logo img {
+      height: 84px;
+      width: auto;
+    }
+
+    .title {
+      font-size: 11px;
+      font-family: 'Times New Roman', Times, serif;
+      font-weight: bold;
+      text-align: center;
+      margin: 0 0 20px 0;
+      color: black;
+      letter-spacing: 0.5px;
+      position: relative;
+      z-index: 1;
+    }
+    .header-right {
+      text-align: right;
+      font-size: 7px;
+      font-family: 'Roboto', 'Arial', sans-serif;
+      font-weight: 500;
+      line-height: 1.3;
+      flex: 0 0 auto;
+      margin-left: 20px;
+      color: #333333;
+    }
+    .header-right p {
+      margin: 3px 0;
+      white-space: nowrap;
+    }
+    .header-right p strong {
+      color: #305c5c;
+    }
+    .charts-container {
+      display: flex;
+      gap: 30px;
+      margin: 0px 0 15px 0;
+    }
+    .chart {
+      flex: 1;
+      padding: 2px;
+      border-radius: 8px;
+      background: white;
+    }
+    .chart-title {
+      font-size: 11px;
+      font-family: 'Roboto', 'Arial', sans-serif;
+      font-weight: 500;
+      margin-bottom: 10px;
+      text-align: center;
+      color: #333333;
+    }
+    .chart-canvas {
+      width: 100%;
+      height: 150px;
+      background: white;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      position: relative;
+      overflow: hidden;
+      background-image: 
+        linear-gradient(to bottom, transparent 0%, transparent 19%, #e9ecef 19%, #e9ecef 20%, transparent 20%, transparent 39%, #e9ecef 39%, #e9ecef 40%, transparent 40%, transparent 59%, #e9ecef 59%, #e9ecef 60%, transparent 60%, transparent 79%, #e9ecef 79%, #e9ecef 80%, transparent 80%, transparent 99%, #e9ecef 99%, #e9ecef 100%);
+      background-size: 100% 150px;
+    }
+    .chart-line {
+      position: absolute;
+      height: 3px;
+      background-color: #007bff;
+      border-radius: 2px;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+    }
+    .chart-line.temperature {
+      background: linear-gradient(90deg, #007bff 0%, #0056b3 100%);
+      clip-path: polygon(0% 15%, 10% 5%, 20% 85%, 30% 70%, 40% 60%, 50% 80%, 60% 40%, 70% 65%, 80% 25%, 90% 50%, 100% 70%);
+    }
+    .chart-line.humidity {
+      background: linear-gradient(90deg, #007bff 0%, #0056b3 100%);
+      clip-path: polygon(0% 85%, 20% 85%, 25% 15%, 30% 15%, 35% 15%, 40% 15%, 45% 15%, 50% 15%, 55% 15%, 60% 15%, 65% 15%, 70% 15%, 75% 15%, 80% 15%, 85% 15%, 90% 15%, 95% 15%, 100% 15%);
+    }
+    .chart-legend {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      display: flex;
+      align-items: center;
+      font-size: 12px;
+      color: #007bff;
+    }
+    .legend-line {
+      width: 20px;
+      height: 2px;
+      background-color: #007bff;
+      margin-right: 5px;
+    }
+    .legend-marker {
+      width: 8px;
+      height: 8px;
+      background-color: #007bff;
+      border-radius: 50%;
+      margin-right: 5px;
+    }
+    .chart-source {
+      position: absolute;
+      bottom: 5px;
+      right: 5px;
+      font-size: 10px;
+      color: #6c757d;
+    }
+    .sampling-period {
+      text-align: center;
+      font-size: 12px;
+      color: #6c757d;
+      margin-top: 10px;
+    }
+    .stats-container {
+      margin: 15px 0;
+    }
+    .sampling-period-row {
+      display: flex;
+      gap: 2px;
+      margin-bottom: 5px;
+    }
+    .sampling-period-cell {
+      flex: 1;
+      font-size: 9px;
+      color: black;
+      text-align: center;
+      padding: 10px 15px;
+    }
+    .stats-row {
+      display: flex;
+      gap: 2px;
+      margin-bottom: 5px;
+    }
+    .stats-box-gray {
+      flex: 1;
+      background-color: #eeeeee;
+      padding: 16px 15px;
+      font-size: 9px;
+      font-weight: bold;
+      color: black;
+      text-align: center;
+      border-radius: 4px;
+    }
+    .stats-text {
+      flex: 1;
+      padding: 16px 15px;
+      font-size: 9px;
+      font-weight: bold;
+      color: black;
+      text-align: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 1.5px;
+      margin-top: 15px;
+      font-size: 10px;
+    }
+    th {
+      border: 1px solid #305c5c;
+    }
+    td {
+      border: 1px solid #666;
+      border-bottom: 1px solid #999;
+      font-family: 'Roboto', 'Arial', sans-serif;
+      font-size: 7px;
+    }
+    th {
+      text-align: center;
+      padding: 0 8px;
+      font-size: 12px;
+    }
+    td {
+      text-align: left;
+      padding: 1px 0 0 1px;
+    }
+    th {
+      background-color: #305c5c;
+      color: white;
+      font-weight: bold;
+    }
+    tbody tr:nth-child(odd) {
+      background-color: #eeeeee;
+    }
+    tbody tr:nth-child(even) {
+      background-color: white;
+    }
+    
+    /* Tamanho A4 para o documento */
+    body {
+      width: 21cm;
+      min-height: 29.7cm;
+      margin: 0 auto;
+      background: white;
+      padding: 1cm;
+      box-sizing: border-box;
+    }
+    
+    /* Regras específicas para impressão */
+    @media print {
+      /* Margens mínimas para impressão */
+      @page {
+        margin: 1.5cm 0.5cm 0.5cm 0.5cm;
+        size: A4;
+      }
+      
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      
+      .chart-canvas {
+        background-image: 
+          linear-gradient(to bottom, transparent 0%, transparent 19%, #e9ecef 19%, #e9ecef 20%, transparent 20%, transparent 39%, #e9ecef 39%, #e9ecef 40%, transparent 40%, transparent 59%, #e9ecef 59%, #e9ecef 60%, transparent 60%, transparent 79%, #e9ecef 79%, #e9ecef 80%, transparent 80%, transparent 99%, #e9ecef 99%, #e9ecef 100%) !important;
+        background-size: 100% 150px !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      
+      th {
+        background-color: #305c5c !important;
+        color: white !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      tbody tr:nth-child(odd) {
+        background-color: #eeeeee !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      tbody tr:nth-child(even) {
+        background-color: white !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .stats-box-gray {
+        background-color: #e9ecef !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+    .y-axis-labels {
+      position: absolute;
+      left: 5px;
+      top: 0;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-size: 10px;
+      color: #6c757d;
+    }
+    .y-axis-label {
+      transform: translateY(50%);
+    }
+    .line-separator {
+      text-align: center;
+      margin: 10px 0;
+    }
+    .line-separator img {
+      max-width: 100%;
+      height: auto;
+    }
+    
+
+  </style>
+</head>
+<body>
+
+  <div class="header">
+  <h1 class="title">Relatório de temperatura e umidade</h1>
+  <div class="header-top">
+    <div class="header-left">
+      <div class="logo">
+        <img src="./ares.png" alt="ARES Logo">
+      </div>
+    </div>
+    <div class="header-right">
+      <p><strong>Gerado por:</strong> MAYCONL SAMUEL MORAES MARINHO</p>
+      <p><strong>Usuário:</strong> mayconlmoraes.operador</p>
+      <p><strong>Versão:</strong> 1.0.2</p>
+      <p><strong>Versão da instância do banco de dados:</strong> 4.2.13</p>
+      <p><strong>Gerado em (America/Sao_Paulo):</strong> 24/07/2025 17:49:13</p>
+      <p><strong>Gerado em (UTC):</strong> 24/07/2025 20:49:13</p>
+      <p><strong>Nº De série do dispositivo:</strong> BA04E0008117</p>
+      <p><strong>Nome do dispositivo:</strong> A6915</p>
+      <p><strong>MAC:</strong> 28:76:81:08:D6:1D</p>
+      <p><strong>Nome do cliente:</strong> VTCLOG</p>
+    </div>
+  </div>
+</div>
+
+<div class="charts-container">
+  <div class="chart">
+    <div class="chart-title">Temperatura</div>
+    <div class="chart-canvas">
+      <div class="y-axis-labels">
+        <div class="y-axis-label">2.2</div>
+        <div class="y-axis-label">2.0</div>
+        <div class="y-axis-label">1.8</div>
+        <div class="y-axis-label">1.6</div>
+        <div class="y-axis-label">1.4</div>
+      </div>
+      <div class="chart-line temperature"></div>
+      <div class="chart-legend">
+        <div class="legend-line"></div>
+        <div class="legend-marker"></div>
+        <span>Temperatura</span>
+      </div>
+      <div class="chart-source">Highcharts.com</div>
+    </div>
+  </div>
+  
+  <div class="chart">
+    <div class="chart-title">Umidade</div>
+    <div class="chart-canvas">
+      <div class="y-axis-labels">
+        <div class="y-axis-label">81.5</div>
+        <div class="y-axis-label">81.0</div>
+        <div class="y-axis-label">80.5</div>
+        <div class="y-axis-label">80.0</div>
+        <div class="y-axis-label">79.5</div>
+      </div>
+      <div class="chart-line humidity"></div>
+      <div class="chart-legend">
+        <div class="legend-line"></div>
+        <div class="legend-marker"></div>
+        <span>Umidade</span>
+      </div>
+      <div class="chart-source">Highcharts.com</div>
+    </div>
+  </div>
+</div>
+
+<div class="stats-container">
+  <div class="sampling-period-row">
+    <div class="sampling-period-cell">Período da amostragem: 12/06/2025 15:17:00 Até 13/06/2025 08:00:00</div>
+    <div class="sampling-period-cell">Período da amostragem: 12/06/2025 15:17:00 Até 13/06/2025 08:00:00</div>
+  </div>
+  
+  <div class="stats-row">
+    <div class="stats-box-gray">
+      <strong>Temperatura mínima:</strong> 1.26
+    </div>
+    <div class="stats-box-gray">
+      <strong>Temperatura máxima:</strong> 1.82
+    </div>
+  </div>
+  
+  <div class="stats-row">
+    <div class="stats-text">
+      <strong>Temperatura média:</strong> 1.55 °C
+    </div>
+    <div class="stats-text">
+      <strong>Umidade média:</strong> 80.26 %
+    </div>
+  </div>
+</div>
+
+<div class="line-separator">
+  <img src="./line.png" alt="Linha separadora">
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Data/Hora(America/Sao_Paulo)</th>
+      <th>Temperatura</th>
+      <th>Umidade</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>13/06/2025 07:58:17</td>
+      <td>1.56 ºC</td>
+      <td>81.00%</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>13/06/2025 07:53:17</td>
+      <td>1.54 ºC</td>
+      <td>81.00%</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>13/06/2025 07:48:17</td>
+      <td>1.56 ºC</td>
+      <td>81.00%</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>13/06/2025 07:43:17</td>
+      <td>1.56 ºC</td>
+      <td>81.00%</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>13/06/2025 07:38:17</td>
+      <td>1.54 ºC</td>
+      <td>81.00%</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>13/06/2025 07:33:17</td>
+      <td>1.56 ºC</td>
+      <td>81.00%</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>13/06/2025 07:28:17</td>
+      <td>1.56 ºC</td>
+      <td>81.00%</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>13/06/2025 07:23:17</td>
+      <td>1.56 ºC</td>
+      <td>81.00%</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td>13/06/2025 07:18:17</td>
+      <td>1.56 ºC</td>
+      <td>81.00%</td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td>13/06/2025 07:13:17</td>
+      <td>1.55 ºC</td>
+      <td>81.00%</td>
+    </tr>
+  </tbody>
+</table>
+
+</body>
+</html>

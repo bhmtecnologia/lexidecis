@@ -45,7 +45,6 @@
       min-height: -webkit-fill-available;
       overflow: hidden;
       background: var(--body-color);
-      align-items: stretch;
     }
 
     #chat-sidebar {
@@ -62,9 +61,6 @@
       min-height: -webkit-fill-available;
       position: relative;
       transition: margin-left 0.3s ease, transform 0.3s ease, width 0.3s ease;
-      flex: 1;
-      max-height: 100vh;
-      max-height: -webkit-fill-available;
     }
 
     .sidebar-header button {
@@ -74,11 +70,10 @@
     .sidebar-bottom {
       background: var(--bg-light);
       padding: 0;
-      position: absolute;
-      bottom: 0;
-      left: 0;
+      position: relative;
       width: 100%;
       min-height: 50px;
+      margin-top: auto;
     }
 
     #userMenuBtn {
@@ -203,6 +198,7 @@
       min-height: -webkit-fill-available;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
     }
 
     flowise-fullchatbot {
@@ -375,22 +371,16 @@
       #wrapper {
         height: -webkit-fill-available;
         min-height: -webkit-fill-available;
-        display: flex;
-        align-items: stretch;
       }
       
       #chat-sidebar {
         height: -webkit-fill-available;
         min-height: -webkit-fill-available;
-        flex: 1;
-        max-height: -webkit-fill-available;
       }
       
       #chat-area {
         height: -webkit-fill-available;
         min-height: -webkit-fill-available;
-        flex: 1;
-        max-height: -webkit-fill-available;
       }
       
       #sidebar-mini {
@@ -401,6 +391,37 @@
       html, body {
         height: -webkit-fill-available;
         min-height: -webkit-fill-available;
+      }
+    }
+
+    /* Mobile specific fixes */
+    @media (max-width: 768px) {
+      #chat-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1000;
+        width: 100%;
+        max-width: 320px;
+        height: 100vh;
+        height: -webkit-fill-available;
+        min-height: 100vh;
+        min-height: -webkit-fill-available;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+      }
+      
+      #chat-sidebar:not(.hidden) {
+        transform: translateX(0);
+      }
+      
+      #sidebar-mini {
+        display: none;
+      }
+      
+      .sidebar-bottom {
+        position: relative;
+        margin-top: auto;
       }
     }
 

@@ -19,9 +19,6 @@
   transition: margin-left var(--transition-base), 
               transform var(--transition-base), 
               width var(--transition-base);
-  flex: 1;
-  max-height: 100vh;
-  max-height: -webkit-fill-available;
 }
 
 #chat-sidebar.hidden {
@@ -110,12 +107,11 @@
 .sidebar-bottom {
   background: var(--bg-light);
   padding: 0;
-  position: absolute;
-  bottom: 0;
-  left: 0;
+  position: relative;
   width: 100%;
   min-height: 50px;
   border-top: var(--border-width) solid var(--shape-border);
+  margin-top: auto;
 }
 
 #userMenuBtn {
@@ -278,6 +274,11 @@
   
   #sidebar-mini {
     display: none;
+  }
+  
+  .sidebar-bottom {
+    position: relative;
+    margin-top: auto;
   }
   
   /* Overlay para mobile */

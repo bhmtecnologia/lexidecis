@@ -27,13 +27,10 @@
     <nav id="sidebarMenu" class="lexi-sidebar lexi-sidebar-menu sidebar d-flex flex-column p-3 bg-dark">
         <!-- Barra de Ícones como Botões -->
         <div class="d-flex justify-content-around mb-3">
-            <button id="profile-icon" class="btn btn-link text-white" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Perfil">
-                <i class="bi bi-person-circle" style="font-size: 1.5rem;"></i> 
-            </button>
             <button id="select-gpt-button" class="btn btn-link text-white" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Escolher GPT">
                 <i class="bi bi-robot" style="font-size: 1.5rem;"></i>
             </button>
-                        <button id="new-chat-button" class="btn btn-link text-white" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Nova conversa">
+            <button id="new-chat-button" class="btn btn-link text-white" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Nova conversa">
                 <i class="bi bi-pencil-square" style="font-size: 1.5rem;"></i> 
             </button>
         </div>
@@ -173,6 +170,10 @@
                     <i class="bi bi-envelope me-2"></i>
                     <span id="user-email">usuario@exemplo.com</span>
                 </div>
+                <div class="lexi-user-menu-item" id="profile-button">
+                    <i class="bi bi-person-circle me-2"></i>
+                    <span>Gerenciar Perfil</span>
+                </div>
                 <div class="lexi-user-menu-item" id="config-button">
                     <i class="bi bi-gear me-2"></i>
                     <span>Configurações</span>
@@ -244,10 +245,65 @@
     <script type="module">
         import { verifyAuthState, logout } from "../services/auth.js";
         import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import ProfileManager from "../services/profileManager.js";
     
         document.addEventListener("DOMContentLoaded", () => {
             // Verificar o estado de autenticação
             verifyAuthState();
+            
+            // Aguardar Bootstrap estar disponível
+            const waitForBootstrap = () => {
+                if (typeof bootstrap !== 'undefined') {
+                    return Promise.resolve();
+                }
+                return new Promise(resolve => {
+                    const checkBootstrap = () => {
+                        if (typeof bootstrap !== 'undefined') {
+                            resolve();
+                        } else {
+                            setTimeout(checkBootstrap, 100);
+                        }
+                    };
+                    checkBootstrap();
+                });
+            };
+
+            // Inicializar ProfileManager
+            let profileManager = null;
+            
+            // Função para inicializar o ProfileManager
+            async function initializeProfileManager() {
+                if (!profileManager) {
+                    // Aguardar Bootstrap estar disponível
+                    await waitForBootstrap();
+                    
+                    // Criar um UIManager simples para o ProfileManager
+                    const simpleUIManager = {
+                        showError: (message) => {
+                            const errorContainer = document.getElementById('error-container');
+                            if (errorContainer) {
+                                errorContainer.textContent = message;
+                                errorContainer.classList.remove('d-none');
+                                setTimeout(() => {
+                                    errorContainer.classList.add('d-none');
+                                }, 5000);
+                            }
+                        },
+                        showSuccess: (message) => {
+                            // Criar uma notificação de sucesso simples
+                            const successDiv = document.createElement('div');
+                            successDiv.className = 'alert alert-success position-fixed top-0 end-0 m-3';
+                            successDiv.textContent = message;
+                            document.body.appendChild(successDiv);
+                            setTimeout(() => {
+                                successDiv.remove();
+                            }, 3000);
+                        }
+                    };
+                    
+                    profileManager = new ProfileManager(simpleUIManager);
+                }
+            }
 
             // Função para atualizar informações do usuário
             function updateUserInfo() {
@@ -329,11 +385,29 @@
                 });
             }
 
+            // Associar evento ao botão de gerenciar perfil
+            const profileButton = document.getElementById("profile-button");
+            if (profileButton) {
+                profileButton.addEventListener("click", async (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    // Fechar o menu
+                    userMenuDropdown.classList.remove('show');
+                    // Inicializar ProfileManager se necessário e abrir modal
+                    await initializeProfileManager();
+                    if (profileManager) {
+                        profileManager.openModal();
+                    }
+                });
+            }
+
             // Configurar listener para mudanças de autenticação
             const auth = getAuth();
-            auth.onAuthStateChanged((user) => {
+            auth.onAuthStateChanged(async (user) => {
                 if (user) {
                     updateUserInfo();
+                    // Inicializar ProfileManager quando usuário estiver autenticado
+                    await initializeProfileManager();
                 }
             });
 

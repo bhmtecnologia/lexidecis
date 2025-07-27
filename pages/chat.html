@@ -24,7 +24,7 @@
     </button>
 
     <!-- Sidebar -->
-    <nav id="sidebarMenu" class="lexi-sidebar lexi-sidebar-menu sidebar d-flex flex-column p-3 bg-dark" style="height: 100vh;">
+    <nav id="sidebarMenu" class="lexi-sidebar lexi-sidebar-menu sidebar d-flex flex-column p-3 bg-dark">
         <!-- Barra de Ícones como Botões -->
         <div class="d-flex justify-content-around mb-3">
             <button id="profile-icon" class="btn btn-link text-white" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Perfil">
@@ -45,18 +45,13 @@
             <button class="btn btn-outline-secondary lexi-clear-search-btn" type="button" id="clear-search-button">&times;</button>
         </div>
 
-        <!-- Lista de chats -->
-        <ul id="chat-list" class="list-group lexi-chat-list overflow-auto custom-chat-list-height bg-dark">
+        <!-- Lista de chats - Agora com flex-grow para ocupar espaço disponível -->
+        <ul id="chat-list" class="list-group lexi-chat-list overflow-auto bg-dark flex-grow-1">
             <!-- Lista será populada dinamicamente -->
         </ul>
 
-        <!-- Botões e campos na sidebar -->
-        <ul class="nav nav-pills flex-column overflow-auto mb-auto">
-            <!-- Menu items podem ser adicionados aqui no futuro -->
-        </ul>
-
-        <!-- User Menu -->
-        <div class="lexi-user-menu-container">
+        <!-- User Menu - Agora sempre visível no final -->
+        <div class="lexi-user-menu-container mt-auto">
             <!-- Avatar do usuário (botão do menu) -->
             <div class="d-flex align-items-center lexi-user-menu-trigger" id="user-menu-trigger">
                 <div class="lexi-user-avatar me-2" id="user-avatar">T</div>

@@ -83,6 +83,9 @@
     /* Container da lista */
     .lexi-chat-list {
         background-color: #212529 !important;
+        flex: 1 !important;
+        min-height: 0 !important;
+        overflow-y: auto !important;
     }
 
     /* Itens da lista */
@@ -139,26 +142,6 @@
         display: none !important;
     }
 
-    /* ALTERNATIVA: Personalizar a seta do dropdown (descomente se preferir)
-    .lexi-chat-list .dropdown-toggle::after {
-        display: inline-block !important;
-        margin-left: 0.255em !important;
-        vertical-align: 0.255em !important;
-        content: "" !important;
-        border-top: 0.2em solid #adb5bd !important;
-        border-right: 0.2em solid transparent !important;
-        border-bottom: 0 !important;
-        border-left: 0.2em solid transparent !important;
-        opacity: 0.7 !important;
-        transition: opacity 0.2s ease !important;
-    }
-    
-    .lexi-chat-list .dropdown-toggle:hover::after {
-        opacity: 1 !important;
-        border-top-color: white !important;
-    }
-    */
-
     /* Menus dropdown */
     .lexi-chat-list .dropdown-menu {
         background-color: #343a40 !important;
@@ -182,6 +165,11 @@
     .lexi-user-menu-container {
         position: relative;
         z-index: 10000;
+        flex-shrink: 0 !important;
+        background-color: #212529;
+        border-top: 1px solid #495057;
+        padding-top: 10px;
+        margin-top: 10px;
     }
 
     /* Trigger do menu */
@@ -300,7 +288,7 @@
             width: 100%;
         }
         
-        /* Sidebar mobile */
+        /* Sidebar mobile - CORRIGIDO: altura flexível */
         .lexi-sidebar-menu {
             transform: translateX(-100%);
             transition: transform 0.3s ease;
@@ -310,11 +298,9 @@
             width: 250px;
             z-index: 9999;
             height: 100vh;
-            min-height: 100vh;
-            overflow-y: auto;
-            bottom: 0;
             display: flex;
             flex-direction: column;
+            overflow: hidden; /* IMPORTANTE: não cortar conteúdo */
         }
         
         .lexi-sidebar-menu.active {
@@ -341,7 +327,7 @@
             transition: margin-left 0.3s ease;
         }
         
-        /* User menu mobile */
+        /* User menu mobile - CORRIGIDO: sempre visível */
         .lexi-user-menu-trigger {
             position: relative;
             z-index: 10001;
@@ -361,26 +347,27 @@
             z-index: 10002;
         }
         
-        /* Container do user menu no final */
+        /* Container do user menu - CORRIGIDO: flex-shrink 0 para não encolher */
         .lexi-user-menu-container {
-            margin-top: auto;
-            padding-bottom: 20px;
-            position: sticky;
-            bottom: 0;
+            flex-shrink: 0 !important;
             background-color: #212529;
             border-top: 1px solid #495057;
+            padding-top: 10px;
+            margin-top: 10px;
         }
         
-        /* Lista de chats flexível */
+        /* Lista de chats flexível - CORRIGIDO: flex 1 para ocupar espaço disponível */
         .lexi-chat-list {
-            flex: 1;
-            overflow-y: auto;
+            flex: 1 !important;
+            min-height: 0 !important;
+            overflow-y: auto !important;
         }
         
-        /* Sidebar altura total */
+        /* Sidebar altura total - CORRIGIDO: flexível */
         .lexi-sidebar-main {
             height: 100vh !important;
-            min-height: 100vh !important;
+            display: flex !important;
+            flex-direction: column !important;
         }
     }
 
@@ -406,8 +393,9 @@
         
         /* Garantir que a lista de chats tenha altura adequada */
         .lexi-chat-list {
-            max-height: calc(100vh - 200px);
-            min-height: 300px;
+            flex: 1 !important;
+            min-height: 0 !important;
+            overflow-y: auto !important;
         }
     }
 
@@ -525,8 +513,12 @@
     color: white !important;
 }
 
+/* CORREÇÃO GLOBAL: Lista de chats com flexbox */
 .lexi-chat-list {
     background-color: #212529 !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
 }
 
 .lexi-chat-list .list-group-item {
@@ -640,9 +632,15 @@
     border-color: #0d6efd !important;
 }
 
+/* CORREÇÃO GLOBAL: Menu do usuário sempre visível */
 .lexi-user-menu-container {
     position: relative;
     z-index: 10000;
+    flex-shrink: 0 !important;
+    background-color: #212529;
+    border-top: 1px solid #495057;
+    padding-top: 10px;
+    margin-top: 10px;
 }
 
 .lexi-user-menu-trigger {
@@ -885,10 +883,9 @@ li.list-group-item.bg-light {
         width: 250px !important;
         z-index: 9999 !important;
         height: 100vh !important;
-        min-height: 100vh !important;
-        overflow-y: auto !important;
         display: flex !important;
         flex-direction: column !important;
+        overflow: hidden !important; /* IMPORTANTE: não cortar conteúdo */
     }
     
     #sidebarMenu.lexi-sidebar-menu.active {

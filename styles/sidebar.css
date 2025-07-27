@@ -950,16 +950,22 @@ li.list-group-item.bg-light {
     .lexi-sidebar-html, .lexi-sidebar-body {
         height: -webkit-fill-available;
         min-height: -webkit-fill-available;
+        display: flex;
+        align-items: stretch;
     }
     
     .lexi-sidebar-main {
         height: -webkit-fill-available !important;
         min-height: -webkit-fill-available !important;
+        flex: 1 !important;
+        max-height: -webkit-fill-available !important;
     }
     
     #sidebarMenu {
         height: -webkit-fill-available;
         min-height: -webkit-fill-available;
+        flex: 1;
+        max-height: -webkit-fill-available;
     }
     
     .lexi-sidebar-overlay {
@@ -970,5 +976,14 @@ li.list-group-item.bg-light {
     #sidebarMenu.lexi-sidebar-menu {
         height: -webkit-fill-available !important;
         min-height: -webkit-fill-available !important;
+        flex: 1 !important;
+        max-height: -webkit-fill-available !important;
+    }
+    
+    .content {
+        height: -webkit-fill-available;
+        min-height: -webkit-fill-available;
+        flex: 1;
+        max-height: -webkit-fill-available;
     }
 }

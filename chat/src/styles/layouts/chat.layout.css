@@ -26,6 +26,7 @@ html, body {
   min-height: -webkit-fill-available;
   overflow: hidden;
   background: var(--body-color);
+  align-items: stretch;
 }
 
 /* Área do chat */
@@ -34,6 +35,12 @@ html, body {
   position: relative;
   background: var(--light-background);
   transition: margin-left var(--transition-base);
+  height: 100vh;
+  height: -webkit-fill-available;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Flowise chatbot */

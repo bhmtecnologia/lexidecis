@@ -115,10 +115,13 @@ body {
     height: -webkit-fill-available;
     min-height: 100vh;
     min-height: -webkit-fill-available;
+    max-height: 100vh;
+    max-height: -webkit-fill-available;
     overflow-y: auto; /* Permite rolagem vertical */
     z-index: 1000; /* Garante sobreposição */
     display: flex;
     flex-direction: column;
+    flex: 1;
 }
 
 /* ===========================
@@ -136,7 +139,10 @@ body {
     height: -webkit-fill-available;
     min-height: 100vh;
     min-height: -webkit-fill-available;
+    max-height: 100vh;
+    max-height: -webkit-fill-available;
     overflow: hidden; /* Remove rolagem não desejada */
+    flex: 1;
 }
 
 body.sidebar-active .content {
@@ -544,16 +550,22 @@ input, button {
 @supports (-webkit-touch-callout: none) {
     body {
         min-height: -webkit-fill-available;
+        display: flex;
+        align-items: stretch;
     }
     
     #sidebarMenu {
         height: -webkit-fill-available;
         min-height: -webkit-fill-available;
+        flex: 1;
+        max-height: -webkit-fill-available;
     }
     
     .content {
         height: -webkit-fill-available;
         min-height: -webkit-fill-available;
+        flex: 1;
+        max-height: -webkit-fill-available;
     }
     
     .sidebar-overlay {

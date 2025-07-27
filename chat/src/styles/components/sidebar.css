@@ -19,6 +19,9 @@
   transition: margin-left var(--transition-base), 
               transform var(--transition-base), 
               width var(--transition-base);
+  flex: 1;
+  max-height: 100vh;
+  max-height: -webkit-fill-available;
 }
 
 #chat-sidebar.hidden {
@@ -354,6 +357,8 @@
   #chat-sidebar {
     height: -webkit-fill-available;
     min-height: -webkit-fill-available;
+    flex: 1;
+    max-height: -webkit-fill-available;
   }
   
   #sidebar-mini {
@@ -364,5 +369,17 @@
   #chat-sidebar:not(.hidden)::before {
     height: -webkit-fill-available;
     min-height: -webkit-fill-available;
+  }
+  
+  #wrapper {
+    display: flex;
+    align-items: stretch;
+  }
+  
+  #chat-area {
+    height: -webkit-fill-available;
+    min-height: -webkit-fill-available;
+    flex: 1;
+    max-height: -webkit-fill-available;
   }
 } 

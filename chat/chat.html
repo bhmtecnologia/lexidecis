@@ -45,6 +45,7 @@
       min-height: -webkit-fill-available;
       overflow: hidden;
       background: var(--body-color);
+      align-items: stretch;
     }
 
     #chat-sidebar {
@@ -61,6 +62,9 @@
       min-height: -webkit-fill-available;
       position: relative;
       transition: margin-left 0.3s ease, transform 0.3s ease, width 0.3s ease;
+      flex: 1;
+      max-height: 100vh;
+      max-height: -webkit-fill-available;
     }
 
     .sidebar-header button {
@@ -193,6 +197,12 @@
       position: relative;
       background: var(--light-background);
       transition: margin-left 0.3s ease;
+      height: 100vh;
+      height: -webkit-fill-available;
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+      display: flex;
+      flex-direction: column;
     }
 
     flowise-fullchatbot {
@@ -365,11 +375,22 @@
       #wrapper {
         height: -webkit-fill-available;
         min-height: -webkit-fill-available;
+        display: flex;
+        align-items: stretch;
       }
       
       #chat-sidebar {
         height: -webkit-fill-available;
         min-height: -webkit-fill-available;
+        flex: 1;
+        max-height: -webkit-fill-available;
+      }
+      
+      #chat-area {
+        height: -webkit-fill-available;
+        min-height: -webkit-fill-available;
+        flex: 1;
+        max-height: -webkit-fill-available;
       }
       
       #sidebar-mini {

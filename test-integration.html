@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Integração - UIManager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-item {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Teste de Integração - UIManager</h1>
+        <p>Este arquivo testa se a integração do UIManager está funcionando corretamente.</p>
+        
+        <div class="test-item info">
+            <h3>Status da Integração</h3>
+            <div id="integration-status">Verificando...</div>
+        </div>
+
+        <div class="test-item">
+            <h3>Testes Disponíveis</h3>
+            <button onclick="testUIManagerImport()">Testar Importação UIManager</button>
+            <button onclick="testAuthImport()">Testar Importação Auth</button>
+            <button onclick="testRendererImport()">Testar Importação Renderer</button>
+            <button onclick="openChatPage()">Abrir Página Chat</button>
+        </div>
+
+        <div class="test-item">
+            <h3>Logs de Teste</h3>
+            <div id="test-logs" style="background: #f8f9fa; padding: 10px; border-radius: 4px; max-height: 300px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        function log(message, type = 'info') {
+            const logsDiv = document.getElementById('test-logs');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+            logEntry.style.color = type === 'error' ? 'red' : type === 'success' ? 'green' : 'black';
+            logsDiv.appendChild(logEntry);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+
+        // Teste de importação do UIManager
+        window.testUIManagerImport = async () => {
+            try {
+                log('Testando importação do UIManager...');
+                const UIManager = await import('./services/uiManager.js');
+                log('✅ UIManager importado com sucesso!', 'success');
+                log(`Classe UIManager: ${typeof UIManager.default}`, 'info');
+            } catch (error) {
+                log(`❌ Erro ao importar UIManager: ${error.message}`, 'error');
+            }
+        };
+
+        // Teste de importação do Auth
+        window.testAuthImport = async () => {
+            try {
+                log('Testando importação do Auth...');
+                const auth = await import('./services/auth.js');
+                log('✅ Auth importado com sucesso!', 'success');
+                log(`Funções disponíveis: ${Object.keys(auth).join(', ')}`, 'info');
+            } catch (error) {
+                log(`❌ Erro ao importar Auth: ${error.message}`, 'error');
+            }
+        };
+
+        // Teste de importação do Renderer
+        window.testRendererImport = async () => {
+            try {
+                log('Testando importação do Renderer...');
+                const renderer = await import('./services/renderer.js');
+                log('✅ Renderer importado com sucesso!', 'success');
+            } catch (error) {
+                log(`❌ Erro ao importar Renderer: ${error.message}`, 'error');
+            }
+        };
+
+        // Abrir página de chat
+        window.openChatPage = () => {
+            log('Abrindo página de chat...');
+            window.open('./pages/chat.html', '_blank');
+        };
+
+        // Verificação inicial
+        document.addEventListener('DOMContentLoaded', () => {
+            const statusDiv = document.getElementById('integration-status');
+            statusDiv.innerHTML = `
+                <div class="success">
+                    <strong>✅ Página de teste carregada com sucesso!</strong><br>
+                    Clique nos botões acima para testar as integrações.
+                </div>
+            `;
+            log('Página de teste inicializada', 'success');
+        });
+    </script>
+</body>
+</html> 

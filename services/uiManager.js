@@ -4,6 +4,7 @@ const DEBUG_MODE = isLocalhost; // Define DEBUG_MODE com base no hostname
 import GPTManager from './gptManager.js';
 // Removemos a importação do HistoryManager, pois suas funções foram migradas para o ChatManager
 import ProfileManager from './profileManager.js';
+import { logout } from './auth.js';
 
 class UIManager {
     constructor(apiService, stateManager, chatManager, config, auth) {
@@ -28,6 +29,12 @@ class UIManager {
         }
 
         this.setupUIEvents();
+        
+        // Configurar listener para mudanças de autenticação
+        this.setupAuthListener();
+        
+        // Atualizar informações do usuário imediatamente se já estiver logado
+        this.updateUserInfo();
     }
 
     /* Método auxiliar para logs */
@@ -70,8 +77,10 @@ class UIManager {
         // Botões da barra lateral
         const newChatButton = document.getElementById('new-chat-button');
         const selectGPTButton = document.getElementById('select-gpt-button');
-        const profileIcon = document.getElementById('profile-icon');
+        const profileButton = document.getElementById('profile-button');
         const configButton = document.getElementById('config-button');
+        const adminButton = document.getElementById('admin-button');
+        const logoutButton = document.getElementById('logout-button');
 
         if (newChatButton) {
             newChatButton.addEventListener('click', () => this.createNewChat());
@@ -81,22 +90,50 @@ class UIManager {
             selectGPTButton.addEventListener('click', () => this.gptManager.openModal());
         }
 
-        if (profileIcon) {
-            profileIcon.addEventListener('click', () => this.profileManager.openModal());
+        if (profileButton) {
+            profileButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                this.closeUserMenu();
+                this.profileManager.openModal();
+            });
         }
 
         if (configButton) {
-            configButton.addEventListener('click', () => this.openConfigModal());
-        }
-
-        // Eventos do menu suspenso de configurações (exemplo de logout)
-        const logoutItem = document.querySelector('.dropdown-item[href="#logout"]');
-        if (logoutItem) {
-            logoutItem.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.logout();
+            configButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                this.closeUserMenu();
+                this.openConfigModal();
             });
         }
+
+        if (adminButton) {
+            adminButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                this.closeUserMenu();
+                this.openAdminModal();
+            });
+        }
+
+        if (logoutButton) {
+            logoutButton.addEventListener('click', async (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                try {
+                    await this.logout();
+                } catch (error) {
+                    console.error("Erro ao realizar logout:", error);
+                }
+            });
+        }
+
+        // Funcionalidade do menu dropdown do usuário
+        this.setupUserMenu();
+
+        // Lógica do botão de toggle da sidebar em telas menores
+        this.setupSidebarToggle();
 
         // Evento de fechamento do modal via Bootstrap
         const gptModal = document.getElementById('gpt-modal');
@@ -107,6 +144,93 @@ class UIManager {
                     selectGPTButton.focus();
                 }
             });
+        }
+
+        // Evento para recarregar o iframe quando o modal admin for aberto
+        const adminModal = document.getElementById('adminModal');
+        if (adminModal) {
+            adminModal.addEventListener('shown.bs.modal', () => {
+                const iframe = document.getElementById('adminIframe');
+                if (iframe) {
+                    iframe.src = iframe.src; // Recarrega o iframe
+                }
+            });
+        }
+    }
+
+    /* --- Configuração do Menu do Usuário --- */
+    setupUserMenu() {
+        const userMenuTrigger = document.getElementById('user-menu-trigger');
+        const userMenuDropdown = document.getElementById('user-menu-dropdown');
+        
+        if (userMenuTrigger && userMenuDropdown) {
+            // Toggle do menu ao clicar no trigger
+            userMenuTrigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                userMenuDropdown.classList.toggle('show');
+            });
+            
+            // Fechar menu ao clicar fora
+            document.addEventListener('click', (e) => {
+                if (!userMenuTrigger.contains(e.target) && !userMenuDropdown.contains(e.target)) {
+                    this.closeUserMenu();
+                }
+            });
+            
+            // Fechar menu ao pressionar ESC
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    this.closeUserMenu();
+                }
+            });
+        }
+    }
+
+    /* --- Configuração do Toggle da Sidebar --- */
+    setupSidebarToggle() {
+        const sidebar = document.getElementById('sidebarMenu');
+        const toggleBtn = document.getElementById('toggle-sidebar-btn');
+        const overlay = document.getElementById('sidebarOverlay');
+
+        if (toggleBtn && sidebar && overlay) {
+            toggleBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.debugLog('Toggle button clicked');
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
+                this.debugLog('Sidebar active:', sidebar.classList.contains('active'));
+            });
+
+            overlay.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.debugLog('Overlay clicked');
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            });
+
+            // Fechar sidebar ao pressionar ESC
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && sidebar.classList.contains('active')) {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                }
+            });
+        } else {
+            console.error('Elementos do sidebar não encontrados:', {
+                sidebar: !!sidebar,
+                toggleBtn: !!toggleBtn,
+                overlay: !!overlay
+            });
+        }
+    }
+
+    /* --- Método para fechar o menu do usuário --- */
+    closeUserMenu() {
+        const userMenuDropdown = document.getElementById('user-menu-dropdown');
+        if (userMenuDropdown) {
+            userMenuDropdown.classList.remove('show');
         }
     }
 
@@ -370,11 +494,86 @@ class UIManager {
         }
     }
 
-    logout() {
-        console.log('Usuário desconectado.');
-        sessionStorage.clear();
-        localStorage.clear();
-        window.location.href = '/login';
+    async logout() {
+        try {
+            await logout();
+            console.log('Usuário desconectado.');
+            sessionStorage.clear();
+            localStorage.clear();
+            window.location.href = '../index.html';
+        } catch (error) {
+            console.error('Erro ao realizar logout:', error);
+            // Mesmo com erro, limpar dados locais e redirecionar
+            sessionStorage.clear();
+            localStorage.clear();
+            window.location.href = '../index.html';
+        }
+    }
+
+    /* --- Método para abrir o Modal do Admin --- */
+    openAdminModal() {
+        const adminModal = document.getElementById('adminModal');
+        if (adminModal) {
+            const modal = new bootstrap.Modal(adminModal);
+            modal.show();
+        }
+    }
+
+    /* --- Método para atualizar informações do usuário --- */
+    updateUserInfo() {
+        const user = this.auth.currentUser;
+        
+        if (user) {
+            const userAvatar = document.getElementById('user-avatar');
+            const userDisplayName = document.getElementById('user-display-name');
+            const userEmail = document.getElementById('user-email');
+            
+            // Obter a primeira letra do displayName ou email
+            let displayName = user.displayName || user.email || 'U';
+            let firstLetter = displayName.charAt(0).toUpperCase();
+            
+            // Atualizar o avatar com a primeira letra
+            if (userAvatar) {
+                userAvatar.textContent = firstLetter;
+            }
+            
+            // Atualizar o nome de exibição
+            if (userDisplayName) {
+                // Se tem displayName, usa ele, senão usa o email
+                if (user.displayName) {
+                    userDisplayName.textContent = user.displayName;
+                } else {
+                    // Extrai o username do email (parte antes do @)
+                    const emailUsername = user.email.split('@')[0];
+                    userDisplayName.textContent = emailUsername;
+                }
+            }
+            
+            // Atualizar o email no menu
+            if (userEmail) {
+                userEmail.textContent = user.email;
+            }
+        } else {
+            // Usuário não autenticado - mostrar valores padrão
+            const userAvatar = document.getElementById('user-avatar');
+            const userDisplayName = document.getElementById('user-display-name');
+            const userEmail = document.getElementById('user-email');
+            
+            if (userAvatar) userAvatar.textContent = 'U';
+            if (userDisplayName) userDisplayName.textContent = 'Usuário';
+            if (userEmail) userEmail.textContent = 'usuario@exemplo.com';
+        }
+    }
+
+    /* --- Configurar listener para mudanças de autenticação --- */
+    setupAuthListener() {
+        this.auth.onAuthStateChanged((user) => {
+            if (user) {
+                this.updateUserInfo();
+            } else {
+                this.updateUserInfo(); // Atualiza para mostrar "U" quando o usuário faz logout
+            }
+        });
     }
 }
 

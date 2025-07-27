@@ -94,6 +94,14 @@
     <!-- Overlay para sidebar em dispositivos móveis -->
     <div id="sidebarOverlay" class="lexi-sidebar-overlay"></div>
 
+    <!-- Loading Indicator para Chats -->
+    <div id="chatLoadingIndicator" class="lexi-chat-loading">
+        <div class="d-flex flex-column align-items-center">
+            <div class="lexi-loading-spinner"></div>
+            <div class="lexi-loading-text">Carregando chat...</div>
+        </div>
+    </div>
+
     <!-- Conteúdo Principal -->
     <div class="content">
         <div id="welcome-message" class="d-flex justify-content-center align-items-center vh-100">
@@ -299,6 +307,45 @@
                 // Aqui você pode carregar o chat existente com chatId
             };
 
+            // Função para mostrar loading
+            function showChatLoading() {
+                const loadingIndicator = document.getElementById('chatLoadingIndicator');
+                const body = document.body;
+                
+                if (loadingIndicator) {
+                    loadingIndicator.classList.add('show');
+                }
+                
+                body.classList.add('lexi-loading-active');
+            }
+
+            // Função para esconder loading
+            function hideChatLoading() {
+                const loadingIndicator = document.getElementById('chatLoadingIndicator');
+                const body = document.body;
+                
+                if (loadingIndicator) {
+                    loadingIndicator.classList.remove('show');
+                }
+                
+                body.classList.remove('lexi-loading-active');
+            }
+
+            // Função para selecionar item de chat
+            function selectChatItem(chatId) {
+                // Remover seleção anterior
+                const allChatItems = document.querySelectorAll('#chat-list li');
+                allChatItems.forEach(item => {
+                    item.classList.remove('lexi-chat-item-selected');
+                });
+                
+                // Selecionar novo item
+                const selectedItem = document.querySelector(`#chat-list li[data-chat-id="${chatId}"]`);
+                if (selectedItem) {
+                    selectedItem.classList.add('lexi-chat-item-selected');
+                }
+            }
+
             // Associar eventos aos botões
             const newChatButton = document.getElementById('new-chat-button');
             if (newChatButton) {
@@ -311,9 +358,20 @@
             if (chatList) {
                 chatList.addEventListener('click', (event) => {
                     const chatItem = event.target.closest('li');
-                    if (chatItem) {
+                    if (chatItem && chatItem.getAttribute('data-chat-id')) {
                         const chatId = chatItem.getAttribute('data-chat-id');
-                        selecionarChat(chatId);
+                        
+                        // Mostrar loading
+                        showChatLoading();
+                        
+                        // Selecionar item visualmente
+                        selectChatItem(chatId);
+                        
+                        // Simular carregamento do chat (substitua pela sua lógica real)
+                        setTimeout(() => {
+                            selecionarChat(chatId);
+                            hideChatLoading();
+                        }, 1500); // 1.5 segundos de loading
                     }
                 });
             }

@@ -61,6 +61,131 @@
             right: 10px;
             font-size: 1.2rem;
         }
+
+        /* Estilos para o status indicator */
+        .status-indicator {
+            position: relative;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        /* Estilos para o avatar do usuário */
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #fd7e14;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        /* Estilos para o menu do usuário */
+        .user-menu-container {
+            position: relative;
+        }
+
+        .user-menu-trigger {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 6px;
+            transition: background-color 0.2s ease;
+        }
+
+        .user-menu-trigger:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .user-menu-dropdown {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            background-color: #343a40;
+            border: 1px solid #495057;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: none;
+            margin-bottom: 8px;
+        }
+
+        .user-menu-dropdown.show {
+            display: block;
+        }
+
+        .user-menu-item {
+            padding: 8px 12px;
+            color: white;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            font-size: 12px;
+        }
+
+        .user-menu-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .user-menu-item.user-menu-logout:hover {
+            background-color: #dc3545;
+        }
+
+        .user-menu-item#config-button:hover {
+            background-color: #17a2b8;
+        }
+
+        .user-menu-item#admin-button:hover {
+            background-color: #6f42c1;
+        }
+
+        .user-menu-divider {
+            margin: 4px 0;
+            border-color: #495057;
+        }
+
+        .user-menu-item i {
+            font-size: 14px;
+        }
+
+        /* Estilos para o modal do admin */
+        .modal-xl {
+            max-width: 95%;
+        }
+
+        .modal-body {
+            padding: 0;
+        }
+
+        #adminIframe {
+            border: none;
+            width: 100%;
+            height: 600px;
+        }
+
+        .modal-content {
+            background-color: #f8f9fa;
+        }
+
+        .modal-header {
+            background-color: #343a40;
+            color: white;
+            border-bottom: 1px solid #495057;
+        }
+
+        .modal-footer {
+            background-color: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+        }
     </style>
 </head>
 <body>
@@ -101,14 +226,45 @@
 
         <!-- Botões e campos na sidebar -->
         <ul class="nav nav-pills flex-column overflow-auto mb-auto">
-            <li>
-                <a href="#" class="nav-link text-white" id="logout-button">
-                    <i class="bi bi-box-arrow-right"></i> Sair
-                </a>
-            </li>
+            <!-- Menu items podem ser adicionados aqui no futuro -->
         </ul>
 
         <hr class="bg-white">
+
+        <!-- User Menu -->
+        <div class="user-menu-container">
+            <!-- Avatar do usuário (botão do menu) -->
+            <div class="d-flex align-items-center user-menu-trigger" id="user-menu-trigger">
+                <div class="user-avatar me-2" id="user-avatar">T</div>
+                <span class="text-white" id="user-display-name">TI</span>
+                <i class="bi bi-chevron-down text-white ms-auto"></i>
+            </div>
+
+            <!-- Menu dropdown -->
+            <div class="user-menu-dropdown" id="user-menu-dropdown">
+                <div class="user-menu-item">
+                    <i class="bi bi-envelope me-2"></i>
+                    <span id="user-email">usuario@exemplo.com</span>
+                </div>
+                <div class="user-menu-item" id="config-button">
+                    <i class="bi bi-gear me-2"></i>
+                    <span>Configurações</span>
+                </div>
+                <div class="user-menu-item" id="admin-button">
+                    <i class="bi bi-person-gear me-2"></i>
+                    <span>Painel do Admin</span>
+                </div>
+                <div class="user-menu-item user-menu-logout" id="logout-button">
+                    <i class="bi bi-box-arrow-right me-2"></i>
+                    <span>Sair</span>
+                </div>
+                <hr class="user-menu-divider">
+                <div class="user-menu-item">
+                    <i class="bi bi-circle-fill text-success me-2"></i>
+                    <span>Usuários Ativos: 1</span>
+                </div>
+            </div>
+        </div>
     </nav>
 
     <!-- Overlay para sidebar em dispositivos móveis -->
@@ -130,25 +286,158 @@
         <!-- Mensagem de erro -->
     </div>
 
+    <!-- Modal do Painel Admin -->
+    <div class="modal fade" id="adminModal" tabindex="-1" aria-labelledby="adminModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="adminModalLabel">Painel do Admin</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <iframe id="adminIframe" src="/admin/index.html" width="100%" height="600px" frameborder="0"></iframe>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <!-- Scripts de Autenticação e Renderização -->
     <script type="module">
         import { verifyAuthState, logout } from "../services/auth.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     
         document.addEventListener("DOMContentLoaded", () => {
             // Verificar o estado de autenticação
             verifyAuthState();
+
+            // Função para atualizar informações do usuário
+            function updateUserInfo() {
+                const auth = getAuth();
+                const user = auth.currentUser;
+                
+                if (user) {
+                    const userAvatar = document.getElementById('user-avatar');
+                    const userDisplayName = document.getElementById('user-display-name');
+                    const userEmail = document.getElementById('user-email');
+                    
+                    // Obter a primeira letra do displayName ou email
+                    let displayName = user.displayName || user.email || 'U';
+                    let firstLetter = displayName.charAt(0).toUpperCase();
+                    
+                    // Atualizar o avatar com a primeira letra
+                    if (userAvatar) {
+                        userAvatar.textContent = firstLetter;
+                    }
+                    
+                    // Atualizar o nome de exibição
+                    if (userDisplayName) {
+                        // Se tem displayName, usa ele, senão usa o email
+                        if (user.displayName) {
+                            userDisplayName.textContent = user.displayName;
+                        } else {
+                            // Extrai o username do email (parte antes do @)
+                            const emailUsername = user.email.split('@')[0];
+                            userDisplayName.textContent = emailUsername;
+                        }
+                    }
+                    
+                    // Atualizar o email no menu
+                    if (userEmail) {
+                        userEmail.textContent = user.email;
+                    }
+                }
+            }
 
             // Associar o evento ao botão de logout
             const logoutButton = document.getElementById("logout-button");
             if (logoutButton) {
                 logoutButton.addEventListener("click", async (event) => {
                     event.preventDefault();
+                    event.stopPropagation();
                     try {
                         await logout();
                     } catch (error) {
                         console.error("Erro ao realizar logout:", error);
                         // Opcional: Mostrar uma mensagem de erro ao usuário
+                    }
+                });
+            }
+
+            // Associar evento ao botão de configurações
+            const configButton = document.getElementById("config-button");
+            if (configButton) {
+                configButton.addEventListener("click", (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    // Fechar o menu
+                    userMenuDropdown.classList.remove('show');
+                    // Redirecionar para página de configurações
+                    window.location.href = "../pages/config.html";
+                });
+            }
+
+            // Associar evento ao botão do painel admin
+            const adminButton = document.getElementById("admin-button");
+            if (adminButton) {
+                adminButton.addEventListener("click", (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    // Fechar o menu
+                    userMenuDropdown.classList.remove('show');
+                    // Abrir modal do painel admin
+                    const adminModal = new bootstrap.Modal(document.getElementById('adminModal'));
+                    adminModal.show();
+                });
+            }
+
+            // Configurar listener para mudanças de autenticação
+            const auth = getAuth();
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    updateUserInfo();
+                }
+            });
+
+            // Atualizar informações do usuário imediatamente se já estiver logado
+            updateUserInfo();
+
+            // Evento para recarregar o iframe quando o modal for aberto
+            const adminModal = document.getElementById('adminModal');
+            if (adminModal) {
+                adminModal.addEventListener('shown.bs.modal', function () {
+                    const iframe = document.getElementById('adminIframe');
+                    if (iframe) {
+                        iframe.src = iframe.src; // Recarrega o iframe
+                    }
+                });
+            }
+
+            // Funcionalidade do menu dropdown do usuário
+            const userMenuTrigger = document.getElementById('user-menu-trigger');
+            const userMenuDropdown = document.getElementById('user-menu-dropdown');
+            
+            if (userMenuTrigger && userMenuDropdown) {
+                // Toggle do menu ao clicar no trigger
+                userMenuTrigger.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    userMenuDropdown.classList.toggle('show');
+                });
+                
+                // Fechar menu ao clicar fora
+                document.addEventListener('click', (e) => {
+                    if (!userMenuTrigger.contains(e.target) && !userMenuDropdown.contains(e.target)) {
+                        userMenuDropdown.classList.remove('show');
+                    }
+                });
+                
+                // Fechar menu ao pressionar ESC
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        userMenuDropdown.classList.remove('show');
                     }
                 });
             }

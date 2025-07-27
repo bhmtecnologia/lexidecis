@@ -402,52 +402,7 @@
            BARRA DE ROLAGEM ELEGANTE - DESKTOP
            ======================================== */
         
-        /* Configuração geral da lista de chats */
-        .lexi-chat-list {
-            overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: #6c757d #343a40;
-        }
-        
-        /* Estilização da barra de rolagem para Webkit (Chrome, Safari, Edge) */
-        .lexi-chat-list::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        .lexi-chat-list::-webkit-scrollbar-track {
-            background: #343a40;
-            border-radius: 3px;
-        }
-        
-        .lexi-chat-list::-webkit-scrollbar-thumb {
-            background: #6c757d;
-            border-radius: 3px;
-            transition: background-color 0.2s ease;
-        }
-        
-        .lexi-chat-list::-webkit-scrollbar-thumb:hover {
-            background: #adb5bd;
-        }
-        
-        /* Estilização da barra de rolagem para a sidebar principal */
-        .lexi-sidebar-menu::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        .lexi-sidebar-menu::-webkit-scrollbar-track {
-            background: #343a40;
-            border-radius: 3px;
-        }
-        
-        .lexi-sidebar-menu::-webkit-scrollbar-thumb {
-            background: #6c757d;
-            border-radius: 3px;
-            transition: background-color 0.2s ease;
-        }
-        
-        .lexi-sidebar-menu::-webkit-scrollbar-thumb:hover {
-            background: #adb5bd;
-        }
+
         
         /* Garantir que a lista de chats tenha altura adequada */
         .lexi-chat-list {
@@ -822,43 +777,73 @@ li.list-group-item.bg-light {
    BARRA DE ROLAGEM ELEGANTE - GLOBAL
    ======================================== */
 
-/* Configuração geral para barras de rolagem no desktop */
+/* Configuração geral para barras de rolagem em todos os dispositivos */
+/* Estilização global para elementos com rolagem */
+.lexi-sidebar *::-webkit-scrollbar,
+#sidebarMenu *::-webkit-scrollbar,
+.lexi-chat-list::-webkit-scrollbar,
+.lexi-sidebar-menu::-webkit-scrollbar {
+    width: 6px;
+}
+
+/* Dropdown do usuário com barra mais fina */
+.lexi-user-menu-dropdown::-webkit-scrollbar {
+    width: 4px;
+}
+
+.lexi-sidebar *::-webkit-scrollbar-track,
+#sidebarMenu *::-webkit-scrollbar-track,
+.lexi-chat-list::-webkit-scrollbar-track,
+.lexi-sidebar-menu::-webkit-scrollbar-track {
+    background: #343a40;
+    border-radius: 3px;
+}
+
+.lexi-user-menu-dropdown::-webkit-scrollbar-track {
+    background: #343a40;
+    border-radius: 2px;
+}
+
+.lexi-sidebar *::-webkit-scrollbar-thumb,
+#sidebarMenu *::-webkit-scrollbar-thumb,
+.lexi-chat-list::-webkit-scrollbar-thumb,
+.lexi-sidebar-menu::-webkit-scrollbar-thumb {
+    background: #6c757d;
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
+}
+
+.lexi-user-menu-dropdown::-webkit-scrollbar-thumb {
+    background: #6c757d;
+    border-radius: 2px;
+    transition: background-color 0.2s ease;
+}
+
+.lexi-sidebar *::-webkit-scrollbar-thumb:hover,
+#sidebarMenu *::-webkit-scrollbar-thumb:hover,
+.lexi-chat-list::-webkit-scrollbar-thumb:hover,
+.lexi-sidebar-menu::-webkit-scrollbar-thumb:hover,
+.lexi-user-menu-dropdown::-webkit-scrollbar-thumb:hover {
+    background: #adb5bd;
+}
+
+/* Configuração para Firefox em todos os dispositivos */
+.lexi-sidebar *,
+#sidebarMenu *,
+.lexi-chat-list,
+.lexi-sidebar-menu {
+    scrollbar-width: thin;
+    scrollbar-color: #6c757d #343a40;
+}
+
+/* Dropdown do usuário com barra mais fina */
+.lexi-user-menu-dropdown {
+    scrollbar-width: thin;
+    scrollbar-color: #6c757d #343a40;
+}
+
+/* Configuração específica para desktop */
 @media (min-width: 768px) {
-    /* Estilização global para elementos com rolagem */
-    .lexi-sidebar *::-webkit-scrollbar,
-    #sidebarMenu *::-webkit-scrollbar,
-    .chat-container *::-webkit-scrollbar {
-        width: 6px;
-    }
-    
-    .lexi-sidebar *::-webkit-scrollbar-track,
-    #sidebarMenu *::-webkit-scrollbar-track,
-    .chat-container *::-webkit-scrollbar-track {
-        background: #343a40;
-        border-radius: 3px;
-    }
-    
-    .lexi-sidebar *::-webkit-scrollbar-thumb,
-    #sidebarMenu *::-webkit-scrollbar-thumb,
-    .chat-container *::-webkit-scrollbar-thumb {
-        background: #6c757d;
-        border-radius: 3px;
-        transition: background-color 0.2s ease;
-    }
-    
-    .lexi-sidebar *::-webkit-scrollbar-thumb:hover,
-    #sidebarMenu *::-webkit-scrollbar-thumb:hover,
-    .chat-container *::-webkit-scrollbar-thumb:hover {
-        background: #adb5bd;
-    }
-    
-    /* Configuração para Firefox */
-    .lexi-sidebar *,
-    #sidebarMenu *,
-    .chat-container * {
-        scrollbar-width: thin;
-        scrollbar-color: #6c757d #343a40;
-    }
 }
 
 /* ========================================

@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="../styles/chat.css">
     <link rel="stylesheet" href="../styles/gptManager.css">
     <link rel="stylesheet" href="../styles/loadingScreen.css">
-    <link rel="stylesheet" href="styles/sidebar.css">
+    <link rel="stylesheet" href="../styles/sidebar.css">
 </head>
 <body>
 
@@ -47,7 +47,115 @@
 
         <!-- Lista de chats - Agora com flex-grow para ocupar espaço disponível -->
         <ul id="chat-list" class="list-group lexi-chat-list overflow-auto bg-dark flex-grow-1">
-            <!-- Lista será populada dinamicamente -->
+            <!-- Chats de exemplo para teste -->
+            <li class="lexi-chat-item lexi-chat-item-selected" data-chat-id="1">
+                <div class="lexi-chat-item-content">
+                    <div class="lexi-chat-item-header">
+                        <span class="lexi-chat-item-title">Revisão de Código</span>
+                        <span class="lexi-chat-item-date">Hoje, 14:30</span>
+                    </div>
+                    <div class="lexi-chat-item-preview">Olá! Preciso de ajuda para revisar...</div>
+                </div>
+            </li>
+            <li class="lexi-chat-item" data-chat-id="2">
+                <div class="lexi-chat-item-content">
+                    <div class="lexi-chat-item-header">
+                        <span class="lexi-chat-item-title">Plano Ação 5W2H</span>
+                        <span class="lexi-chat-item-date">Hoje, 12:15</span>
+                    </div>
+                    <div class="lexi-chat-item-preview">Vou criar um plano de ação usando...</div>
+                </div>
+            </li>
+            <li class="lexi-chat-item" data-chat-id="3">
+                <div class="lexi-chat-item-content">
+                    <div class="lexi-chat-item-header">
+                        <span class="lexi-chat-item-title">Boas-vindas</span>
+                        <span class="lexi-chat-item-date">Ontem, 18:45</span>
+                    </div>
+                    <div class="lexi-chat-item-preview">Bem-vindo ao LexiDecis! Como posso...</div>
+                </div>
+            </li>
+            <li class="lexi-chat-item" data-chat-id="4">
+                <div class="lexi-chat-item-content">
+                    <div class="lexi-chat-item-header">
+                        <span class="lexi-chat-item-title">Análise de Texto</span>
+                        <span class="lexi-chat-item-date">Ontem, 16:20</span>
+                    </div>
+                    <div class="lexi-chat-item-preview">Preciso analisar este documento...</div>
+                </div>
+            </li>
+            <li class="lexi-chat-item" data-chat-id="5">
+                <div class="lexi-chat-item-content">
+                    <div class="lexi-chat-item-header">
+                        <span class="lexi-chat-item-title">Saudações iniciais</span>
+                        <span class="lexi-chat-item-date">Ontem, 14:10</span>
+                    </div>
+                    <div class="lexi-chat-item-preview">Olá! Como você está hoje?</div>
+                </div>
+            </li>
+            <li class="lexi-chat-item" data-chat-id="6">
+                <div class="lexi-chat-item-content">
+                    <div class="lexi-chat-item-header">
+                        <span class="lexi-chat-item-title">Saudações e ajuda</span>
+                        <span class="lexi-chat-item-date">Ontem, 11:30</span>
+                    </div>
+                    <div class="lexi-chat-item-preview">Oi! Preciso de ajuda com...</div>
+                </div>
+            </li>
+            <li class="lexi-chat-item" data-chat-id="7">
+                <div class="lexi-chat-item-content">
+                    <div class="lexi-chat-item-header">
+                        <span class="lexi-chat-item-title">White Label vs Marca Própria</span>
+                        <span class="lexi-chat-item-date">2 dias atrás</span>
+                    </div>
+                    <div class="lexi-chat-item-preview">Qual a diferença entre white label...</div>
+                </div>
+            </li>
+            <li class="lexi-chat-item" data-chat-id="8">
+                <div class="lexi-chat-item-content">
+                    <div class="lexi-chat-item-header">
+                        <span class="lexi-chat-item-title">Cad. Inadimplentes</span>
+                        <span class="lexi-chat-item-date">2 dias atrás</span>
+                    </div>
+                    <div class="lexi-chat-item-preview">Como cadastrar inadimplentes no...</div>
+                </div>
+            </li>
+            <li class="lexi-chat-item" data-chat-id="9">
+                <div class="lexi-chat-item-content">
+                    <div class="lexi-chat-item-header">
+                        <span class="lexi-chat-item-title">Dívida de 120 mil</span>
+                        <span class="lexi-chat-item-date">3 dias atrás</span>
+                    </div>
+                    <div class="lexi-chat-item-preview">Tenho uma dívida de R$ 120.000...</div>
+                </div>
+            </li>
+            <li class="lexi-chat-item" data-chat-id="10">
+                <div class="lexi-chat-item-content">
+                    <div class="lexi-chat-item-header">
+                        <span class="lexi-chat-item-title">Revelia e multa</span>
+                        <span class="lexi-chat-item-date">3 dias atrás</span>
+                    </div>
+                    <div class="lexi-chat-item-preview">O que acontece em caso de revelia...</div>
+                </div>
+            </li>
+            <li class="lexi-chat-item" data-chat-id="11">
+                <div class="lexi-chat-item-content">
+                    <div class="lexi-chat-item-header">
+                        <span class="lexi-chat-item-title">Criação de Título</span>
+                        <span class="lexi-chat-item-date">4 dias atrás</span>
+                    </div>
+                    <div class="lexi-chat-item-preview">Como criar um título executivo...</div>
+                </div>
+            </li>
+            <li class="lexi-chat-item" data-chat-id="12">
+                <div class="lexi-chat-item-content">
+                    <div class="lexi-chat-item-header">
+                        <span class="lexi-chat-item-title">Avisos VTCLog</span>
+                        <span class="lexi-chat-item-date">4 dias atrás</span>
+                    </div>
+                    <div class="lexi-chat-item-preview">Como configurar avisos no VTCLog...</div>
+                </div>
+            </li>
         </ul>
 
         <!-- User Menu - Agora sempre visível no final -->
@@ -364,6 +472,38 @@
                 }
             }
 
+            // Funcionalidade de pesquisa
+            const searchInput = document.getElementById('search-input');
+            const clearSearchBtn = document.getElementById('clear-search-button');
+            
+            if (searchInput) {
+                searchInput.addEventListener('input', () => {
+                    const searchTerm = searchInput.value.toLowerCase();
+                    const chatItems = document.querySelectorAll('#chat-list .lexi-chat-item');
+                    
+                    chatItems.forEach(item => {
+                        const title = item.querySelector('.lexi-chat-item-title').textContent.toLowerCase();
+                        const preview = item.querySelector('.lexi-chat-item-preview').textContent.toLowerCase();
+                        
+                        if (title.includes(searchTerm) || preview.includes(searchTerm)) {
+                            item.style.display = 'block';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+                });
+            }
+            
+            if (clearSearchBtn) {
+                clearSearchBtn.addEventListener('click', () => {
+                    searchInput.value = '';
+                    const chatItems = document.querySelectorAll('#chat-list .lexi-chat-item');
+                    chatItems.forEach(item => {
+                        item.style.display = 'block';
+                    });
+                });
+            }
+
             // Associar eventos aos botões
             const newChatButton = document.getElementById('new-chat-button');
             if (newChatButton) {
@@ -395,7 +535,7 @@
             }
 
             // **Remover a chamada automática de iniciarNovoChat()**
-             iniciarNovoChat(); // Remova ou comente esta linha
+            // iniciarNovoChat(); // Comentado para não iniciar automaticamente
         });
     </script>
     <script type="module" src="../services/renderer.js"></script>

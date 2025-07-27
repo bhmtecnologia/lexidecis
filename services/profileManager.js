@@ -51,31 +51,45 @@ export default class ProfileManager {
         }
 
         const modalHTML = `
-            <div class="modal fade" id="${this.modalId}" tabindex="-1" aria-labelledby="profile-modal-title" aria-hidden="true">
+            <div class="modal fade lexi-profile-modal" id="${this.modalId}" tabindex="-1" aria-labelledby="profile-modal-title" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
+                    <div class="modal-content lexi-profile-modal-content">
+                        <div class="modal-header lexi-profile-modal-header">
                             <h5 class="modal-title" id="profile-modal-title">Gerenciar Perfil</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
                         </div>
-                        <div class="modal-body">
+                        <div class="modal-body lexi-profile-modal-body">
                             <form id="profile-form">
                                 <div class="mb-3">
-                                    <label for="profile-name" class="form-label">Nome</label>
-                                    <input type="text" id="profile-name" class="form-control" placeholder="Nome do usuário">
+                                    <label for="profile-name" class="form-label">
+                                        <i class="bi bi-person me-2"></i>Nome
+                                    </label>
+                                    <input type="text" id="profile-name" class="form-control" placeholder="Digite seu nome completo">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="profile-email" class="form-label">Email</label>
-                                    <input type="email" id="profile-email" class="form-control" placeholder="Email do usuário" readonly>
+                                    <label for="profile-email" class="form-label">
+                                        <i class="bi bi-envelope me-2"></i>Email
+                                    </label>
+                                    <input type="email" id="profile-email" class="form-control" placeholder="Seu email" readonly>
+                                    <small class="form-text text-muted">
+                                        <i class="bi bi-info-circle me-1"></i>O email não pode ser alterado
+                                    </small>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="profile-password" class="form-label">Nova Senha</label>
-                                    <input type="password" id="profile-password" class="form-control" placeholder="Nova senha">
+                                    <label for="profile-password" class="form-label">
+                                        <i class="bi bi-lock me-2"></i>Nova Senha
+                                    </label>
+                                    <input type="password" id="profile-password" class="form-control" placeholder="Deixe em branco para manter a senha atual">
+                                    <small class="form-text text-muted">
+                                        <i class="bi bi-shield-check me-1"></i>Mínimo 6 caracteres
+                                    </small>
                                 </div>
-                                <button type="submit" class="btn btn-primary w-100">Salvar Alterações</button>
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="bi bi-check-circle me-2"></i>Salvar Alterações
+                                </button>
                             </form>
                         </div>
-                        <div class="modal-footer">
+                        <div class="modal-footer lexi-profile-modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
                         </div>
                     </div>
@@ -135,27 +149,76 @@ export default class ProfileManager {
 
         const profileName = document.getElementById("profile-name").value.trim();
         const profilePassword = document.getElementById("profile-password").value.trim();
+        const submitButton = document.querySelector("#profile-form button[type='submit']");
+
+        // Validar se há alterações
+        if (!profileName && !profilePassword) {
+            this.uiManager?.showError("Nenhuma alteração foi feita.");
+            return;
+        }
+
+        // Validar nome
+        if (profileName && profileName.length < 2) {
+            this.uiManager?.showError("O nome deve ter pelo menos 2 caracteres.");
+            return;
+        }
+
+        // Validar senha
+        if (profilePassword && profilePassword.length < 6) {
+            this.uiManager?.showError("A senha deve ter pelo menos 6 caracteres.");
+            return;
+        }
 
         try {
+            // Mostrar estado de carregamento
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.classList.add('btn-loading');
+                submitButton.innerHTML = '<i class="bi bi-arrow-clockwise me-2"></i>Salvando...';
+            }
+
+            let hasChanges = false;
+
             if (profileName && profileName !== user.displayName) {
                 await updateProfile(user, { displayName: profileName });
                 console.log("Nome atualizado para:", profileName);
+                hasChanges = true;
             }
 
             if (profilePassword) {
-                if (profilePassword.length < 6) {
-                    this.uiManager?.showError("A senha deve ter pelo menos 6 caracteres.");
-                    return;
-                }
                 await updatePassword(user, profilePassword);
                 console.log("Senha atualizada com sucesso.");
+                hasChanges = true;
             }
 
-            this.uiManager?.showSuccess("Perfil atualizado com sucesso!");
-            this.modal.hide();
+            if (hasChanges) {
+                this.uiManager?.showSuccess("Perfil atualizado com sucesso!");
+                this.modal.hide();
+            } else {
+                this.uiManager?.showError("Nenhuma alteração foi feita.");
+            }
         } catch (error) {
             console.error("Erro ao salvar alterações do perfil:", error);
-            this.uiManager?.showError("Erro ao salvar alterações do perfil. Tente novamente.");
+            
+            // Mensagens de erro mais específicas
+            let errorMessage = "Erro ao salvar alterações do perfil. Tente novamente.";
+            
+            if (error.code === 'auth/requires-recent-login') {
+                errorMessage = "Por segurança, faça login novamente para alterar sua senha.";
+            } else if (error.code === 'auth/weak-password') {
+                errorMessage = "A senha é muito fraca. Use uma senha mais forte.";
+            } else if (error.code === 'auth/invalid-display-name') {
+                errorMessage = "O nome contém caracteres inválidos.";
+            }
+            
+            this.uiManager?.showError(errorMessage);
+        } finally {
+            // Restaurar estado do botão
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.classList.remove('btn-loading');
+                submitButton.innerHTML = '<i class="bi bi-check-circle me-2"></i>Salvar Alterações';
+            }
         }
     }
 

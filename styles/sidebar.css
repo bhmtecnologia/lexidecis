@@ -8,15 +8,11 @@
        ESTILOS BASE E COMPATIBILIDADE
        ======================================== */
 
-    /* Garantir compatibilidade com iOS */
+    /* Garantir compatibilidade com navegadores */
     .lexi-sidebar-html, .lexi-sidebar-body {
         height: 100vh;
-        height: -webkit-fill-available;
         min-height: 100vh;
-        min-height: -webkit-fill-available;
         overflow-x: hidden;
-        -webkit-text-size-adjust: 100%;
-        -webkit-tap-highlight-color: transparent;
     }
 
     /* ========================================
@@ -25,9 +21,7 @@
 
     .lexi-sidebar-main {
         height: 100vh !important;
-        height: -webkit-fill-available !important;
         min-height: 100vh !important;
-        min-height: -webkit-fill-available !important;
         display: flex !important;
         flex-direction: column !important;
     }
@@ -301,7 +295,6 @@
         /* Body para mobile */
         .lexi-sidebar-body {
             height: 100vh;
-            height: -webkit-fill-available;
             overflow: hidden;
             position: fixed;
             width: 100%;
@@ -317,11 +310,8 @@
             width: 250px;
             z-index: 9999;
             height: 100vh;
-            height: -webkit-fill-available;
             min-height: 100vh;
-            min-height: -webkit-fill-available;
             overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
             bottom: 0;
             display: flex;
             flex-direction: column;
@@ -368,7 +358,6 @@
             right: 0;
             max-height: 250px;
             overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
             z-index: 10002;
         }
         
@@ -386,15 +375,12 @@
         .lexi-chat-list {
             flex: 1;
             overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
         }
         
         /* Sidebar altura total */
         .lexi-sidebar-main {
             height: 100vh !important;
-            height: -webkit-fill-available !important;
             min-height: 100vh !important;
-            min-height: -webkit-fill-available !important;
         }
     }
 
@@ -914,11 +900,8 @@ li.list-group-item.bg-light {
         width: 250px !important;
         z-index: 9999 !important;
         height: 100vh !important;
-        height: -webkit-fill-available !important;
         min-height: 100vh !important;
-        min-height: -webkit-fill-available !important;
         overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch !important;
         display: flex !important;
         flex-direction: column !important;
     }
@@ -944,35 +927,3 @@ li.list-group-item.bg-light {
     }
 }
 
-/* iOS Safari specific fixes */
-@supports (-webkit-touch-callout: none) {
-    .lexi-sidebar-html, .lexi-sidebar-body {
-        height: -webkit-fill-available;
-        min-height: -webkit-fill-available;
-    }
-    
-    .lexi-sidebar-main {
-        height: -webkit-fill-available !important;
-        min-height: -webkit-fill-available !important;
-    }
-    
-    #sidebarMenu {
-        height: -webkit-fill-available;
-        min-height: -webkit-fill-available;
-    }
-    
-    .lexi-sidebar-overlay {
-        height: -webkit-fill-available;
-        min-height: -webkit-fill-available;
-    }
-    
-    #sidebarMenu.lexi-sidebar-menu {
-        height: -webkit-fill-available !important;
-        min-height: -webkit-fill-available !important;
-    }
-    
-    .content {
-        height: -webkit-fill-available;
-        min-height: -webkit-fill-available;
-    }
-}

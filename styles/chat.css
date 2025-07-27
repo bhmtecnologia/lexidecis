@@ -90,7 +90,6 @@
 body {
     display: flex; /* Define layout flexível */
     min-height: 100vh; /* Garante que o corpo ocupe toda a altura da janela */
-    min-height: -webkit-fill-available; /* Suporte para iOS */
     background-color: var(--background-color); /* Cor de fundo consistente */
     color: var(--text-color); /* Cor padrão do texto */
     margin: 0;
@@ -112,11 +111,8 @@ body {
     transform: translateX(0); /* Sidebar visível inicialmente em telas grandes */
     position: fixed; /* Fixa a sidebar na tela */
     height: 100vh;
-    height: -webkit-fill-available;
     min-height: 100vh;
-    min-height: -webkit-fill-available;
     max-height: 100vh;
-    max-height: -webkit-fill-available;
     overflow-y: auto; /* Permite rolagem vertical */
     z-index: 1000; /* Garante sobreposição */
     display: flex;
@@ -135,11 +131,8 @@ body {
     display: flex;
     flex-direction: column; /* Layout flexível em coluna */
     height: 100vh; /* Ocupa toda a altura */
-    height: -webkit-fill-available;
     min-height: 100vh;
-    min-height: -webkit-fill-available;
     max-height: 100vh;
-    max-height: -webkit-fill-available;
     overflow: hidden; /* Remove rolagem não desejada */
 }
 
@@ -492,9 +485,7 @@ body.sidebar-active .content {
     left: 0;
     width: 100%;
     height: 100vh;
-    height: -webkit-fill-available;
     min-height: 100vh;
-    min-height: -webkit-fill-available;
     background: rgba(0, 0, 0, 0.5); /* Fundo semitransparente */
     z-index: 999; /* Abaixo da sidebar */
     transition: opacity 0.3s ease-in-out; /* Transição suave para aparecer/desaparecer */
@@ -544,24 +535,3 @@ input, button {
     touch-action: manipulation; /* Melhora a responsividade dos toques */
 }
 
-/* iOS Safari specific fixes */
-@supports (-webkit-touch-callout: none) {
-    body {
-        min-height: -webkit-fill-available;
-    }
-    
-    #sidebarMenu {
-        height: -webkit-fill-available;
-        min-height: -webkit-fill-available;
-    }
-    
-    .content {
-        height: -webkit-fill-available;
-        min-height: -webkit-fill-available;
-    }
-    
-    .sidebar-overlay {
-        height: -webkit-fill-available;
-        min-height: -webkit-fill-available;
-    }
-}

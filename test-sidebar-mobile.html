@@ -16,6 +16,10 @@
             margin: 0;
             padding: 0;
             font-family: Arial, sans-serif;
+            /* Suporte para iOS Safari */
+            height: 100vh;
+            height: 100dvh; /* Dynamic viewport height */
+            height: -webkit-fill-available; /* Fallback para iOS Safari */
         }
         
         .test-info {
@@ -28,6 +32,9 @@
             border-radius: 5px;
             z-index: 10001;
             font-size: 12px;
+            /* Considerar safe areas do iOS */
+            top: max(10px, env(safe-area-inset-top, 10px));
+            left: max(10px, env(safe-area-inset-left, 10px));
         }
         
         .test-chat-item {
@@ -38,6 +45,18 @@
         
         .test-chat-item:hover {
             background-color: #343a40;
+        }
+        
+        /* Suporte específico para iOS Safari */
+        @supports (-webkit-touch-callout: none) {
+            body {
+                height: -webkit-fill-available;
+            }
+            
+            .test-info {
+                top: max(10px, env(safe-area-inset-top, 10px));
+                left: max(10px, env(safe-area-inset-left, 10px));
+            }
         }
     </style>
 </head>
@@ -160,7 +179,25 @@
             // Informações da viewport
             const viewportWidth = window.innerWidth;
             const viewportHeight = window.innerHeight;
-            viewportInfo.textContent = `Viewport: ${viewportWidth}x${viewportHeight}px`;
+            const screenHeight = window.screen.height;
+            const visualViewport = window.visualViewport;
+            
+            // Detectar iOS Safari
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+            const isIOSSafari = isIOS && isSafari;
+            
+            // Calcular altura das barras do Safari
+            const safariBarHeight = isIOSSafari ? (screenHeight - viewportHeight) : 0;
+            const addressBarHeight = isIOSSafari ? Math.max(0, safariBarHeight - 44) : 0; // ~60px para barra de endereço
+            const toolbarHeight = isIOSSafari ? 44 : 0; // Barra de ferramentas
+            
+            viewportInfo.innerHTML = `
+                Viewport: ${viewportWidth}x${viewportHeight}px<br>
+                Screen: ${window.screen.width}x${screenHeight}px<br>
+                ${isIOSSafari ? `Safari Bars: ${safariBarHeight}px total` : 'Desktop Browser'}<br>
+                ${isIOSSafari ? `Address Bar: ~${addressBarHeight}px | Toolbar: ${toolbarHeight}px` : ''}
+            `;
             
             // Informações da sidebar
             const sidebar = document.getElementById('sidebarMenu');
@@ -168,7 +205,16 @@
             const userMenu = document.querySelector('.lexi-user-menu-container');
             const userMenuRect = userMenu.getBoundingClientRect();
             
-            sidebarInfo.textContent = `Sidebar: ${Math.round(sidebarRect.height)}px | User Menu: ${Math.round(userMenuRect.top)}px`;
+            // Verificar se o menu está visível considerando as barras do Safari
+            const isUserMenuVisible = userMenuRect.bottom <= viewportHeight;
+            const distanceFromBottom = viewportHeight - userMenuRect.bottom;
+            
+            sidebarInfo.innerHTML = `
+                Sidebar: ${Math.round(sidebarRect.height)}px<br>
+                User Menu: ${Math.round(userMenuRect.top)}px → ${Math.round(userMenuRect.bottom)}px<br>
+                ${isUserMenuVisible ? '✅ Menu Visível' : '❌ Menu Cortado'}<br>
+                ${distanceFromBottom > 0 ? `Distância do fundo: ${Math.round(distanceFromBottom)}px` : 'Menu no fundo da tela'}
+            `;
         }
 
         // Função para toggle da sidebar

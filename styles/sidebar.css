@@ -283,12 +283,17 @@
         /* Body para mobile */
         .lexi-sidebar-body {
             height: 100vh;
-            overflow: hidden;
+            height: 100dvh; /* Dynamic viewport height para iOS Safari */
+            height: -webkit-fill-available; /* Fallback para iOS Safari */
+            min-height: 100vh;
+            min-height: 100dvh;
+            min-height: -webkit-fill-available;
+            overflow-x: hidden;
             position: fixed;
             width: 100%;
         }
         
-        /* Sidebar mobile - CORRIGIDO: altura flexível */
+        /* Sidebar mobile - CORRIGIDO: altura flexível com suporte iOS Safari */
         .lexi-sidebar-menu {
             transform: translateX(-100%);
             transition: transform 0.3s ease;
@@ -298,6 +303,8 @@
             width: 250px;
             z-index: 9999;
             height: 100vh;
+            height: 100dvh; /* Dynamic viewport height para iOS Safari */
+            height: -webkit-fill-available; /* Fallback para iOS Safari */
             display: flex;
             flex-direction: column;
             overflow: hidden; /* IMPORTANTE: não cortar conteúdo */
@@ -354,6 +361,8 @@
             border-top: 1px solid #495057;
             padding-top: 10px;
             margin-top: 10px;
+            /* Garantir que fique acima da barra do Safari */
+            padding-bottom: env(safe-area-inset-bottom, 10px);
         }
         
         /* Lista de chats flexível - CORRIGIDO: flex 1 para ocupar espaço disponível */
@@ -363,9 +372,11 @@
             overflow-y: auto !important;
         }
         
-        /* Sidebar altura total - CORRIGIDO: flexível */
+        /* Sidebar altura total - CORRIGIDO: flexível com suporte iOS Safari */
         .lexi-sidebar-main {
             height: 100vh !important;
+            height: 100dvh !important; /* Dynamic viewport height para iOS Safari */
+            height: -webkit-fill-available !important; /* Fallback para iOS Safari */
             display: flex !important;
             flex-direction: column !important;
         }

@@ -25,6 +25,16 @@
             -webkit-tap-highlight-color: transparent;
         }
         
+        /* Garantir que a sidebar ocupe 100% da altura */
+        .sidebar {
+            height: 100vh !important;
+            height: -webkit-fill-available !important;
+            min-height: 100vh !important;
+            min-height: -webkit-fill-available !important;
+            display: flex !important;
+            flex-direction: column !important;
+        }
+        
         /* Estilos para o toggle da sidebar em telas pequenas */
         @media (max-width: 767px) {
             body {
@@ -42,14 +52,19 @@
                 position: fixed;
                 top: 0;
                 left: 0;
-                bottom: 0;
                 width: 250px;
                 z-index: 9999;
-                /* Garantir que a sidebar respeite os limites do viewport */
+                /* Garantir que a sidebar ocupe 100% da altura */
                 height: 100vh;
                 height: -webkit-fill-available;
+                min-height: 100vh;
+                min-height: -webkit-fill-available;
                 overflow-y: auto;
                 -webkit-overflow-scrolling: touch;
+                /* Forçar altura total */
+                bottom: 0;
+                display: flex;
+                flex-direction: column;
             }
             #sidebarMenu.active {
                 transform: translateX(0%);
@@ -235,6 +250,26 @@
             .user-menu-container {
                 margin-top: auto;
                 padding-bottom: 20px;
+                /* Forçar que fique no final */
+                position: sticky;
+                bottom: 0;
+                background-color: #212529;
+                border-top: 1px solid #495057;
+            }
+            
+            /* Garantir que a lista de chats ocupe o espaço disponível */
+            .chat-list {
+                flex: 1;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            /* Garantir que a sidebar tenha altura total */
+            .sidebar {
+                height: 100vh !important;
+                height: -webkit-fill-available !important;
+                min-height: 100vh !important;
+                min-height: -webkit-fill-available !important;
             }
         }
 
@@ -277,7 +312,7 @@
     </button>
 
     <!-- Sidebar -->
-    <nav id="sidebarMenu" class="sidebar d-flex flex-column p-3 bg-dark">
+    <nav id="sidebarMenu" class="sidebar d-flex flex-column p-3 bg-dark" style="height: 100vh; height: -webkit-fill-available;">
         <!-- Barra de Ícones como Botões -->
         <div class="d-flex justify-content-around mb-3">
             <button id="profile-icon" class="btn btn-link text-white" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Perfil">

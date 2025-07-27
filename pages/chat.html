@@ -4,7 +4,7 @@
 <head>
     <!-- Meta tags essenciais -->
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
     <title>LexiDecis - Inteligência Artificial Corporativa</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -15,8 +15,27 @@
     <link rel="stylesheet" href="../styles/gptManager.css">
     <link rel="stylesheet" href="../styles/loadingScreen.css">
     <style>
+        /* Estilos base para garantir compatibilidade com iOS */
+        html, body {
+            /* Garantir que o viewport seja respeitado no iOS */
+            height: 100%;
+            overflow-x: hidden;
+            /* Prevenir zoom e scroll horizontal no iOS */
+            -webkit-text-size-adjust: 100%;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
         /* Estilos para o toggle da sidebar em telas pequenas */
         @media (max-width: 767px) {
+            body {
+                /* Garantir que o body respeite os limites do viewport no iOS */
+                height: 100vh;
+                height: -webkit-fill-available;
+                overflow: hidden;
+                position: fixed;
+                width: 100%;
+            }
+            
             #sidebarMenu {
                 transform: translateX(-100%);
                 transition: transform 0.3s ease;
@@ -26,6 +45,11 @@
                 bottom: 0;
                 width: 250px;
                 z-index: 9999;
+                /* Garantir que a sidebar respeite os limites do viewport */
+                height: 100vh;
+                height: -webkit-fill-available;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
             }
             #sidebarMenu.active {
                 transform: translateX(0%);
@@ -45,6 +69,22 @@
             }
             #sidebarOverlay.active {
                 display: block;
+            }
+            
+            /* Garantir que o user menu seja sempre visível */
+            .user-menu-container {
+                position: relative;
+                z-index: 10000;
+            }
+            
+            .user-menu-dropdown {
+                position: absolute;
+                bottom: 100%;
+                left: 0;
+                right: 0;
+                max-height: 300px;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
             }
         }
         @media (min-width: 768px) {
@@ -91,6 +131,8 @@
         /* Estilos para o menu do usuário */
         .user-menu-container {
             position: relative;
+            /* Garantir que o container seja sempre visível */
+            z-index: 10000;
         }
 
         .user-menu-trigger {
@@ -155,6 +197,45 @@
 
         .user-menu-item i {
             font-size: 14px;
+        }
+
+        /* Estilos específicos para mobile iOS */
+        @media (max-width: 767px) {
+            /* Garantir que o user menu seja sempre acessível */
+            .user-menu-trigger {
+                position: relative;
+                z-index: 10001;
+                /* Garantir que o trigger seja sempre clicável */
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+                padding: 8px;
+            }
+            
+            .user-menu-dropdown {
+                /* Ajustar posicionamento para mobile */
+                position: absolute;
+                bottom: 100%;
+                left: 0;
+                right: 0;
+                max-height: 250px;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                /* Garantir que o menu apareça acima de tudo */
+                z-index: 10002;
+            }
+            
+            /* Garantir que a sidebar tenha scroll adequado */
+            #sidebarMenu {
+                display: flex;
+                flex-direction: column;
+            }
+            
+            /* Garantir que o user menu fique sempre no final da sidebar */
+            .user-menu-container {
+                margin-top: auto;
+                padding-bottom: 20px;
+            }
         }
 
         /* Estilos para o modal do admin */

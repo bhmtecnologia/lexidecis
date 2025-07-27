@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>Teste Sidebar Mobile - LexiDecis</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <!-- CSS externo -->
+    <link rel="stylesheet" href="styles/sidebar.css">
+    <style>
+        /* Estilos de teste */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            /* Suporte para iOS Safari */
+            height: 100vh;
+            height: 100dvh; /* Dynamic viewport height */
+            height: -webkit-fill-available; /* Fallback para iOS Safari */
+        }
+        
+        .test-info {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 10001;
+            font-size: 12px;
+            /* Considerar safe areas do iOS */
+            top: max(10px, env(safe-area-inset-top, 10px));
+            left: max(10px, env(safe-area-inset-left, 10px));
+        }
+        
+        .test-chat-item {
+            padding: 10px;
+            border-bottom: 1px solid #495057;
+            color: white;
+        }
+        
+        .test-chat-item:hover {
+            background-color: #343a40;
+        }
+        
+        /* Suporte específico para iOS Safari */
+        @supports (-webkit-touch-callout: none) {
+            body {
+                height: -webkit-fill-available;
+            }
+            
+            .test-info {
+                top: max(10px, env(safe-area-inset-top, 10px));
+                left: max(10px, env(safe-area-inset-left, 10px));
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Informações de teste -->
+    <div class="test-info">
+        <strong>Teste Sidebar Mobile</strong><br>
+        <span id="viewport-info">Carregando...</span><br>
+        <span id="sidebar-info">Carregando...</span>
+    </div>
+
+    <!-- Botão para dispositivos móveis -->
+    <button id="toggle-sidebar-btn" class="btn btn-primary lexi-toggle-sidebar-btn">
+        <i class="bi bi-list"></i>
+    </button>
+
+    <!-- Sidebar -->
+    <nav id="sidebarMenu" class="lexi-sidebar lexi-sidebar-menu sidebar d-flex flex-column p-3 bg-dark">
+        <!-- Barra de Ícones como Botões -->
+        <div class="d-flex justify-content-around mb-3">
+            <button id="profile-icon" class="btn btn-link text-white" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Perfil">
+                <i class="bi bi-person-circle" style="font-size: 1.5rem;"></i> 
+            </button>
+            <button id="select-gpt-button" class="btn btn-link text-white" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Escolher GPT">
+                <i class="bi bi-robot" style="font-size: 1.5rem;"></i>
+            </button>
+            <button id="new-chat-button" class="btn btn-link text-white" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Nova conversa">
+                <i class="bi bi-pencil-square" style="font-size: 1.5rem;"></i> 
+            </button>
+        </div>
+
+        <!-- Campo de pesquisa -->
+        <div class="input-group mb-3">
+            <span class="input-group-text lexi-search-icon" id="search-icon"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control lexi-search-input" id="search-input" placeholder="Buscar" aria-label="Pesquisar chats" aria-describedby="search-icon">
+            <button class="btn btn-outline-secondary lexi-clear-search-btn" type="button" id="clear-search-button">&times;</button>
+        </div>
+
+        <!-- Lista de chats - Agora com flex-grow para ocupar espaço disponível -->
+        <ul id="chat-list" class="list-group lexi-chat-list overflow-auto bg-dark flex-grow-1">
+            <!-- Chats de teste para simular conteúdo real -->
+            <li class="test-chat-item">Chat de Teste 1 - Direito Civil</li>
+            <li class="test-chat-item">Chat de Teste 2 - Direito Penal</li>
+            <li class="test-chat-item">Chat de Teste 3 - Direito Trabalhista</li>
+            <li class="test-chat-item">Chat de Teste 4 - Direito Tributário</li>
+            <li class="test-chat-item">Chat de Teste 5 - Direito Administrativo</li>
+            <li class="test-chat-item">Chat de Teste 6 - Direito Constitucional</li>
+            <li class="test-chat-item">Chat de Teste 7 - Direito Empresarial</li>
+            <li class="test-chat-item">Chat de Teste 8 - Direito Previdenciário</li>
+            <li class="test-chat-item">Chat de Teste 9 - Direito Ambiental</li>
+            <li class="test-chat-item">Chat de Teste 10 - Direito Digital</li>
+            <li class="test-chat-item">Chat de Teste 11 - Direito Internacional</li>
+            <li class="test-chat-item">Chat de Teste 12 - Direito de Propriedade</li>
+            <li class="test-chat-item">Chat de Teste 13 - Direito de Família</li>
+            <li class="test-chat-item">Chat de Teste 14 - Direito Imobiliário</li>
+            <li class="test-chat-item">Chat de Teste 15 - Direito de Contratos</li>
+        </ul>
+
+        <!-- User Menu - Agora sempre visível no final -->
+        <div class="lexi-user-menu-container mt-auto">
+            <!-- Avatar do usuário (botão do menu) -->
+            <div class="d-flex align-items-center lexi-user-menu-trigger" id="user-menu-trigger">
+                <div class="lexi-user-avatar me-2" id="user-avatar">T</div>
+                <span class="text-white" id="user-display-name">Teste Usuário</span>
+                <i class="bi bi-chevron-down text-white ms-auto"></i>
+            </div>
+
+            <!-- Menu dropdown -->
+            <div class="lexi-user-menu-dropdown" id="user-menu-dropdown">
+                <div class="lexi-user-menu-item">
+                    <i class="bi bi-envelope me-2"></i>
+                    <span id="user-email">teste@lexidecis.com</span>
+                </div>
+                <div class="lexi-user-menu-item" id="config-button">
+                    <i class="bi bi-gear me-2"></i>
+                    <span>Configurações</span>
+                </div>
+                <div class="lexi-user-menu-item" id="admin-button">
+                    <i class="bi bi-person-gear me-2"></i>
+                    <span>Painel do Admin</span>
+                </div>
+                <div class="lexi-user-menu-item lexi-user-menu-logout" id="logout-button">
+                    <i class="bi bi-box-arrow-right me-2"></i>
+                    <span>Sair</span>
+                </div>
+                <hr class="lexi-user-menu-divider">
+                <div class="lexi-user-menu-item">
+                    <i class="bi bi-circle-fill text-success me-2"></i>
+                    <span>Usuários Ativos: 1</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Overlay para sidebar em dispositivos móveis -->
+    <div id="sidebarOverlay" class="lexi-sidebar-overlay"></div>
+
+    <!-- Conteúdo Principal -->
+    <div class="content">
+        <div id="welcome-message" class="d-flex justify-content-center align-items-center vh-100">
+            <div class="text-center">
+                <h1>Teste Sidebar Mobile</h1>
+                <p class="lead">Clique no botão hambúrguer para abrir a sidebar</p>
+                <p>O menu do usuário deve ficar sempre visível no final da sidebar</p>
+                <div class="mt-4">
+                    <button class="btn btn-primary" onclick="toggleSidebar()">Abrir/Fechar Sidebar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Função para atualizar informações de teste
+        function updateTestInfo() {
+            const viewportInfo = document.getElementById('viewport-info');
+            const sidebarInfo = document.getElementById('sidebar-info');
+            
+            // Informações da viewport
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            const screenHeight = window.screen.height;
+            const visualViewport = window.visualViewport;
+            
+            // Detectar iOS Safari
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+            const isIOSSafari = isIOS && isSafari;
+            
+            // Calcular altura das barras do Safari
+            const safariBarHeight = isIOSSafari ? (screenHeight - viewportHeight) : 0;
+            const addressBarHeight = isIOSSafari ? Math.max(0, safariBarHeight - 44) : 0; // ~60px para barra de endereço
+            const toolbarHeight = isIOSSafari ? 44 : 0; // Barra de ferramentas
+            
+            viewportInfo.innerHTML = `
+                Viewport: ${viewportWidth}x${viewportHeight}px<br>
+                Screen: ${window.screen.width}x${screenHeight}px<br>
+                ${isIOSSafari ? `Safari Bars: ${safariBarHeight}px total` : 'Desktop Browser'}<br>
+                ${isIOSSafari ? `Address Bar: ~${addressBarHeight}px | Toolbar: ${toolbarHeight}px` : ''}
+            `;
+            
+            // Informações da sidebar
+            const sidebar = document.getElementById('sidebarMenu');
+            const sidebarRect = sidebar.getBoundingClientRect();
+            const userMenu = document.querySelector('.lexi-user-menu-container');
+            const userMenuRect = userMenu.getBoundingClientRect();
+            
+            // Verificar se o menu está visível considerando as barras do Safari
+            const isUserMenuVisible = userMenuRect.bottom <= viewportHeight;
+            const distanceFromBottom = viewportHeight - userMenuRect.bottom;
+            
+            sidebarInfo.innerHTML = `
+                Sidebar: ${Math.round(sidebarRect.height)}px<br>
+                User Menu: ${Math.round(userMenuRect.top)}px → ${Math.round(userMenuRect.bottom)}px<br>
+                ${isUserMenuVisible ? '✅ Menu Visível' : '❌ Menu Cortado'}<br>
+                ${distanceFromBottom > 0 ? `Distância do fundo: ${Math.round(distanceFromBottom)}px` : 'Menu no fundo da tela'}
+            `;
+        }
+
+        // Função para toggle da sidebar
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebarMenu');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+            
+            // Atualizar informações após a animação
+            setTimeout(updateTestInfo, 300);
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            // Toggle button
+            const toggleBtn = document.getElementById('toggle-sidebar-btn');
+            const sidebar = document.getElementById('sidebarMenu');
+            const overlay = document.getElementById('sidebarOverlay');
+
+            if (toggleBtn && sidebar && overlay) {
+                toggleBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleSidebar();
+                });
+
+                overlay.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                    updateTestInfo();
+                });
+            }
+
+            // User menu dropdown
+            const userMenuTrigger = document.getElementById('user-menu-trigger');
+            const userMenuDropdown = document.getElementById('user-menu-dropdown');
+            
+            if (userMenuTrigger && userMenuDropdown) {
+                userMenuTrigger.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    userMenuDropdown.classList.toggle('show');
+                });
+                
+                document.addEventListener('click', (e) => {
+                    if (!userMenuTrigger.contains(e.target) && !userMenuDropdown.contains(e.target)) {
+                        userMenuDropdown.classList.remove('show');
+                    }
+                });
+            }
+
+            // Atualizar informações inicialmente
+            updateTestInfo();
+            
+            // Atualizar informações quando a janela for redimensionada
+            window.addEventListener('resize', updateTestInfo);
+            
+            // Atualizar informações periodicamente para debug
+            setInterval(updateTestInfo, 1000);
+        });
+    </script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 

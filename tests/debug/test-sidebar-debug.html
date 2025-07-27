@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>Debug Sidebar - LexiDecis</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <!-- CSS externo -->
+    <link rel="stylesheet" href="styles/chat.css">
+    <link rel="stylesheet" href="styles/sidebar.css">
+    <style>
+        /* Estilos de debug */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            height: 100vh;
+            height: 100dvh;
+            height: -webkit-fill-available;
+        }
+        
+        .debug-info {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 10001;
+            font-size: 12px;
+            max-width: 300px;
+            font-family: monospace;
+        }
+        
+        .debug-item {
+            margin-bottom: 8px;
+            padding: 4px;
+            border-radius: 3px;
+        }
+        
+        .debug-success {
+            background: rgba(0,255,0,0.2);
+            border-left: 3px solid #00ff00;
+        }
+        
+        .debug-error {
+            background: rgba(255,0,0,0.2);
+            border-left: 3px solid #ff0000;
+        }
+        
+        .debug-warning {
+            background: rgba(255,255,0,0.2);
+            border-left: 3px solid #ffff00;
+        }
+        
+        .test-chat-item {
+            padding: 10px;
+            border-bottom: 1px solid #495057;
+            color: white;
+        }
+        
+        .test-chat-item:hover {
+            background-color: #343a40;
+        }
+        
+        /* Suporte específico para iOS Safari */
+        @supports (-webkit-touch-callout: none) {
+            body {
+                height: -webkit-fill-available;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Informações de debug -->
+    <div class="debug-info">
+        <strong>🔍 Debug Sidebar</strong><br>
+        <div id="debug-content">Carregando...</div>
+    </div>
+
+    <!-- Botão para dispositivos móveis -->
+    <button id="toggle-sidebar-btn" class="btn btn-primary lexi-toggle-sidebar-btn">
+        <i class="bi bi-list"></i>
+    </button>
+
+    <!-- Sidebar -->
+    <nav id="sidebarMenu" class="lexi-sidebar lexi-sidebar-menu sidebar d-flex flex-column p-3 bg-dark">
+        <!-- Barra de Ícones como Botões -->
+        <div class="d-flex justify-content-around mb-3">
+            <button id="profile-icon" class="btn btn-link text-white" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Perfil">
+                <i class="bi bi-person-circle" style="font-size: 1.5rem;"></i> 
+            </button>
+            <button id="select-gpt-button" class="btn btn-link text-white" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Escolher GPT">
+                <i class="bi bi-robot" style="font-size: 1.5rem;"></i>
+            </button>
+            <button id="new-chat-button" class="btn btn-link text-white" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Nova conversa">
+                <i class="bi bi-pencil-square" style="font-size: 1.5rem;"></i> 
+            </button>
+        </div>
+
+        <!-- Campo de pesquisa -->
+        <div class="input-group mb-3">
+            <span class="input-group-text lexi-search-icon" id="search-icon"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control lexi-search-input" id="search-input" placeholder="Buscar" aria-label="Pesquisar chats" aria-describedby="search-icon">
+            <button class="btn btn-outline-secondary lexi-clear-search-btn" type="button" id="clear-search-button">&times;</button>
+        </div>
+
+        <!-- Lista de chats - Agora com flex-grow para ocupar espaço disponível -->
+        <ul id="chat-list" class="list-group lexi-chat-list overflow-auto bg-dark flex-grow-1">
+            <!-- Chats de teste para simular conteúdo real -->
+            <li class="test-chat-item">Chat de Teste 1 - Direito Civil</li>
+            <li class="test-chat-item">Chat de Teste 2 - Direito Penal</li>
+            <li class="test-chat-item">Chat de Teste 3 - Direito Trabalhista</li>
+            <li class="test-chat-item">Chat de Teste 4 - Direito Tributário</li>
+            <li class="test-chat-item">Chat de Teste 5 - Direito Administrativo</li>
+            <li class="test-chat-item">Chat de Teste 6 - Direito Constitucional</li>
+            <li class="test-chat-item">Chat de Teste 7 - Direito Empresarial</li>
+            <li class="test-chat-item">Chat de Teste 8 - Direito Previdenciário</li>
+            <li class="test-chat-item">Chat de Teste 9 - Direito Ambiental</li>
+            <li class="test-chat-item">Chat de Teste 10 - Direito Digital</li>
+            <li class="test-chat-item">Chat de Teste 11 - Direito Internacional</li>
+            <li class="test-chat-item">Chat de Teste 12 - Direito de Propriedade</li>
+            <li class="test-chat-item">Chat de Teste 13 - Direito de Família</li>
+            <li class="test-chat-item">Chat de Teste 14 - Direito Imobiliário</li>
+            <li class="test-chat-item">Chat de Teste 15 - Direito de Contratos</li>
+        </ul>
+
+        <!-- User Menu - Agora sempre visível no final -->
+        <div class="lexi-user-menu-container mt-auto">
+            <!-- Avatar do usuário (botão do menu) -->
+            <div class="d-flex align-items-center lexi-user-menu-trigger" id="user-menu-trigger">
+                <div class="lexi-user-avatar me-2" id="user-avatar">T</div>
+                <span class="text-white" id="user-display-name">Debug Usuário</span>
+                <i class="bi bi-chevron-down text-white ms-auto"></i>
+            </div>
+
+            <!-- Menu dropdown -->
+            <div class="lexi-user-menu-dropdown" id="user-menu-dropdown">
+                <div class="lexi-user-menu-item">
+                    <i class="bi bi-envelope me-2"></i>
+                    <span id="user-email">debug@lexidecis.com</span>
+                </div>
+                <div class="lexi-user-menu-item" id="config-button">
+                    <i class="bi bi-gear me-2"></i>
+                    <span>Configurações</span>
+                </div>
+                <div class="lexi-user-menu-item" id="admin-button">
+                    <i class="bi bi-person-gear me-2"></i>
+                    <span>Painel do Admin</span>
+                </div>
+                <div class="lexi-user-menu-item lexi-user-menu-logout" id="logout-button">
+                    <i class="bi bi-box-arrow-right me-2"></i>
+                    <span>Sair</span>
+                </div>
+                <hr class="lexi-user-menu-divider">
+                <div class="lexi-user-menu-item">
+                    <i class="bi bi-circle-fill text-success me-2"></i>
+                    <span>Usuários Ativos: 1</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Overlay para sidebar em dispositivos móveis -->
+    <div id="sidebarOverlay" class="lexi-sidebar-overlay"></div>
+
+    <!-- Conteúdo Principal -->
+    <div class="content">
+        <div id="welcome-message" class="d-flex justify-content-center align-items-center vh-100">
+            <div class="text-center">
+                <h1>Debug Sidebar</h1>
+                <p class="lead">Testando correções da sidebar</p>
+                <p>Verifique o painel de debug no canto superior esquerdo</p>
+                <div class="mt-4">
+                    <button class="btn btn-primary" onclick="toggleSidebar()">Abrir/Fechar Sidebar</button>
+                    <button class="btn btn-secondary" onclick="refreshDebug()">Atualizar Debug</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Função para verificar estilos aplicados
+        function checkAppliedStyles() {
+            const sidebar = document.getElementById('sidebarMenu');
+            const chatList = document.getElementById('chat-list');
+            const userMenu = document.querySelector('.lexi-user-menu-container');
+            
+            const sidebarStyles = window.getComputedStyle(sidebar);
+            const chatListStyles = window.getComputedStyle(chatList);
+            const userMenuStyles = window.getComputedStyle(userMenu);
+            
+            return {
+                sidebar: {
+                    height: sidebarStyles.height,
+                    display: sidebarStyles.display,
+                    flexDirection: sidebarStyles.flexDirection,
+                    overflow: sidebarStyles.overflow,
+                    transform: sidebarStyles.transform
+                },
+                chatList: {
+                    flex: chatListStyles.flex,
+                    minHeight: chatListStyles.minHeight,
+                    overflowY: chatListStyles.overflowY,
+                    maxHeight: chatListStyles.maxHeight
+                },
+                userMenu: {
+                    flexShrink: userMenuStyles.flexShrink,
+                    position: userMenuStyles.position,
+                    zIndex: userMenuStyles.zIndex
+                }
+            };
+        }
+
+        // Função para verificar se o menu está visível
+        function isUserMenuVisible() {
+            const userMenu = document.querySelector('.lexi-user-menu-container');
+            const rect = userMenu.getBoundingClientRect();
+            const viewportHeight = window.innerHeight;
+            return rect.bottom <= viewportHeight && rect.top >= 0;
+        }
+
+        // Função para atualizar informações de debug
+        function updateDebugInfo() {
+            const debugContent = document.getElementById('debug-content');
+            const styles = checkAppliedStyles();
+            const isVisible = isUserMenuVisible();
+            
+            // Detectar iOS Safari
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+            const isIOSSafari = isIOS && isSafari;
+            
+            // Informações da viewport
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            const screenHeight = window.screen.height;
+            const safariBarHeight = isIOSSafari ? (screenHeight - viewportHeight) : 0;
+            
+            let debugHTML = '';
+            
+            // Informações básicas
+            debugHTML += `<div class="debug-item ${isIOSSafari ? 'debug-warning' : 'debug-success'}">
+                <strong>Browser:</strong> ${isIOSSafari ? 'iOS Safari' : 'Desktop/Android'}<br>
+                <strong>Viewport:</strong> ${viewportWidth}x${viewportHeight}px<br>
+                <strong>Screen:</strong> ${window.screen.width}x${screenHeight}px<br>
+                ${isIOSSafari ? `<strong>Safari Bars:</strong> ${safariBarHeight}px` : ''}
+            </div>`;
+            
+            // Status do menu do usuário
+            debugHTML += `<div class="debug-item ${isVisible ? 'debug-success' : 'debug-error'}">
+                <strong>Menu Visível:</strong> ${isVisible ? '✅ SIM' : '❌ NÃO'}
+            </div>`;
+            
+            // Estilos da sidebar
+            debugHTML += `<div class="debug-item debug-warning">
+                <strong>Sidebar:</strong><br>
+                Height: ${styles.sidebar.height}<br>
+                Display: ${styles.sidebar.display}<br>
+                Flex: ${styles.sidebar.flexDirection}<br>
+                Overflow: ${styles.sidebar.overflow}
+            </div>`;
+            
+            // Estilos da lista de chats
+            debugHTML += `<div class="debug-item debug-warning">
+                <strong>Chat List:</strong><br>
+                Flex: ${styles.chatList.flex}<br>
+                MinHeight: ${styles.chatList.minHeight}<br>
+                OverflowY: ${styles.chatList.overflowY}<br>
+                MaxHeight: ${styles.chatList.maxHeight}
+            </div>`;
+            
+            // Estilos do menu do usuário
+            debugHTML += `<div class="debug-item debug-warning">
+                <strong>User Menu:</strong><br>
+                FlexShrink: ${styles.userMenu.flexShrink}<br>
+                Position: ${styles.userMenu.position}<br>
+                ZIndex: ${styles.userMenu.zIndex}
+            </div>`;
+            
+            debugContent.innerHTML = debugHTML;
+        }
+
+        // Função para toggle da sidebar
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebarMenu');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+            
+            // Atualizar debug após a animação
+            setTimeout(updateDebugInfo, 300);
+        }
+
+        // Função para atualizar debug
+        function refreshDebug() {
+            updateDebugInfo();
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            // Toggle button
+            const toggleBtn = document.getElementById('toggle-sidebar-btn');
+            const sidebar = document.getElementById('sidebarMenu');
+            const overlay = document.getElementById('sidebarOverlay');
+
+            if (toggleBtn && sidebar && overlay) {
+                toggleBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleSidebar();
+                });
+
+                overlay.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                    updateDebugInfo();
+                });
+            }
+
+            // User menu dropdown
+            const userMenuTrigger = document.getElementById('user-menu-trigger');
+            const userMenuDropdown = document.getElementById('user-menu-dropdown');
+            
+            if (userMenuTrigger && userMenuDropdown) {
+                userMenuTrigger.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    userMenuDropdown.classList.toggle('show');
+                });
+                
+                document.addEventListener('click', (e) => {
+                    if (!userMenuTrigger.contains(e.target) && !userMenuDropdown.contains(e.target)) {
+                        userMenuDropdown.classList.remove('show');
+                    }
+                });
+            }
+
+            // Atualizar informações inicialmente
+            updateDebugInfo();
+            
+            // Atualizar informações quando a janela for redimensionada
+            window.addEventListener('resize', updateDebugInfo);
+            
+            // Atualizar informações periodicamente para debug
+            setInterval(updateDebugInfo, 2000);
+        });
+    </script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 

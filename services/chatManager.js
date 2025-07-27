@@ -102,32 +102,14 @@ class ChatManager {
             return;
         }
 
-        // Agrupa os chats por data, para exibição organizada
+        // Cria os itens de chat diretamente sem agrupamento por data
         const fragment = document.createDocumentFragment();
-        const groupedChats = {};
+        
+        // Ordena os chats por data: os mais novos primeiro
+        chatsToDisplay.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        // Cria os itens de chat para cada chat
         chatsToDisplay.forEach(chat => {
-            const group = this.getDateGroup(chat.date);
-            if (!groupedChats[group]) {
-                groupedChats[group] = [];
-            }
-            groupedChats[group].push(chat);
-        });
-
-        // Define a ordem das seções de data
-        const groupOrder = ["Hoje", "Ontem", "Anteontem", "Esta semana", "Semana passada", "Mês passado"];
-        groupOrder.forEach(group => {
-            if (groupedChats[group]) {
-                // Ordena os chats do grupo: os mais novos primeiro
-                groupedChats[group].sort((a, b) => new Date(b.date) - new Date(a.date));
-
-                // Cria o cabeçalho do grupo
-                const groupHeader = document.createElement('li');
-                groupHeader.classList.add('list-group-item', 'fw-bold', 'bg-light', 'text-muted');
-                groupHeader.textContent = group;
-                fragment.appendChild(groupHeader);
-
-                // Cria os itens de chat para cada chat no grupo
-                groupedChats[group].forEach(chat => {
                     const chatItem = document.createElement('li');
                     chatItem.classList.add('list-group-item', 'chat-item', 'd-flex', 'justify-content-between', 'align-items-center');
                     chatItem.innerHTML = `
@@ -189,8 +171,6 @@ class ChatManager {
                     chatItem.addEventListener('click', this.handleChatClick.bind(this));
                     fragment.appendChild(chatItem);
                 });
-            }
-        });
 
         chatList.appendChild(fragment);
     }
@@ -431,23 +411,7 @@ class ChatManager {
        5. Funções Auxiliares e Atualização
        =================================== */
 
-    getDateGroup(date) {
-        const today = new Date();
-        const chatDate = new Date(date);
 
-        today.setHours(0, 0, 0, 0);
-        chatDate.setHours(0, 0, 0, 0);
-
-        const diffTime = today - chatDate;
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-        if (diffDays === 0) return "Hoje";
-        if (diffDays === 1) return "Ontem";
-        if (diffDays === 2) return "Anteontem";
-        if (diffDays < 7) return "Esta semana";
-        if (diffDays < 30) return "Semana passada";
-        return "Mês passado";
-    }
 
     /**
      * Atualiza a lista de chats quando há alteração no estado de carregamento do chatbot.

@@ -191,7 +191,7 @@ export class SidebarComponent {
         <i class="bi bi-chat-dots me-2"></i>
         <span>${chat.name || chat.id}</span>
         <button class="btn btn-sm btn-outline-secondary ms-auto chat-options-btn" data-chat-id="${chat.id}">
-          <i class="bi bi-three-dots"></i>
+          <i class="bi bi-gear" aria-hidden="true"></i>
         </button>
       </li>
     `).join('');
@@ -203,6 +203,16 @@ export class SidebarComponent {
           this.onChatSelect(item);
         }
       });
+
+      // Event listener específico para o botão da engrenagem
+      const optionsBtn = item.querySelector('.chat-options-btn');
+      if (optionsBtn) {
+        optionsBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          // Aqui você pode adicionar a lógica para abrir o menu de opções
+          console.log('Botão de opções clicado para o chat:', item.dataset.sessionId);
+        });
+      }
     });
   }
 

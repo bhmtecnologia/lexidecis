@@ -141,7 +141,7 @@ class ChatManager {
                                     data-bs-toggle="dropdown" 
                                     aria-expanded="false" 
                                     title="Opções">
-                                    <i class="bi bi-three-dots-vertical"></i>
+                                    <i class="bi bi-gear"></i>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="chatOptions-${chat.id}">
                                     <li>
@@ -178,6 +178,11 @@ class ChatManager {
                     chatItem.querySelector('.delete-chat-button').addEventListener('click', (event) => {
                         event.stopPropagation();
                         this.handleDeleteChat(chat.id, chat.name);
+                    });
+
+                    // Event listener para o botão da engrenagem (evitar propagação)
+                    chatItem.querySelector('.dropdown-toggle').addEventListener('click', (event) => {
+                        event.stopPropagation();
                     });
 
                     // Clique no item de chat -> handleChatClick

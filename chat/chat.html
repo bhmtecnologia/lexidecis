@@ -863,10 +863,20 @@
       })();
       const actions = document.createElement('div');
       actions.className = 'ms-auto';
-      actions.innerHTML = `<button class="chat-options-btn btn-icon" title="Opções"><i class="bi bi-three-dots"></i></button>`;
+      actions.innerHTML = `<button class="chat-options-btn btn-icon" title="Opções"><i class="bi bi-gear"></i></button>`;
       li.appendChild(actions);
       chatListEl.appendChild(li);
-      const tippyInstance = tippy(li.querySelector('.chat-options-btn'), {
+      
+      // Event listener específico para o botão de opções
+      const optionsBtn = li.querySelector('.chat-options-btn');
+      if (optionsBtn) {
+        optionsBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          // O tippy já está configurado para abrir o menu
+        });
+      }
+      
+      tippy(li.querySelector('.chat-options-btn'), {
         content: `
           <ul class="list-unstyled m-0">
             <li><button class="dropdown-item" data-action="rename">Renomear</button></li>

@@ -329,9 +329,20 @@
           span.textContent = chat.name || chat.id;
           li.appendChild(span);
           const actions = document.createElement('div');
-          actions.innerHTML = `<button class="chat-options-btn btn-icon" title="Opções"><i class="bi bi-three-dots"></i></button>`;
+          actions.innerHTML = `<button class="chat-options-btn btn-icon" title="Opções"><i class="bi bi-gear"></i></button>`;
           li.appendChild(actions);
           chatListEl.appendChild(li);
+          
+          // Event listener específico para o botão de opções
+          const optionsBtn = li.querySelector('.chat-options-btn');
+          if (optionsBtn) {
+            optionsBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              // Aqui você pode adicionar a lógica para abrir o menu de opções
+              console.log('Botão de opções clicado para o chat:', chat.id);
+            });
+          }
+          
           tippy(li.querySelector('.chat-options-btn'), {
             content: `
               <ul class="list-unstyled m-0">

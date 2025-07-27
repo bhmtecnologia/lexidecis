@@ -24,7 +24,7 @@
     </button>
 
     <!-- Sidebar -->
-    <nav id="sidebarMenu" class="lexi-sidebar sidebar d-flex flex-column p-3 bg-dark" style="height: 100vh; height: -webkit-fill-available;">
+    <nav id="sidebarMenu" class="lexi-sidebar lexi-sidebar-menu sidebar d-flex flex-column p-3 bg-dark" style="height: 100vh; height: -webkit-fill-available;">
         <!-- Barra de Ícones como Botões -->
         <div class="d-flex justify-content-around mb-3">
             <button id="profile-icon" class="btn btn-link text-white" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Perfil">
@@ -279,15 +279,38 @@
             const toggleBtn = document.getElementById('toggle-sidebar-btn');
             const overlay = document.getElementById('sidebarOverlay');
 
-            toggleBtn.addEventListener('click', () => {
-                sidebar.classList.toggle('active');
-                overlay.classList.toggle('active');
-            });
+            if (toggleBtn && sidebar && overlay) {
+                toggleBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Toggle button clicked');
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                    console.log('Sidebar active:', sidebar.classList.contains('active'));
+                });
 
-            overlay.addEventListener('click', () => {
-                sidebar.classList.remove('active');
-                overlay.classList.remove('active');
-            });
+                overlay.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Overlay clicked');
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+
+                // Fechar sidebar ao pressionar ESC
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && sidebar.classList.contains('active')) {
+                        sidebar.classList.remove('active');
+                        overlay.classList.remove('active');
+                    }
+                });
+            } else {
+                console.error('Elementos do sidebar não encontrados:', {
+                    sidebar: !!sidebar,
+                    toggleBtn: !!toggleBtn,
+                    overlay: !!overlay
+                });
+            }
 
             // Gerenciar a exibição da mensagem de boas-vindas e do chatbot
             const welcomeMessage = document.getElementById('welcome-message');

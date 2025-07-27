@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Toggle Sidebar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="styles/sidebar.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .content {
+            margin-left: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        @media (min-width: 768px) {
+            .content {
+                margin-left: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Botão para dispositivos móveis -->
+    <button id="toggle-sidebar-btn" class="btn btn-primary lexi-toggle-sidebar-btn">
+        <i class="bi bi-list"></i>
+    </button>
+
+    <!-- Sidebar -->
+    <nav id="sidebarMenu" class="lexi-sidebar lexi-sidebar-menu sidebar d-flex flex-column p-3 bg-dark" style="height: 100vh; height: -webkit-fill-available;">
+        <div class="d-flex justify-content-around mb-3">
+            <button class="btn btn-link text-white">
+                <i class="bi bi-person-circle" style="font-size: 1.5rem;"></i> 
+            </button>
+            <button class="btn btn-link text-white">
+                <i class="bi bi-robot" style="font-size: 1.5rem;"></i>
+            </button>
+            <button class="btn btn-link text-white">
+                <i class="bi bi-pencil-square" style="font-size: 1.5rem;"></i> 
+            </button>
+        </div>
+
+        <div class="input-group mb-3">
+            <span class="input-group-text lexi-search-icon"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control lexi-search-input" placeholder="Buscar">
+        </div>
+
+        <ul class="list-group lexi-chat-list overflow-auto">
+            <li class="list-group-item">Chat 1</li>
+            <li class="list-group-item">Chat 2</li>
+            <li class="list-group-item">Chat 3</li>
+        </ul>
+    </nav>
+
+    <!-- Overlay para sidebar em dispositivos móveis -->
+    <div id="sidebarOverlay" class="lexi-sidebar-overlay"></div>
+
+    <!-- Conteúdo Principal -->
+    <div class="content">
+        <h1>Teste do Toggle Sidebar</h1>
+        <p>Este é um teste para verificar se o botão toggle do sidebar está funcionando corretamente.</p>
+        <p>Em dispositivos móveis, você deve ver um botão azul no canto superior direito.</p>
+        <p>Clique no botão para abrir/fechar a sidebar.</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebarMenu');
+            const toggleBtn = document.getElementById('toggle-sidebar-btn');
+            const overlay = document.getElementById('sidebarOverlay');
+
+            console.log('Elementos encontrados:', {
+                sidebar: !!sidebar,
+                toggleBtn: !!toggleBtn,
+                overlay: !!overlay
+            });
+
+            if (toggleBtn && sidebar && overlay) {
+                toggleBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Toggle button clicked');
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                    console.log('Sidebar active:', sidebar.classList.contains('active'));
+                });
+
+                overlay.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Overlay clicked');
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+
+                // Fechar sidebar ao pressionar ESC
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && sidebar.classList.contains('active')) {
+                        sidebar.classList.remove('active');
+                        overlay.classList.remove('active');
+                    }
+                });
+            } else {
+                console.error('Elementos do sidebar não encontrados');
+            }
+        });
+    </script>
+</body>
+</html> 

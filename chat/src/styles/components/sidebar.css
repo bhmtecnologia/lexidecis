@@ -11,7 +11,10 @@
   border-right: var(--border-width) solid var(--shape-border);
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 100vh;
+  height: -webkit-fill-available;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
   position: relative;
   transition: margin-left var(--transition-base), 
               transform var(--transition-base), 
@@ -187,6 +190,9 @@
   top: 0;
   left: 0;
   height: 100vh;
+  height: -webkit-fill-available;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
   width: 50px;
   background: var(--body-color);
   border-right: var(--border-width) solid var(--shape-border);
@@ -255,7 +261,10 @@
     z-index: var(--z-fixed);
     width: 100%;
     max-width: 320px;
-    height: 100%;
+    height: 100vh;
+    height: -webkit-fill-available;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
     transform: translateX(-100%);
     transition: transform var(--transition-base);
   }
@@ -276,6 +285,9 @@
     left: 0;
     width: 100vw;
     height: 100vh;
+    height: -webkit-fill-available;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
     background: rgba(0, 0, 0, 0.5);
     z-index: -1;
   }
@@ -334,5 +346,23 @@
   #chat-sidebar li.selected {
     background: #000000;
     color: #ffffff;
+  }
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+  #chat-sidebar {
+    height: -webkit-fill-available;
+    min-height: -webkit-fill-available;
+  }
+  
+  #sidebar-mini {
+    height: -webkit-fill-available;
+    min-height: -webkit-fill-available;
+  }
+  
+  #chat-sidebar:not(.hidden)::before {
+    height: -webkit-fill-available;
+    min-height: -webkit-fill-available;
   }
 } 

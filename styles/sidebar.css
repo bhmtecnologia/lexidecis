@@ -10,7 +10,10 @@
 
     /* Garantir compatibilidade com iOS */
     .lexi-sidebar-html, .lexi-sidebar-body {
-        height: 100%;
+        height: 100vh;
+        height: -webkit-fill-available;
+        min-height: 100vh;
+        min-height: -webkit-fill-available;
         overflow-x: hidden;
         -webkit-text-size-adjust: 100%;
         -webkit-tap-highlight-color: transparent;
@@ -939,5 +942,33 @@ li.list-group-item.bg-light {
     
     .lexi-sidebar-overlay.active {
         display: block !important;
+    }
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+    .lexi-sidebar-html, .lexi-sidebar-body {
+        height: -webkit-fill-available;
+        min-height: -webkit-fill-available;
+    }
+    
+    .lexi-sidebar-main {
+        height: -webkit-fill-available !important;
+        min-height: -webkit-fill-available !important;
+    }
+    
+    #sidebarMenu {
+        height: -webkit-fill-available;
+        min-height: -webkit-fill-available;
+    }
+    
+    .lexi-sidebar-overlay {
+        height: -webkit-fill-available;
+        min-height: -webkit-fill-available;
+    }
+    
+    #sidebarMenu.lexi-sidebar-menu {
+        height: -webkit-fill-available !important;
+        min-height: -webkit-fill-available !important;
     }
 }

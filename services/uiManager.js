@@ -322,8 +322,16 @@ class UIManager {
             // Agora, em vez de usar HistoryManager, delegamos a injeção do histórico ao ChatManager
             await this.chatManager.injectChatHistory(this.stateManager.currentSessionId, this.stateManager.selectedGPT.flowiseConfig);
 
+            // Manipular visibilidade dos elementos
+            const welcomeMessage = document.getElementById('welcome-message');
             const chatbotContainer = document.getElementById('chatbot-container');
+            
+            if (welcomeMessage) {
+                welcomeMessage.classList.add('d-none');
+            }
+            
             if (chatbotContainer) {
+                chatbotContainer.classList.remove('d-none');
                 chatbotContainer.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
             } else {
                 console.error('Elemento chatbot-container não encontrado.');

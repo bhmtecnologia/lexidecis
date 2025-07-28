@@ -5,6 +5,7 @@ import GPTManager from './gptManager.js';
 // Removemos a importação do HistoryManager, pois suas funções foram migradas para o ChatManager
 import ProfileManager from './profileManager.js';
 import { logout } from './auth.js';
+import { getJwt } from './auth.js';
 
 class UIManager {
     constructor(apiService, stateManager, chatManager, config, auth) {
@@ -34,7 +35,13 @@ class UIManager {
         this.setupAuthListener();
         
         // Atualizar informações do usuário imediatamente se já estiver logado
-        this.updateUserInfo();
+        this.updateUserInfo().catch(error => {
+            if (DEBUG_MODE) {
+                console.error('[UIManager] Erro ao atualizar informações do usuário:', error);
+            } else {
+                console.warn('[UIManager] Erro ao atualizar informações do usuário');
+            }
+        });
     }
 
     /* Método auxiliar para logs */
@@ -528,13 +535,15 @@ class UIManager {
     }
 
     /* --- Método para atualizar informações do usuário --- */
-    updateUserInfo() {
+    async updateUserInfo() {
+        this.debugLog('[UIManager] updateUserInfo() chamada');
         const user = this.auth.currentUser;
         
         if (user) {
             const userAvatar = document.getElementById('user-avatar');
             const userDisplayName = document.getElementById('user-display-name');
             const userEmail = document.getElementById('user-email');
+            const adminButton = document.getElementById('admin-button');
             
             // Obter a primeira letra do displayName ou email
             let displayName = user.displayName || user.email || 'U';
@@ -561,25 +570,170 @@ class UIManager {
             if (userEmail) {
                 userEmail.textContent = user.email;
             }
+
+            // Verificar permissões de admin e mostrar/ocultar botão
+            if (adminButton) {
+                this.debugLog('[UIManager] Botão admin encontrado, estado inicial:', adminButton.style.display);
+                this.debugLog('[UIManager] Computed style do botão admin:', window.getComputedStyle(adminButton).display);
+                try {
+                    this.debugLog('[UIManager] Verificando permissões de admin...');
+                    
+                    // Obter o perfil do usuário da API
+                    const profileResponse = await this.getUserProfile();
+                    this.debugLog('[UIManager] Perfil obtido:', profileResponse);
+                    
+                    // A API retorna um array, então pegamos o primeiro elemento
+                    const profile = Array.isArray(profileResponse) ? profileResponse[0] : profileResponse;
+                    this.debugLog('[UIManager] Perfil processado:', profile);
+                    this.debugLog('[UIManager] Tipo do profile:', typeof profile);
+                    this.debugLog('[UIManager] Profile é array?', Array.isArray(profile));
+                    this.debugLog('[UIManager] Chaves do profile:', profile ? Object.keys(profile) : 'null');
+                    
+                    // Verificar se o usuário tem permissão de admin
+                    const hasAdminPermission = profile && profile.routes && profile.routes.includes('#admin');
+                    this.debugLog('[UIManager] Routes:', profile?.routes);
+                    this.debugLog('[UIManager] Has admin permission:', hasAdminPermission);
+                    
+                    // Teste: verificar se conseguimos manipular outros elementos
+                    const profileButton = document.getElementById('profile-button');
+                    const configButton = document.getElementById('config-button');
+                    if (profileButton) {
+                        this.debugLog('[UIManager] Teste: profile-button encontrado, estado:', profileButton.style.display);
+                    }
+                    if (configButton) {
+                        this.debugLog('[UIManager] Teste: config-button encontrado, estado:', configButton.style.display);
+                        // Teste: tentar ocultar e mostrar o botão de config para ver se funciona
+                        configButton.style.setProperty('display', 'none', 'important');
+                        setTimeout(() => {
+                            configButton.style.setProperty('display', 'flex', 'important');
+                            this.debugLog('[UIManager] Teste: config-button manipulado com sucesso');
+                        }, 500);
+                    }
+                    
+                    // Mostrar ou ocultar o botão de admin
+                    if (hasAdminPermission) {
+                        adminButton.style.setProperty('display', 'flex', 'important');
+                        this.debugLog('[UIManager] Usuário tem permissão de admin - botão visível');
+                        this.debugLog('[UIManager] Estado final do botão:', adminButton.style.display);
+                        this.debugLog('[UIManager] Computed style após mudança:', window.getComputedStyle(adminButton).display);
+                        
+                        // Verificar se o botão ainda está visível após 1 segundo
+                        setTimeout(() => {
+                            this.debugLog('[UIManager] Estado do botão após 1s:', adminButton.style.display);
+                            this.debugLog('[UIManager] Computed style após 1s:', window.getComputedStyle(adminButton).display);
+                            if (adminButton.style.display === 'none' || window.getComputedStyle(adminButton).display === 'none') {
+                                this.debugLog('[UIManager] Botão foi ocultado por outro código!');
+                                // Tentar mostrar novamente
+                                adminButton.style.setProperty('display', 'flex', 'important');
+                            }
+                        }, 1000);
+                    } else {
+                        adminButton.style.setProperty('display', 'none', 'important');
+                        this.debugLog('[UIManager] Usuário não tem permissão de admin - botão oculto');
+                    }
+                } catch (error) {
+                    // Em produção, não expor detalhes do erro para evitar brechas de segurança
+                    if (DEBUG_MODE) {
+                        console.error('[UIManager] Erro ao verificar permissões de admin:', error);
+                    } else {
+                        console.warn('[UIManager] Verificação de permissões não disponível');
+                    }
+                    // Em caso de erro, ocultar o botão por segurança
+                    adminButton.style.setProperty('display', 'none', 'important');
+                }
+            } else {
+                this.debugLog('[UIManager] Botão admin-button não encontrado no DOM');
+            }
         } else {
             // Usuário não autenticado - mostrar valores padrão
             const userAvatar = document.getElementById('user-avatar');
             const userDisplayName = document.getElementById('user-display-name');
             const userEmail = document.getElementById('user-email');
+            const adminButton = document.getElementById('admin-button');
             
             if (userAvatar) userAvatar.textContent = 'U';
             if (userDisplayName) userDisplayName.textContent = 'Usuário';
             if (userEmail) userEmail.textContent = 'usuario@exemplo.com';
+            
+            // Ocultar botão de admin quando não há usuário autenticado
+            if (adminButton) {
+                adminButton.style.setProperty('display', 'none', 'important');
+            }
         }
+    }
+
+    /* --- Método para obter perfil do usuário da API --- */
+    async getUserProfile() {
+        const user = this.auth.currentUser;
+        if (!user) throw new Error("Usuário não autenticado");
+        
+        const token = await user.getIdToken();
+        
+        this.debugLog('[UIManager] Fazendo requisição para obter perfil do usuário...');
+        
+        // Primeiro, vamos tentar obter a lista de usuários para encontrar o usuário atual
+        const usersResponse = await fetch('https://webhook.power.tec.br/webhook/v1/users', {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            }
+        });
+
+        if (!usersResponse.ok) {
+            const errorText = await usersResponse.text();
+            throw new Error("Erro ao obter lista de usuários: " + errorText);
+        }
+
+        const usersData = await usersResponse.json();
+        this.debugLog('[UIManager] Lista de usuários obtida:', usersData);
+        
+        // Encontrar o usuário atual na lista
+        const currentUser = usersData.find(u => u.email === user.email);
+        this.debugLog('[UIManager] Usuário atual encontrado:', currentUser);
+        
+        if (currentUser) {
+            // Se encontrou o usuário, retornar com as propriedades necessárias
+            return {
+                id: currentUser.id,
+                username: currentUser.username,
+                email: currentUser.email,
+                is_admin: currentUser.is_admin,
+                routes: currentUser.is_admin ? ['#admin'] : [] // Se é admin, adicionar rota admin
+            };
+        }
+        
+        // Se não encontrou, tentar o endpoint original
+        this.debugLog('[UIManager] Usuário não encontrado na lista, tentando endpoint original...');
+        
+        const response = await fetch('https://webhook.power.tec.br/webhook/lexidecis/v1/profile', {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error("Erro ao obter perfil do usuário: " + errorText);
+        }
+
+        const data = await response.json();
+        this.debugLog('[UIManager] Resposta bruta da API original:', data);
+        this.debugLog('[UIManager] Tipo da resposta:', typeof data);
+        this.debugLog('[UIManager] É array?', Array.isArray(data));
+        
+        return data;
     }
 
     /* --- Configurar listener para mudanças de autenticação --- */
     setupAuthListener() {
-        this.auth.onAuthStateChanged((user) => {
+        this.auth.onAuthStateChanged(async (user) => {
             if (user) {
-                this.updateUserInfo();
+                await this.updateUserInfo();
             } else {
-                this.updateUserInfo(); // Atualiza para mostrar "U" quando o usuário faz logout
+                await this.updateUserInfo(); // Atualiza para mostrar "U" quando o usuário faz logout
             }
         });
     }

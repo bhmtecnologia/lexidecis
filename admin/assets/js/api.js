@@ -87,7 +87,7 @@ export async function getCompanies(AuthService) {
   return companies;
 }
 
-import logService from '../../services/logService.js';
+import logService from '../../../services/logService.js';
 
 /**
  * Busca a lista de usuários a partir da API.

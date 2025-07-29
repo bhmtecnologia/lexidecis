@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste do Serviço de Log - LexiDecis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .log-output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .config-info {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .environment-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .env-dev {
+            background: #d4edda;
+            color: #155724;
+        }
+        .env-prod {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste do Serviço de Log - LexiDecis</h1>
+        
+        <div class="config-info">
+            <h4>📋 Configuração Atual</h4>
+            <div id="config-display"></div>
+        </div>
+
+        <div class="section">
+            <h3>🔧 Controles de Debug</h3>
+            <button class="btn" onclick="forceDebug(true)">Forçar Debug ON</button>
+            <button class="btn" onclick="forceDebug(false)">Forçar Debug OFF</button>
+            <button class="btn" onclick="refreshConfig()">Atualizar Config</button>
+        </div>
+
+        <div class="section">
+            <h3>📝 Testes de Log Básicos</h3>
+            <button class="btn" onclick="testBasicLogs()">Testar Logs Básicos</button>
+            <button class="btn" onclick="testApiLogs()">Testar Logs de API</button>
+            <button class="btn" onclick="testAuthLogs()">Testar Logs de Auth</button>
+            <button class="btn" onclick="testUiLogs()">Testar Logs de UI</button>
+        </div>
+
+        <div class="section">
+            <h3>🚀 Testes de Log Estruturado</h3>
+            <button class="btn" onclick="testStructuredLogs()">Testar Logs Estruturados</button>
+            <button class="btn" onclick="testApiResponse()">Simular Resposta de API</button>
+            <button class="btn" onclick="testApiError()">Simular Erro de API</button>
+        </div>
+
+        <div class="section">
+            <h3>🧹 Limpar Console</h3>
+            <button class="btn btn-danger" onclick="clearConsole()">Limpar Console</button>
+        </div>
+
+        <div class="section">
+            <h3>📊 Saída do Console</h3>
+            <div class="log-output" id="console-output">
+                <em>Os logs aparecerão aqui e no console do navegador...</em>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import logService from '../services/logService.js';
+
+        // Expor logService globalmente para os testes
+        window.logService = logService;
+
+        // Função para capturar logs do console
+        function captureConsole() {
+            const originalLog = console.log;
+            const originalWarn = console.warn;
+            const originalError = console.error;
+            const output = document.getElementById('console-output');
+
+            function addToOutput(type, ...args) {
+                const timestamp = new Date().toLocaleTimeString();
+                const message = args.map(arg => 
+                    typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+                ).join(' ');
+                
+                const logEntry = document.createElement('div');
+                logEntry.innerHTML = `<strong>[${timestamp}] ${type}:</strong> ${message}`;
+                logEntry.style.marginBottom = '5px';
+                logEntry.style.padding = '2px 0';
+                
+                if (type === 'ERROR') {
+                    logEntry.style.color = '#dc3545';
+                } else if (type === 'WARN') {
+                    logEntry.style.color = '#ffc107';
+                }
+                
+                output.appendChild(logEntry);
+                output.scrollTop = output.scrollHeight;
+            }
+
+            console.log = function(...args) {
+                originalLog.apply(console, args);
+                addToOutput('LOG', ...args);
+            };
+
+            console.warn = function(...args) {
+                originalWarn.apply(console, args);
+                addToOutput('WARN', ...args);
+            };
+
+            console.error = function(...args) {
+                originalError.apply(console, args);
+                addToOutput('ERROR', ...args);
+            };
+        }
+
+        // Função para exibir configuração atual
+        function displayConfig() {
+            const config = logService.getConfig();
+            const configDisplay = document.getElementById('config-display');
+            
+            const environment = config.isDevelopment ? 'development' : 'production';
+            const envClass = config.isDevelopment ? 'env-dev' : 'env-prod';
+            
+            configDisplay.innerHTML = `
+                <div>
+                    <strong>Ambiente:</strong> 
+                    <span class="environment-badge ${envClass}">${environment}</span>
+                </div>
+                <div><strong>Hostname:</strong> ${window.location.hostname}</div>
+                <div><strong>DEBUG_MODE:</strong> ${config.DEBUG_MODE ? '✅ ON' : '❌ OFF'}</div>
+                <div><strong>INFO_MODE:</strong> ${config.INFO_MODE ? '✅ ON' : '❌ OFF'}</div>
+                <div><strong>WARN_MODE:</strong> ${config.WARN_MODE ? '✅ ON' : '❌ OFF'}</div>
+                <div><strong>ERROR_MODE:</strong> ${config.ERROR_MODE ? '✅ ON' : '❌ OFF'}</div>
+                <div><strong>API_LOGS:</strong> ${config.API_LOGS ? '✅ ON' : '❌ OFF'}</div>
+                <div><strong>AUTH_LOGS:</strong> ${config.AUTH_LOGS ? '✅ ON' : '❌ OFF'}</div>
+                <div><strong>UI_LOGS:</strong> ${config.UI_LOGS ? '✅ ON' : '❌ OFF'}</div>
+            `;
+        }
+
+        // Funções de teste
+        window.forceDebug = function(enabled) {
+            logService.forceDebug(enabled);
+            displayConfig();
+            logService.info('Test', `Debug forçado: ${enabled ? 'HABILITADO' : 'DESABILITADO'}`);
+        };
+
+        window.refreshConfig = function() {
+            displayConfig();
+        };
+
+        window.testBasicLogs = function() {
+            logService.debug('Test', 'Mensagem de debug');
+            logService.info('Test', 'Mensagem informativa');
+            logService.warn('Test', 'Mensagem de aviso');
+            logService.error('Test', 'Mensagem de erro');
+            logService.success('Test', 'Mensagem de sucesso');
+        };
+
+        window.testApiLogs = function() {
+            logService.api('fetchUsers', 'Iniciando busca de usuários');
+            logService.api('fetchUsers', 'Token obtido:', 'Presente');
+            logService.api('fetchUsers', 'URL:', 'https://api.exemplo.com/users');
+        };
+
+        window.testAuthLogs = function() {
+            logService.auth('login', 'Usuário autenticado:', 'usuario@exemplo.com');
+            logService.auth('logout', 'Usuário deslogado');
+            logService.auth('token', 'Token expirado');
+        };
+
+        window.testUiLogs = function() {
+            logService.ui('sidebar', 'Sidebar aberto');
+            logService.ui('modal', 'Modal fechado');
+            logService.ui('button', 'Botão clicado');
+        };
+
+        window.testStructuredLogs = function() {
+            logService.start('fetchUsers', 'Iniciando busca de usuários');
+            logService.data('fetchUsers', { id: 1, name: 'João' }, 'User data');
+            logService.end('fetchUsers', 'Busca finalizada');
+        };
+
+        window.testApiResponse = function() {
+            const mockResponse = {
+                status: 200,
+                ok: true,
+                headers: new Map([['content-type', 'application/json']])
+            };
+            const mockData = { users: [{ id: 1, name: 'João' }] };
+            
+            logService.response('fetchUsers', mockResponse, mockData);
+        };
+
+        window.testApiError = function() {
+            const mockResponse = {
+                status: 500,
+                ok: false,
+                statusText: 'Internal Server Error'
+            };
+            const error = new Error('Erro na API');
+            
+            logService.apiError('fetchUsers', error, mockResponse);
+        };
+
+        window.clearConsole = function() {
+            document.getElementById('console-output').innerHTML = '<em>Console limpo...</em>';
+        };
+
+        // Inicializar
+        captureConsole();
+        displayConfig();
+        
+        // Log inicial
+        logService.info('Test', 'Página de teste do LogService carregada');
+    </script>
+</body>
+</html> 

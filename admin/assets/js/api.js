@@ -87,6 +87,8 @@ export async function getCompanies(AuthService) {
   return companies;
 }
 
+import logService from '../../services/logService.js';
+
 /**
  * Busca a lista de usuários a partir da API.
  *
@@ -98,15 +100,15 @@ export async function fetchUsers(AuthService) {
   const user = AuthService.user;
   if (!user) throw new Error("Usuário não autenticado");
   
-  console.log('[fetchUsers] 🔍 Iniciando busca de usuários...');
-  console.log('[fetchUsers] 👤 Usuário autenticado:', user.email);
+  logService.start('fetchUsers', 'Iniciando busca de usuários');
+  logService.api('fetchUsers', '👤 Usuário autenticado:', user.email);
   
   const token = await user.getIdToken();
-  console.log('[fetchUsers] 🔑 Token obtido:', token ? 'Presente' : 'Ausente');
-  console.log('[fetchUsers] 📏 Tamanho do token:', token?.length);
+  logService.api('fetchUsers', '🔑 Token obtido:', token ? 'Presente' : 'Ausente');
+  logService.api('fetchUsers', '📏 Tamanho do token:', token?.length);
   
   const url = 'https://webhook.power.tec.br/webhook/v1/users';
-  console.log('[fetchUsers] 🔗 URL:', url);
+  logService.api('fetchUsers', '🔗 URL:', url);
   
   const response = await fetch(url, {
     method: "GET",
@@ -116,30 +118,26 @@ export async function fetchUsers(AuthService) {
     }
   });
   
-  console.log('[fetchUsers] 📡 Response status:', response.status);
-  console.log('[fetchUsers] ✅ Response ok:', response.ok);
-  console.log('[fetchUsers] 📋 Response headers:', [...response.headers.entries()]);
+  logService.response('fetchUsers', response);
   
   const dataText = await response.text();
-  console.log('[fetchUsers] 📝 Raw response:', dataText);
-  console.log('[fetchUsers] 📏 Response length:', dataText.length);
+  logService.data('fetchUsers', dataText, 'Raw response');
+  logService.api('fetchUsers', '📏 Response length:', dataText.length);
   
   let data;
   try {
     data = JSON.parse(dataText);
-    console.log('[fetchUsers] ✅ JSON parsed successfully');
-    console.log('[fetchUsers] 📊 Data type:', typeof data);
-    console.log('[fetchUsers] 📊 Data:', data);
+    logService.success('fetchUsers', 'JSON parsed successfully');
+    logService.data('fetchUsers', data, 'Parsed data');
   } catch (e) {
-    console.error('[fetchUsers] ❌ Erro ao converter resposta para JSON:', e);
-    console.error('[fetchUsers] 📝 Resposta recebida:', dataText);
-    console.error('[fetchUsers] 📊 Response status:', response.status);
-    console.error('[fetchUsers] 📊 Response statusText:', response.statusText);
+    logService.apiError('fetchUsers', e, response);
+    logService.error('fetchUsers', '📝 Resposta recebida:', dataText);
     throw new Error("Resposta da API inválida");
   }
   
   if (!Array.isArray(data)) data = [data];
-  console.log('[fetchUsers] 🎯 Final data:', data);
+  logService.data('fetchUsers', data, 'Final data');
+  logService.end('fetchUsers', 'Busca de usuários finalizada');
   return data;
 }
 

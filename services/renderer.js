@@ -25,12 +25,12 @@ const ENDPOINT_URL = 'https://webhook.power.tec.br/webhook/lexidecis/endpoints';
 const ENDPOINT_TIMEOUT_MS = 3000;
 const ENDPOINT_MAX_RETRIES = 3;
 
-// Checa se está em localhost/127.0.0.1 para modo debug
-const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
-const DEBUG_MODE = isLocalhost;
+// Importar serviço de log centralizado
+import logService from './logService.js';
 
+// Função de compatibilidade com o padrão existente
 function debugLog(...args) {
-    if (DEBUG_MODE) console.log(...args);
+    logService.debug('Renderer', ...args);
 }
 
 // Carregamos do sessionStorage (pode ser que não estejam definidos ainda se o usuário não logou)
@@ -55,15 +55,15 @@ let CONFIG = {
 let abortLoading = false;
 
 document.addEventListener('DOMContentLoaded', async () => {
-    debugLog("[Renderer] DOMContentLoaded disparado. Iniciando aplicação...");
+    logService.start('Renderer', 'DOMContentLoaded disparado. Iniciando aplicação');
 
     // 1) Cria o loading screen
     const loadingScreen = new LoadingScreen();
-    debugLog("[Renderer] LoadingScreen criado.");
+    logService.info('Renderer', 'LoadingScreen criado');
 
     // 2) Instancia StatusCheck para verificar o status do sistema
     const statusCheck = new StatusCheck();
-    debugLog("[Renderer] StatusCheck instanciado.");
+    logService.info('Renderer', 'StatusCheck instanciado');
 
     // 3) Definimos as etapas (exibidas no loading) com a lista de chats sendo a última etapa
     const etapasDeCarregamento = [
@@ -78,18 +78,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 4) Exibir a tela de loading
     loadingScreen.show(etapasDeCarregamento);
-    debugLog("[Renderer] LoadingScreen exibido com etapas:", etapasDeCarregamento);
+    logService.info('Renderer', 'LoadingScreen exibido com etapas:', etapasDeCarregamento);
 
     // Inicia a verificação do status de forma assíncrona
     statusCheck.checkStatus().then(userAgreed => {
         if (!userAgreed) {
-            debugLog("[Renderer] checkStatus() retornou falso. Abortando carregamento...");
+            logService.warn('Renderer', 'checkStatus() retornou falso. Abortando carregamento');
             abortLoading = true;
             showToast('Status do sistema não ideal. Saindo...', 'warning');
             loadingScreen.hide();
             window.location.href = '../index.html';
         } else {
-            debugLog("[Renderer] Status do sistema OK.");
+            logService.success('Renderer', 'Status do sistema OK');
         }
     });
 

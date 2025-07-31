@@ -443,6 +443,7 @@ class UIManager {
                         .text-sm.text-gray-700 {
                             color: #ffffff !important;
                             font-weight: 500 !important;
+                            font-size: 11px !important;
                         }
                     `,
                     chatWindow: {

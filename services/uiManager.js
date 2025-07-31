@@ -6,6 +6,7 @@ import GPTManager from './gptManager.js';
 import ProfileManager from './profileManager.js';
 import { logout } from './auth.js';
 import { getJwt } from './auth.js';
+import { createMessageLoading, replaceWithMessageLoading, withMessageLoading, setMessageLoadingEnabled, isMessageLoadingEnabled, toggleMessageLoading } from './messageLoading.js';
 
 class UIManager {
     constructor(apiService, stateManager, chatManager, config, auth) {
@@ -360,8 +361,8 @@ class UIManager {
                 observersConfig: {
                     observeUserInput: (userInput) => this.logUserInput(userInput),
                     observeMessages: (messages) => this.logMessages(messages),
-                    // Delegamos a função de loading para o ChatManager
-                    observeLoading: (loading) => this.chatManager.handleLoadingState(loading)
+                    // Removido observeLoading para evitar loading a cada mensagem
+                    // O loading de chat deve aparecer apenas ao clicar em um chat
                 },
                 theme: {
                     button: {
@@ -543,6 +544,67 @@ class UIManager {
 
     logMessages(messages) {
         this.debugLog({ messages });
+    }
+
+    /**
+     * Envia mensagem com loading simples (padrão ChatGPT)
+     * @param {string} message - Mensagem a ser enviada
+     * @param {HTMLElement} targetElement - Elemento onde inserir o loading
+     */
+    async sendMessageWithSimpleLoading(message, targetElement) {
+        if (!targetElement) return;
+        
+        // Substituir elemento por loading
+        const loading = replaceWithMessageLoading(targetElement, {
+            text: 'Enviando...',
+            size: 'medium',
+            showText: true
+        });
+        
+        try {
+            // Simular envio de mensagem
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            this.debugLog('Mensagem enviada com sucesso:', message);
+            return true;
+        } catch (error) {
+            this.debugLog('Erro ao enviar mensagem:', error);
+            throw error;
+        } finally {
+            // Restaurar elemento original
+            loading.restore();
+        }
+    }
+
+    /**
+     * Função utilitária para enviar mensagem com loading automático
+     * @param {HTMLElement} button - Botão de envio
+     * @param {Function} sendAction - Função que envia a mensagem
+     * @param {Object} options - Opções do loading
+     */
+    async sendMessageWithAutoLoading(button, sendAction, options = {}) {
+        const defaultOptions = {
+            text: 'Enviando...',
+            size: 'medium',
+            showText: true,
+            ...options
+        };
+        
+        await withMessageLoading(button, sendAction, defaultOptions);
+    }
+
+    /**
+     * Função para lidar com loading de mensagem (não de chat)
+     * @param {boolean} loading - Se está carregando
+     * @param {HTMLElement} targetElement - Elemento onde mostrar loading
+     */
+    handleMessageLoading(loading, targetElement = null) {
+        if (!loading) return;
+        
+        // Usar loading simples de mensagem, não loading de chat
+        if (targetElement) {
+            this.sendMessageWithSimpleLoading('Enviando mensagem...', targetElement);
+        }
     }
 
     hideHeader() {

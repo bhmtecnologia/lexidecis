@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste - Correção do Loading</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Teste - Correção do Sistema de Loading</h1>
+        <p>Este teste verifica se o problema das etapas "undefined" foi resolvido.</p>
+        
+        <button class="test-button" onclick="testLoadingWithSteps()">
+            Testar Loading com Etapas
+        </button>
+        
+        <button class="test-button" onclick="testLoadingWithoutSteps()">
+            Testar Loading sem Etapas
+        </button>
+        
+        <button class="test-button" onclick="testChatLoading()">
+            Testar Loading de Chat
+        </button>
+        
+        <button class="test-button" onclick="testFileProcessing()">
+            Testar Processamento de Arquivo
+        </button>
+        
+        <button class="test-button" onclick="testInlineLoading()">
+            Testar Loading Inline
+        </button>
+        
+        <button class="test-button" onclick="testHistoryLoading()">
+            Testar Loading de Histórico
+        </button>
+        
+        <button class="test-button" onclick="testFileProcessingWithManager()">
+            Testar Processamento de Arquivo (Manager)
+        </button>
+        
+        <button class="test-button" onclick="testChatClickLoading()">
+            Testar Loading de Clique em Chat
+        </button>
+        
+        <button class="test-button" onclick="testUpdateProgress()">
+            Testar updateProgress
+        </button>
+        
+        <button class="test-button" onclick="testNewMessageLoading()">
+            Testar Novo Loading de Mensagem
+        </button>
+        
+        <button class="test-button" onclick="toggleMessageLoading()">
+            Alternar Loading de Mensagem
+        </button>
+        
+        <button class="test-button" onclick="clearLog()">
+            Limpar Log
+        </button>
+        
+        <div class="log" id="log"></div>
+    </div>
+
+    <script type="module">
+        import { getLoadingManager, LoadingUtils } from '../services/unifiedLoadingManager.js';
+
+        // Função para adicionar log
+        function addLog(message) {
+            const log = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            log.innerHTML += `[${timestamp}] ${message}\n`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        // Teste com etapas
+        window.testLoadingWithSteps = function() {
+            addLog('Iniciando teste com etapas...');
+            
+            const steps = [
+                'Verificar Status do Sistema',
+                'Autenticação',
+                'Carregar Endpoints',
+                'Pré-carregar GPTs',
+                'Selecionar GPT Padrão',
+                'Inicializar Chatbot',
+                'Carregar Lista de Chats'
+            ];
+            
+            addLog(`Etapas definidas: ${steps.join(', ')}`);
+            
+            const loadingId = LoadingUtils.show('APP_INITIALIZATION', {
+                message: 'Testando sistema de loading...',
+                steps: steps
+            });
+            
+            addLog(`Loading iniciado com ID: ${loadingId}`);
+            
+            // Simular progresso das etapas
+            let stepIndex = 0;
+            const interval = setInterval(() => {
+                if (stepIndex < steps.length) {
+                    const stepName = steps[stepIndex];
+                    LoadingUtils.step(loadingId, stepName, 'completed');
+                    addLog(`Etapa marcada como completed: ${stepName}`);
+                    stepIndex++;
+                } else {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        LoadingUtils.hide(loadingId);
+                        addLog('Loading finalizado');
+                    }, 1000);
+                }
+            }, 1000);
+        };
+
+        // Teste sem etapas
+        window.testLoadingWithoutSteps = function() {
+            addLog('Iniciando teste sem etapas...');
+            
+            const loadingId = LoadingUtils.show('CHAT_LOADING', {
+                message: 'Carregando chat...'
+            });
+            
+            addLog(`Loading iniciado com ID: ${loadingId}`);
+            
+            setTimeout(() => {
+                LoadingUtils.hide(loadingId);
+                addLog('Loading finalizado');
+            }, 3000);
+        };
+
+        // Teste de loading de chat
+        window.testChatLoading = function() {
+            addLog('Iniciando teste de loading de chat...');
+            
+            const loadingId = LoadingUtils.show('CHAT_LOADING', {
+                message: 'Carregando chat...',
+                allowCancel: true
+            });
+            
+            addLog(`Loading de chat iniciado com ID: ${loadingId}`);
+            
+            // Simular progresso
+            setTimeout(() => {
+                LoadingUtils.updateProgress(loadingId, 50, 'Carregando histórico...');
+                addLog('Progresso atualizado: 50%');
+            }, 1000);
+            
+            setTimeout(() => {
+                LoadingUtils.updateProgress(loadingId, 100, 'Chat carregado!');
+                addLog('Progresso atualizado: 100%');
+            }, 2000);
+            
+            setTimeout(() => {
+                LoadingUtils.hide(loadingId);
+                addLog('Loading de chat finalizado');
+            }, 3000);
+        };
+
+        // Teste de processamento de arquivo
+        window.testFileProcessing = function() {
+            addLog('Iniciando teste de processamento de arquivo...');
+            
+            const steps = [
+                'Validando arquivo',
+                'Extraindo conteúdo',
+                'Processando dados',
+                'Salvando resultado'
+            ];
+            
+            const loadingId = LoadingUtils.show('FILE_PROCESSING', {
+                message: 'Processando arquivo...',
+                steps: steps,
+                allowCancel: true
+            });
+            
+            addLog(`Processamento de arquivo iniciado com ID: ${loadingId}`);
+            
+            // Simular progresso das etapas
+            let stepIndex = 0;
+            const interval = setInterval(() => {
+                if (stepIndex < steps.length) {
+                    const stepName = steps[stepIndex];
+                    LoadingUtils.step(loadingId, stepName, 'completed');
+                    addLog(`Etapa concluída: ${stepName}`);
+                    stepIndex++;
+                } else {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        LoadingUtils.hide(loadingId);
+                        addLog('Processamento de arquivo finalizado');
+                    }, 1000);
+                }
+            }, 1500);
+        };
+
+        // Teste de loading inline
+        window.testInlineLoading = function() {
+            addLog('Iniciando teste de loading inline...');
+            
+            // Criar elemento de teste
+            const testContainer = document.createElement('div');
+            testContainer.innerHTML = `
+                <div style="padding: 20px; border: 1px solid #ccc; margin: 10px 0;">
+                    <h4>Área de Teste - Loading Inline</h4>
+                    <p>Esta área terá um loading inline inserido.</p>
+                    <div id="inline-test-area"></div>
+                </div>
+            `;
+            document.querySelector('.test-container').appendChild(testContainer);
+            
+            // Inserir loading inline
+            const inlineElement = LoadingUtils.createInlineLoading('MESSAGE_SENDING', {
+                message: 'Enviando mensagem...'
+            });
+            
+            document.getElementById('inline-test-area').appendChild(inlineElement);
+            addLog('Loading inline inserido na área de teste');
+            
+            // Remover após 3 segundos
+            setTimeout(() => {
+                if (inlineElement.parentNode) {
+                    inlineElement.parentNode.removeChild(inlineElement);
+                    addLog('Loading inline removido automaticamente');
+                }
+                         }, 3000);
+         };
+
+         // Teste de loading de histórico
+         window.testHistoryLoading = function() {
+             addLog('Iniciando teste de loading de histórico...');
+             
+             const loadingId = LoadingUtils.show('HISTORY_LOADING', {
+                 message: 'Carregando histórico do chat...',
+                 allowCancel: true
+             });
+             
+             addLog(`Loading de histórico iniciado com ID: ${loadingId}`);
+             
+             // Simular carregamento de histórico
+             setTimeout(() => {
+                 LoadingUtils.updateProgress(loadingId, 30, 'Buscando mensagens...');
+                 addLog('Progresso atualizado: 30%');
+             }, 1000);
+             
+             setTimeout(() => {
+                 LoadingUtils.updateProgress(loadingId, 70, 'Formatando histórico...');
+                 addLog('Progresso atualizado: 70%');
+             }, 2000);
+             
+             setTimeout(() => {
+                 LoadingUtils.updateProgress(loadingId, 100, 'Histórico carregado!');
+                 addLog('Progresso atualizado: 100%');
+             }, 3000);
+             
+             setTimeout(() => {
+                 LoadingUtils.hide(loadingId);
+                 addLog('Loading de histórico finalizado');
+             }, 4000);
+         };
+
+         // Teste de processamento de arquivo usando o manager
+         window.testFileProcessingWithManager = function() {
+             addLog('Iniciando teste de processamento de arquivo usando manager...');
+             
+             // Simular um arquivo
+             const mockFile = {
+                 name: 'documento.pdf',
+                 size: 5 * 1024 * 1024 // 5MB
+             };
+             
+             // Importar o ChatManager para testar
+             import('./chatManager.js').then(module => {
+                 const ChatManager = module.default;
+                 
+                 // Criar instância mock do ChatManager
+                 const mockApiService = {};
+                 const mockStateManager = {};
+                 const mockConfig = {};
+                 
+                 const chatManager = new ChatManager(mockApiService, mockStateManager, mockConfig);
+                 
+                 // Testar processamento de arquivo
+                 chatManager.processFileWithLoading(mockFile)
+                     .then(result => {
+                         addLog('Arquivo processado com sucesso:', result);
+                     })
+                     .catch(error => {
+                         addLog('Erro ao processar arquivo:', error.message);
+                     });
+             }).catch(error => {
+                 addLog('Erro ao importar ChatManager:', error.message);
+             });
+         };
+
+         // Teste de loading de clique em chat
+         window.testChatClickLoading = function() {
+             addLog('Iniciando teste de loading de clique em chat...');
+             
+             // Simular clique em chat
+             const mockEvent = {
+                 preventDefault: () => {},
+                 currentTarget: {
+                     dataset: {
+                         chatId: 'test-chat-123'
+                     }
+                 }
+             };
+             
+             // Importar o ChatManager para testar
+             import('./chatManager.js').then(module => {
+                 const ChatManager = module.default;
+                 
+                 // Criar instância mock do ChatManager
+                 const mockApiService = {};
+                 const mockStateManager = {
+                     chats: [{
+                         id: 'test-chat-123',
+                         name: 'Chat de Teste',
+                         fk_gpt_id: 'test-gpt-456'
+                     }],
+                     getGPTById: () => ({ id: 'test-gpt-456', name: 'GPT Teste' }),
+                     setSessionId: () => {}
+                 };
+                 const mockConfig = {};
+                 
+                 const chatManager = new ChatManager(mockApiService, mockStateManager, mockConfig);
+                 
+                 // Simular uiManager
+                 chatManager.uiManager = {
+                     gptManager: {
+                         selectGPTItem: async () => {}
+                     },
+                     historyManager: {
+                         loadHistory: async () => {}
+                     },
+                     initializeChatbot: async () => {}
+                 };
+                 
+                 // Testar clique em chat
+                 chatManager.handleChatClick(mockEvent)
+                     .then(() => {
+                         addLog('Clique em chat processado com sucesso');
+                     })
+                     .catch(error => {
+                         addLog('Erro ao processar clique em chat:', error.message);
+                     });
+             }).catch(error => {
+                 addLog('Erro ao importar ChatManager:', error.message);
+             });
+         };
+
+         // Teste de updateProgress
+         window.testUpdateProgress = function() {
+             addLog('Iniciando teste de updateProgress...');
+             
+             const loadingId = LoadingUtils.show('UPDATE_PROGRESS_TEST', {
+                 message: 'Testando updateProgress...'
+             });
+             
+             addLog(`Loading iniciado com ID: ${loadingId}`);
+             
+             setTimeout(() => {
+                 LoadingUtils.updateProgress(loadingId, 25, 'Progresso 25%');
+                 addLog('Progresso atualizado: 25%');
+             }, 1000);
+             
+             setTimeout(() => {
+                 LoadingUtils.updateProgress(loadingId, 50, 'Progresso 50%');
+                 addLog('Progresso atualizado: 50%');
+             }, 2000);
+             
+             setTimeout(() => {
+                 LoadingUtils.updateProgress(loadingId, 75, 'Progresso 75%');
+                 addLog('Progresso atualizado: 75%');
+             }, 3000);
+             
+             setTimeout(() => {
+                 LoadingUtils.updateProgress(loadingId, 100, 'Progresso 100%');
+                 addLog('Progresso atualizado: 100%');
+             }, 4000);
+             
+             setTimeout(() => {
+                 LoadingUtils.hide(loadingId);
+                 addLog('Loading finalizado');
+             }, 5000);
+         };
+
+         // Teste do novo sistema de loading de mensagens
+         window.testNewMessageLoading = function() {
+             addLog('Iniciando teste do novo sistema de loading de mensagens...');
+             
+             // Importar o novo sistema
+             import('./messageLoading.js').then(module => {
+                 const { createMessageLoading, replaceWithMessageLoading, isMessageLoadingEnabled } = module;
+                 
+                 // Criar área de demonstração
+                 const demoContainer = document.createElement('div');
+                 demoContainer.innerHTML = `
+                     <div style="padding: 20px; border: 1px solid #ccc; margin: 10px 0; background: #f9f9f9;">
+                         <h4>Demonstração - Novo Loading de Mensagem</h4>
+                         <p>Este é o novo sistema simples e elegante:</p>
+                         <div id="new-loading-demo"></div>
+                         <button id="demo-button" style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                             Enviar Mensagem
+                         </button>
+                     </div>
+                 `;
+                 document.querySelector('.test-container').appendChild(demoContainer);
+                 
+                 // Demo 1: Loading simples
+                 const demoArea = document.getElementById('new-loading-demo');
+                 const isEnabled = isMessageLoadingEnabled();
+                 
+                 if (isEnabled) {
+                     const loading = createMessageLoading({
+                         size: 'medium',
+                         text: 'Enviando mensagem...',
+                         showText: true
+                     });
+                     demoArea.appendChild(loading);
+                 } else {
+                     demoArea.innerHTML = '<em>Loading desabilitado - não será exibido</em>';
+                 }
+                 
+                 // Demo 2: Substituição de botão
+                 const button = document.getElementById('demo-button');
+                 button.onclick = function() {
+                     const buttonLoading = replaceWithMessageLoading(button, {
+                         text: 'Enviando...',
+                         size: 'medium',
+                         showText: true
+                     });
+                     
+                     if (isEnabled) {
+                         setTimeout(() => {
+                             buttonLoading.restore();
+                             addLog('Botão restaurado com sucesso');
+                         }, 3000);
+                     } else {
+                         addLog('Loading desabilitado - botão não alterado');
+                     }
+                 };
+                 
+                 addLog(`Novo sistema de loading demonstrado (${isEnabled ? 'habilitado' : 'desabilitado'})`);
+                 
+                 // Remover demo após 10 segundos
+                 setTimeout(() => {
+                     if (demoContainer.parentNode) {
+                         demoContainer.parentNode.removeChild(demoContainer);
+                         addLog('Demo removido automaticamente');
+                     }
+                 }, 10000);
+                 
+             }).catch(error => {
+                 addLog('Erro ao importar novo sistema:', error.message);
+             });
+         };
+
+         // Função para alternar loading de mensagem
+         window.toggleMessageLoading = function() {
+             import('./messageLoading.js').then(module => {
+                 const { toggleMessageLoading, isMessageLoadingEnabled } = module;
+                 const newStatus = toggleMessageLoading();
+                 addLog(`Loading de mensagem ${newStatus ? 'habilitado' : 'desabilitado'}`);
+             }).catch(error => {
+                 addLog('Erro ao alternar loading:', error.message);
+             });
+         };
+
+         // Limpar log
+        window.clearLog = function() {
+            document.getElementById('log').innerHTML = '';
+        };
+
+        // Inicializar sistema
+        const loadingManager = getLoadingManager();
+        addLog('Sistema de loading inicializado');
+        
+        // Escutar eventos
+        document.addEventListener('unifiedLoading:loadingComplete', (event) => {
+            addLog(`Evento: Loading finalizado - ${event.detail.context}`);
+        });
+    </script>
+</body>
+</html> 

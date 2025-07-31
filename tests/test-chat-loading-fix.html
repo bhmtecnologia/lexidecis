@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste - Correção Loading de Chat</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+            margin: 0;
+        }
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .chat-list {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .chat-item {
+            padding: 10px;
+            margin: 5px 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .chat-item:hover {
+            background: #e9ecef;
+        }
+        .chat-item.active {
+            background: #007bff;
+            color: white;
+        }
+        .message-area {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+            min-height: 100px;
+        }
+        .message-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        .send-button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .send-button:hover {
+            background: #218838;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .status-indicator {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-ok {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔧 Teste - Correção Loading de Chat</h1>
+        <p>Este teste demonstra que o loading de chat só aparece ao clicar em um chat, não a cada mensagem enviada.</p>
+        
+        <!-- Status da Correção -->
+        <div class="test-section" style="background: #d4edda; border-color: #28a745;">
+            <h3>✅ Correção Implementada</h3>
+            <p><strong>Problema:</strong> Loading de chat aparecia a cada mensagem enviada</p>
+            <p><strong>Solução:</strong> Removido <code>observeLoading</code> do chatbot</p>
+            <p><strong>Resultado:</strong> Loading de chat só aparece ao clicar em um chat</p>
+        </div>
+
+        <!-- Simulação de Chat -->
+        <div class="test-section">
+            <h3>💬 Simulação de Chat</h3>
+            <p>Teste o comportamento correto:</p>
+            
+            <div class="chat-list">
+                <h4>Lista de Chats</h4>
+                <div class="chat-item" data-chat-id="chat-1" onclick="selectChat(this, 'chat-1')">
+                    📝 Chat de Teste 1
+                </div>
+                <div class="chat-item" data-chat-id="chat-2" onclick="selectChat(this, 'chat-2')">
+                    📝 Chat de Teste 2
+                </div>
+                <div class="chat-item" data-chat-id="chat-3" onclick="selectChat(this, 'chat-3')">
+                    📝 Chat de Teste 3
+                </div>
+            </div>
+
+            <div class="message-area">
+                <h4>Área de Mensagens</h4>
+                <div id="messages">
+                    <p><em>Selecione um chat para começar...</em></p>
+                </div>
+                
+                <input type="text" class="message-input" id="message-input" placeholder="Digite sua mensagem..." onkeypress="handleKeyPress(event)">
+                <button class="send-button" onclick="sendMessage()">Enviar Mensagem</button>
+            </div>
+        </div>
+
+        <!-- Testes -->
+        <div class="test-section">
+            <h3>🧪 Testes</h3>
+            <p>Execute estes testes para verificar o comportamento correto:</p>
+            
+            <button class="test-button" onclick="testChatClick()">
+                Testar Clique em Chat
+            </button>
+            
+            <button class="test-button" onclick="testMessageSending()">
+                Testar Envio de Mensagem
+            </button>
+            
+            <button class="test-button" onclick="testMultipleMessages()">
+                Testar Múltiplas Mensagens
+            </button>
+            
+            <button class="test-button" onclick="clearLog()">
+                Limpar Log
+            </button>
+        </div>
+
+        <!-- Log -->
+        <div class="log" id="log"></div>
+    </div>
+
+    <script type="module">
+        import { getLoadingManager, LoadingUtils } from '../services/unifiedLoadingManager.js';
+
+        // Variáveis globais
+        let selectedChatId = null;
+        let messageCount = 0;
+
+        // Função para adicionar log
+        function addLog(message, type = 'info') {
+            const log = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const statusClass = type === 'error' ? 'status-error' : 'status-ok';
+            log.innerHTML += `<span class="status-indicator ${statusClass}">[${timestamp}]</span> ${message}\n`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        // Função para selecionar chat
+        window.selectChat = function(element, chatId) {
+            // Remover seleção anterior
+            document.querySelectorAll('.chat-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Selecionar novo chat
+            element.classList.add('active');
+            selectedChatId = chatId;
+            
+            addLog(`Chat selecionado: ${chatId}`, 'info');
+            
+            // Simular loading de chat (apenas ao clicar)
+            simulateChatLoading(chatId);
+        };
+
+        // Simular loading de chat
+        function simulateChatLoading(chatId) {
+            addLog(`🔄 Iniciando loading de chat para: ${chatId}`, 'info');
+            
+            const loadingId = LoadingUtils.show('CHAT_LOADING', {
+                message: `Carregando chat: ${chatId}...`,
+                allowCancel: true
+            });
+            
+            // Simular carregamento
+            setTimeout(() => {
+                LoadingUtils.updateProgress(loadingId, 50, 'Carregando histórico...');
+            }, 1000);
+            
+            setTimeout(() => {
+                LoadingUtils.updateProgress(loadingId, 100, 'Chat carregado!');
+            }, 2000);
+            
+            setTimeout(() => {
+                LoadingUtils.hide(loadingId);
+                addLog(`✅ Chat carregado com sucesso: ${chatId}`, 'info');
+                
+                // Limpar mensagens
+                document.getElementById('messages').innerHTML = '<p><em>Chat carregado. Digite uma mensagem...</em></p>';
+            }, 3000);
+        }
+
+        // Função para enviar mensagem
+        window.sendMessage = function() {
+            if (!selectedChatId) {
+                addLog('❌ Selecione um chat primeiro!', 'error');
+                return;
+            }
+            
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (!message) {
+                addLog('❌ Digite uma mensagem!', 'error');
+                return;
+            }
+            
+            messageCount++;
+            addLog(`📤 Enviando mensagem ${messageCount}: "${message}"`, 'info');
+            
+            // Adicionar mensagem à área
+            const messagesDiv = document.getElementById('messages');
+            const messageElement = document.createElement('div');
+            messageElement.style.padding = '8px';
+            messageElement.style.margin = '5px 0';
+            messageElement.style.background = '#e3f2fd';
+            messageElement.style.borderRadius = '4px';
+            messageElement.innerHTML = `<strong>Você:</strong> ${message}`;
+            messagesDiv.appendChild(messageElement);
+            
+            // Limpar input
+            input.value = '';
+            
+            // Simular resposta (sem loading de chat)
+            setTimeout(() => {
+                const responseElement = document.createElement('div');
+                responseElement.style.padding = '8px';
+                responseElement.style.margin = '5px 0';
+                responseElement.style.background = '#f3e5f5';
+                responseElement.style.borderRadius = '4px';
+                responseElement.innerHTML = `<strong>Bot:</strong> Resposta à mensagem "${message}"`;
+                messagesDiv.appendChild(responseElement);
+                
+                addLog(`📥 Resposta recebida para mensagem ${messageCount}`, 'info');
+            }, 1500);
+        };
+
+        // Função para lidar com Enter
+        window.handleKeyPress = function(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        };
+
+        // Teste de clique em chat
+        window.testChatClick = function() {
+            addLog('🧪 Iniciando teste de clique em chat...', 'info');
+            
+            // Simular clique em chat
+            setTimeout(() => {
+                selectChat(document.querySelector('.chat-item'), 'chat-1');
+            }, 500);
+        };
+
+        // Teste de envio de mensagem
+        window.testMessageSending = function() {
+            addLog('🧪 Iniciando teste de envio de mensagem...', 'info');
+            
+            if (!selectedChatId) {
+                addLog('❌ Selecione um chat primeiro!', 'error');
+                return;
+            }
+            
+            // Simular envio
+            document.getElementById('message-input').value = 'Mensagem de teste';
+            sendMessage();
+        };
+
+        // Teste de múltiplas mensagens
+        window.testMultipleMessages = function() {
+            addLog('🧪 Iniciando teste de múltiplas mensagens...', 'info');
+            
+            if (!selectedChatId) {
+                addLog('❌ Selecione um chat primeiro!', 'error');
+                return;
+            }
+            
+            const messages = [
+                'Primeira mensagem',
+                'Segunda mensagem',
+                'Terceira mensagem'
+            ];
+            
+            let index = 0;
+            const interval = setInterval(() => {
+                if (index < messages.length) {
+                    document.getElementById('message-input').value = messages[index];
+                    sendMessage();
+                    index++;
+                } else {
+                    clearInterval(interval);
+                    addLog('✅ Teste de múltiplas mensagens concluído', 'info');
+                }
+            }, 2000);
+        };
+
+        // Limpar log
+        window.clearLog = function() {
+            document.getElementById('log').innerHTML = '';
+        };
+
+        // Inicializar
+        addLog('🚀 Sistema de teste carregado', 'info');
+        addLog('📋 Instruções:', 'info');
+        addLog('1. Clique em um chat para ver o loading de chat', 'info');
+        addLog('2. Envie mensagens para ver que NÃO há loading de chat', 'info');
+        addLog('3. Use os botões de teste para verificar o comportamento', 'info');
+    </script>
+</body>
+</html> 

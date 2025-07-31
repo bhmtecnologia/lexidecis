@@ -1,6 +1,6 @@
 // renderer.js
 
-import LoadingScreen from './loadingScreen.js';
+import { getLoadingManager, LoadingUtils } from './unifiedLoadingManager.js';
 import GPTManager from './gptManager.js';
 import { showAlert } from './alertManager.js';
 import { showToast } from './notificationManager.js';
@@ -57,15 +57,15 @@ let abortLoading = false;
 document.addEventListener('DOMContentLoaded', async () => {
     logService.start('Renderer', 'DOMContentLoaded disparado. Iniciando aplicação');
 
-    // 1) Cria o loading screen
-    const loadingScreen = new LoadingScreen();
-    logService.info('Renderer', 'LoadingScreen criado');
+    // 1) Inicializa o sistema unificado de loading
+    const loadingManager = getLoadingManager();
+    logService.info('Renderer', 'Sistema unificado de loading inicializado');
 
     // 2) Instancia StatusCheck para verificar o status do sistema
     const statusCheck = new StatusCheck();
     logService.info('Renderer', 'StatusCheck instanciado');
 
-    // 3) Definimos as etapas (exibidas no loading) com a lista de chats sendo a última etapa
+    // 3) Definimos as etapas de carregamento
     const etapasDeCarregamento = [
         'Verificar Status do Sistema',
         'Autenticação',
@@ -76,9 +76,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         'Carregar Lista de Chats'
     ];
 
-    // 4) Exibir a tela de loading
-    loadingScreen.show(etapasDeCarregamento);
-    logService.info('Renderer', 'LoadingScreen exibido com etapas:', etapasDeCarregamento);
+    // 4) Exibir o loading de inicialização
+    const loadingId = LoadingUtils.show('APP_INITIALIZATION', {
+        message: 'Iniciando LexiDecis...',
+        steps: etapasDeCarregamento
+    });
+    logService.info('Renderer', 'Loading de inicialização exibido com etapas:', etapasDeCarregamento);
 
     // Inicia a verificação do status de forma assíncrona
     statusCheck.checkStatus().then(userAgreed => {
@@ -86,7 +89,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             logService.warn('Renderer', 'checkStatus() retornou falso. Abortando carregamento');
             abortLoading = true;
             showToast('Status do sistema não ideal. Saindo...', 'warning');
-            loadingScreen.hide();
+            LoadingUtils.hide(loadingId);
             window.location.href = '../index.html';
         } else {
             logService.success('Renderer', 'Status do sistema OK');
@@ -94,8 +97,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     try {
-        // ETAPA 1: Verificar Status do Sistema (marca etapa concluída sem aguardar a verificação)
-        await loadingScreen.loadModel('Verificar Status do Sistema');
+        // ETAPA 1: Verificar Status do Sistema (já está marcada como completed quando o status é OK)
         if (abortLoading) return;
 
         // ETAPA 2: Autenticação
@@ -119,7 +121,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         });
         debugLog("[Renderer] -> Autenticação OK (Firebase).");
-        await loadingScreen.loadModel('Autenticação');
+        // Marcar etapas como concluídas
+        LoadingUtils.step(loadingId, 'Verificar Status do Sistema', 'completed');
+        LoadingUtils.step(loadingId, 'Autenticação', 'completed');
         if (abortLoading) return;
 
         // Recarrega variáveis do sessionStorage após autenticação
@@ -148,7 +152,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         debugLog("[Renderer] CONFIG atualizado após autenticação:", CONFIG);
 
         // ETAPA 3: Carregar Endpoints (via n8n) com timeout e retry
-        await loadingScreen.loadModel('Carregar Endpoints');
         if (abortLoading) return;
         debugLog("[Renderer] Carregando endpoints via", ENDPOINT_URL);
         const jwt = await getJwt();
@@ -179,7 +182,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (attempt === ENDPOINT_MAX_RETRIES) {
                     // Fallback UX: informar e oferecer recarregar
                     showAlert('Não foi possível carregar configurações. Verifique sua conexão e clique em Recarregar Configurações.', 'error');
-                    loadingScreen.hide();
+                    LoadingUtils.hide(loadingId);
                     return;
                 }
                 // Exponential backoff entre tentativas
@@ -213,7 +216,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         debugLog("[Renderer] Chamando gptManager.preloadGPTs()...");
         await gptManager.preloadGPTs();
         debugLog("[Renderer] -> Pré-carregamento de GPTs finalizado.");
-        await loadingScreen.loadModel('Pré-carregar GPTs');
+        LoadingUtils.step(loadingId, 'Carregar Endpoints', 'completed');
+        LoadingUtils.step(loadingId, 'Pré-carregar GPTs', 'completed');
         if (abortLoading) return;
 
         // ETAPA 5: Selecionar GPT Padrão (caso nenhum chat esteja selecionado)
@@ -234,14 +238,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
             debugLog("[Renderer] Já existe um chat selecionado. Pulando GPT padrão...");
         }
-        await loadingScreen.loadModel('Selecionar GPT Padrão');
+        LoadingUtils.step(loadingId, 'Selecionar GPT Padrão', 'completed');
         if (abortLoading) return;
 
         // ETAPA 6: Inicializar Chatbot (UI e listeners)
         debugLog("[Renderer] Inicializando chatbot via uiManager.initializeChatbot()...");
         await uiManager.initializeChatbot();
         debugLog("[Renderer] -> Chatbot inicializado.");
-        await loadingScreen.loadModel('Inicializar Chatbot');
+        LoadingUtils.step(loadingId, 'Inicializar Chatbot', 'completed');
         if (abortLoading) return;
 
         // ETAPA 7: Carregar Lista de Chats (realizada ao final)
@@ -249,12 +253,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         await chatManager.loadChatList(chatManager.populateChatMenu.bind(chatManager));
         stateManager.loadSelectedChat();
         debugLog("[Renderer] -> Lista de chats carregada e chat selecionado (se houver).");
-        await loadingScreen.loadModel('Carregar Lista de Chats');
+        LoadingUtils.step(loadingId, 'Carregar Lista de Chats', 'completed');
         if (abortLoading) return;
 
         // Finaliza com sucesso
         debugLog("[Renderer] Todas as etapas concluídas. Ocultando loading screen...");
-        loadingScreen.hide();
+        LoadingUtils.hide(loadingId);
         showAlert('LexiDecis: Estou pronto.', 'success');
         debugLog("[Renderer] Aplicação está pronta para uso.");
 
@@ -265,7 +269,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (error.message.includes("não autenticado") || error.message.includes("Usuário não autenticado")) {
             window.location.href = "../index.html";
         } else {
-            loadingScreen.hide();
+            LoadingUtils.hide(loadingId);
         }
     }
 });

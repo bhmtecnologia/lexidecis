@@ -14,6 +14,7 @@ function debugLog(...args) {
 import { showRenamePrompt, showAlert, showDeleteConfirmation } from './alertManager.js';
 import ApiService from './apiService.js';
 import StateManager from './stateManager.js';
+import { LoadingUtils } from './unifiedLoadingManager.js';
 
 class ChatManager {
     /**
@@ -195,6 +196,12 @@ class ChatManager {
 
             debugLog('Chat clicado:', chatId);
 
+            // Mostrar loading de chat
+            const loadingId = LoadingUtils.show('CHAT_LOADING', {
+                message: 'Carregando chat...',
+                allowCancel: true
+            });
+
             // Localiza o chat correspondente no StateManager
             const selectedChat = this.stateManager.chats.find(chat => chat.id === chatId);
             if (!selectedChat) {
@@ -233,7 +240,14 @@ class ChatManager {
             // Carrega histórico, se existir um historyManager integrado via UIManager
             if (this.uiManager && this.uiManager.historyManager) {
                 debugLog('Carregando histórico do chat:', chatId);
+                
+                // Atualizar mensagem do loading
+                LoadingUtils.updateProgress(loadingId, 50, 'Carregando histórico...');
+                
                 await this.uiManager.historyManager.loadHistory(chatId);
+                
+                // Atualizar progresso
+                LoadingUtils.updateProgress(loadingId, 100, 'Chat carregado!');
             }
 
             // Destaca o chat selecionado na interface
@@ -241,12 +255,24 @@ class ChatManager {
 
             // Inicializa o chatbot, caso não tenha sido feito no GPTManager
             if (this.uiManager) {
+                LoadingUtils.updateProgress(loadingId, 75, 'Inicializando chatbot...');
                 await this.uiManager.initializeChatbot();
+                LoadingUtils.updateProgress(loadingId, 90, 'Chatbot inicializado');
             }
+
+            // Esconder loading após sucesso (com pequeno delay para mostrar mensagem final)
+            setTimeout(() => {
+                LoadingUtils.hide(loadingId);
+            }, 500);
 
         } catch (error) {
             console.error('Erro ao processar clique no chat:', error);
             showAlert('Erro ao processar o clique no chat. Verifique o console.', 'error');
+            
+            // Esconder loading em caso de erro
+            if (typeof loadingId !== 'undefined') {
+                LoadingUtils.hide(loadingId);
+            }
         }
     }
 
@@ -415,6 +441,8 @@ class ChatManager {
 
     /**
      * Atualiza a lista de chats quando há alteração no estado de carregamento do chatbot.
+     * ATENÇÃO: Esta função deve ser chamada APENAS ao clicar em um chat,
+     * NÃO a cada mensagem enviada.
      * @param {boolean} loading - Indica se o chatbot está carregando.
      */
     async handleLoadingState(loading) {
@@ -422,6 +450,13 @@ class ChatManager {
 
         if (loading) {
             debugLog('O chatbot está carregando...');
+            
+            // Mostrar loading de chat
+            const loadingId = LoadingUtils.show('CHAT_LOADING', {
+                message: 'Carregando chat...',
+                allowCancel: true
+            });
+
             try {
                 const params = {
                     gpt_id: this.stateManager.selectedGPT.id,
@@ -436,12 +471,14 @@ class ChatManager {
                     debugLog('Resposta da API bem-sucedida:', response.message);
                     // Atualiza a lista de chats após a atualização via API
                     await this.loadChatList(this.populateChatMenu.bind(this));
+                    LoadingUtils.hide(loadingId);
                 } else {
                     throw new Error(response.message || 'Erro desconhecido.');
                 }
             } catch (error) {
                 console.error('Erro ao fazer a requisição POST:', error);
                 showAlert('Erro ao atualizar o chat. Verifique o console para mais detalhes.', 'error');
+                LoadingUtils.hide(loadingId);
             }
         } else {
             debugLog('O chatbot terminou de carregar.');
@@ -521,7 +558,20 @@ class ChatManager {
      * @returns {Promise<Array>} - Retorna o histórico de mensagens.
      */
     async fetchChatHistory(sessionId, config) {
-        return await this._fetchAndFormatHistory(sessionId, config);
+        // Mostrar loading de histórico
+        const loadingId = LoadingUtils.show('HISTORY_LOADING', {
+            message: 'Carregando histórico do chat...',
+            allowCancel: true
+        });
+        
+        try {
+            const history = await this._fetchAndFormatHistory(sessionId, config);
+            LoadingUtils.hide(loadingId);
+            return history;
+        } catch (error) {
+            LoadingUtils.hide(loadingId);
+            throw error;
+        }
     }
 
     /* =====================
@@ -554,6 +604,63 @@ class ChatManager {
             }, 5000);
         } else {
             this.showError(message);
+        }
+    }
+
+    /**
+     * Exemplo de função que processa arquivo com loading
+     * @param {File} file - Arquivo a ser processado
+     * @returns {Promise<Object>} - Resultado do processamento
+     */
+    async processFileWithLoading(file) {
+        const steps = [
+            'Validando arquivo',
+            'Extraindo conteúdo',
+            'Processando dados',
+            'Salvando resultado'
+        ];
+        
+        const loadingId = LoadingUtils.show('FILE_PROCESSING', {
+            message: `Processando arquivo: ${file.name}`,
+            steps: steps,
+            allowCancel: true
+        });
+        
+        try {
+            // Etapa 1: Validar arquivo
+            LoadingUtils.step(loadingId, 'Validando arquivo', 'loading');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            if (file.size > 10 * 1024 * 1024) { // 10MB
+                throw new Error('Arquivo muito grande');
+            }
+            LoadingUtils.step(loadingId, 'Validando arquivo', 'completed');
+            
+            // Etapa 2: Extrair conteúdo
+            LoadingUtils.step(loadingId, 'Extraindo conteúdo', 'loading');
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            LoadingUtils.step(loadingId, 'Extraindo conteúdo', 'completed');
+            
+            // Etapa 3: Processar dados
+            LoadingUtils.step(loadingId, 'Processando dados', 'loading');
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            LoadingUtils.step(loadingId, 'Processando dados', 'completed');
+            
+            // Etapa 4: Salvar resultado
+            LoadingUtils.step(loadingId, 'Salvando resultado', 'loading');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            LoadingUtils.step(loadingId, 'Salvando resultado', 'completed');
+            
+            LoadingUtils.hide(loadingId);
+            
+            return {
+                success: true,
+                filename: file.name,
+                processedAt: new Date().toISOString()
+            };
+        } catch (error) {
+            LoadingUtils.hide(loadingId);
+            throw error;
         }
     }
 }

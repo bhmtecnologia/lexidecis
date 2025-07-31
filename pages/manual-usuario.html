@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual do Usuário - LexiDecis</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #3B81F6;
+            --secondary-color: #495057;
+            --dark-bg: #212529;
+            --light-text: #f8f9fa;
+            --border-color: #495057;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--light-text);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+        }
+
+        .manual-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .manual-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: linear-gradient(135deg, var(--primary-color), #1e40af);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .manual-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: white;
+        }
+
+        .manual-header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 0;
+        }
+
+        .section {
+            background: #343a40;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+
+        .section h2 {
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .section h3 {
+            color: #adb5bd;
+            font-size: 1.3rem;
+            font-weight: 500;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card {
+            background: #495057;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-left: 4px solid var(--primary-color);
+            transition: transform 0.2s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .step-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .step-list li {
+            background: #495057;
+            margin: 0.5rem 0;
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 3px solid var(--primary-color);
+            position: relative;
+        }
+
+        .step-list li::before {
+            content: counter(step-counter);
+            counter-increment: step-counter;
+            background: var(--primary-color);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            position: absolute;
+            left: -12px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .step-list {
+            counter-reset: step-counter;
+        }
+
+        .tip-box {
+            background: linear-gradient(135deg, #ffc107, #ff8c00);
+            color: #000;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid #ff8c00;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid #c82333;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid #138496;
+        }
+
+        .keyboard-shortcut {
+            background: #6c757d;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        .table-of-contents {
+            background: #343a40;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .table-of-contents h2 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .toc-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .toc-list li {
+            margin: 0.5rem 0;
+        }
+
+        .toc-list a {
+            color: #adb5bd;
+            text-decoration: none;
+            padding: 0.5rem;
+            display: block;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .toc-list a:hover {
+            background: #495057;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .back-to-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--primary-color);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+            transition: all 0.2s ease;
+            z-index: 1000;
+        }
+
+        .back-to-top:hover {
+            background: #1e40af;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .manual-container {
+                padding: 1rem;
+            }
+            
+            .manual-header h1 {
+                font-size: 2rem;
+            }
+            
+            .section {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="manual-container">
+        <!-- Cabeçalho do Manual -->
+        <div class="manual-header">
+            <h1><i class="bi bi-robot"></i> Manual do Usuário</h1>
+            <p>LexiDecis - Inteligência Artificial Corporativa</p>
+            <p>Guia completo para utilização da plataforma</p>
+        </div>
+
+        <!-- Sumário -->
+        <div class="table-of-contents">
+            <h2><i class="bi bi-list-ul"></i> Sumário</h2>
+            <ul class="toc-list">
+                <li><a href="#introducao">1. Introdução ao LexiDecis</a></li>
+                <li><a href="#primeiros-passos">2. Primeiros Passos</a></li>
+                <li><a href="#interface">3. Interface do Usuário</a></li>
+                <li><a href="#chat">4. Sistema de Chat</a></li>
+                <li><a href="#gpts">5. Gerenciamento de GPTs</a></li>
+                <li><a href="#chats">6. Gerenciamento de Chats</a></li>
+                <li><a href="#perfil">7. Gerenciamento de Perfil</a></li>
+                <li><a href="#admin">8. Painel Administrativo</a></li>
+                <li><a href="#dicas">9. Dicas e Truques</a></li>
+                <li><a href="#suporte">10. Suporte e Contato</a></li>
+            </ul>
+        </div>
+
+        <!-- Seção 1: Introdução -->
+        <div class="section" id="introducao">
+            <h2><i class="bi bi-info-circle"></i> 1. Introdução ao LexiDecis</h2>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="bi bi-lightning-charge"></i>
+                </div>
+                <h3>O que é o LexiDecis?</h3>
+                <p>O LexiDecis é uma plataforma de inteligência artificial corporativa que oferece múltiplos modelos de IA para auxiliar em diversas tarefas profissionais. A plataforma integra diferentes provedores de IA como OpenAI, Gemini, Anthropic, DeepSeek, Groq e um motor de IA personalizado.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="bi bi-gear-wide-connected"></i>
+                </div>
+                <h3>Principais Funcionalidades</h3>
+                <ul>
+                    <li><strong>Chat Inteligente:</strong> Conversas com múltiplos modelos de IA</li>
+                    <li><strong>Gerenciamento de GPTs:</strong> Seleção e configuração de diferentes modelos</li>
+                    <li><strong>Histórico de Conversas:</strong> Acesso a todas as conversas anteriores</li>
+                    <li><strong>Interface Responsiva:</strong> Funciona em desktop e dispositivos móveis</li>
+                    <li><strong>Sistema de Autenticação:</strong> Login seguro com Firebase</li>
+                    <li><strong>Painel Administrativo:</strong> Controle total para administradores</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Seção 2: Primeiros Passos -->
+        <div class="section" id="primeiros-passos">
+            <h2><i class="bi bi-play-circle"></i> 2. Primeiros Passos</h2>
+            
+            <h3>Como Acessar o Sistema</h3>
+            <ol class="step-list">
+                <li>Acesse a URL do LexiDecis no seu navegador</li>
+                <li>Na tela de login, insira seu email e senha</li>
+                <li>Clique em "Entrar" para acessar a plataforma</li>
+                <li>Aguarde o carregamento inicial do sistema</li>
+            </ol>
+
+            <div class="tip-box">
+                <strong><i class="bi bi-lightbulb"></i> Dica:</strong>
+                Na primeira vez que acessar, o sistema verificará o status de todos os serviços de IA. Aguarde a verificação ser concluída antes de começar a usar.
+            </div>
+
+            <h3>Configuração Inicial</h3>
+            <p>Após o primeiro login, o sistema irá:</p>
+            <ul>
+                <li>Carregar a lista de GPTs disponíveis</li>
+                <li>Selecionar automaticamente um GPT padrão</li>
+                <li>Inicializar o chatbot</li>
+                <li>Carregar seu histórico de conversas</li>
+            </ul>
+        </div>
+
+        <!-- Seção 3: Interface do Usuário -->
+        <div class="section" id="interface">
+            <h2><i class="bi bi-layout-text-window"></i> 3. Interface do Usuário</h2>
+            
+            <h3>Layout Principal</h3>
+            <div class="feature-card">
+                <h4><i class="bi bi-list"></i> Sidebar (Barra Lateral)</h4>
+                <p>A sidebar contém todas as funcionalidades principais do sistema:</p>
+                <ul>
+                    <li><strong>Botão de Seleção de GPT:</strong> <i class="bi bi-robot"></i> Para escolher diferentes modelos de IA</li>
+                    <li><strong>Botão Nova Conversa:</strong> <i class="bi bi-pencil-square"></i> Para iniciar uma nova conversa</li>
+                    <li><strong>Campo de Pesquisa:</strong> <i class="bi bi-search"></i> Para buscar conversas antigas</li>
+                    <li><strong>Lista de Chats:</strong> Histórico de todas as suas conversas</li>
+                    <li><strong>Menu do Usuário:</strong> Configurações, perfil e logout</li>
+                </ul>
+            </div>
+
+            <h3>Área Principal</h3>
+            <div class="feature-card">
+                <h4><i class="bi bi-chat-dots"></i> Área de Chat</h4>
+                <p>A área principal é onde acontecem as conversas com a IA:</p>
+                <ul>
+                    <li><strong>Mensagens:</strong> Exibição das mensagens trocadas</li>
+                    <li><strong>Campo de Entrada:</strong> Para digitar suas perguntas</li>
+                    <li><strong>Botões de Ação:</strong> Enviar, anexar arquivos, gravar áudio</li>
+                </ul>
+            </div>
+
+            <h3>Responsividade</h3>
+            <div class="info-box">
+                <strong><i class="bi bi-phone"></i> Dispositivos Móveis:</strong>
+                Em telas menores, a sidebar pode ser recolhida usando o botão <i class="bi bi-list"></i> no canto superior direito. Toque no botão para expandir/recolher a sidebar.
+            </div>
+        </div>
+
+        <!-- Seção 4: Sistema de Chat -->
+        <div class="section" id="chat">
+            <h2><i class="bi bi-chat-square-text"></i> 4. Sistema de Chat</h2>
+            
+            <h3>Como Iniciar uma Conversa</h3>
+            <ol class="step-list">
+                <li>Clique no botão <i class="bi bi-pencil-square"></i> "Nova Conversa" na sidebar</li>
+                <li>Digite sua pergunta no campo de entrada na parte inferior</li>
+                <li>Pressione <span class="keyboard-shortcut">Enter</span> ou clique no botão de enviar</li>
+                <li>Aguarde a resposta da IA</li>
+            </ol>
+
+            <h3>Funcionalidades do Chat</h3>
+            <div class="feature-card">
+                <h4><i class="bi bi-paperclip"></i> Anexar Arquivos</h4>
+                <p>Você pode anexar arquivos para que a IA analise:</p>
+                <ul>
+                    <li>Clique no ícone de anexo <i class="bi bi-paperclip"></i></li>
+                    <li>Selecione o arquivo desejado</li>
+                    <li>O arquivo será processado e enviado junto com sua mensagem</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <h4><i class="bi bi-mic"></i> Gravação de Áudio</h4>
+                <p>Para dispositivos com microfone:</p>
+                <ul>
+                    <li>Clique no ícone de microfone <i class="bi bi-mic"></i></li>
+                    <li>Fale sua pergunta</li>
+                    <li>Clique novamente para parar a gravação</li>
+                    <li>O áudio será convertido em texto automaticamente</li>
+                </ul>
+            </div>
+
+            <div class="tip-box">
+                <strong><i class="bi bi-lightbulb"></i> Dica:</strong>
+                Use <span class="keyboard-shortcut">Shift + Enter</span> para quebrar linha no campo de entrada. Use apenas <span class="keyboard-shortcut">Enter</span> para enviar a mensagem.
+            </div>
+        </div>
+
+        <!-- Seção 5: Gerenciamento de GPTs -->
+        <div class="section" id="gpts">
+            <h2><i class="bi bi-robot"></i> 5. Gerenciamento de GPTs</h2>
+            
+            <h3>O que são GPTs?</h3>
+            <p>GPTs (Generative Pre-trained Transformers) são diferentes modelos de inteligência artificial, cada um com características específicas e especializações diferentes.</p>
+
+            <h3>Como Selecionar um GPT</h3>
+            <ol class="step-list">
+                <li>Clique no botão <i class="bi bi-robot"></i> na sidebar</li>
+                <li>Uma janela modal será aberta com todos os GPTs disponíveis</li>
+                <li>Navegue pelas categorias ou use a busca para encontrar um GPT específico</li>
+                <li>Clique no GPT desejado para selecioná-lo</li>
+                <li>O GPT selecionado será aplicado à conversa atual</li>
+            </ol>
+
+            <h3>Tipos de GPTs Disponíveis</h3>
+            <div class="feature-card">
+                <h4><i class="bi bi-collection"></i> Categorias</h4>
+                <ul>
+                    <li><strong>OpenAI:</strong> GPT-4, GPT-3.5 e outros modelos da OpenAI</li>
+                    <li><strong>Google:</strong> Gemini Pro e outros modelos do Google</li>
+                    <li><strong>Anthropic:</strong> Claude e outros modelos da Anthropic</li>
+                    <li><strong>DeepSeek:</strong> Modelos especializados da DeepSeek</li>
+                    <li><strong>Groq:</strong> Modelos de alta velocidade da Groq</li>
+                    <li><strong>Motor de IA:</strong> Modelos personalizados e especializados</li>
+                </ul>
+            </div>
+
+            <div class="warning-box">
+                <strong><i class="bi bi-exclamation-triangle"></i> Importante:</strong>
+                Cada GPT pode ter diferentes capacidades e limitações. Alguns são melhores para tarefas específicas como análise de código, redação criativa, ou análise de dados.
+            </div>
+        </div>
+
+        <!-- Seção 6: Gerenciamento de Chats -->
+        <div class="section" id="chats">
+            <h2><i class="bi bi-chat-left-text"></i> 6. Gerenciamento de Chats</h2>
+            
+            <h3>Lista de Chats</h3>
+            <p>A sidebar mostra todas as suas conversas organizadas por data:</p>
+            <ul>
+                <li><strong>Hoje:</strong> Conversas do dia atual</li>
+                <li><strong>Ontem:</strong> Conversas de ontem</li>
+                <li><strong>Anteontem:</strong> Conversas de dois dias atrás</li>
+                <li><strong>Datas anteriores:</strong> Conversas mais antigas</li>
+            </ul>
+
+            <h3>Como Gerenciar Chats</h3>
+            <div class="feature-card">
+                <h4><i class="bi bi-search"></i> Buscar Chats</h4>
+                <ol class="step-list">
+                    <li>Use o campo de pesquisa na sidebar</li>
+                    <li>Digite palavras-chave relacionadas ao chat</li>
+                    <li>Os resultados serão destacados automaticamente</li>
+                    <li>Clique no "X" para limpar a busca</li>
+                </ol>
+            </div>
+
+            <div class="feature-card">
+                <h4><i class="bi bi-pencil"></i> Renomear Chats</h4>
+                <ol class="step-list">
+                    <li>Clique no menu de três pontos (...) ao lado do chat</li>
+                    <li>Selecione "Renomear"</li>
+                    <li>Digite o novo nome</li>
+                    <li>Pressione Enter para confirmar</li>
+                </ol>
+            </div>
+
+            <div class="feature-card">
+                <h4><i class="bi bi-trash"></i> Excluir Chats</h4>
+                <ol class="step-list">
+                    <li>Clique no menu de três pontos (...) ao lado do chat</li>
+                    <li>Selecione "Excluir"</li>
+                    <li>Confirme a exclusão na janela de confirmação</li>
+                </ol>
+            </div>
+
+            <div class="warning-box">
+                <strong><i class="bi bi-exclamation-triangle"></i> Atenção:</strong>
+                A exclusão de chats é permanente e não pode ser desfeita. Certifique-se de que realmente deseja excluir a conversa antes de confirmar.
+            </div>
+        </div>
+
+        <!-- Seção 7: Gerenciamento de Perfil -->
+        <div class="section" id="perfil">
+            <h2><i class="bi bi-person-circle"></i> 7. Gerenciamento de Perfil</h2>
+            
+            <h3>Acessando o Perfil</h3>
+            <ol class="step-list">
+                <li>Clique no seu nome/avatar no final da sidebar</li>
+                <li>No menu dropdown, clique em "Gerenciar Perfil"</li>
+                <li>Uma janela modal será aberta com suas informações</li>
+            </ol>
+
+            <h3>Informações do Perfil</h3>
+            <div class="feature-card">
+                <h4><i class="bi bi-info-circle"></i> Dados Exibidos</h4>
+                <ul>
+                    <li><strong>Email:</strong> Seu endereço de email (somente leitura)</li>
+                    <li><strong>Nome de Exibição:</strong> Nome que aparece na interface</li>
+                    <li><strong>Senha:</strong> Opção para alterar sua senha</li>
+                </ul>
+            </div>
+
+            <h3>Alterando Informações</h3>
+            <div class="feature-card">
+                <h4><i class="bi bi-pencil-square"></i> Como Editar</h4>
+                <ol class="step-list">
+                    <li>Clique no campo que deseja editar</li>
+                    <li>Digite as novas informações</li>
+                    <li>Para alterar a senha, preencha os campos de senha atual e nova senha</li>
+                    <li>Clique em "Salvar Alterações"</li>
+                    <li>Aguarde a confirmação de sucesso</li>
+                </ol>
+            </div>
+
+            <div class="tip-box">
+                <strong><i class="bi bi-lightbulb"></i> Dica:</strong>
+                Mantenha seu nome de exibição atualizado para facilitar a identificação em ambientes corporativos.
+            </div>
+        </div>
+
+        <!-- Seção 8: Painel Administrativo -->
+        <div class="section" id="admin">
+            <h2><i class="bi bi-gear"></i> 8. Painel Administrativo</h2>
+            
+            <h3>Acesso ao Painel Admin</h3>
+            <div class="info-box">
+                <strong><i class="bi bi-shield-check"></i> Acesso Restrito:</strong>
+                O painel administrativo está disponível apenas para usuários com privilégios de administrador.
+            </div>
+
+            <ol class="step-list">
+                <li>Clique no seu nome/avatar no final da sidebar</li>
+                <li>No menu dropdown, clique em "Painel do Admin"</li>
+                <li>Uma janela modal será aberta com o painel administrativo</li>
+            </ol>
+
+            <h3>Funcionalidades do Painel Admin</h3>
+            <div class="feature-card">
+                <h4><i class="bi bi-people"></i> Gerenciamento de Usuários</h4>
+                <ul>
+                    <li>Visualizar todos os usuários cadastrados</li>
+                    <li>Gerenciar permissões e acessos</li>
+                    <li>Monitorar atividade dos usuários</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <h4><i class="bi bi-robot"></i> Gerenciamento de GPTs</h4>
+                <ul>
+                    <li>Adicionar novos modelos de IA</li>
+                    <li>Configurar parâmetros dos GPTs</li>
+                    <li>Ativar/desativar modelos</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <h4><i class="bi bi-graph-up"></i> Monitoramento do Sistema</h4>
+                <ul>
+                    <li>Status dos serviços de IA</li>
+                    <li>Métricas de uso</li>
+                    <li>Logs do sistema</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Seção 9: Dicas e Truques -->
+        <div class="section" id="dicas">
+            <h2><i class="bi bi-lightbulb"></i> 9. Dicas e Truques</h2>
+            
+            <h3>Atalhos de Teclado</h3>
+            <div class="feature-card">
+                <ul>
+                    <li><span class="keyboard-shortcut">Enter</span> - Enviar mensagem</li>
+                    <li><span class="keyboard-shortcut">Shift + Enter</span> - Quebrar linha</li>
+                    <li><span class="keyboard-shortcut">Ctrl/Cmd + K</span> - Focar no campo de busca</li>
+                    <li><span class="keyboard-shortcut">Escape</span> - Fechar modais</li>
+                </ul>
+            </div>
+
+            <h3>Dicas para Melhores Resultados</h3>
+            <div class="feature-card">
+                <h4><i class="bi bi-chat-quote"></i> Como Fazer Perguntas Efetivas</h4>
+                <ul>
+                    <li><strong>Seja específico:</strong> Quanto mais detalhada a pergunta, melhor a resposta</li>
+                    <li><strong>Use contexto:</strong> Mencione o contexto da sua dúvida</li>
+                    <li><strong>Faça uma pergunta por vez:</strong> Evite múltiplas perguntas em uma só mensagem</li>
+                    <li><strong>Especifique o formato:</strong> Se quiser uma resposta em formato específico, mencione isso</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <h4><i class="bi bi-file-earmark"></i> Trabalhando com Arquivos</h4>
+                <ul>
+                    <li>Formatos suportados: PDF, DOC, DOCX, TXT, imagens</li>
+                    <li>Tamanho máximo: Verifique os limites do sistema</li>
+                    <li>Para análise de código: Use arquivos de texto simples</li>
+                    <li>Para imagens: A IA pode descrever e analisar o conteúdo</li>
+                </ul>
+            </div>
+
+            <div class="tip-box">
+                <strong><i class="bi bi-lightbulb"></i> Dica Pro:</strong>
+                Use diferentes GPTs para diferentes tipos de tarefas. Por exemplo, use GPTs especializados em código para programação e GPTs gerais para redação criativa.
+            </div>
+        </div>
+
+        <!-- Seção 10: Suporte e Contato -->
+        <div class="section" id="suporte">
+            <h2><i class="bi bi-headset"></i> 10. Suporte e Contato</h2>
+            
+            <h3>Problemas Comuns</h3>
+            <div class="feature-card">
+                <h4><i class="bi bi-exclamation-triangle"></i> Solução de Problemas</h4>
+                
+                <h5>Chat não carrega</h5>
+                <ul>
+                    <li>Verifique sua conexão com a internet</li>
+                    <li>Recarregue a página (F5)</li>
+                    <li>Limpe o cache do navegador</li>
+                    <li>Verifique se todos os serviços estão online</li>
+                </ul>
+
+                <h5>Resposta lenta da IA</h5>
+                <ul>
+                    <li>Alguns modelos podem ser mais lentos que outros</li>
+                    <li>Tente usar um GPT diferente</li>
+                    <li>Verifique se há muitos usuários simultâneos</li>
+                </ul>
+
+                <h5>Erro de autenticação</h5>
+                <ul>
+                    <li>Faça logout e login novamente</li>
+                    <li>Verifique se suas credenciais estão corretas</li>
+                    <li>Entre em contato com o administrador se o problema persistir</li>
+                </ul>
+            </div>
+
+            <h3>Como Obter Ajuda</h3>
+            <div class="feature-card">
+                <h4><i class="bi bi-question-circle"></i> Canais de Suporte</h4>
+                <ul>
+                    <li><strong>Documentação:</strong> Este manual e documentação técnica</li>
+                    <li><strong>Administrador:</strong> Entre em contato com o administrador do sistema</li>
+                    <li><strong>Logs:</strong> Verifique os logs do sistema para erros específicos</li>
+                </ul>
+            </div>
+
+            <div class="info-box">
+                <strong><i class="bi bi-info-circle"></i> Informações Importantes:</strong>
+                <ul>
+                    <li>O sistema monitora automaticamente o status de todos os serviços</li>
+                    <li>Notificações aparecem quando há problemas de conectividade</li>
+                    <li>Seus dados são armazenados de forma segura</li>
+                    <li>O sistema possui backup automático das conversas</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Botão Voltar ao Topo -->
+        <a href="#" class="back-to-top" title="Voltar ao topo">
+            <i class="bi bi-arrow-up"></i>
+        </a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Smooth scrolling para links internos
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Mostrar/ocultar botão "Voltar ao topo"
+        window.addEventListener('scroll', function() {
+            const backToTop = document.querySelector('.back-to-top');
+            if (window.pageYOffset > 300) {
+                backToTop.style.display = 'flex';
+            } else {
+                backToTop.style.display = 'none';
+            }
+        });
+
+        // Adicionar classe ativa ao link do sumário
+        window.addEventListener('scroll', function() {
+            const sections = document.querySelectorAll('.section');
+            const navLinks = document.querySelectorAll('.toc-list a');
+            
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= sectionTop - 200) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

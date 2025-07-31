@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="../styles/loadingScreen.css">
     <link rel="stylesheet" href="../styles/sidebar.css">
     <link rel="stylesheet" href="../styles/profileModal.css">
+    <link rel="stylesheet" href="../styles/manualModal.css">
 </head>
 <body>
 
@@ -71,6 +72,10 @@
                     <i class="bi bi-gear me-2"></i>
                     <span>Configurações</span>
                 </div>
+                <div class="lexi-user-menu-item" id="manual-button">
+                    <i class="bi bi-book me-2"></i>
+                    <span>Manual do Usuário</span>
+                </div>
                 <div class="lexi-user-menu-item" id="admin-button">
                     <i class="bi bi-person-gear me-2"></i>
                     <span>Painel do Admin</span>
@@ -119,6 +124,26 @@
                 </div>
                 <div class="modal-body">
                     <iframe id="adminIframe" src="/admin/index.html" width="100%" height="600px" frameborder="0"></iframe>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal do Manual do Usuário -->
+    <div class="modal fade" id="manualModal" tabindex="-1" aria-labelledby="manualModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="manualModalLabel">
+                        <i class="bi bi-book"></i> Manual do Usuário - LexiDecis
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <iframe id="manualIframe" src="manual-usuario.html" width="100%" height="100%" frameborder="0" style="min-height: 80vh;"></iframe>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>

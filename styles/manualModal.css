@@ -1,0 +1,150 @@
+/* ========================================
+   LEXI MANUAL MODAL - NAMESPACE ESPECÍFICO
+   ======================================== */
+
+/* Estilos para o modal do manual do usuário */
+#manualModal .modal-content {
+    background: #212529;
+    border: 1px solid #495057;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+#manualModal .modal-header {
+    background: #343a40;
+    border-bottom: 1px solid #495057;
+    border-radius: 12px 12px 0 0;
+    padding: 1rem 1.5rem;
+}
+
+#manualModal .modal-title {
+    color: #f8f9fa;
+    font-weight: 600;
+    font-size: 1.2rem;
+}
+
+#manualModal .modal-title i {
+    color: #3B81F6;
+    margin-right: 0.5rem;
+}
+
+#manualModal .modal-body {
+    padding: 0;
+    background: #212529;
+}
+
+#manualModal .modal-footer {
+    background: #343a40;
+    border-top: 1px solid #495057;
+    border-radius: 0 0 12px 12px;
+    padding: 1rem 1.5rem;
+}
+
+#manualModal .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+}
+
+#manualModal .btn-close:hover {
+    opacity: 1;
+}
+
+#manualModal .btn-secondary {
+    background: #6c757d;
+    border-color: #6c757d;
+    color: white;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+#manualModal .btn-secondary:hover {
+    background: #5a6268;
+    border-color: #545b62;
+    transform: translateY(-1px);
+}
+
+/* Estilos para o iframe do manual */
+#manualIframe {
+    border: none;
+    background: #212529;
+    border-radius: 0;
+}
+
+/* Responsividade para dispositivos móveis */
+@media (max-width: 768px) {
+    #manualModal .modal-dialog {
+        margin: 0;
+        max-width: 100%;
+        height: 100%;
+    }
+    
+    #manualModal .modal-content {
+        height: 100%;
+        border-radius: 0;
+    }
+    
+    #manualModal .modal-header {
+        border-radius: 0;
+    }
+    
+    #manualModal .modal-footer {
+        border-radius: 0;
+    }
+    
+    #manualIframe {
+        height: calc(100vh - 140px) !important;
+    }
+}
+
+/* Animações de entrada */
+#manualModal.fade .modal-dialog {
+    transition: transform 0.3s ease-out;
+    transform: translate(0, -50px);
+}
+
+#manualModal.show .modal-dialog {
+    transform: none;
+}
+
+/* Estilos para o modal fullscreen */
+.modal-fullscreen .modal-dialog {
+    max-width: 100%;
+    margin: 0;
+    height: 100%;
+}
+
+.modal-fullscreen .modal-content {
+    height: 100%;
+    border-radius: 0;
+}
+
+/* Melhorias de acessibilidade */
+#manualModal .modal-content:focus {
+    outline: 2px solid #3B81F6;
+    outline-offset: 2px;
+}
+
+#manualModal .btn:focus {
+    box-shadow: 0 0 0 0.2rem rgba(59, 129, 246, 0.25);
+}
+
+/* Scrollbar personalizada para o iframe */
+#manualIframe::-webkit-scrollbar {
+    width: 8px;
+}
+
+#manualIframe::-webkit-scrollbar-track {
+    background: #343a40;
+}
+
+#manualIframe::-webkit-scrollbar-thumb {
+    background: #495057;
+    border-radius: 4px;
+}
+
+#manualIframe::-webkit-scrollbar-thumb:hover {
+    background: #6c757d;
+} 

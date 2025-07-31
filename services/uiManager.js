@@ -400,6 +400,17 @@ class UIManager {
                         .inline-flex.items-center.h-12.max-w-max.p-2.flex-none.transition-opacity.duration-300.opacity-100.bg-\\[transparent\\].border.border-gray-300.rounded-md svg {
                             stroke: #ffffff !important;
                         }
+                        
+                        /* Estilo para sugestões de pergunta (starter prompts) */
+                        .chatbot-host-bubble {
+                            background-color: #343a40 !important;
+                            color: #ffffff !important;
+                            border: 1px solid #495057 !important;
+                        }
+                        
+                        .chatbot-host-bubble:hover {
+                            background-color: #495057 !important;
+                        }
                     `,
                     chatWindow: {
                         showTitle: true,

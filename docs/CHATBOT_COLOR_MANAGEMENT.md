@@ -111,9 +111,33 @@ customCSS: `
         background-color: #343a40 !important;  // ← COR NO HOVER
     }
     
+    /* ===== ESTILOS PARA TABELAS ===== */
+    /* Estilo para todas as tabelas dentro do chatbot */
+    table {
+        color: #ffffff !important;
+        border-color: #495057 !important;
+    }
+    
+    /* Estilo para cabeçalhos de tabela (th) */
+    table th,
+    table thead th,
+    table thead td {
+        background-color: #343a40 !important;
+        color: #ffffff !important;
+        border-color: #495057 !important;
+        font-weight: bold !important;
+    }
+    
+    /* Estilo para células de dados (td) */
+    table td,
+    table tbody td {
+        background-color: #212529 !important;
+        color: #ffffff !important;
+        border-color: #495057 !important;
+    }
+    
     /* Outros estilos... */
 `
-```
 
 ## Como Alterar as Cores
 
@@ -177,6 +201,48 @@ botMessage: {
 // Antes
 textInput: {
     backgroundColor: '#212529',
+
+### 5. Alterar Cores das Tabelas
+
+**Localização**: `services/uiManager.js` linha ~450 (CSS customizado)
+
+```javascript
+// Antes - Cabeçalhos de tabela
+table th,
+table thead th,
+table thead td {
+    background-color: #343a40 !important;
+    color: #ffffff !important;
+    border-color: #495057 !important;
+    font-weight: bold !important;
+}
+
+// Depois - Cabeçalhos de tabela
+table th,
+table thead th,
+table thead td {
+    background-color: #2d2d2d !important;  // Exemplo: cinza mais escuro
+    color: #ffffff !important;
+    border-color: #404040 !important;
+    font-weight: bold !important;
+}
+
+// Antes - Células de dados
+table td,
+table tbody td {
+    background-color: #212529 !important;
+    color: #ffffff !important;
+    border-color: #495057 !important;
+}
+
+// Depois - Células de dados
+table td,
+table tbody td {
+    background-color: #1a1a1a !important;  // Exemplo: preto mais escuro
+    color: #ffffff !important;
+    border-color: #404040 !important;
+}
+```
     textColor: '#ffffff',
     // ...
 },
@@ -263,6 +329,37 @@ customCSS: `
 ### Problema: Bordas aparecendo nas mensagens
 
 **Solução**: Verificar se `border: none !important;` está definido no CSS customizado
+
+### Problema: Cabeçalhos de tabela aparecem em preto
+
+**Causa**: CSS customizado não está cobrindo elementos `th` e `thead`
+**Solução**: Adicionar regras específicas para tabelas no CSS customizado:
+
+```javascript
+/* Estilo para cabeçalhos de tabela (th) */
+table th,
+table thead th,
+table thead td {
+    background-color: #343a40 !important;
+    color: #ffffff !important;
+    border-color: #495057 !important;
+    font-weight: bold !important;
+}
+```
+
+### Problema: Tabelas com cores inconsistentes
+
+**Causa**: Estilos Bootstrap ou Flowise sobrescrevendo CSS customizado
+**Solução**: Usar `!important` e especificidade CSS adequada:
+
+```javascript
+/* Para tabelas com classes Bootstrap */
+.table th,
+.table thead th {
+    background-color: #343a40 !important;
+    color: #ffffff !important;
+}
+```
 
 ## Boas Práticas
 

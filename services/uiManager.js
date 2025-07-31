@@ -445,6 +445,80 @@ class UIManager {
                             font-weight: 500 !important;
                             font-size: 11px !important;
                         }
+                        
+                        /* ===== ESTILOS PARA TABELAS ===== */
+                        /* Estilo para todas as tabelas dentro do chatbot */
+                        table {
+                            color: #ffffff !important;
+                            border-color: #495057 !important;
+                        }
+                        
+                        /* Estilo para cabeçalhos de tabela (th) */
+                        table th,
+                        table thead th,
+                        table thead td {
+                            background-color: #343a40 !important;
+                            color: #ffffff !important;
+                            border-color: #495057 !important;
+                            font-weight: bold !important;
+                        }
+                        
+                        /* Estilo para células de dados (td) */
+                        table td,
+                        table tbody td {
+                            background-color: #212529 !important;
+                            color: #ffffff !important;
+                            border-color: #495057 !important;
+                        }
+                        
+                        /* Estilo para linhas alternadas (striped) */
+                        table tbody tr:nth-child(even) td {
+                            background-color: #2d2d2d !important;
+                        }
+                        
+                        /* Estilo para hover nas linhas da tabela */
+                        table tbody tr:hover td {
+                            background-color: #404040 !important;
+                        }
+                        
+                        /* Estilo para bordas da tabela */
+                        table,
+                        table th,
+                        table td {
+                            border: 1px solid #495057 !important;
+                        }
+                        
+                        /* Estilo para tabelas com classes Bootstrap */
+                        .table {
+                            color: #ffffff !important;
+                        }
+                        
+                        .table th,
+                        .table thead th {
+                            background-color: #343a40 !important;
+                            color: #ffffff !important;
+                            border-color: #495057 !important;
+                        }
+                        
+                        .table td,
+                        .table tbody td {
+                            background-color: #212529 !important;
+                            color: #ffffff !important;
+                            border-color: #495057 !important;
+                        }
+                        
+                        .table-striped tbody tr:nth-child(even) td {
+                            background-color: #2d2d2d !important;
+                        }
+                        
+                        .table-bordered {
+                            border-color: #495057 !important;
+                        }
+                        
+                        .table-bordered th,
+                        .table-bordered td {
+                            border-color: #495057 !important;
+                        }
                     `,
                     chatWindow: {
                         showTitle: true,

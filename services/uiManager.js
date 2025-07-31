@@ -383,7 +383,24 @@ class UIManager {
                         blurredBackgroundColor: 'rgba(0, 0, 0, 0.4)',
                         backgroundColor: 'white',
                     },
-                    customCSS: ``,
+                    customCSS: `
+                        /* Estilo para elementos de anexo */
+                        .inline-flex.items-center.h-12.max-w-max.p-2.flex-none.transition-opacity.duration-300.opacity-100.bg-\\[transparent\\].border.border-gray-300.rounded-md {
+                            background-color: #212529 !important;
+                            border-color: #495057 !important;
+                            color: #ffffff !important;
+                        }
+                        
+                        /* Estilo para o texto do anexo */
+                        .inline-flex.items-center.h-12.max-w-max.p-2.flex-none.transition-opacity.duration-300.opacity-100.bg-\\[transparent\\].border.border-gray-300.rounded-md span {
+                            color: #ffffff !important;
+                        }
+                        
+                        /* Estilo para o ícone do anexo */
+                        .inline-flex.items-center.h-12.max-w-max.p-2.flex-none.transition-opacity.duration-300.opacity-100.bg-\\[transparent\\].border.border-gray-300.rounded-md svg {
+                            stroke: #ffffff !important;
+                        }
+                    `,
                     chatWindow: {
                         showTitle: true,
                         showAgentMessages: true,

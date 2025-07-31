@@ -411,6 +411,27 @@ class UIManager {
                         .chatbot-host-bubble:hover {
                             background-color: #495057 !important;
                         }
+                        
+                        /* Estilo para botões de copiar e feedback */
+                        .chatbot-button {
+                            background-color: transparent !important;
+                            border: none !important;
+                            color: #ffffff !important;
+                        }
+                        
+                        .chatbot-button:hover {
+                            background-color: rgba(255, 255, 255, 0.1) !important;
+                        }
+                        
+                        .chatbot-button svg {
+                            stroke: #ffffff !important;
+                        }
+                        
+                        /* Estilo para o título "Perguntas sugeridas" */
+                        .text-sm.text-gray-700 {
+                            color: #ffffff !important;
+                            font-weight: 500 !important;
+                        }
                     `,
                     chatWindow: {
                         showTitle: true,

@@ -6,6 +6,7 @@ import GPTManager from './gptManager.js';
 import ProfileManager from './profileManager.js';
 import { logout } from './auth.js';
 import { getJwt } from './auth.js';
+import { showAlert } from './alertManager.js';
 import { createMessageLoading, replaceWithMessageLoading, withMessageLoading, setMessageLoadingEnabled, isMessageLoadingEnabled, toggleMessageLoading } from './messageLoading.js';
 
 class UIManager {
@@ -87,6 +88,7 @@ class UIManager {
         const selectGPTButton = document.getElementById('select-gpt-button');
         const profileButton = document.getElementById('profile-button');
         const configButton = document.getElementById('config-button');
+        const manualButton = document.getElementById('manual-button');
         const adminButton = document.getElementById('admin-button');
         const logoutButton = document.getElementById('logout-button');
 
@@ -113,6 +115,15 @@ class UIManager {
                 event.stopPropagation();
                 this.closeUserMenu();
                 this.openConfigModal();
+            });
+        }
+
+        if (manualButton) {
+            manualButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                this.closeUserMenu();
+                this.openManualModal();
             });
         }
 
@@ -486,7 +497,7 @@ class UIManager {
                           time: true,
                         },
                         footer: {
-                            textColor: '#212529',
+                            textColor: '#ffffff',
                             text: 'O LexiDecis pode cometer erros. Sempre verifique as respostas - ',
                             company: 'LexiDecis',
                             companyLink: 'https://lexidecis.com.br',
@@ -848,6 +859,28 @@ class UIManager {
                 await this.updateUserInfo(); // Atualiza para mostrar "U" quando o usuário faz logout
             }
         });
+    }
+
+    /* --- Abrir Modal do Manual do Usuário --- */
+    openManualModal() {
+        this.debugLog('[UIManager] Abrindo modal do manual do usuário...');
+        
+        const manualModal = document.getElementById('manualModal');
+        if (manualModal) {
+            const modal = new bootstrap.Modal(manualModal);
+            modal.show();
+            
+            // Recarregar o iframe quando o modal for aberto
+            manualModal.addEventListener('shown.bs.modal', () => {
+                const iframe = document.getElementById('manualIframe');
+                if (iframe) {
+                    iframe.src = iframe.src; // Recarrega o iframe
+                }
+            }, { once: true }); // Executar apenas uma vez
+        } else {
+            this.debugLog('[UIManager] Modal do manual não encontrado no DOM');
+            showAlert('Erro ao abrir o manual do usuário.', 'error');
+        }
     }
 }
 

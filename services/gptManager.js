@@ -106,7 +106,7 @@ export default class GPTManager {
         const spinnerOverlay = document.createElement('div');
         spinnerOverlay.classList.add('spinner-overlay', 'd-none');
         spinnerOverlay.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;display:flex;justify-content:center;align-items:center;background:rgba(255,255,255,0.7);';
-        spinnerOverlay.innerHTML = '<div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>';
+        spinnerOverlay.innerHTML = '<div class="gpt-loading-bar" role="status"><span class="visually-hidden">Loading...</span></div>';
         cardDiv.appendChild(spinnerOverlay);
 
         // Removido o listener individual de clique do card; agora o clique é delegado no container.

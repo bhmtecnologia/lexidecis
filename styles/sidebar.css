@@ -602,12 +602,24 @@
 }
 
 .lexi-loading-spinner {
-    width: 50px;
-    height: 50px;
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #fd7e14;
-    border-radius: 50%;
-    animation: lexi-spin 1s linear infinite;
+    width: 60px;
+    height: 4px;
+    background: linear-gradient(90deg, #fd7e14, #e55a00);
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+    animation: lexi-progress 2s ease-in-out infinite;
+}
+
+.lexi-loading-spinner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+    animation: lexi-shimmer 1.5s ease-in-out infinite;
 }
 
 .lexi-loading-text {
@@ -617,9 +629,21 @@
     text-align: center;
 }
 
-@keyframes lexi-spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+@keyframes lexi-progress {
+    0% { 
+        background: linear-gradient(90deg, #fd7e14, #e55a00);
+    }
+    50% { 
+        background: linear-gradient(90deg, #e55a00, #fd7e14);
+    }
+    100% { 
+        background: linear-gradient(90deg, #fd7e14, #e55a00);
+    }
+}
+
+@keyframes lexi-shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
 }
 
 /* Desabilitar interação durante loading */

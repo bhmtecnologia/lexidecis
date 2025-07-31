@@ -167,25 +167,49 @@ export default class UnifiedLoadingManager {
             }
 
             .unified-loading-spinner {
-                width: 50px;
-                height: 50px;
-                border: 4px solid rgba(255, 255, 255, 0.3);
-                border-top: 4px solid ${this.config.primaryColor};
-                border-radius: 50%;
-                animation: unified-spin 1s linear infinite;
-                margin: 0 auto 1rem;
+                width: 100%;
+                height: 6px;
+                background: linear-gradient(90deg, ${this.config.primaryColor}, ${this.config.secondaryColor});
+                border-radius: 3px;
+                margin: 0.5rem auto 1rem;
+                position: relative;
+                overflow: hidden;
+                animation: unified-progress 2s ease-in-out infinite;
             }
 
-            @keyframes unified-spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
+            .unified-loading-spinner::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+                animation: unified-shimmer 1.5s ease-in-out infinite;
+            }
+
+            @keyframes unified-progress {
+                0% { 
+                    background: linear-gradient(90deg, ${this.config.primaryColor}, ${this.config.secondaryColor});
+                }
+                50% { 
+                    background: linear-gradient(90deg, ${this.config.secondaryColor}, ${this.config.primaryColor});
+                }
+                100% { 
+                    background: linear-gradient(90deg, ${this.config.primaryColor}, ${this.config.secondaryColor});
+                }
+            }
+
+            @keyframes unified-shimmer {
+                0% { left: -100%; }
+                100% { left: 100%; }
             }
 
             .unified-loading-title {
                 color: ${this.config.textColor};
                 font-size: 1.2rem;
                 font-weight: 600;
-                margin-bottom: 0.5rem;
+                margin-bottom: 0;
             }
 
             .unified-loading-message {
@@ -277,9 +301,8 @@ export default class UnifiedLoadingManager {
             }
 
             .unified-loading-inline .unified-loading-spinner {
-                width: 16px;
-                height: 16px;
-                border-width: 2px;
+                width: 20px;
+                height: 3px;
                 margin: 0;
             }
 
@@ -322,8 +345,8 @@ export default class UnifiedLoadingManager {
         container.innerHTML = `
             <div class="unified-loading-overlay">
                 <div class="unified-loading-modal">
-                    <div class="unified-loading-spinner"></div>
                     <div class="unified-loading-title"></div>
+                    <div class="unified-loading-spinner"></div>
                     <div class="unified-loading-message"></div>
                     <div class="unified-loading-progress" style="display: none;">
                         <div class="unified-loading-progress-bar"></div>

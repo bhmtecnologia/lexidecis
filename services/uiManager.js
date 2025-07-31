@@ -498,7 +498,7 @@ class UIManager {
                         },
                         footer: {
                             textColor: '#ffffff',
-                            text: 'O LexiDecis pode cometer erros. Sempre verifique as respostas - ',
+                            text: 'Sempre verifique as respostas - ',
                             company: 'LexiDecis',
                             companyLink: 'https://lexidecis.com.br',
                         },

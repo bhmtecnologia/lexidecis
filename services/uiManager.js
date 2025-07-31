@@ -365,7 +365,7 @@ class UIManager {
                 },
                 theme: {
                     button: {
-                        backgroundColor: '#282828',
+                        backgroundColor: '#363839',
                         right: 20,
                         bottom: 20,
                         size: 48,
@@ -377,7 +377,7 @@ class UIManager {
                         title: 'Aviso',
                         message: 'Ao utilizar esse serviço, está concordando com os termos de uso <a target="_blank" href="https://v1.lexidecis.com.br/terms.html">Termos & Condições</a>',
                         textColor: 'black',
-                        buttonColor: '#282828',
+                        buttonColor: '#363839',
                         buttonText: 'Concordo, quero iniciar o LexiDecis',
                         buttonTextColor: 'white',
                         blurredBackgroundColor: 'rgba(0, 0, 0, 0.4)',
@@ -388,6 +388,7 @@ class UIManager {
                         showTitle: true,
                         showAgentMessages: true,
                         title: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.name : 'Escolha um GPT',
+                        titleBackgroundColor: '#363839',
                         titleAvatarSrc: 'https://www.bhm.tec.br/images/152x152/10788698/favicon.png',
                         welcomeMessage: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.description : 'Bem-vindo ao assistente',
                         errorMessage: 'Ops, reduza sua pergunta e tente novamente.',
@@ -411,16 +412,16 @@ class UIManager {
                           showAvatar: false,
                         },
                         userMessage: {
-                          backgroundColor: '#282828',
+                          backgroundColor: '#363839',
                           textColor: '#ffffff',
                           showAvatar: false,
                           //avatarSrc: 'https://raw.githubusercontent.com/zahidkhawaja/langchain-chat-nextjs/main/public/usericon.png',
                         },
                         textInput: {
                           placeholder: 'Mensagem...',
-                          backgroundColor: '#282828',
-                          textColor: '#f1f1f1',
-                          sendButtonColor: '#f1f1f1',
+                          backgroundColor: '#363839',
+                          textColor: '#ffffff',
+                          sendButtonColor: '#ffffff',
                           maxChars: 100000,
                           maxCharsWarningMessage: 'Você excedeu o limite de caracteres. Insira menos de 100000 caracteres.',
                           autoFocus: true,
@@ -428,14 +429,14 @@ class UIManager {
                           receiveMessageSound: true,
                         },
                         feedback: {
-                          color: '#282828',
+                          color: '#363839',
                         },
                         dateTimeToggle: {
                           date: true,
                           time: true,
                         },
                         footer: {
-                            textColor: '#282828',
+                            textColor: '#363839',
                             text: 'O LexiDecis pode cometer erros. Sempre verifique as respostas - ',
                             company: 'LexiDecis',
                             companyLink: 'https://lexidecis.com.br',

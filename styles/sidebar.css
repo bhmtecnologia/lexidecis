@@ -804,12 +804,12 @@ li.list-group-item.bg-light {
 #sidebarMenu *::-webkit-scrollbar-track,
 .lexi-chat-list::-webkit-scrollbar-track,
 .lexi-sidebar-menu::-webkit-scrollbar-track {
-    background: #343a40;
+    background: transparent;
     border-radius: 3px;
 }
 
 .lexi-user-menu-dropdown::-webkit-scrollbar-track {
-    background: #343a40;
+    background: transparent;
     border-radius: 2px;
 }
 
@@ -842,13 +842,13 @@ li.list-group-item.bg-light {
 .lexi-chat-list,
 .lexi-sidebar-menu {
     scrollbar-width: thin;
-    scrollbar-color: #6c757d #343a40;
+    scrollbar-color: #6c757d transparent;
 }
 
 /* Dropdown do usuário com barra mais fina */
 .lexi-user-menu-dropdown {
     scrollbar-width: thin;
-    scrollbar-color: #6c757d #343a40;
+    scrollbar-color: #6c757d transparent;
 }
 
 /* Configuração específica para desktop */

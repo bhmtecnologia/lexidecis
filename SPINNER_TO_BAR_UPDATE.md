@@ -16,6 +16,8 @@ Este documento registra as alterações feitas para substituir os spinners circu
   - Adicionado: efeito de brilho com `::before`
 - **Posicionamento**: Barra movida para baixo do título (linha 340-350)
 - **Espaçamento**: Ajustado margin para melhor visualização
+- **FILE_PROCESSING**: Configurado para usar spinner nativo do Bootstrap (linha 57-63)
+- **Loading Inline**: Atualizado para usar `spinner-border` nativo (linha 625-630)
 
 ### 2. `services/gptManager.js`
 - **Linha 108**: Substituído `spinner-border` por `gpt-loading-bar`
@@ -48,6 +50,13 @@ Este documento registra as alterações feitas para substituir os spinners circu
 - **Animações**: 
   - `unified-progress`: Mudança de gradiente
   - `unified-shimmer`: Efeito de brilho deslizante
+
+### 4. Loading de Anexos (FILE_PROCESSING)
+- **Tipo**: Inline com spinner nativo do Bootstrap
+- **Classe**: `spinner-border spinner-border-sm`
+- **Dimensões**: 1rem x 1rem
+- **Comportamento**: Spinner circular rotativo nativo
+- **Uso**: Processamento de upload de arquivos e anexos
 
 ### 2. GPT Manager
 - **Dimensões**: 60px de largura, 4px de altura

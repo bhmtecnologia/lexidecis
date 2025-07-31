@@ -57,8 +57,8 @@ export default class UnifiedLoadingManager {
             },
             FILE_PROCESSING: {
                 name: 'Processamento de Arquivo',
-                type: 'overlay',
-                showProgress: true,
+                type: 'inline',
+                showProgress: false,
                 showSteps: false,
                 allowCancel: true,
                 timeout: 30000
@@ -300,10 +300,10 @@ export default class UnifiedLoadingManager {
                 font-size: 0.9rem;
             }
 
-            .unified-loading-inline .unified-loading-spinner {
-                width: 20px;
-                height: 3px;
+            .unified-loading-inline .spinner-border {
                 margin: 0;
+                width: 1rem;
+                height: 1rem;
             }
 
             /* Responsividade */
@@ -624,7 +624,7 @@ export default class UnifiedLoadingManager {
         const element = document.createElement('div');
         element.className = 'unified-loading-inline';
         element.innerHTML = `
-            <div class="unified-loading-spinner"></div>
+            <div class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
             <span>${options.message || 'Carregando...'}</span>
         `;
         

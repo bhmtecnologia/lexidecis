@@ -415,13 +415,13 @@ class UIManager {
                         
                         /* Estilo para sugestões de pergunta (starter prompts) */
                         .chatbot-host-bubble {
-                            background-color: #343a40 !important;
+                            background-color: #212529 !important;
                             color: #ffffff !important;
-                            border: 1px solid #495057 !important;
+                            border: none !important;
                         }
                         
                         .chatbot-host-bubble:hover {
-                            background-color: #495057 !important;
+                            background-color: #343a40 !important;
                         }
                         
                         /* Estilo para botões de copiar e feedback */

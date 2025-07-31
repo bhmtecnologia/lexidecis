@@ -409,7 +409,7 @@ class UIManager {
                         titleAvatarSrc: 'https://www.bhm.tec.br/images/152x152/10788698/favicon.png',
                         welcomeMessage: this.stateManager.selectedGPT ? this.stateManager.selectedGPT.description : 'Bem-vindo ao assistente',
                         errorMessage: 'Ops, reduza sua pergunta e tente novamente.',
-                        backgroundColor: '#f1f1f1',
+                        backgroundColor: '#212529',
                         fontSize: 13,
                         starterPrompts: (() => {
                             const prompts = this.stateManager.selectedGPT?.starterPrompts;
@@ -424,12 +424,12 @@ class UIManager {
                         sourceDocsTitle: 'Sources:',
                         renderHTML: true,
                         botMessage: {
-                          backgroundColor: '#f1f1f1',
-                          textColor: '#000000',
+                          backgroundColor: '#212529',
+                          textColor: '#ffffff',
                           showAvatar: false,
                         },
                         userMessage: {
-                          backgroundColor: '#212529',
+                          backgroundColor: '#343a40',
                           textColor: '#ffffff',
                           showAvatar: false,
                           //avatarSrc: 'https://raw.githubusercontent.com/zahidkhawaja/langchain-chat-nextjs/main/public/usericon.png',

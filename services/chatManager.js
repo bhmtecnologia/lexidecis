@@ -103,14 +103,29 @@ class ChatManager {
             return;
         }
 
-        // Cria os itens de chat diretamente sem agrupamento por data
-        const fragment = document.createDocumentFragment();
-        
         // Ordena os chats por data: os mais novos primeiro
         chatsToDisplay.sort((a, b) => new Date(b.date) - new Date(a.date));
         
-        // Cria os itens de chat para cada chat
-        chatsToDisplay.forEach(chat => {
+        // Agrupa os chats por data
+        const groupedChats = this.groupChatsByDate(chatsToDisplay);
+        
+        // Cria os itens de chat agrupados
+        const fragment = document.createDocumentFragment();
+        
+                    // Itera pelos grupos na ordem desejada
+            const groupOrder = ['Hoje', 'Ontem', 'Esta Semana', 'Este Mês', 'Anterior'];
+        
+        groupOrder.forEach(groupName => {
+            const chatsInGroup = groupedChats[groupName];
+            if (chatsInGroup && chatsInGroup.length > 0) {
+                // Cria o cabeçalho do grupo
+                const groupHeader = document.createElement('li');
+                groupHeader.classList.add('list-group-item', 'chat-group-header', 'fw-bold', 'bg-light', 'text-muted');
+                groupHeader.textContent = groupName;
+                fragment.appendChild(groupHeader);
+                
+                // Cria os itens de chat para este grupo
+                chatsInGroup.forEach(chat => {
                     const chatItem = document.createElement('li');
                     chatItem.classList.add('list-group-item', 'chat-item', 'd-flex', 'justify-content-between', 'align-items-center');
                     chatItem.innerHTML = `
@@ -172,8 +187,53 @@ class ChatManager {
                     chatItem.addEventListener('click', this.handleChatClick.bind(this));
                     fragment.appendChild(chatItem);
                 });
+            }
+        });
 
         chatList.appendChild(fragment);
+    }
+
+    /**
+     * Agrupa os chats por data de modificação.
+     * @param {Array<Object>} chats - Lista de chats para agrupar.
+     * @returns {Object} Objeto com chats agrupados por período.
+     */
+    groupChatsByDate(chats) {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const weekAgo = new Date(today);
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        const monthAgo = new Date(today);
+        monthAgo.setMonth(monthAgo.getMonth() - 1);
+
+        const groups = {
+            'Hoje': [],
+            'Ontem': [],
+            'Esta Semana': [],
+            'Este Mês': [],
+            'Anterior': []
+        };
+
+        chats.forEach(chat => {
+            const chatDate = new Date(chat.date);
+            const chatDateOnly = new Date(chatDate.getFullYear(), chatDate.getMonth(), chatDate.getDate());
+
+            if (chatDateOnly.getTime() === today.getTime()) {
+                groups['Hoje'].push(chat);
+            } else if (chatDateOnly.getTime() === yesterday.getTime()) {
+                groups['Ontem'].push(chat);
+            } else if (chatDateOnly >= weekAgo) {
+                groups['Esta Semana'].push(chat);
+            } else if (chatDateOnly >= monthAgo) {
+                groups['Este Mês'].push(chat);
+            } else {
+                groups['Anterior'].push(chat);
+            }
+        });
+
+        return groups;
     }
 
     /* ============================

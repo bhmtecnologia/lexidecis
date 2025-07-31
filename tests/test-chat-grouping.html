@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste - Agrupamento de Chats</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../styles/chat.css">
+    <style>
+        body {
+            background-color: #363839;
+            color: white;
+        }
+        .test-container {
+            max-width: 400px;
+            margin: 50px auto;
+            background-color: #363839;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .test-title {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #f4f6f8;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h3 class="test-title">Teste - Agrupamento de Chats</h3>
+        
+        <!-- Campo de pesquisa -->
+        <div class="input-group mb-3">
+            <span class="input-group-text" id="search-icon"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control" id="search-input" placeholder="Buscar" aria-label="Pesquisar chats">
+            <button class="btn btn-outline-secondary" type="button" id="clear-search-button">&times;</button>
+        </div>
+
+        <!-- Lista de chats -->
+        <ul id="chat-list" class="list-group overflow-auto bg-dark flex-grow-1">
+            <!-- Os chats serão carregados dinamicamente -->
+        </ul>
+    </div>
+
+    <script type="module">
+        // Dados de teste com diferentes datas
+        const testChats = [
+            {
+                id: '1',
+                name: 'Chat de hoje 1',
+                date: new Date().toISOString(),
+                fk_gpt_id: 'gpt1'
+            },
+            {
+                id: '2',
+                name: 'Chat de hoje 2',
+                date: new Date().toISOString(),
+                fk_gpt_id: 'gpt1'
+            },
+            {
+                id: '3',
+                name: 'Chat de ontem 1',
+                date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+                fk_gpt_id: 'gpt1'
+            },
+            {
+                id: '4',
+                name: 'Chat de ontem 2',
+                date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+                fk_gpt_id: 'gpt1'
+            },
+            {
+                id: '5',
+                name: 'Chat desta semana 1',
+                date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+                fk_gpt_id: 'gpt1'
+            },
+            {
+                id: '6',
+                name: 'Chat desta semana 2',
+                date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+                fk_gpt_id: 'gpt1'
+            },
+            {
+                id: '7',
+                name: 'Chat deste mês 1',
+                date: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+                fk_gpt_id: 'gpt1'
+            },
+            {
+                id: '8',
+                name: 'Chat deste mês 2',
+                date: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
+                fk_gpt_id: 'gpt1'
+            },
+            {
+                id: '9',
+                name: 'Chat antigo 1',
+                date: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString(),
+                fk_gpt_id: 'gpt1'
+            },
+            {
+                id: '10',
+                name: 'Chat antigo 2',
+                date: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
+                fk_gpt_id: 'gpt1'
+            }
+        ];
+
+        // Função para agrupar chats por data (copiada do ChatManager)
+        function groupChatsByDate(chats) {
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const weekAgo = new Date(today);
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            const monthAgo = new Date(today);
+            monthAgo.setMonth(monthAgo.getMonth() - 1);
+
+            const groups = {
+                'Hoje': [],
+                'Ontem': [],
+                'Esta Semana': [],
+                'Este Mês': [],
+                'Anterior': []
+            };
+
+            chats.forEach(chat => {
+                const chatDate = new Date(chat.date);
+                const chatDateOnly = new Date(chatDate.getFullYear(), chatDate.getMonth(), chatDate.getDate());
+
+                if (chatDateOnly.getTime() === today.getTime()) {
+                    groups['Hoje'].push(chat);
+                } else if (chatDateOnly.getTime() === yesterday.getTime()) {
+                    groups['Ontem'].push(chat);
+                } else if (chatDateOnly >= weekAgo) {
+                    groups['Esta Semana'].push(chat);
+                } else if (chatDateOnly >= monthAgo) {
+                    groups['Este Mês'].push(chat);
+                } else {
+                    groups['Anterior'].push(chat);
+                }
+            });
+
+            return groups;
+        }
+
+        // Função para destacar texto de pesquisa
+        function highlightSearch(text) {
+            return text;
+        }
+
+        // Função para popular o menu de chats
+        function populateChatMenu(chatsToDisplay) {
+            const chatList = document.getElementById('chat-list');
+            if (!chatList) {
+                console.error('Elemento #chat-list não encontrado.');
+                return;
+            }
+            chatList.innerHTML = '';
+
+            if (!chatsToDisplay || chatsToDisplay.length === 0) {
+                const emptyMessage = document.createElement('li');
+                emptyMessage.textContent = 'Nenhum chat encontrado.';
+                emptyMessage.classList.add('list-group-item', 'text-center');
+                chatList.appendChild(emptyMessage);
+                return;
+            }
+
+            // Ordena os chats por data: os mais novos primeiro
+            chatsToDisplay.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            // Agrupa os chats por data
+            const groupedChats = groupChatsByDate(chatsToDisplay);
+            
+            // Cria os itens de chat agrupados
+            const fragment = document.createDocumentFragment();
+            
+            // Itera pelos grupos na ordem desejada
+            const groupOrder = ['Hoje', 'Ontem', 'Esta Semana', 'Este Mês', 'Anterior'];
+            
+            groupOrder.forEach(groupName => {
+                const chatsInGroup = groupedChats[groupName];
+                if (chatsInGroup && chatsInGroup.length > 0) {
+                    // Cria o cabeçalho do grupo
+                    const groupHeader = document.createElement('li');
+                    groupHeader.classList.add('list-group-item', 'chat-group-header', 'fw-bold', 'bg-light', 'text-muted');
+                    groupHeader.textContent = groupName;
+                    fragment.appendChild(groupHeader);
+                    
+                    // Cria os itens de chat para este grupo
+                    chatsInGroup.forEach(chat => {
+                        const chatItem = document.createElement('li');
+                        chatItem.classList.add('list-group-item', 'chat-item', 'd-flex', 'justify-content-between', 'align-items-center');
+                        chatItem.innerHTML = `
+                            <div class="chat-item d-flex align-items-center justify-content-between">
+                                <span class="chat-name text-start">${highlightSearch(chat.name || 'Chat sem nome')}</span>
+                                <div class="dropdown">
+                                    <button 
+                                        class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                        type="button" 
+                                        id="chatOptions-${chat.id}" 
+                                        data-bs-toggle="dropdown" 
+                                        aria-expanded="false" 
+                                        title="Opções">
+                                        <i class="bi bi-gear"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="chatOptions-${chat.id}">
+                                        <li>
+                                            <button 
+                                                class="dropdown-item rename-chat-button" 
+                                                data-chat-id="${chat.id}" 
+                                                title="Renomear Chat">
+                                                Renomear
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button 
+                                                class="dropdown-item delete-chat-button" 
+                                                data-chat-id="${chat.id}" 
+                                                title="Excluir Chat">
+                                                Excluir
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        `;
+
+                        // Anexa informações importantes ao elemento
+                        chatItem.dataset.chatId = chat.id;
+                        chatItem.dataset.chatDate = chat.date;
+                        chatItem.dataset.fkGptId = chat.fk_gpt_id;
+
+                        // Event listeners para renomear e excluir
+                        chatItem.querySelector('.rename-chat-button').addEventListener('click', (event) => {
+                            event.stopPropagation();
+                            console.log('Renomear chat:', chat.id);
+                        });
+                        chatItem.querySelector('.delete-chat-button').addEventListener('click', (event) => {
+                            event.stopPropagation();
+                            console.log('Excluir chat:', chat.id);
+                        });
+
+                        // Event listener para o botão da engrenagem (evitar propagação)
+                        chatItem.querySelector('.dropdown-toggle').addEventListener('click', (event) => {
+                            event.stopPropagation();
+                        });
+
+                        // Clique no item de chat
+                        chatItem.addEventListener('click', (event) => {
+                            console.log('Chat clicado:', chat.id);
+                        });
+                        
+                        fragment.appendChild(chatItem);
+                    });
+                }
+            });
+
+            chatList.appendChild(fragment);
+        }
+
+        // Inicializar o teste
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Teste de agrupamento iniciado');
+            populateChatMenu(testChats);
+            
+            // Funcionalidade de pesquisa
+            const searchInput = document.getElementById('search-input');
+            const clearSearchButton = document.getElementById('clear-search-button');
+            
+            searchInput.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                const filteredChats = testChats.filter(chat => 
+                    chat.name.toLowerCase().includes(searchTerm)
+                );
+                populateChatMenu(filteredChats);
+            });
+            
+            clearSearchButton.addEventListener('click', () => {
+                searchInput.value = '';
+                populateChatMenu(testChats);
+            });
+        });
+    </script>
+</body>
+</html> 

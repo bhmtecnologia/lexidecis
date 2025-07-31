@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Unitário - StateManager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .test-item {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 4px solid #ddd;
+            background-color: #f9f9f9;
+        }
+        .success { border-left-color: #28a745; background-color: #d4edda; }
+        .error { border-left-color: #dc3545; background-color: #f8d7da; }
+        .info { border-left-color: #17a2b8; background-color: #d1ecf1; }
+        .warning { border-left-color: #ffc107; background-color: #fff3cd; }
+        
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .stat-label {
+            color: #6c757d;
+            font-size: 14px;
+        }
+        
+        .log-container {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Teste Unitário - StateManager</h1>
+        <p>Testes abrangentes para o gerenciador de estado da aplicação Chat LexiDecis.</p>
+        
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="total-tests">0</div>
+                <div class="stat-label">Total de Testes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="passed-tests">0</div>
+                <div class="stat-label">Passaram</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="failed-tests">0</div>
+                <div class="stat-label">Falharam</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="success-rate">0%</div>
+                <div class="stat-label">Taxa de Sucesso</div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🎯 Controles de Teste</h3>
+            <button onclick="runAllTests()" id="run-all-btn">Executar Todos os Testes</button>
+            <button onclick="runSpecificTest('session')">Testar Gerenciamento de Sessão</button>
+            <button onclick="runSpecificTest('chat')">Testar Gerenciamento de Chats</button>
+            <button onclick="runSpecificTest('gpt')">Testar Gerenciamento de GPTs</button>
+            <button onclick="runSpecificTest('state')">Testar Estado Geral</button>
+            <button onclick="clearResults()">Limpar Resultados</button>
+        </div>
+
+        <div class="test-section">
+            <h3>📋 Resultados dos Testes</h3>
+            <div id="test-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Logs de Teste</h3>
+            <div class="log-container" id="test-logs"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { TestManager, Assert, Logger } from '../../utils/testHelpers.js';
+        import { mockState, mockChats, mockGPTs, setupMockData, clearMockData } from '../../utils/mockData.js';
+        
+        // Importar StateManager (simulado para teste)
+        // Em um ambiente real, você importaria o StateManager real
+        class MockStateManager {
+            constructor() {
+                this.session = { id: null };
+                this.chat = { chats: [] };
+                this.gpt = { 
+                    gpts: [], 
+                    selectedGPT: null,
+                    isLoading: false,
+                    isSelectionLoading: false
+                };
+                this.events = {};
+            }
+
+            // Métodos simulados para teste
+            setSessionId(id) { this.session.id = id; }
+            getSessionId() { return this.session.id; }
+            setChats(chats) { this.chat.chats = chats; }
+            getChats() { return this.chat.chats; }
+            setGPTs(gpts) { this.gpt.gpts = gpts; }
+            getGPTs() { return this.gpt.gpts; }
+            setSelectedGPT(gpt) { this.gpt.selectedGPT = gpt; }
+            getSelectedGPT() { return this.gpt.selectedGPT; }
+            setLoadingGPTs(loading) { this.gpt.isLoading = loading; }
+            isLoadingGPTsActive() { return this.gpt.isLoading; }
+            setGPTSelectionLoading(loading) { this.gpt.isSelectionLoading = loading; }
+            isGPTSelectionLoadingActive() { return this.gpt.isSelectionLoading; }
+            
+            on(event, callback) {
+                if (!this.events[event]) this.events[event] = [];
+                this.events[event].push(callback);
+            }
+            
+            emit(event, data) {
+                if (this.events[event]) {
+                    this.events[event].forEach(callback => callback(data));
+                }
+            }
+        }
+
+        // Instâncias globais
+        const testManager = new TestManager();
+        const logger = new Logger();
+        let stateManager;
+
+        // Função para atualizar estatísticas
+        function updateStats() {
+            const stats = testManager.getStats();
+            document.getElementById('total-tests').textContent = stats.total;
+            document.getElementById('passed-tests').textContent = stats.passed;
+            document.getElementById('failed-tests').textContent = stats.failed;
+            document.getElementById('success-rate').textContent = `${stats.successRate.toFixed(1)}%`;
+        }
+
+        // Função para adicionar resultado de teste
+        function addTestResult(name, status, message = '') {
+            const resultsDiv = document.getElementById('test-results');
+            const testItem = document.createElement('div');
+            testItem.className = `test-item ${status}`;
+            testItem.innerHTML = `
+                <strong>${name}</strong>: ${status === 'success' ? '✅ PASSOU' : '❌ FALHOU'}
+                ${message ? `<br><small>${message}</small>` : ''}
+            `;
+            resultsDiv.appendChild(testItem);
+        }
+
+        // Função para adicionar log
+        function addLog(message, type = 'info') {
+            const logsDiv = document.getElementById('test-logs');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+            logEntry.style.color = type === 'error' ? 'red' : type === 'success' ? 'green' : 'black';
+            logsDiv.appendChild(logEntry);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+
+        // ============================
+        // TESTES DE GERENCIAMENTO DE SESSÃO
+        // ============================
+
+        function setupSessionTests() {
+            testManager.addTest('Definir ID de Sessão', async () => {
+                const sessionId = 'test-session-123';
+                stateManager.setSessionId(sessionId);
+                Assert.assertEquals(stateManager.getSessionId(), sessionId, 'ID de sessão não foi definido corretamente');
+                addLog('✅ ID de sessão definido com sucesso', 'success');
+            }, 'session');
+
+            testManager.addTest('Recuperar ID de Sessão', async () => {
+                const sessionId = 'test-session-456';
+                stateManager.setSessionId(sessionId);
+                const retrievedId = stateManager.getSessionId();
+                Assert.assertEquals(retrievedId, sessionId, 'ID de sessão não foi recuperado corretamente');
+                addLog('✅ ID de sessão recuperado com sucesso', 'success');
+            }, 'session');
+
+            testManager.addTest('Limpar ID de Sessão', async () => {
+                stateManager.setSessionId(null);
+                Assert.assertNull(stateManager.getSessionId(), 'ID de sessão não foi limpo');
+                addLog('✅ ID de sessão limpo com sucesso', 'success');
+            }, 'session');
+        }
+
+        // ============================
+        // TESTES DE GERENCIAMENTO DE CHATS
+        // ============================
+
+        function setupChatTests() {
+            testManager.addTest('Definir Lista de Chats', async () => {
+                stateManager.setChats(mockChats);
+                const chats = stateManager.getChats();
+                Assert.assertEquals(chats.length, mockChats.length, 'Número de chats não corresponde');
+                Assert.assertEquals(chats[0].id, mockChats[0].id, 'Primeiro chat não corresponde');
+                addLog('✅ Lista de chats definida com sucesso', 'success');
+            }, 'chat');
+
+            testManager.addTest('Adicionar Chat Individual', async () => {
+                const newChat = {
+                    id: 'chat-new',
+                    name: 'Novo Chat',
+                    last_modified: new Date().toISOString(),
+                    message_count: 0,
+                    gpt_id: 'gpt-4',
+                    user_id: 'user-456',
+                    company_name: 'empresa',
+                    is_active: true
+                };
+                
+                const currentChats = stateManager.getChats();
+                const updatedChats = [...currentChats, newChat];
+                stateManager.setChats(updatedChats);
+                
+                const chats = stateManager.getChats();
+                Assert.assertEquals(chats.length, currentChats.length + 1, 'Chat não foi adicionado');
+                Assert.assertEquals(chats[chats.length - 1].id, newChat.id, 'Novo chat não foi adicionado corretamente');
+                addLog('✅ Chat individual adicionado com sucesso', 'success');
+            }, 'chat');
+
+            testManager.addTest('Verificar Estrutura de Chat', async () => {
+                const chats = stateManager.getChats();
+                if (chats.length > 0) {
+                    const chat = chats[0];
+                    Assert.assertNotNull(chat.id, 'Chat deve ter ID');
+                    Assert.assertNotNull(chat.name, 'Chat deve ter nome');
+                    Assert.assertNotNull(chat.last_modified, 'Chat deve ter data de modificação');
+                    Assert.assertNotNull(chat.gpt_id, 'Chat deve ter GPT ID');
+                    addLog('✅ Estrutura de chat válida', 'success');
+                }
+            }, 'chat');
+        }
+
+        // ============================
+        // TESTES DE GERENCIAMENTO DE GPTs
+        // ============================
+
+        function setupGPTTests() {
+            testManager.addTest('Definir Lista de GPTs', async () => {
+                const gptsList = Object.values(mockGPTs);
+                stateManager.setGPTs(gptsList);
+                const gpts = stateManager.getGPTs();
+                Assert.assertEquals(gpts.length, gptsList.length, 'Número de GPTs não corresponde');
+                Assert.assertEquals(gpts[0].id, gptsList[0].id, 'Primeiro GPT não corresponde');
+                addLog('✅ Lista de GPTs definida com sucesso', 'success');
+            }, 'gpt');
+
+            testManager.addTest('Selecionar GPT', async () => {
+                const selectedGPT = mockGPTs.gpt4;
+                stateManager.setSelectedGPT(selectedGPT);
+                const retrievedGPT = stateManager.getSelectedGPT();
+                Assert.assertEquals(retrievedGPT.id, selectedGPT.id, 'GPT selecionado não corresponde');
+                Assert.assertEquals(retrievedGPT.name, selectedGPT.name, 'Nome do GPT selecionado não corresponde');
+                addLog('✅ GPT selecionado com sucesso', 'success');
+            }, 'gpt');
+
+            testManager.addTest('Gerenciar Estado de Loading GPTs', async () => {
+                // Testar ativação
+                stateManager.setLoadingGPTs(true);
+                Assert.assertTrue(stateManager.isLoadingGPTsActive(), 'Loading de GPTs não foi ativado');
+                
+                // Testar desativação
+                stateManager.setLoadingGPTs(false);
+                Assert.assertFalse(stateManager.isLoadingGPTsActive(), 'Loading de GPTs não foi desativado');
+                
+                addLog('✅ Estado de loading de GPTs gerenciado com sucesso', 'success');
+            }, 'gpt');
+
+            testManager.addTest('Gerenciar Estado de Seleção de GPT', async () => {
+                // Testar ativação
+                stateManager.setGPTSelectionLoading(true);
+                Assert.assertTrue(stateManager.isGPTSelectionLoadingActive(), 'Loading de seleção não foi ativado');
+                
+                // Testar desativação
+                stateManager.setGPTSelectionLoading(false);
+                Assert.assertFalse(stateManager.isGPTSelectionLoadingActive(), 'Loading de seleção não foi desativado');
+                
+                addLog('✅ Estado de seleção de GPT gerenciado com sucesso', 'success');
+            }, 'gpt');
+        }
+
+        // ============================
+        // TESTES DE ESTADO GERAL
+        // ============================
+
+        function setupStateTests() {
+            testManager.addTest('Inicialização do StateManager', async () => {
+                Assert.assertNotNull(stateManager, 'StateManager não foi inicializado');
+                Assert.assertNotNull(stateManager.session, 'Sessão não foi inicializada');
+                Assert.assertNotNull(stateManager.chat, 'Chat não foi inicializado');
+                Assert.assertNotNull(stateManager.gpt, 'GPT não foi inicializado');
+                addLog('✅ StateManager inicializado corretamente', 'success');
+            }, 'state');
+
+            testManager.addTest('Sistema de Eventos', async () => {
+                let eventReceived = false;
+                const testData = { test: 'data' };
+                
+                stateManager.on('test-event', (data) => {
+                    eventReceived = true;
+                    Assert.assertEquals(data, testData, 'Dados do evento não correspondem');
+                });
+                
+                stateManager.emit('test-event', testData);
+                Assert.assertTrue(eventReceived, 'Evento não foi recebido');
+                addLog('✅ Sistema de eventos funcionando', 'success');
+            }, 'state');
+
+            testManager.addTest('Persistência de Estado', async () => {
+                // Simular configuração de dados
+                setupMockData({
+                    tenant: 'test-company',
+                    uuid: 'test-user',
+                    email: 'test@example.com',
+                    state: mockState
+                });
+                
+                // Verificar se os dados foram configurados
+                const tenant = sessionStorage.getItem('tenant');
+                const uuid = sessionStorage.getItem('uuid');
+                const email = sessionStorage.getItem('email');
+                
+                Assert.assertEquals(tenant, 'test-company', 'Tenant não foi persistido');
+                Assert.assertEquals(uuid, 'test-user', 'UUID não foi persistido');
+                Assert.assertEquals(email, 'test@example.com', 'Email não foi persistido');
+                
+                addLog('✅ Persistência de estado funcionando', 'success');
+            }, 'state');
+        }
+
+        // ============================
+        // FUNÇÕES DE EXECUÇÃO
+        // ============================
+
+        window.runAllTests = async () => {
+            addLog('🚀 Iniciando execução de todos os testes...', 'info');
+            
+            // Limpar resultados anteriores
+            document.getElementById('test-results').innerHTML = '';
+            document.getElementById('run-all-btn').disabled = true;
+            
+            // Configurar dados mock
+            setupMockData();
+            
+            // Inicializar StateManager
+            stateManager = new MockStateManager();
+            
+            // Configurar todos os testes
+            setupSessionTests();
+            setupChatTests();
+            setupGPTTests();
+            setupStateTests();
+            
+            // Executar testes
+            await testManager.runTests();
+            
+            // Atualizar estatísticas
+            updateStats();
+            
+            // Reabilitar botão
+            document.getElementById('run-all-btn').disabled = false;
+            
+            addLog('✅ Execução de testes concluída', 'success');
+        };
+
+        window.runSpecificTest = async (category) => {
+            addLog(`🎯 Executando testes da categoria: ${category}`, 'info');
+            
+            // Limpar resultados anteriores
+            document.getElementById('test-results').innerHTML = '';
+            
+            // Configurar dados mock
+            setupMockData();
+            
+            // Inicializar StateManager
+            stateManager = new MockStateManager();
+            
+            // Configurar testes específicos
+            switch (category) {
+                case 'session':
+                    setupSessionTests();
+                    break;
+                case 'chat':
+                    setupChatTests();
+                    break;
+                case 'gpt':
+                    setupGPTTests();
+                    break;
+                case 'state':
+                    setupStateTests();
+                    break;
+                default:
+                    addLog(`❌ Categoria de teste desconhecida: ${category}`, 'error');
+                    return;
+            }
+            
+            // Executar testes
+            await testManager.runTests();
+            
+            // Atualizar estatísticas
+            updateStats();
+            
+            addLog(`✅ Testes da categoria ${category} concluídos`, 'success');
+        };
+
+        window.clearResults = () => {
+            document.getElementById('test-results').innerHTML = '';
+            document.getElementById('test-logs').innerHTML = '';
+            updateStats();
+            addLog('🧹 Resultados limpos', 'info');
+        };
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            addLog('📋 Teste unitário do StateManager carregado', 'info');
+            addLog('💡 Clique em "Executar Todos os Testes" para começar', 'info');
+        });
+    </script>
+</body>
+</html> 

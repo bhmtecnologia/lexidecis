@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 Índice de Testes - LexiDecis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .test-categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .category {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .category:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-color: #007bff;
+        }
+
+        .category h3 {
+            color: #2c3e50;
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .category-icon {
+            font-size: 1.8rem;
+        }
+
+        .test-list {
+            list-style: none;
+        }
+
+        .test-item {
+            margin: 10px 0;
+            padding: 12px 15px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .test-item:hover {
+            background: #e3f2fd;
+            border-left-color: #2196f3;
+            transform: translateX(5px);
+        }
+
+        .test-item a {
+            text-decoration: none;
+            color: #2c3e50;
+            display: block;
+            font-weight: 500;
+        }
+
+        .test-item .description {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .quick-actions {
+            background: #e8f5e8;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 2px solid #28a745;
+        }
+
+        .quick-actions h3 {
+            color: #155724;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #1e7e34;
+            transform: translateY(-2px);
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #6c757d;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-ready { background-color: #28a745; }
+        .status-dev { background-color: #ffc107; }
+        .status-planned { background-color: #6c757d; }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .test-categories {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 Índice de Testes</h1>
+            <p>Sistema de Testes Completo - LexiDecis Chat</p>
+        </div>
+
+        <div class="content">
+            <!-- Estatísticas -->
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-value">4</div>
+                    <div class="stat-label">Categorias de Teste</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">13+</div>
+                    <div class="stat-label">Testes Unitários</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">5+</div>
+                    <div class="stat-label">Testes de Integração</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">3+</div>
+                    <div class="stat-label">Testes E2E</div>
+                </div>
+            </div>
+
+            <!-- Ações Rápidas -->
+            <div class="quick-actions">
+                <h3>🚀 Ações Rápidas</h3>
+                <div class="action-buttons">
+                    <a href="chat-app/test-simple.html" class="btn btn-primary" target="_blank">
+                        🧪 Teste Simples
+                    </a>
+                    <a href="chat-app/unit/services/stateManager.test.html" class="btn btn-success" target="_blank">
+                        📊 Teste Unitário
+                    </a>
+                    <a href="chat-app/integration/chatWorkflow.test.html" class="btn btn-warning" target="_blank">
+                        🔄 Teste Integração
+                    </a>
+                    <a href="chat-app/e2e/mobileResponsiveness.test.html" class="btn btn-danger" target="_blank">
+                        📱 Teste E2E
+                    </a>
+                </div>
+            </div>
+
+            <!-- Categorias de Teste -->
+            <div class="test-categories">
+                <!-- Testes Unitários -->
+                <div class="category">
+                    <h3><span class="category-icon">🧪</span> Testes Unitários</h3>
+                    <p style="color: #6c757d; margin-bottom: 15px;">Testes de componentes individuais isoladamente</p>
+                    <ul class="test-list">
+                        <li class="test-item">
+                            <a href="chat-app/unit/services/stateManager.test.html" target="_blank">
+                                StateManager
+                                <div class="description">Gerenciamento de estado da aplicação</div>
+                            </a>
+                        </li>
+                        <li class="test-item">
+                            <a href="#" onclick="alert('Em desenvolvimento')">
+                                ChatManager
+                                <div class="description">Gerenciamento de chats e histórico</div>
+                            </a>
+                        </li>
+                        <li class="test-item">
+                            <a href="#" onclick="alert('Em desenvolvimento')">
+                                UIManager
+                                <div class="description">Interface do usuário</div>
+                            </a>
+                        </li>
+                        <li class="test-item">
+                            <a href="#" onclick="alert('Em desenvolvimento')">
+                                GPTManager
+                                <div class="description">Gerenciamento de modelos de IA</div>
+                            </a>
+                        </li>
+                        <li class="test-item">
+                            <a href="#" onclick="alert('Em desenvolvimento')">
+                                ApiService
+                                <div class="description">Comunicação com APIs</div>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Testes de Integração -->
+                <div class="category">
+                    <h3><span class="category-icon">🔄</span> Testes de Integração</h3>
+                    <p style="color: #6c757d; margin-bottom: 15px;">Testes de interação entre módulos</p>
+                    <ul class="test-list">
+                        <li class="test-item">
+                            <a href="chat-app/integration/chatWorkflow.test.html" target="_blank">
+                                Fluxo de Chat
+                                <div class="description">Fluxo completo de chat com IA</div>
+                            </a>
+                        </li>
+                        <li class="test-item">
+                            <a href="#" onclick="alert('Em desenvolvimento')">
+                                Autenticação
+                                <div class="description">Integração com Firebase Auth</div>
+                            </a>
+                        </li>
+                        <li class="test-item">
+                            <a href="#" onclick="alert('Em desenvolvimento')">
+                                Seleção de GPT
+                                <div class="description">Troca e configuração de modelos</div>
+                            </a>
+                        </li>
+                        <li class="test-item">
+                            <a href="#" onclick="alert('Em desenvolvimento')">
+                                Persistência
+                                <div class="description">Salvamento e recuperação de dados</div>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Testes E2E -->
+                <div class="category">
+                    <h3><span class="category-icon">🎯</span> Testes End-to-End</h3>
+                    <p style="color: #6c757d; margin-bottom: 15px;">Testes de cenários completos do usuário</p>
+                    <ul class="test-list">
+                        <li class="test-item">
+                            <a href="chat-app/e2e/mobileResponsiveness.test.html" target="_blank">
+                                Responsividade Mobile
+                                <div class="description">Teste em diferentes dispositivos</div>
+                            </a>
+                        </li>
+                        <li class="test-item">
+                            <a href="#" onclick="alert('Em desenvolvimento')">
+                                Jornada do Usuário
+                                <div class="description">Fluxo completo do usuário</div>
+                            </a>
+                        </li>
+                        <li class="test-item">
+                            <a href="#" onclick="alert('Em desenvolvimento')">
+                                Tratamento de Erros
+                                <div class="description">Cenários de erro e recuperação</div>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Testes de Performance -->
+                <div class="category">
+                    <h3><span class="category-icon">⚡</span> Testes de Performance</h3>
+                    <p style="color: #6c757d; margin-bottom: 15px;">Testes de performance e otimizações</p>
+                    <ul class="test-list">
+                        <li class="test-item">
+                            <a href="#" onclick="alert('Em desenvolvimento')">
+                                Tempo de Carregamento
+                                <div class="description">Métricas de velocidade</div>
+                            </a>
+                        </li>
+                        <li class="test-item">
+                            <a href="#" onclick="alert('Em desenvolvimento')">
+                                Uso de Memória
+                                <div class="description">Monitoramento de recursos</div>
+                            </a>
+                        </li>
+                        <li class="test-item">
+                            <a href="#" onclick="alert('Em desenvolvimento')">
+                                Performance do Histórico
+                                <div class="description">Teste com muitos chats</div>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Testes Existentes -->
+            <div class="category" style="margin-top: 20px;">
+                <h3><span class="category-icon">📁</span> Testes Existentes</h3>
+                <p style="color: #6c757d; margin-bottom: 15px;">Testes já implementados no projeto</p>
+                <ul class="test-list">
+                    <li class="test-item">
+                        <a href="test-integration.html" target="_blank">
+                            Teste de Integração Geral
+                            <div class="description">Teste básico de integração</div>
+                        </a>
+                    </li>
+                    <li class="test-item">
+                        <a href="ui-tests/test-sidebar-mobile.html" target="_blank">
+                            Teste Sidebar Mobile
+                            <div class="description">Teste da sidebar em dispositivos móveis</div>
+                        </a>
+                    </li>
+                    <li class="test-item">
+                        <a href="ui-tests/test-toggle.html" target="_blank">
+                            Teste Toggle
+                            <div class="description">Teste de toggle da sidebar</div>
+                        </a>
+                    </li>
+                    <li class="test-item">
+                        <a href="error-handling/interactive-test.html" target="_blank">
+                            Teste de Tratamento de Erros
+                            <div class="description">Teste interativo de erros</div>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>🧪 Sistema de Testes LexiDecis | Versão 1.0 | Criado com ❤️ para qualidade</p>
+        </div>
+    </div>
+
+    <script>
+        // Adicionar funcionalidade de busca
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🧪 Índice de Testes carregado com sucesso!');
+            console.log('💡 Clique nos links para abrir os testes em novas abas');
+            
+            // Adicionar efeito de hover nos cards
+            const cards = document.querySelectorAll('.category');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-5px)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

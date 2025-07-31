@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Simples - Utilitários</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 4px solid #ddd;
+            background: #f9f9f9;
+        }
+        .success { border-left-color: #28a745; background-color: #d4edda; }
+        .error { border-left-color: #dc3545; background-color: #f8d7da; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Teste Simples - Verificação de Utilitários</h1>
+        <p>Este teste verifica se os utilitários estão carregando corretamente.</p>
+        
+        <button onclick="runSimpleTest()">🚀 Executar Teste Simples</button>
+        <button onclick="clearResults()">🗑️ Limpar Resultados</button>
+        
+        <div id="test-results"></div>
+    </div>
+
+    <script type="module">
+        // Teste de importação dos utilitários
+        async function testImports() {
+            const results = [];
+            
+            try {
+                // Teste 1: Importar testHelpers
+                const { TestManager, Assert, Logger } = await import('./utils/testHelpers.js');
+                results.push({
+                    test: 'Importação testHelpers',
+                    passed: true,
+                    message: 'TestManager, Assert e Logger importados com sucesso'
+                });
+                
+                // Teste 2: Importar mockData
+                const { mockUsers, mockGPTs } = await import('./utils/mockData.js');
+                results.push({
+                    test: 'Importação mockData',
+                    passed: true,
+                    message: 'mockUsers e mockGPTs importados com sucesso'
+                });
+                
+                // Teste 3: Testar TestManager
+                const testManager = new TestManager();
+                results.push({
+                    test: 'Instanciação TestManager',
+                    passed: testManager instanceof TestManager,
+                    message: 'TestManager instanciado corretamente'
+                });
+                
+                // Teste 4: Testar Assert
+                try {
+                    Assert.assertTrue(true, 'Teste básico');
+                    results.push({
+                        test: 'Teste Assert.assertTrue',
+                        passed: true,
+                        message: 'Assert.assertTrue funcionando'
+                    });
+                } catch (error) {
+                    results.push({
+                        test: 'Teste Assert.assertTrue',
+                        passed: false,
+                        message: `Erro: ${error.message}`
+                    });
+                }
+                
+                // Teste 5: Testar Logger
+                const logger = new Logger();
+                results.push({
+                    test: 'Instanciação Logger',
+                    passed: logger instanceof Logger,
+                    message: 'Logger instanciado corretamente'
+                });
+                
+                // Teste 6: Verificar dados mock
+                results.push({
+                    test: 'Dados mock disponíveis',
+                    passed: mockUsers && mockGPTs && Object.keys(mockUsers).length > 0,
+                    message: `mockUsers: ${Object.keys(mockUsers).length} usuários, mockGPTs: ${Object.keys(mockGPTs).length} GPTs`
+                });
+                
+            } catch (error) {
+                results.push({
+                    test: 'Importação geral',
+                    passed: false,
+                    message: `Erro de importação: ${error.message}`
+                });
+            }
+            
+            return results;
+        }
+        
+        // Função para executar o teste
+        window.runSimpleTest = async () => {
+            console.log('🧪 Iniciando teste simples...');
+            
+            // Limpar resultados anteriores
+            document.getElementById('test-results').innerHTML = '';
+            
+            try {
+                const results = await testImports();
+                
+                results.forEach(result => {
+                    const resultElement = document.createElement('div');
+                    resultElement.className = `test-result ${result.passed ? 'success' : 'error'}`;
+                    resultElement.innerHTML = `
+                        <strong>${result.test}</strong>: ${result.passed ? '✅ PASSOU' : '❌ FALHOU'}
+                        <br><small>${result.message}</small>
+                    `;
+                    document.getElementById('test-results').appendChild(resultElement);
+                });
+                
+                const passed = results.filter(r => r.passed).length;
+                const total = results.length;
+                
+                console.log(`📊 Resultado: ${passed}/${total} testes passaram`);
+                
+            } catch (error) {
+                console.error('❌ Erro no teste:', error);
+                
+                const resultElement = document.createElement('div');
+                resultElement.className = 'test-result error';
+                resultElement.innerHTML = `
+                    <strong>Erro Geral</strong>: ❌ FALHOU
+                    <br><small>${error.message}</small>
+                `;
+                document.getElementById('test-results').appendChild(resultElement);
+            }
+        };
+        
+        window.clearResults = () => {
+            document.getElementById('test-results').innerHTML = '';
+        };
+        
+        // Executar teste automaticamente ao carregar
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('📋 Teste simples carregado');
+            console.log('💡 Clique em "Executar Teste Simples" para começar');
+        });
+    </script>
+</body>
+</html> 

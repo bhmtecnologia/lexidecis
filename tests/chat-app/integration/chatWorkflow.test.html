@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Integração - Fluxo de Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .workflow-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        .workflow-step {
+            margin: 15px 0;
+            padding: 15px;
+            border-left: 4px solid #007bff;
+            background: white;
+            border-radius: 4px;
+        }
+        .step-success { border-left-color: #28a745; }
+        .step-error { border-left-color: #dc3545; }
+        .step-warning { border-left-color: #ffc107; }
+        .step-info { border-left-color: #17a2b8; }
+        
+        .chat-simulation {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .chat-message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+        .user-message {
+            background: #007bff;
+            color: white;
+            margin-left: auto;
+        }
+        .assistant-message {
+            background: #e9ecef;
+            color: #333;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        button.success { background-color: #28a745; }
+        button.warning { background-color: #ffc107; color: #333; }
+        button.danger { background-color: #dc3545; }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-online { background-color: #28a745; }
+        .status-offline { background-color: #dc3545; }
+        .status-loading { background-color: #ffc107; }
+        
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .metric-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .metric-label {
+            color: #6c757d;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        .log-panel {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔄 Teste de Integração - Fluxo de Chat</h1>
+        <p>Teste completo do fluxo de chat da aplicação LexiDecis, incluindo autenticação, seleção de GPT, envio de mensagens e gerenciamento de histórico.</p>
+        
+        <div class="metrics" id="metrics">
+            <div class="metric-card">
+                <div class="metric-value" id="total-steps">0</div>
+                <div class="metric-label">Etapas Executadas</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="successful-steps">0</div>
+                <div class="metric-label">Etapas Bem-sucedidas</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="failed-steps">0</div>
+                <div class="metric-label">Etapas Falharam</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="execution-time">0s</div>
+                <div class="metric-label">Tempo de Execução</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button onclick="startWorkflow()" id="start-btn" class="success">🚀 Iniciar Fluxo Completo</button>
+            <button onclick="testAuthentication()">🔐 Testar Autenticação</button>
+            <button onclick="testGPTSelection()">🤖 Testar Seleção de GPT</button>
+            <button onclick="testChatCreation()">💬 Testar Criação de Chat</button>
+            <button onclick="testMessageSending()">📤 Testar Envio de Mensagem</button>
+            <button onclick="testHistoryManagement()">📚 Testar Gerenciamento de Histórico</button>
+            <button onclick="resetWorkflow()" class="warning">🔄 Resetar</button>
+            <button onclick="clearLogs()" class="danger">🗑️ Limpar Logs</button>
+        </div>
+
+        <div class="workflow-section">
+            <h3>📋 Fluxo de Trabalho</h3>
+            <div id="workflow-steps"></div>
+        </div>
+
+        <div class="workflow-section">
+            <h3>💬 Simulação de Chat</h3>
+            <div class="chat-simulation" id="chat-simulation">
+                <div class="chat-message assistant-message">
+                    Olá! Sou o assistente de teste. Como posso ajudá-lo hoje?
+                </div>
+            </div>
+            <div class="controls">
+                <input type="text" id="message-input" placeholder="Digite sua mensagem..." style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                <button onclick="sendTestMessage()">Enviar</button>
+            </div>
+        </div>
+
+        <div class="workflow-section">
+            <h3>📊 Logs de Execução</h3>
+            <div class="log-panel" id="execution-logs"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { TestManager, Assert, Time, DOM } from '../utils/testHelpers.js';
+        import { mockUsers, mockGPTs, mockChats, mockMessages, mockConfig, setupMockData, clearMockData } from '../utils/mockData.js';
+
+        // Simulação dos componentes da aplicação
+        class MockChatWorkflow {
+            constructor() {
+                this.currentUser = null;
+                this.selectedGPT = null;
+                this.currentChat = null;
+                this.messages = [];
+                this.isAuthenticated = false;
+                this.isLoading = false;
+                this.workflowSteps = [];
+                this.startTime = null;
+            }
+
+            // Simulação de autenticação
+            async authenticate(userData) {
+                this.isLoading = true;
+                await Time.delay(1000); // Simular delay de rede
+                
+                this.currentUser = userData;
+                this.isAuthenticated = true;
+                this.isLoading = false;
+                
+                this.addWorkflowStep('Autenticação', 'success', `Usuário ${userData.name} autenticado com sucesso`);
+                return true;
+            }
+
+            // Simulação de seleção de GPT
+            async selectGPT(gptId) {
+                this.isLoading = true;
+                await Time.delay(500);
+                
+                const gpt = mockGPTs[gptId] || Object.values(mockGPTs).find(g => g.id === gptId);
+                if (!gpt) {
+                    this.isLoading = false;
+                    this.addWorkflowStep('Seleção de GPT', 'error', `GPT ${gptId} não encontrado`);
+                    return false;
+                }
+                
+                this.selectedGPT = gpt;
+                this.isLoading = false;
+                
+                this.addWorkflowStep('Seleção de GPT', 'success', `GPT ${gpt.name} selecionado`);
+                return true;
+            }
+
+            // Simulação de criação de chat
+            async createChat(chatName) {
+                this.isLoading = true;
+                await Time.delay(800);
+                
+                const newChat = {
+                    id: `chat-${Date.now()}`,
+                    name: chatName,
+                    last_modified: new Date().toISOString(),
+                    message_count: 0,
+                    gpt_id: this.selectedGPT?.id || 'gpt-4',
+                    user_id: this.currentUser?.id || 'user-456',
+                    company_name: this.currentUser?.tenant || 'empresa',
+                    is_active: true,
+                    created_at: new Date().toISOString()
+                };
+                
+                this.currentChat = newChat;
+                this.messages = [];
+                this.isLoading = false;
+                
+                this.addWorkflowStep('Criação de Chat', 'success', `Chat "${chatName}" criado`);
+                return newChat;
+            }
+
+            // Simulação de envio de mensagem
+            async sendMessage(content) {
+                if (!this.currentChat) {
+                    this.addWorkflowStep('Envio de Mensagem', 'error', 'Nenhum chat ativo');
+                    return false;
+                }
+                
+                this.isLoading = true;
+                
+                // Adicionar mensagem do usuário
+                const userMessage = {
+                    id: `msg-${Date.now()}`,
+                    chat_id: this.currentChat.id,
+                    content: content,
+                    role: 'user',
+                    timestamp: new Date().toISOString(),
+                    gpt_id: this.selectedGPT?.id || 'gpt-4'
+                };
+                
+                this.messages.push(userMessage);
+                this.addChatMessage(userMessage, 'user');
+                
+                // Simular resposta da IA
+                await Time.delay(2000);
+                
+                const assistantMessage = {
+                    id: `msg-${Date.now() + 1}`,
+                    chat_id: this.currentChat.id,
+                    content: this.generateMockResponse(content),
+                    role: 'assistant',
+                    timestamp: new Date().toISOString(),
+                    gpt_id: this.selectedGPT?.id || 'gpt-4'
+                };
+                
+                this.messages.push(assistantMessage);
+                this.addChatMessage(assistantMessage, 'assistant');
+                
+                this.currentChat.message_count = this.messages.length;
+                this.currentChat.last_modified = new Date().toISOString();
+                
+                this.isLoading = false;
+                
+                this.addWorkflowStep('Envio de Mensagem', 'success', `Mensagem enviada e respondida`);
+                return true;
+            }
+
+            // Simulação de carregamento de histórico
+            async loadChatHistory(chatId) {
+                this.isLoading = true;
+                await Time.delay(1000);
+                
+                const chat = mockChats.find(c => c.id === chatId);
+                if (!chat) {
+                    this.isLoading = false;
+                    this.addWorkflowStep('Carregamento de Histórico', 'error', `Chat ${chatId} não encontrado`);
+                    return false;
+                }
+                
+                this.currentChat = chat;
+                this.messages = mockMessages[chatId] || [];
+                
+                // Limpar simulação de chat
+                const chatSimulation = document.getElementById('chat-simulation');
+                chatSimulation.innerHTML = '';
+                
+                // Adicionar mensagens do histórico
+                this.messages.forEach(msg => {
+                    this.addChatMessage(msg, msg.role);
+                });
+                
+                this.isLoading = false;
+                
+                this.addWorkflowStep('Carregamento de Histórico', 'success', `Histórico do chat "${chat.name}" carregado`);
+                return true;
+            }
+
+            // Geração de resposta mock
+            generateMockResponse(userMessage) {
+                const responses = [
+                    'Entendo sua pergunta. Deixe-me ajudá-lo com isso.',
+                    'Excelente pergunta! Aqui está a resposta que você procura.',
+                    'Baseado no que você perguntou, posso fornecer as seguintes informações.',
+                    'Vou analisar sua questão e fornecer uma resposta detalhada.',
+                    'Essa é uma questão interessante. Deixe-me explicar os pontos principais.'
+                ];
+                
+                return responses[Math.floor(Math.random() * responses.length)];
+            }
+
+            // Adicionar etapa do fluxo
+            addWorkflowStep(name, status, message) {
+                const step = {
+                    name,
+                    status,
+                    message,
+                    timestamp: new Date().toISOString()
+                };
+                
+                this.workflowSteps.push(step);
+                this.updateWorkflowDisplay();
+                this.addLog(`${name}: ${message}`, status);
+            }
+
+            // Atualizar display do fluxo
+            updateWorkflowDisplay() {
+                const workflowSteps = document.getElementById('workflow-steps');
+                workflowSteps.innerHTML = '';
+                
+                this.workflowSteps.forEach((step, index) => {
+                    const stepElement = document.createElement('div');
+                    stepElement.className = `workflow-step step-${step.status}`;
+                    stepElement.innerHTML = `
+                        <strong>${index + 1}. ${step.name}</strong>
+                        <br><small>${step.message}</small>
+                        <br><small style="color: #666;">${new Date(step.timestamp).toLocaleTimeString()}</small>
+                    `;
+                    workflowSteps.appendChild(stepElement);
+                });
+                
+                this.updateMetrics();
+            }
+
+            // Adicionar mensagem ao chat
+            addChatMessage(message, role) {
+                const chatSimulation = document.getElementById('chat-simulation');
+                const messageElement = document.createElement('div');
+                messageElement.className = `chat-message ${role}-message`;
+                messageElement.textContent = message.content;
+                chatSimulation.appendChild(messageElement);
+                chatSimulation.scrollTop = chatSimulation.scrollHeight;
+            }
+
+            // Atualizar métricas
+            updateMetrics() {
+                const totalSteps = this.workflowSteps.length;
+                const successfulSteps = this.workflowSteps.filter(s => s.status === 'success').length;
+                const failedSteps = this.workflowSteps.filter(s => s.status === 'error').length;
+                
+                document.getElementById('total-steps').textContent = totalSteps;
+                document.getElementById('successful-steps').textContent = successfulSteps;
+                document.getElementById('failed-steps').textContent = failedSteps;
+                
+                if (this.startTime) {
+                    const executionTime = Math.round((Date.now() - this.startTime) / 1000);
+                    document.getElementById('execution-time').textContent = `${executionTime}s`;
+                }
+            }
+
+            // Adicionar log
+            addLog(message, type = 'info') {
+                const logsDiv = document.getElementById('execution-logs');
+                const timestamp = new Date().toLocaleTimeString();
+                const logEntry = document.createElement('div');
+                logEntry.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+                logEntry.style.color = type === 'error' ? 'red' : type === 'success' ? 'green' : type === 'warning' ? 'orange' : 'black';
+                logsDiv.appendChild(logEntry);
+                logsDiv.scrollTop = logsDiv.scrollHeight;
+            }
+
+            // Resetar fluxo
+            reset() {
+                this.currentUser = null;
+                this.selectedGPT = null;
+                this.currentChat = null;
+                this.messages = [];
+                this.isAuthenticated = false;
+                this.isLoading = false;
+                this.workflowSteps = [];
+                this.startTime = null;
+                
+                document.getElementById('workflow-steps').innerHTML = '';
+                document.getElementById('chat-simulation').innerHTML = `
+                    <div class="chat-message assistant-message">
+                        Olá! Sou o assistente de teste. Como posso ajudá-lo hoje?
+                    </div>
+                `;
+                this.updateMetrics();
+            }
+        }
+
+        // Instância global do fluxo
+        let workflow;
+
+        // Funções de teste específicas
+        window.startWorkflow = async () => {
+            workflow = new MockChatWorkflow();
+            workflow.startTime = Date.now();
+            
+            workflow.addLog('🚀 Iniciando fluxo completo de chat...', 'info');
+            
+            try {
+                // 1. Autenticação
+                await workflow.authenticate(mockUsers.user);
+                
+                // 2. Seleção de GPT
+                await workflow.selectGPT('gpt-4');
+                
+                // 3. Criação de chat
+                await workflow.createChat('Teste de Integração');
+                
+                // 4. Envio de mensagem
+                await workflow.sendMessage('Olá! Este é um teste de integração.');
+                
+                // 5. Envio de segunda mensagem
+                await workflow.sendMessage('Pode me explicar como funciona o sistema de testes?');
+                
+                workflow.addLog('✅ Fluxo completo executado com sucesso!', 'success');
+                
+            } catch (error) {
+                workflow.addLog(`❌ Erro no fluxo: ${error.message}`, 'error');
+            }
+        };
+
+        window.testAuthentication = async () => {
+            workflow = new MockChatWorkflow();
+            workflow.startTime = Date.now();
+            
+            workflow.addLog('🔐 Testando autenticação...', 'info');
+            
+            try {
+                await workflow.authenticate(mockUsers.user);
+                workflow.addLog('✅ Teste de autenticação concluído', 'success');
+            } catch (error) {
+                workflow.addLog(`❌ Erro na autenticação: ${error.message}`, 'error');
+            }
+        };
+
+        window.testGPTSelection = async () => {
+            if (!workflow || !workflow.isAuthenticated) {
+                alert('Execute a autenticação primeiro!');
+                return;
+            }
+            
+            workflow.addLog('🤖 Testando seleção de GPTs...', 'info');
+            
+            try {
+                await workflow.selectGPT('gpt-4');
+                await workflow.selectGPT('claude-3');
+                await workflow.selectGPT('gemini-pro');
+                workflow.addLog('✅ Teste de seleção de GPTs concluído', 'success');
+            } catch (error) {
+                workflow.addLog(`❌ Erro na seleção de GPTs: ${error.message}`, 'error');
+            }
+        };
+
+        window.testChatCreation = async () => {
+            if (!workflow || !workflow.isAuthenticated) {
+                alert('Execute a autenticação primeiro!');
+                return;
+            }
+            
+            workflow.addLog('💬 Testando criação de chats...', 'info');
+            
+            try {
+                await workflow.createChat('Chat de Teste 1');
+                await workflow.createChat('Chat de Teste 2');
+                workflow.addLog('✅ Teste de criação de chats concluído', 'success');
+            } catch (error) {
+                workflow.addLog(`❌ Erro na criação de chats: ${error.message}`, 'error');
+            }
+        };
+
+        window.testMessageSending = async () => {
+            if (!workflow || !workflow.currentChat) {
+                alert('Crie um chat primeiro!');
+                return;
+            }
+            
+            workflow.addLog('📤 Testando envio de mensagens...', 'info');
+            
+            try {
+                await workflow.sendMessage('Esta é uma mensagem de teste.');
+                await workflow.sendMessage('Outra mensagem para testar o sistema.');
+                workflow.addLog('✅ Teste de envio de mensagens concluído', 'success');
+            } catch (error) {
+                workflow.addLog(`❌ Erro no envio de mensagens: ${error.message}`, 'error');
+            }
+        };
+
+        window.testHistoryManagement = async () => {
+            workflow = new MockChatWorkflow();
+            workflow.startTime = Date.now();
+            
+            workflow.addLog('📚 Testando gerenciamento de histórico...', 'info');
+            
+            try {
+                await workflow.loadChatHistory('chat-001');
+                workflow.addLog('✅ Teste de gerenciamento de histórico concluído', 'success');
+            } catch (error) {
+                workflow.addLog(`❌ Erro no gerenciamento de histórico: ${error.message}`, 'error');
+            }
+        };
+
+        window.sendTestMessage = () => {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (!message) {
+                alert('Digite uma mensagem!');
+                return;
+            }
+            
+            if (!workflow || !workflow.currentChat) {
+                alert('Inicie um fluxo primeiro!');
+                return;
+            }
+            
+            workflow.sendMessage(message);
+            input.value = '';
+        };
+
+        window.resetWorkflow = () => {
+            if (workflow) {
+                workflow.reset();
+            }
+            addLog('🔄 Fluxo resetado', 'info');
+        };
+
+        window.clearLogs = () => {
+            document.getElementById('execution-logs').innerHTML = '';
+            addLog('🗑️ Logs limpos', 'info');
+        };
+
+        // Função auxiliar para adicionar logs
+        function addLog(message, type = 'info') {
+            const logsDiv = document.getElementById('execution-logs');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+            logEntry.style.color = type === 'error' ? 'red' : type === 'success' ? 'green' : type === 'warning' ? 'orange' : 'black';
+            logsDiv.appendChild(logEntry);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+
+        // Permitir envio de mensagem com Enter
+        document.getElementById('message-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendTestMessage();
+            }
+        });
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            addLog('📋 Teste de integração do fluxo de chat carregado', 'info');
+            addLog('💡 Clique em "Iniciar Fluxo Completo" para começar', 'info');
+        });
+    </script>
+</body>
+</html> 

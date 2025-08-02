@@ -403,14 +403,28 @@ class UIManager {
                     observeUserInput: (userInput) => this.logUserInput(userInput),
                     observeMessages: (messages) => this.logMessages(messages),
                     observeLoading: async (loading) => {
+                        console.log('🔗 observeLoading chamado com loading:', loading);
                         if (loading) {
                             try {
+                                console.log('🔗 Loading ativo, tentando capturar input do usuário...');
+                                
                                 // Captura o input do usuário do textarea do chatbot
                                 const chatbotElement = document.querySelector('flowise-fullchatbot');
+                                console.log('🔗 Chatbot element encontrado:', !!chatbotElement);
+                                
                                 if (chatbotElement && chatbotElement.shadowRoot) {
+                                    console.log('🔗 ShadowRoot encontrado');
                                     const textarea = chatbotElement.shadowRoot.querySelector('textarea');
+                                    console.log('🔗 Textarea encontrado:', !!textarea);
+                                    
+                                    if (textarea) {
+                                        console.log('🔗 Valor do textarea:', textarea.value);
+                                        console.log('🔗 Textarea tem valor?', !!textarea.value);
+                                    }
+                                    
                                     if (textarea && textarea.value) {
                                         const userInput = textarea.value;
+                                        console.log('🔗 Input capturado:', userInput);
                                         console.log('🔗 Enviando mensagem para API:', {
                                             chatflowid: selectedFlowiseConfig.chatflowId,
                                             sessionId: this.stateManager.currentSessionId,
@@ -430,6 +444,8 @@ class UIManager {
                                             content: userInput
                                         };
 
+                                        console.log('🔗 Payload preparado:', payload);
+
                                         const response = await fetch('https://webhook.power.tec.br/webhook/lexidecis/v2/chatmessage', {
                                             method: "POST",
                                             headers: { 
@@ -439,6 +455,8 @@ class UIManager {
                                             body: JSON.stringify(payload)
                                         });
 
+                                        console.log('🔗 Response status:', response.status);
+
                                         if (!response.ok) {
                                             const errorText = await response.text();
                                             throw new Error("Erro ao salvar mensagem de chat: " + errorText);
@@ -446,11 +464,17 @@ class UIManager {
 
                                         const result = await response.json();
                                         console.log('🔗 Mensagem enviada para API com sucesso:', result);
+                                    } else {
+                                        console.log('🔗 Textarea não encontrado ou sem valor');
                                     }
+                                } else {
+                                    console.log('🔗 Chatbot element ou shadowRoot não encontrado');
                                 }
                             } catch (error) {
                                 console.error('🔗 Erro ao enviar mensagem para API:', error);
                             }
+                        } else {
+                            console.log('🔗 Loading inativo, não fazendo nada');
                         }
                     }
                 },

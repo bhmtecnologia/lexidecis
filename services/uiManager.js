@@ -829,6 +829,20 @@ class UIManager {
                         adminButton.style.setProperty('display', 'none', 'important');
                         this.debugLog('[UIManager] Usuário não tem permissão de admin - botão oculto');
                     }
+                    
+                    // Controle do contador de usuários ativos - só mostrar para admins
+                    const activeUsersCounter = document.getElementById('active-users-counter');
+                    if (activeUsersCounter) {
+                        if (hasAdminPermission) {
+                            activeUsersCounter.style.setProperty('display', 'flex', 'important');
+                            this.debugLog('[UIManager] Usuário tem permissão de admin - contador de usuários ativos visível');
+                        } else {
+                            activeUsersCounter.style.setProperty('display', 'none', 'important');
+                            this.debugLog('[UIManager] Usuário não tem permissão de admin - contador de usuários ativos oculto');
+                        }
+                    } else {
+                        this.debugLog('[UIManager] Elemento active-users-counter não encontrado no DOM');
+                    }
                 } catch (error) {
                     // Em produção, não expor detalhes do erro para evitar brechas de segurança
                     if (DEBUG_MODE) {
@@ -838,6 +852,12 @@ class UIManager {
                     }
                     // Em caso de erro, ocultar o botão por segurança
                     adminButton.style.setProperty('display', 'none', 'important');
+                    
+                    // Em caso de erro, ocultar também o contador de usuários ativos
+                    const activeUsersCounter = document.getElementById('active-users-counter');
+                    if (activeUsersCounter) {
+                        activeUsersCounter.style.setProperty('display', 'none', 'important');
+                    }
                 }
             } else {
                 this.debugLog('[UIManager] Botão admin-button não encontrado no DOM');
@@ -856,6 +876,12 @@ class UIManager {
             // Ocultar botão de admin quando não há usuário autenticado
             if (adminButton) {
                 adminButton.style.setProperty('display', 'none', 'important');
+            }
+            
+            // Ocultar contador de usuários ativos quando não há usuário autenticado
+            const activeUsersCounter = document.getElementById('active-users-counter');
+            if (activeUsersCounter) {
+                activeUsersCounter.style.setProperty('display', 'none', 'important');
             }
         }
     }

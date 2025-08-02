@@ -402,8 +402,38 @@ class UIManager {
                 observersConfig: {
                     observeUserInput: (userInput) => this.logUserInput(userInput),
                     observeMessages: (messages) => this.logMessages(messages),
-                    // Removido observeLoading para evitar loading a cada mensagem
-                    // O loading de chat deve aparecer apenas ao clicar em um chat
+                    observeLoading: async (loading) => {
+                        if (loading) {
+                            try {
+                                // Captura o input do usuário do textarea do chatbot
+                                const chatbotElement = document.querySelector('flowise-fullchatbot');
+                                if (chatbotElement && chatbotElement.shadowRoot) {
+                                    const textarea = chatbotElement.shadowRoot.querySelector('textarea');
+                                    if (textarea && textarea.value) {
+                                        const userInput = textarea.value;
+                                        console.log('🔗 Enviando mensagem para API:', {
+                                            chatflowid: selectedFlowiseConfig.chatflowId,
+                                            sessionId: this.stateManager.currentSessionId,
+                                            role: 'user',
+                                            message: userInput
+                                        });
+                                        
+                                        // Faz o POST para a API de criar chat
+                                        await this.apiService.request('createChatMessage', {
+                                            chatflowid: selectedFlowiseConfig.chatflowId,
+                                            sessionId: this.stateManager.currentSessionId,
+                                            role: 'user',
+                                            message: userInput
+                                        }, 'POST');
+                                        
+                                        console.log('🔗 Mensagem enviada para API com sucesso');
+                                    }
+                                }
+                            } catch (error) {
+                                console.error('🔗 Erro ao enviar mensagem para API:', error);
+                            }
+                        }
+                    }
                 },
                 theme: {
                     button: {

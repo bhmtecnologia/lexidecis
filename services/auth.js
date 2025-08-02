@@ -48,9 +48,9 @@ export const firebaseConfig = {
 
 // Inicialização do Firebase
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const analytics = getAnalytics(app); // Inicializa o Firebase Analytics
-const db = getFirestore(app); // **Inicializa o Firestore**
+export const auth = getAuth(app);
+export const analytics = getAnalytics(app); // Inicializa o Firebase Analytics
+export const db = getFirestore(app); // **Inicializa o Firestore**
 
 /**
  * Salva os dados da sessão do usuário no Firestore.

@@ -356,8 +356,11 @@ class UIManager {
             if (!this.stateManager.currentSessionId) {
                 const newSessionId = this.gptManager.generateSessionId();
                 this.stateManager.setSessionId(newSessionId);
+                console.log('🔗 Nova sessão criada:', newSessionId);
                 // Removido: adição automática do chat à lista
                 // O chat só será adicionado após o envio da primeira mensagem
+            } else {
+                console.log('🔗 Usando sessão existente:', this.stateManager.currentSessionId);
             }
 
             // Limpar histórico injetado

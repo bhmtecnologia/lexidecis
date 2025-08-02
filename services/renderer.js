@@ -224,18 +224,30 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // ETAPA 5: Selecionar GPT Padrão (caso nenhum chat esteja selecionado)
         if (!stateManager.selectedChat) {
-            debugLog("[Renderer] Nenhum chat selecionado; procurando GPT padrão...");
-            const defaultGPTId = "6d71f8f4-b91d-45ed-80a9-803ae61a7c98"; // Exemplo
-            const defaultGPT = gptManager.getGPTById(defaultGPTId);
-            if (defaultGPT) {
-                debugLog("[Renderer] GPT padrão encontrado:", defaultGPT);
-                await gptManager.selectGPTItem(defaultGPT);
-                stateManager.setSelectedGPT(defaultGPT);
-                debugLog(`[Renderer] GPT padrão selecionado: ${defaultGPT.name}`);
-                await uiManager.createNewChat();
+            debugLog("[Renderer] Nenhum chat selecionado; verificando se há chatId na URL...");
+            
+            // Verifica se há chatId na URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const chatIdFromUrl = urlParams.get('chatId');
+            
+            if (chatIdFromUrl) {
+                debugLog("[Renderer] ChatId encontrado na URL:", chatIdFromUrl);
+                debugLog("[Renderer] Aguardando carregamento da lista de chats para selecionar o chat da URL...");
+                // Não cria novo chat, aguarda o carregamento da lista de chats
             } else {
-                showAlert('GPT padrão não encontrado. Consulte o suporte.', 'error');
-                throw new Error('GPT padrão não encontrado.');
+                debugLog("[Renderer] Nenhum chatId na URL; criando novo chat...");
+                const defaultGPTId = "6d71f8f4-b91d-45ed-80a9-803ae61a7c98"; // Exemplo
+                const defaultGPT = gptManager.getGPTById(defaultGPTId);
+                if (defaultGPT) {
+                    debugLog("[Renderer] GPT padrão encontrado:", defaultGPT);
+                    await gptManager.selectGPTItem(defaultGPT);
+                    stateManager.setSelectedGPT(defaultGPT);
+                    debugLog(`[Renderer] GPT padrão selecionado: ${defaultGPT.name}`);
+                    await uiManager.createNewChat();
+                } else {
+                    showAlert('GPT padrão não encontrado. Consulte o suporte.', 'error');
+                    throw new Error('GPT padrão não encontrado.');
+                }
             }
         } else {
             debugLog("[Renderer] Já existe um chat selecionado. Pulando GPT padrão...");

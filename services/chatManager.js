@@ -122,15 +122,18 @@ class ChatManager {
      */
     async selectChatFromUrl(chat) {
         try {
+            console.log('🔗 selectChatFromUrl chamado com chat:', chat);
+            
             // Atualiza o estado usando a propriedade selectedChat
             this.stateManager.selectedChat = chat;
             
             // Seleciona visualmente o item na lista
             this.selectChatItem(chat.id || chat.session_id);
             
-            // Inicializa o chat se necessário
-            if (this.uiManager && typeof this.uiManager.loadChat === 'function') {
-                await this.uiManager.loadChat(chat);
+            // Inicializa o chatbot com o chat selecionado
+            if (this.uiManager && typeof this.uiManager.initializeChatbot === 'function') {
+                console.log('🔗 Inicializando chatbot para chat da URL:', chat.id || chat.session_id);
+                await this.uiManager.initializeChatbot();
             }
             
             debugLog(`Chat carregado da URL: ${chat.id || chat.session_id}`);

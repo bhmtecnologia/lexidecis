@@ -481,16 +481,23 @@ export default class GPTManager {
         if (gpt.id) {
             await this.fetchGPTConfig(gpt.id);
 
-            if (!this.stateManager.currentSessionId) {
-                this.stateManager.setSessionId(this.generateSessionId());
-                const defaultChat = {
-                    id: this.stateManager.currentSessionId,
-                    name: gpt.name,
-                    date: new Date().toISOString(),
-                    fk_gpt_id: gpt.id
-                };
-                this.stateManager.addChat(defaultChat);
-                this.uiManager.chatManager.populateChatMenu(this.stateManager.chats);
+            // Sempre cria uma nova sessão quando troca de GPT
+            const newSessionId = this.generateSessionId();
+            this.stateManager.setSessionId(newSessionId);
+            
+            // Cria um novo chat com o GPT selecionado
+            const newChat = {
+                id: newSessionId,
+                name: gpt.name,
+                date: new Date().toISOString(),
+                fk_gpt_id: gpt.id
+            };
+            this.stateManager.addChat(newChat);
+            this.uiManager.chatManager.populateChatMenu(this.stateManager.chats);
+            
+            // Atualiza a URL com o novo chat
+            if (this.uiManager.chatManager && typeof this.uiManager.chatManager.updateUrlWithChatId === 'function') {
+                this.uiManager.chatManager.updateUrlWithChatId(newSessionId, gpt.id);
             }
 
             await this.uiManager.initializeChatbot();

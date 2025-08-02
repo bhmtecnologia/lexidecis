@@ -38,6 +38,14 @@ class PresenceService {
      */
     setupPresenceListener() {
         try {
+            // Verifica se db está disponível
+            if (!db) {
+                logService.warn('PresenceService', 'Firestore db não disponível, usando fallback');
+                this.activeUsersCount = 1;
+                this.notifyObservers(this.activeUsersCount);
+                return;
+            }
+
             // Listener para todos os documentos de userSessions
             const userSessionsRef = collection(db, "userSessions");
             this.presenceUnsubscribe = onSnapshot(userSessionsRef, (snapshot) => {
@@ -63,6 +71,9 @@ class PresenceService {
             logService.info('PresenceService', 'Listener de presença configurado');
         } catch (error) {
             logService.error('PresenceService', 'Erro ao configurar listener de presença:', error);
+            // Fallback robusto
+            this.activeUsersCount = 1;
+            this.notifyObservers(this.activeUsersCount);
         }
     }
 
@@ -71,6 +82,14 @@ class PresenceService {
      */
     async updateActiveUsersCount() {
         try {
+            // Verifica se db está disponível
+            if (!db) {
+                logService.warn('PresenceService', 'Firestore db não disponível, usando fallback');
+                this.activeUsersCount = 1;
+                this.notifyObservers(this.activeUsersCount);
+                return this.activeUsersCount;
+            }
+
             const userSessionsRef = collection(db, "userSessions");
             const onlineQuery = query(userSessionsRef, where("online", "==", true));
             const snapshot = await getDocs(onlineQuery);

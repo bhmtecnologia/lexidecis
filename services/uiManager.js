@@ -304,6 +304,33 @@ class UIManager {
             // Inicializa o chatbot, mas não adiciona o chat ainda
             await this.initializeChatbot();
 
+            // Adiciona o chat à lista e atualiza a URL
+            console.log('🔗 createNewChat: adicionando chat à lista e atualizando URL:', newSessionId);
+            
+            // Adiciona o chat ao StateManager
+            const newChat = {
+                id: newSessionId,
+                name: selectedGPT.name || 'Novo Chat',
+                date: new Date().toISOString(),
+                fk_gpt_id: selectedGPT.id
+            };
+            this.stateManager.addChat(newChat);
+            
+            // Atualiza a URL com o ID do novo chat criado
+            if (this.chatManager && typeof this.chatManager.updateUrlWithChatId === 'function') {
+                this.chatManager.updateUrlWithChatId(newSessionId);
+            }
+
+            // Recarrega a lista de chats para incluir o novo chat
+            if (this.chatManager && typeof this.chatManager.loadChatList === 'function') {
+                await this.chatManager.loadChatList(this.chatManager.populateChatMenu.bind(this.chatManager));
+            }
+
+            // Seleciona o chat recém-criado na interface
+            if (this.chatManager && typeof this.chatManager.selectChatItem === 'function') {
+                this.chatManager.selectChatItem(newSessionId);
+            }
+
             this.debugLog('Sessão criada e chatbot inicializado com sucesso.');
         } catch (error) {
             console.error('Erro ao criar nova sessão de chat:', error);

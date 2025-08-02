@@ -28,6 +28,162 @@ class ChatManager {
         this.stateManager = stateManager;
         this.config = config;
         this.uiManager = null; // Inicializa o uiManager como nulo para evitar quebras
+        
+        console.log('🔗 ChatManager constructor chamado');
+        
+        // Inicializa o sistema de URL (apenas o listener, não a verificação inicial)
+        this.initializeUrlListener();
+    }
+
+    /**
+     * Inicializa apenas o listener de URL (sem verificação inicial)
+     */
+    initializeUrlListener() {
+        console.log('🔗 Inicializando listener de URL...');
+        
+        // Listener para mudanças na URL (navegação do browser)
+        window.addEventListener('popstate', (event) => {
+            console.log('🔗 Evento popstate detectado:', event);
+            this.handleUrlChange();
+        });
+        
+        console.log('🔗 Listener de URL inicializado');
+    }
+
+    /**
+     * Inicializa o sistema completo de gerenciamento de URL (chamado após carregar chats)
+     */
+    initializeUrlManagement() {
+        console.log('🔗 Inicializando sistema completo de gerenciamento de URL...');
+        
+        // Verifica se há chatId na URL
+        console.log('🔗 Verificando URL inicial...');
+        this.handleUrlChange();
+        
+        console.log('🔗 Sistema completo de gerenciamento de URL inicializado');
+    }
+
+    /**
+     * Manipula mudanças na URL
+     */
+    handleUrlChange() {
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const chatId = urlParams.get('chatId');
+            
+            console.log('🔗 handleUrlChange chamado. chatId na URL:', chatId);
+            console.log('🔗 URL atual:', window.location.href);
+            
+            if (chatId) {
+                // Se há um chatId na URL, tenta carregar o chat
+                console.log('🔗 ChatId encontrado na URL, carregando chat:', chatId);
+                this.loadChatFromUrl(chatId);
+            } else {
+                // Se não há chatId, limpa a seleção atual
+                console.log('🔗 Nenhum chatId na URL, limpando seleção');
+                this.clearChatSelection();
+            }
+        } catch (error) {
+            console.error('Erro ao manipular mudança na URL:', error);
+        }
+    }
+
+    /**
+     * Carrega um chat baseado no ID da URL
+     * @param {string} chatId - ID do chat a ser carregado
+     */
+    async loadChatFromUrl(chatId) {
+        try {
+            // Verifica se o stateManager e chats estão disponíveis
+            if (!this.stateManager || !this.stateManager.chats) {
+                console.warn('StateManager ou chats não estão disponíveis ainda');
+                return;
+            }
+            
+            // Procura o chat na lista atual
+            const chat = this.stateManager.chats.find(c => c.id === chatId || c.session_id === chatId);
+            
+            if (chat) {
+                // Se encontrou o chat, seleciona ele
+                await this.selectChatFromUrl(chat);
+            } else {
+                // Se não encontrou, pode ser um chat que ainda não foi carregado
+                // ou um ID inválido
+                console.warn(`Chat com ID ${chatId} não encontrado na lista atual`);
+            }
+        } catch (error) {
+            console.error('Erro ao carregar chat da URL:', error);
+        }
+    }
+
+    /**
+     * Seleciona um chat baseado na URL
+     * @param {Object} chat - Objeto do chat a ser selecionado
+     */
+    async selectChatFromUrl(chat) {
+        try {
+            // Atualiza o estado usando a propriedade selectedChat
+            this.stateManager.selectedChat = chat;
+            
+            // Seleciona visualmente o item na lista
+            this.selectChatItem(chat.id || chat.session_id);
+            
+            // Inicializa o chat se necessário
+            if (this.uiManager && typeof this.uiManager.loadChat === 'function') {
+                await this.uiManager.loadChat(chat);
+            }
+            
+            debugLog(`Chat carregado da URL: ${chat.id || chat.session_id}`);
+        } catch (error) {
+            console.error('Erro ao selecionar chat da URL:', error);
+        }
+    }
+
+    /**
+     * Limpa a seleção atual de chat
+     */
+    clearChatSelection() {
+        try {
+            // Remove seleção visual
+            const selectedItems = document.querySelectorAll('.chat-item.selected');
+            selectedItems.forEach(item => item.classList.remove('selected'));
+            
+            // Limpa estado
+            if (this.stateManager) {
+                this.stateManager.selectedChat = null;
+            }
+            
+            debugLog('Seleção de chat limpa');
+        } catch (error) {
+            console.error('Erro ao limpar seleção de chat:', error);
+        }
+    }
+
+    /**
+     * Atualiza a URL com o chatId
+     * @param {string} chatId - ID do chat
+     */
+    updateUrlWithChatId(chatId) {
+        try {
+            const url = new URL(window.location);
+            
+            if (chatId) {
+                url.searchParams.set('chatId', chatId);
+                console.log('🔗 Atualizando URL com chatId:', chatId);
+            } else {
+                url.searchParams.delete('chatId');
+                console.log('🔗 Removendo chatId da URL');
+            }
+            
+            // Atualiza a URL sem recarregar a página
+            window.history.pushState({ chatId }, '', url.toString());
+            
+            console.log('🔗 URL atualizada para:', url.toString());
+            console.log('🔗 URL original:', window.location.href);
+            debugLog(`URL atualizada com chatId: ${chatId}`);
+        } catch (error) {
+            console.error('🔗 Erro ao atualizar URL:', error);
+        }
     }
 
     /* ============================
@@ -77,6 +233,10 @@ class ChatManager {
             if (typeof populateCallback === 'function') {
                 populateCallback(this.stateManager.chats);
             }
+            
+            // Inicializa o sistema completo de URL após carregar os chats
+            console.log('🔗 Chats carregados, inicializando sistema completo de URL...');
+            this.initializeUrlManagement();
         } catch (error) {
             console.error('Erro ao carregar lista de chats:', error);
             showAlert('Erro ao carregar a lista de chats. Verifique o console para mais detalhes.', 'error');
@@ -247,14 +407,23 @@ class ChatManager {
     async handleChatClick(event) {
         try {
             event.preventDefault();
+            console.log('🔗 handleChatClick chamado, event.currentTarget:', event.currentTarget);
+            console.log('🔗 dataset do elemento:', event.currentTarget.dataset);
             const chatId = event.currentTarget.dataset.chatId;
 
             if (!chatId) {
                 debugLog('Chat sem ID válido:', event);
+                console.log('🔗 Chat sem ID válido, dataset completo:', event.currentTarget.dataset);
                 return;
             }
 
             debugLog('Chat clicado:', chatId);
+            console.log('🔗 Chat clicado, chatId:', chatId);
+            console.log('🔗 URL antes do clique:', window.location.href);
+
+            // Atualiza a URL com o chatId
+            console.log('🔗 Chat clicado, atualizando URL com chatId:', chatId);
+            this.updateUrlWithChatId(chatId);
 
             // Mostrar loading de chat
             const loadingId = LoadingUtils.show('CHAT_LOADING', {
@@ -403,9 +572,11 @@ class ChatManager {
                 this.stateManager.removeChat(chatId);
                 this.populateChatMenu(this.stateManager.chats);
 
-                // Se o chat excluído era o atual, limpamos o sessionId
+                // Se o chat excluído era o atual, limpamos o sessionId e a URL
                 if (this.stateManager.currentSessionId === chatId) {
                     this.stateManager.setSessionId("");
+                    // Limpa a URL removendo o chatId
+                    this.updateUrlWithChatId(null);
                 }
 
                 // Remove o chat selecionado do localStorage, se for o mesmo ID
@@ -442,6 +613,10 @@ class ChatManager {
             if (itemChatId === chatId) {
                 item.classList.add('active');
                 localStorage.setItem('selectedChatId', chatId);
+                
+                // Atualiza a URL com o chatId selecionado
+                console.log('🔗 selectChatItem: atualizando URL com chatId:', chatId);
+                this.updateUrlWithChatId(chatId);
             } else {
                 item.classList.remove('active');
             }

@@ -482,6 +482,7 @@ export default class StateManager extends EventEmitter {
     removeChat(chatId) { this.chat.removeChat(chatId); }
     getChats() { return this.chat.getChats(); }
     getChatById(chatId) { return this.chat.getChatById(chatId); }
+    setSelectedChat(chat) { this.selectedChat = chat; }
 
     // GPTs
     setGPTs(gpts) { this.gpt.setGPTs(gpts); }

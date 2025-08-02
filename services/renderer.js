@@ -224,18 +224,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // ETAPA 5: Selecionar GPT Padrão (caso nenhum chat esteja selecionado)
         if (!stateManager.selectedChat) {
-            debugLog("[Renderer] Nenhum chat selecionado; verificando se há chatId na URL...");
+            debugLog("[Renderer] Nenhum chat selecionado; verificando se há chatId ou gptId na URL...");
             
-            // Verifica se há chatId na URL
+            // Verifica se há chatId ou gptId na URL
             const urlParams = new URLSearchParams(window.location.search);
             const chatIdFromUrl = urlParams.get('chatId');
+            const gptIdFromUrl = urlParams.get('gptId');
             
-            if (chatIdFromUrl) {
+            if (chatIdFromUrl || gptIdFromUrl) {
                 debugLog("[Renderer] ChatId encontrado na URL:", chatIdFromUrl);
-                debugLog("[Renderer] Aguardando carregamento da lista de chats para selecionar o chat da URL...");
+                debugLog("[Renderer] GptId encontrado na URL:", gptIdFromUrl);
+                debugLog("[Renderer] Aguardando carregamento da lista de chats para selecionar o chat/GPT da URL...");
                 // Não cria novo chat, aguarda o carregamento da lista de chats
             } else {
-                debugLog("[Renderer] Nenhum chatId na URL; criando novo chat...");
+                debugLog("[Renderer] Nenhum chatId ou gptId na URL; criando novo chat...");
                 const defaultGPTId = "6d71f8f4-b91d-45ed-80a9-803ae61a7c98"; // Exemplo
                 const defaultGPT = gptManager.getGPTById(defaultGPTId);
                 if (defaultGPT) {

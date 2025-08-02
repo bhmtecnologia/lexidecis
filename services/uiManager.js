@@ -316,9 +316,9 @@ class UIManager {
             };
             this.stateManager.addChat(newChat);
             
-            // Atualiza a URL com o ID do novo chat criado
+            // Atualiza a URL com o ID do novo chat criado e gptId
             if (this.chatManager && typeof this.chatManager.updateUrlWithChatId === 'function') {
-                this.chatManager.updateUrlWithChatId(newSessionId);
+                this.chatManager.updateUrlWithChatId(newSessionId, selectedGPT.id);
             }
 
             // Recarrega a lista de chats para incluir o novo chat

@@ -70,9 +70,24 @@ class ChatManager {
         try {
             const urlParams = new URLSearchParams(window.location.search);
             const chatId = urlParams.get('chatId');
+            const gptId = urlParams.get('gptId');
             
             console.log('🔗 handleUrlChange chamado. chatId na URL:', chatId);
+            console.log('🔗 handleUrlChange chamado. gptId na URL:', gptId);
             console.log('🔗 URL atual:', window.location.href);
+            
+            // Se há um gptId na URL, seleciona o GPT primeiro
+            if (gptId && this.uiManager && this.uiManager.gptManager) {
+                console.log('🔗 GptId encontrado na URL, selecionando GPT:', gptId);
+                const gpt = this.uiManager.gptManager.getGPTById(gptId);
+                if (gpt) {
+                    this.uiManager.gptManager.selectGPTItem(gpt);
+                    this.stateManager.setSelectedGPT(gpt);
+                    console.log('🔗 GPT selecionado da URL:', gpt.name);
+                } else {
+                    console.warn('🔗 GPT com ID', gptId, 'não encontrado');
+                }
+            }
             
             if (chatId) {
                 // Se há um chatId na URL, tenta carregar o chat
@@ -163,10 +178,11 @@ class ChatManager {
     }
 
     /**
-     * Atualiza a URL com o chatId
+     * Atualiza a URL com o chatId e gptId
      * @param {string} chatId - ID do chat
+     * @param {string} gptId - ID do GPT (opcional)
      */
-    updateUrlWithChatId(chatId) {
+    updateUrlWithChatId(chatId, gptId = null) {
         try {
             const url = new URL(window.location);
             
@@ -178,12 +194,22 @@ class ChatManager {
                 console.log('🔗 Removendo chatId da URL');
             }
             
+            // Adiciona gptId se fornecido ou se há um GPT selecionado
+            const currentGptId = gptId || (this.stateManager.selectedGPT ? this.stateManager.selectedGPT.id : null);
+            if (currentGptId) {
+                url.searchParams.set('gptId', currentGptId);
+                console.log('🔗 Atualizando URL com gptId:', currentGptId);
+            } else {
+                url.searchParams.delete('gptId');
+                console.log('🔗 Removendo gptId da URL');
+            }
+            
             // Atualiza a URL sem recarregar a página
-            window.history.pushState({ chatId }, '', url.toString());
+            window.history.pushState({ chatId, gptId: currentGptId }, '', url.toString());
             
             console.log('🔗 URL atualizada para:', url.toString());
             console.log('🔗 URL original:', window.location.href);
-            debugLog(`URL atualizada com chatId: ${chatId}`);
+            debugLog(`URL atualizada com chatId: ${chatId}, gptId: ${currentGptId}`);
         } catch (error) {
             console.error('🔗 Erro ao atualizar URL:', error);
         }
@@ -424,9 +450,9 @@ class ChatManager {
             console.log('🔗 Chat clicado, chatId:', chatId);
             console.log('🔗 URL antes do clique:', window.location.href);
 
-            // Atualiza a URL com o chatId
+            // Atualiza a URL com o chatId e gptId
             console.log('🔗 Chat clicado, atualizando URL com chatId:', chatId);
-            this.updateUrlWithChatId(chatId);
+            this.updateUrlWithChatId(chatId, gptId);
 
             // Mostrar loading de chat
             const loadingId = LoadingUtils.show('CHAT_LOADING', {

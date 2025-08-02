@@ -400,115 +400,86 @@ class UIManager {
                 apiHost: selectedFlowiseConfig.apiHost,
                 chatflowConfig: chatflowConfig,
                 observersConfig: {
-                    observeUserInput: (userInput) => this.logUserInput(userInput),
-                    observeMessages: (messages) => this.logMessages(messages),
-                    observeLoading: async (loading) => {
-                        console.log('🔗 observeLoading chamado com loading:', loading);
-                        if (loading) {
+                    observeUserInput: async (userInput) => {
+                        console.log('🔗 observeUserInput chamado com:', userInput);
+                        this.logUserInput(userInput);
+                        
+                        // Captura o input do usuário quando ele digita
+                        if (userInput && userInput.trim()) {
+                            console.log('🔗 Input do usuário capturado:', userInput);
+                            
                             try {
-                                console.log('🔗 Loading ativo, tentando capturar input do usuário...');
+                                // Faz o POST para a API de criar chat
+                                const { getJwt } = await import('./auth.js');
+                                const token = await getJwt();
+
+                                const payload = {
+                                    chatflowId: selectedFlowiseConfig.chatflowId,
+                                    sessionId: this.stateManager.currentSessionId,
+                                    role: 'user',
+                                    content: userInput
+                                };
+
+                                console.log('🔗 Enviando mensagem para API:', payload);
+
+                                const response = await fetch('https://webhook.power.tec.br/webhook/lexidecis/v2/chatmessage', {
+                                    method: "POST",
+                                    headers: { 
+                                        "Content-Type": "application/json",
+                                        "Authorization": `Bearer ${token}`
+                                    },
+                                    body: JSON.stringify(payload)
+                                });
+
+                                console.log('🔗 Response status:', response.status);
+
+                                if (!response.ok) {
+                                    const errorText = await response.text();
+                                    throw new Error("Erro ao salvar mensagem de chat: " + errorText);
+                                }
+
+                                const result = await response.json();
+                                console.log('🔗 Mensagem enviada para API com sucesso:', result);
                                 
-                                // Captura o input do usuário do textarea do chatbot
-                                const chatbotElement = document.querySelector('flowise-fullchatbot');
-                                console.log('🔗 Chatbot element encontrado:', !!chatbotElement);
+                                // Faz o POST para o endpoint de chats (updateChat)
+                                console.log('🔗 Fazendo POST para endpoint de chats (updateChat)');
+                                const chatParams = {
+                                    gpt_id: this.stateManager.selectedGPT?.id,
+                                    user_name: this.config.userName,
+                                    user_id: this.config.userId,
+                                    sessionid: this.stateManager.currentSessionId
+                                };
                                 
-                                if (chatbotElement && chatbotElement.shadowRoot) {
-                                    console.log('🔗 ShadowRoot encontrado');
-                                    const textarea = chatbotElement.shadowRoot.querySelector('textarea');
-                                    console.log('🔗 Textarea encontrado:', !!textarea);
-                                    
-                                    if (textarea) {
-                                        console.log('🔗 Valor do textarea:', textarea.value);
-                                        console.log('🔗 Textarea tem valor?', !!textarea.value);
-                                    }
-                                    
-                                    if (textarea && textarea.value) {
-                                        const userInput = textarea.value;
-                                        console.log('🔗 Input capturado:', userInput);
-                                        console.log('🔗 Enviando mensagem para API:', {
-                                            chatflowid: selectedFlowiseConfig.chatflowId,
-                                            sessionId: this.stateManager.currentSessionId,
-                                            role: 'user',
-                                            message: userInput
-                                        });
-                                        
-                                        // Faz o POST direto para a API de criar chat
-                                        const { getJwt } = await import('./auth.js');
-                                        const token = await getJwt();
-
-                                        const payload = {
-                                            chatflowId: selectedFlowiseConfig.chatflowId,
-                                            sessionId: this.stateManager.currentSessionId,
-                                            role: 'user',
-                                            content: userInput
-                                        };
-
-                                        console.log('🔗 Payload preparado:', payload);
-
-                                        const response = await fetch('https://webhook.power.tec.br/webhook/lexidecis/v2/chatmessage', {
-                                            method: "POST",
-                                            headers: { 
-                                                "Content-Type": "application/json",
-                                                "Authorization": `Bearer ${token}`
-                                            },
-                                            body: JSON.stringify(payload)
-                                        });
-
-                                        console.log('🔗 Response status:', response.status);
-
-                                        if (!response.ok) {
-                                            const errorText = await response.text();
-                                            throw new Error("Erro ao salvar mensagem de chat: " + errorText);
-                                        }
-
-                                        const result = await response.json();
-                                        console.log('🔗 Mensagem enviada para API com sucesso:', result);
-                                        
-                                        // Faz o POST para o endpoint de chats (updateChat)
-                                        console.log('🔗 Fazendo POST para endpoint de chats (updateChat)');
-                                        const chatParams = {
-                                            gpt_id: this.stateManager.selectedGPT?.id,
-                                            user_name: this.config.userName,
-                                            user_id: this.config.userId,
-                                            sessionid: this.stateManager.currentSessionId
-                                        };
-                                        
-                                        console.log('🔗 Parâmetros para updateChat:', chatParams);
-                                        
-                                        try {
-                                            const chatResponse = await fetch('https://webhook.power.tec.br/webhook/lexidecis/chats', {
-                                                method: 'POST',
-                                                headers: { 
-                                                    'Content-Type': 'application/json',
-                                                    'Authorization': `Bearer ${token}`
-                                                },
-                                                body: JSON.stringify(chatParams)
-                                            });
-                                            
-                                            console.log('🔗 Response status do updateChat:', chatResponse.status);
-                                            
-                                            if (chatResponse.ok) {
-                                                const chatResult = await chatResponse.json();
-                                                console.log('🔗 UpdateChat realizado com sucesso:', chatResult);
-                                            } else {
-                                                const errorText = await chatResponse.text();
-                                                console.error('🔗 Erro no updateChat:', errorText);
-                                            }
-                                        } catch (error) {
-                                            console.error('🔗 Erro ao fazer updateChat:', error);
-                                        }
-                                    } else {
-                                        console.log('🔗 Textarea não encontrado ou sem valor');
-                                    }
+                                console.log('🔗 Parâmetros para updateChat:', chatParams);
+                                
+                                const chatResponse = await fetch('https://webhook.power.tec.br/webhook/lexidecis/chats', {
+                                    method: 'POST',
+                                    headers: { 
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${token}`
+                                    },
+                                    body: JSON.stringify(chatParams)
+                                });
+                                
+                                console.log('🔗 Response status do updateChat:', chatResponse.status);
+                                
+                                if (chatResponse.ok) {
+                                    const chatResult = await chatResponse.json();
+                                    console.log('🔗 UpdateChat realizado com sucesso:', chatResult);
                                 } else {
-                                    console.log('🔗 Chatbot element ou shadowRoot não encontrado');
+                                    const errorText = await chatResponse.text();
+                                    console.error('🔗 Erro no updateChat:', errorText);
                                 }
                             } catch (error) {
                                 console.error('🔗 Erro ao enviar mensagem para API:', error);
                             }
-                        } else {
-                            console.log('🔗 Loading inativo, não fazendo nada');
                         }
+                    },
+                    observeMessages: (messages) => this.logMessages(messages),
+                    observeLoading: async (loading) => {
+                        console.log('🔗 observeLoading chamado com loading:', loading);
+                        // A lógica principal foi movida para observeUserInput
+                        // Este observer agora só monitora o estado de loading
                     }
                 },
                 theme: {

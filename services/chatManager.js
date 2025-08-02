@@ -93,9 +93,13 @@ class ChatManager {
                 // Se há um chatId na URL, tenta carregar o chat
                 console.log('🔗 ChatId encontrado na URL, carregando chat:', chatId);
                 this.loadChatFromUrl(chatId);
+            } else if (gptId) {
+                // Se há apenas gptId na URL, cria um novo chat com esse GPT
+                console.log('🔗 Apenas gptId na URL, criando novo chat com GPT:', gptId);
+                this.createNewChatWithGpt(gptId);
             } else {
-                // Se não há chatId, limpa a seleção atual
-                console.log('🔗 Nenhum chatId na URL, limpando seleção');
+                // Se não há chatId nem gptId, limpa a seleção atual
+                console.log('🔗 Nenhum chatId ou gptId na URL, limpando seleção');
                 this.clearChatSelection();
             }
         } catch (error) {
@@ -154,6 +158,46 @@ class ChatManager {
             debugLog(`Chat carregado da URL: ${chat.id || chat.session_id}`);
         } catch (error) {
             console.error('Erro ao selecionar chat da URL:', error);
+        }
+    }
+
+    /**
+     * Cria um novo chat com o GPT especificado
+     * @param {string} gptId - ID do GPT para criar o novo chat
+     */
+    async createNewChatWithGpt(gptId) {
+        try {
+            console.log('🔗 createNewChatWithGpt chamado com gptId:', gptId);
+            
+            // Verifica se o GPT existe
+            if (!this.uiManager || !this.uiManager.gptManager) {
+                console.error('GPTManager não disponível');
+                return;
+            }
+            
+            const gpt = this.uiManager.gptManager.getGPTById(gptId);
+            if (!gpt) {
+                console.error('GPT não encontrado:', gptId);
+                return;
+            }
+            
+            // Seleciona o GPT se ainda não estiver selecionado
+            if (!this.stateManager.selectedGPT || this.stateManager.selectedGPT.id !== gptId) {
+                await this.uiManager.gptManager.selectGPTItem(gpt);
+                this.stateManager.setSelectedGPT(gpt);
+                console.log('🔗 GPT selecionado para novo chat:', gpt.name);
+            }
+            
+            // Cria um novo chat usando o UIManager
+            if (this.uiManager && typeof this.uiManager.createNewChat === 'function') {
+                console.log('🔗 Criando novo chat com GPT:', gpt.name);
+                await this.uiManager.createNewChat();
+            } else {
+                console.error('UIManager ou método createNewChat não disponível');
+            }
+            
+        } catch (error) {
+            console.error('Erro ao criar novo chat com GPT:', error);
         }
     }
 

@@ -197,6 +197,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         CONFIG.flowise = { ...endpoints.flowise };
         CONFIG.apiCredentials = { ...endpoints.apiCredentials };
         debugLog("[Renderer] CONFIG atualizado com endpoints:", CONFIG);
+        debugLog("[Renderer] apiCredentials disponíveis:", Object.keys(CONFIG.apiCredentials));
 
         // ETAPA 4: Pré-carregar GPTs e Inicializar Serviços
         debugLog("[Renderer] Inicializando serviços e pré-carregando GPTs...");

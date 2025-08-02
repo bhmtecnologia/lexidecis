@@ -194,6 +194,12 @@ Este índice organiza toda a documentação do projeto LexiDecis, facilitando a 
 - **Conteúdo**: Processos manuais, configurações
 - **Status**: ✅ Implementado
 
+### **🔗 Configuração de Endpoints da API**
+- **Arquivo**: `docs/API_ENDPOINT_CONFIGURATION.md`
+- **Descrição**: Configuração e uso de endpoints da API
+- **Conteúdo**: ApiService vs fetch direto, configurações, troubleshooting
+- **Status**: ✅ Implementado
+
 ## 📁 Estrutura de Arquivos
 
 ### **Organização por Categoria**
@@ -222,7 +228,8 @@ docs/
 ├── ⚡ MESSAGE_LOADING_IMPROVEMENTS.md      # Melhorias de carregamento
 ├── 📈 UPDATE_PROGRESS_FIX.md              # Correção de progresso
 ├── 🔄 SPINNER_TO_BAR_UPDATE.md            # Spinner para barra
-└── 📋 MANUAL_IMPLEMENTATION.md            # Implementação manual
+├── 📋 MANUAL_IMPLEMENTATION.md            # Implementação manual
+└── 🔗 API_ENDPOINT_CONFIGURATION.md       # Configuração de endpoints da API
 ```
 
 ## 🎯 Como Usar Este Índice

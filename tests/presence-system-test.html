@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teste do Sistema de Presença - LexiDecis</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../admin/assets/css/presence.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+  <div class="container mt-4">
+    <div class="row">
+      <div class="col-12">
+        <h1>🧪 Teste do Sistema de Presença</h1>
+        <p class="text-muted">Teste para verificar o funcionamento do sistema de presença do LexiDecis</p>
+        
+        <div class="alert alert-info">
+          <h5><i class="bi bi-info-circle"></i> Como usar este teste:</h5>
+          <ol>
+            <li>Abra esta página em múltiplas abas/navegadores</li>
+            <li>Faça login com diferentes usuários</li>
+            <li>Observe como os status mudam em tempo real</li>
+            <li>Feche algumas abas para ver usuários ficarem offline</li>
+          </ol>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h5><i class="bi bi-people"></i> Status de Presença</h5>
+          </div>
+          <div class="card-body">
+            <div id="presenceStatus" class="mb-3">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Carregando...</span>
+              </div>
+              <span class="ms-2">Carregando status de presença...</span>
+            </div>
+            
+            <div id="presenceTable" class="table-responsive">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Usuário</th>
+                    <th>Status</th>
+                    <th>Último Acesso</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="presenceTableBody">
+                  <tr>
+                    <td colspan="4" class="text-center text-muted">
+                      <i class="bi bi-hourglass-split"></i> Aguardando dados...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mt-4">
+          <div class="card-header">
+            <h5><i class="bi bi-gear"></i> Controles de Teste</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <h6>Simular Status</h6>
+                <div class="mb-3">
+                  <label class="form-label">Status Atual:</label>
+                  <div class="d-flex gap-2">
+                    <button class="btn btn-success btn-sm" onclick="simulateStatus('online')">
+                      <i class="bi bi-circle-fill"></i> Online
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="simulateStatus('offline')">
+                      <i class="bi bi-circle"></i> Offline
+                    </button>
+                    <button class="btn btn-warning btn-sm" onclick="simulateStatus('unknown')">
+                      <i class="bi bi-question-circle"></i> Desconhecido
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <h6>Debug</h6>
+                <div class="mb-3">
+                  <button class="btn btn-outline-primary btn-sm" onclick="showDebugInfo()">
+                    <i class="bi bi-bug"></i> Mostrar Debug
+                  </button>
+                  <button class="btn btn-outline-secondary btn-sm" onclick="clearDebug()">
+                    <i class="bi bi-trash"></i> Limpar Debug
+                  </button>
+                </div>
+                <div id="debugInfo" class="d-none">
+                  <small class="text-muted">Informações de debug aparecerão aqui</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mt-4">
+          <div class="card-header">
+            <h5><i class="bi bi-list-check"></i> Logs de Eventos</h5>
+          </div>
+          <div class="card-body">
+            <div id="eventLogs" class="border rounded p-3" style="height: 200px; overflow-y: auto; background-color: #f8f9fa;">
+              <div class="text-muted">Logs de eventos aparecerão aqui...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import AuthService from "../admin/assets/js/auth.js";
+    import { updateUserPresence } from "../admin/assets/js/dom.js";
+
+    // Variáveis globais
+    let currentUser = null;
+    let presenceData = {};
+    let eventLogs = [];
+
+    // Função para adicionar log
+    function addLog(message, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString('pt-BR');
+      const logEntry = `[${timestamp}] ${message}`;
+      eventLogs.push({ message: logEntry, type });
+      
+      const logsContainer = document.getElementById('eventLogs');
+      const logElement = document.createElement('div');
+      logElement.className = `log-entry log-${type}`;
+      logElement.textContent = logEntry;
+      logsContainer.appendChild(logElement);
+      
+      // Manter apenas os últimos 50 logs
+      if (eventLogs.length > 50) {
+        eventLogs.shift();
+        if (logsContainer.firstChild) {
+          logsContainer.removeChild(logsContainer.firstChild);
+        }
+      }
+      
+      // Auto-scroll para o final
+      logsContainer.scrollTop = logsContainer.scrollHeight;
+    }
+
+    // Função para atualizar status de presença
+    function updatePresenceStatus() {
+      const statusElement = document.getElementById('presenceStatus');
+      const tableBody = document.getElementById('presenceTableBody');
+      
+      if (currentUser) {
+        statusElement.innerHTML = `
+          <span class="badge bg-success">
+            <i class="bi bi-circle-fill"></i> Conectado como: ${currentUser.email}
+          </span>
+        `;
+        
+        // Atualiza tabela com dados de presença
+        if (Object.keys(presenceData).length > 0) {
+          tableBody.innerHTML = Object.entries(presenceData).map(([uid, data]) => `
+            <tr>
+              <td>
+                <strong>${data.displayName || 'Usuário'}</strong><br>
+                <small class="text-muted">${data.email || uid}</small>
+              </td>
+              <td>
+                ${getPresenceStatusHTML(uid, data)}
+              </td>
+              <td>
+                ${data.lastSeen ? new Date(data.lastSeen.toDate()).toLocaleString('pt-BR') : 'Nunca'}
+              </td>
+              <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="refreshUserPresence('${uid}')">
+                  <i class="bi bi-arrow-clockwise"></i> Atualizar
+                </button>
+              </td>
+            </tr>
+          `).join('');
+        } else {
+          tableBody.innerHTML = `
+            <tr>
+              <td colspan="4" class="text-center text-muted">
+                <i class="bi bi-people"></i> Nenhum usuário encontrado
+              </td>
+            </tr>
+          `;
+        }
+      } else {
+        statusElement.innerHTML = `
+          <span class="badge bg-warning">
+            <i class="bi bi-exclamation-triangle"></i> Não conectado
+          </span>
+        `;
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="4" class="text-center text-muted">
+              <i class="bi bi-lock"></i> Faça login para ver os dados de presença
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    // Função para gerar HTML do status de presença
+    function getPresenceStatusHTML(uid, data) {
+      if (!data) {
+        return '<span class="presence-badge unknown"><span class="presence-indicator unknown"></span>Desconhecido</span>';
+      }
+      
+      if (data.online) {
+        return '<span class="presence-badge online"><span class="presence-indicator online"></span>Online</span>';
+      } else {
+        return '<span class="presence-badge offline"><span class="presence-indicator offline"></span>Offline</span>';
+      }
+    }
+
+    // Função para simular status (para teste)
+    window.simulateStatus = function(status) {
+      if (!currentUser) {
+        addLog('❌ Usuário não está logado', 'error');
+        return;
+      }
+      
+      const mockData = {
+        online: status === 'online',
+        lastSeen: new Date(),
+        displayName: currentUser.displayName || 'Usuário Teste',
+        email: currentUser.email
+      };
+      
+      presenceData[currentUser.uid] = mockData;
+      updatePresenceStatus();
+      addLog(`🎭 Status simulado: ${status}`, 'info');
+    };
+
+    // Função para mostrar debug
+    window.showDebugInfo = function() {
+      const debugElement = document.getElementById('debugInfo');
+      debugElement.classList.remove('d-none');
+      debugElement.innerHTML = `
+        <div class="small">
+          <strong>Usuário Atual:</strong><br>
+          <pre>${JSON.stringify(currentUser, null, 2)}</pre>
+          <strong>Dados de Presença:</strong><br>
+          <pre>${JSON.stringify(presenceData, null, 2)}</pre>
+        </div>
+      `;
+    };
+
+    // Função para limpar debug
+    window.clearDebug = function() {
+      const debugElement = document.getElementById('debugInfo');
+      debugElement.classList.add('d-none');
+      debugElement.innerHTML = '<small class="text-muted">Informações de debug aparecerão aqui</small>';
+    };
+
+    // Função para atualizar presença de usuário específico
+    window.refreshUserPresence = function(uid) {
+      addLog(`🔄 Atualizando presença do usuário: ${uid}`, 'info');
+      // Aqui você pode implementar a lógica para forçar atualização
+    };
+
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', () => {
+      addLog('🚀 Iniciando teste do sistema de presença...', 'info');
+      
+      // Listener para mudanças de autenticação
+      AuthService.onAuthChange((user) => {
+        currentUser = user;
+        addLog(`👤 ${user ? 'Usuário logado: ' + user.email : 'Usuário deslogado'}`, 'info');
+        updatePresenceStatus();
+        
+        if (user) {
+          // Simula dados de presença para teste
+          setTimeout(() => {
+            presenceData[user.uid] = {
+              online: true,
+              lastSeen: new Date(),
+              displayName: user.displayName || 'Usuário Teste',
+              email: user.email
+            };
+            updatePresenceStatus();
+            addLog('✅ Dados de presença carregados', 'success');
+          }, 1000);
+        }
+      });
+
+      // Listener para mudanças de presença
+      document.addEventListener('presenceChanged', (event) => {
+        const { uid, presence } = event.detail;
+        presenceData[uid] = presence;
+        updatePresenceStatus();
+        addLog(`📡 Presença atualizada: ${uid} - ${presence.online ? 'Online' : 'Offline'}`, 'info');
+      });
+
+      addLog('✅ Sistema inicializado com sucesso', 'success');
+    });
+  </script>
+
+  <style>
+    .log-entry {
+      margin-bottom: 2px;
+      font-family: monospace;
+      font-size: 0.85rem;
+    }
+    
+    .log-info { color: #0d6efd; }
+    .log-success { color: #198754; }
+    .log-warning { color: #fd7e14; }
+    .log-error { color: #dc3545; }
+    
+    .presence-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .presence-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    
+    .presence-badge.online {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .presence-badge.offline {
+      background-color: #f8f9fa;
+      color: #6c757d;
+      border: 1px solid #dee2e6;
+    }
+    
+    .presence-badge.unknown {
+      background-color: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+    }
+    
+    .presence-indicator.online {
+      background-color: #28a745;
+      box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.2);
+      animation: pulse 2s infinite;
+    }
+    
+    .presence-indicator.offline {
+      background-color: #6c757d;
+    }
+    
+    .presence-indicator.unknown {
+      background-color: #ffc107;
+    }
+    
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); }
+      70% { box-shadow: 0 0 0 6px rgba(40, 167, 69, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+    }
+  </style>
+</body>
+</html> 

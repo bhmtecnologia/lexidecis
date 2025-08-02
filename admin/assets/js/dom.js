@@ -9,6 +9,56 @@
 
 console.log("dom.js carregado");
 
+// Variáveis globais para gerenciar presença
+let usersPresence = {};
+let presenceUnsubscribe = null;
+
+/**
+ * Obtém o status de presença de um usuário
+ * @param {string} userId - ID do usuário
+ * @returns {string} HTML com o status de presença
+ */
+function getPresenceStatus(userId) {
+  const presence = usersPresence[userId];
+  
+  if (!presence) {
+    return '<span class="presence-badge unknown presence-tooltip" data-tooltip="Status desconhecido"><span class="presence-indicator unknown"></span>Desconhecido</span>';
+  }
+  
+  if (presence.online) {
+    return '<span class="presence-badge online presence-tooltip" data-tooltip="Usuário está online agora"><span class="presence-indicator online"></span>Online</span>';
+  } else {
+    const lastSeen = presence.lastSeen ? new Date(presence.lastSeen.toDate()).toLocaleString('pt-BR') : 'Desconhecido';
+    return `<span class="presence-badge offline presence-tooltip" data-tooltip="Visto por último: ${lastSeen}"><span class="presence-indicator offline"></span>Offline</span>`;
+  }
+}
+
+/**
+ * Atualiza o status de presença de um usuário na tabela
+ * @param {string} userId - ID do usuário
+ * @param {Object} presence - Dados de presença
+ */
+export function updateUserPresence(userId, presence) {
+  usersPresence[userId] = presence;
+  
+  // Atualiza a célula na tabela se ela existir
+  const table = document.getElementById('data-table');
+  if (table) {
+    const rows = table.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+      const cells = row.querySelectorAll('td');
+      if (cells.length >= 4) {
+        // Verifica se é a linha do usuário correto (coluna 2 = Firebase ID)
+        const firebaseIdCell = cells[2];
+        if (firebaseIdCell.textContent.includes(userId)) {
+          // Atualiza a coluna de status (índice 3)
+          cells[3].innerHTML = getPresenceStatus(userId);
+        }
+      }
+    });
+  }
+}
+
 /**
  * Renderiza o conteúdo principal da aplicação.
  * Injeta apenas a tabela no elemento com id "content", sem sobrescrever o layout existente.
@@ -48,6 +98,7 @@ export function renderContent() {
                         <th>Username</th>
                         <th>Email</th>
                         <th>Firebase ID</th>
+                        <th>Status</th>
                         <th>É Admin</th>
                         <th>Company</th>
                         <th>Unit</th>
@@ -78,20 +129,21 @@ export function renderContent() {
           <div class="card">
             <div class="card-body">
               <div class="table-responsive">
-                <table id="data-table" class="display table table-bordered table-striped">
-                  <thead>
-                    <tr>
-                      <th>Username</th>
-                      <th>Email</th>
-                      <th>Firebase ID</th>
-                      <th>É Admin</th>
-                      <th>Company</th>
-                      <th>Unit</th>
-                      <th>Remote JID</th>
-                      <th>Whatsapp</th>
-                      <th>Ações</th>
-                    </tr>
-                  </thead>
+                                  <table id="data-table" class="display table table-bordered table-striped">
+                    <thead>
+                      <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Firebase ID</th>
+                        <th>Status</th>
+                        <th>É Admin</th>
+                        <th>Company</th>
+                        <th>Unit</th>
+                        <th>Remote JID</th>
+                        <th>Whatsapp</th>
+                        <th>Ações</th>
+                      </tr>
+                    </thead>
                   <tbody></tbody>
                 </table>
               </div>
@@ -173,10 +225,14 @@ export function updateUserTable(users, usersDataObj) {
         `<span class="text-success" title="Firebase UID válido">${user.id}</span>` : 
         `<span class="text-warning" title="ID legado">${user.id}</span>`;
       
+      // Status de presença
+      const presenceStatus = getPresenceStatus(user.id);
+      
       return [
         user.username || '-',
         user.email || '-',
         idDisplay,
+        presenceStatus,
         (typeof user.is_admin === 'boolean') ? (user.is_admin ? 'Sim' : 'Não') : '-',
         user.company_name || '-',
         user.unit_name || '-',
@@ -198,11 +254,15 @@ export function updateUserTable(users, usersDataObj) {
         `<span class="text-success" title="Firebase UID válido">${user.id}</span>` : 
         `<span class="text-warning" title="ID legado">${user.id}</span>`;
       
+      // Status de presença
+      const presenceStatus = getPresenceStatus(user.id);
+      
       tableBody.append(`
         <tr>
           <td>${user.username || '-'}</td>
           <td>${user.email || '-'}</td>
           <td>${idDisplay}</td>
+          <td>${presenceStatus}</td>
           <td>${(typeof user.is_admin === 'boolean') ? (user.is_admin ? 'Sim' : 'Não') : '-'}</td>
           <td>${user.company_name || '-'}</td>
           <td>${user.unit_name || '-'}</td>

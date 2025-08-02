@@ -2,7 +2,7 @@
 
 ## 📋 Visão Geral
 
-O **LexiDecis** é uma aplicação web moderna de chat com inteligência artificial, desenvolvida com arquitetura modular e foco em qualidade. O sistema oferece interface intuitiva para interação com múltiplos modelos de IA, gerenciamento de histórico de conversas e autenticação segura.
+O **LexiDecis** é uma aplicação web moderna de chat com inteligência artificial, desenvolvida com arquitetura modular e foco em qualidade. O sistema oferece interface intuitiva para interação com múltiplos modelos de IA, gerenciamento de histórico de conversas, autenticação segura e **sistema de presença em tempo real**.
 
 ## 🏗️ Arquitetura do Sistema
 
@@ -10,11 +10,11 @@ O **LexiDecis** é uma aplicação web moderna de chat com inteligência artific
 ```
 lexidecis/
 ├── 📁 pages/           # Aplicação principal (chat.html)
-├── 📁 admin/           # Painel administrativo
+├── 📁 admin/           # Painel administrativo com presença em tempo real
 ├── 📁 chat/            # Módulo de chat (versão alternativa)
 ├── 📁 services/        # Serviços core da aplicação
 ├── 📁 tests/           # Sistema completo de testes
-├── 📁 docs/            # Documentação técnica
+├── 📁 docs/            # Documentação técnica completa
 └── 📁 instance/        # Instâncias e projetos específicos
 ```
 
@@ -22,6 +22,7 @@ lexidecis/
 - **Frontend**: HTML5, CSS3, JavaScript ES6+ (Módulos)
 - **UI Framework**: Bootstrap 5
 - **Autenticação**: Firebase Authentication
+- **Banco de Dados**: Firebase Firestore (presença em tempo real)
 - **Estado**: EventEmitter Pattern
 - **Testes**: Framework customizado com TestManager
 
@@ -33,6 +34,14 @@ lexidecis/
 - ✅ Interface responsiva e moderna
 - ✅ Sistema de loading unificado
 - ✅ Tratamento de erros robusto
+
+### **Sistema de Presença em Tempo Real** 🆕
+- ✅ **Indicadores de status**: Online, Offline, Desconhecido
+- ✅ **Heartbeat automático**: Atualização a cada 30 segundos
+- ✅ **Detecção de desconexão**: Marca usuário como offline ao fechar
+- ✅ **Sistema de fallback**: Funciona mesmo sem Firebase
+- ✅ **Interface visual**: Badges coloridos com animações
+- ✅ **Tooltips informativos**: Mostra último acesso
 
 ### **Gerenciamento de Estado**
 - ✅ StateManager centralizado
@@ -59,6 +68,7 @@ lexidecis/
 - Node.js (versão 14+)
 - Navegador moderno com suporte a ES6+
 - Servidor HTTP local (para testes)
+- **Firebase configurado** (para presença em tempo real)
 
 ### **Execução Rápida**
 ```bash
@@ -73,6 +83,22 @@ python3 -m http.server 8000
 
 # 4. Acesse a aplicação
 open http://localhost:8000/pages/chat.html
+
+# 5. Acesse o painel admin (com presença)
+open http://localhost:8000/admin/users.html
+```
+
+### **Configuração do Firebase** 🔥
+```bash
+# 1. Configure as regras do Firestore
+# Acesse: https://console.firebase.google.com/
+# Projeto: lexidecis → Firestore Database → Rules
+
+# 2. Aplique as regras de presença
+# (Ver docs/FIREBASE_PERMISSION_FIX.md)
+
+# 3. Teste o sistema de presença
+open http://localhost:8000/tests/presence-fallback-test.html
 ```
 
 ### **Execução dos Testes**
@@ -82,6 +108,9 @@ python3 -m http.server 8000
 
 # Acesse o índice de testes
 open http://localhost:8000/tests/index.html
+
+# Teste específico do sistema de presença
+open http://localhost:8000/tests/presence-fallback-test.html
 
 # Ou execute via script
 chmod +x tests/chat-app/scripts/run-all-tests.sh
@@ -95,6 +124,26 @@ chmod +x tests/chat-app/scripts/run-all-tests.sh
 - **Descrição**: Interface principal do chat com IA
 - **Módulos**: renderer.js, stateManager.js, chatManager.js, uiManager.js, gptManager.js
 - **Estilos**: Bootstrap 5 + CSS customizado
+
+### **📂 admin/** - Painel Administrativo 🆕
+```
+admin/
+├── index.html          # Dashboard principal
+├── users.html          # Gerenciamento de usuários + Presença em tempo real
+├── gpts.html           # Configuração de modelos de IA
+├── units.html          # Gerenciamento de unidades
+├── assets/
+│   ├── css/
+│   │   ├── admin.css   # Estilos do admin
+│   │   └── presence.css # Estilos dos indicadores de presença
+│   └── js/
+│       ├── auth.js     # Autenticação + Sistema de presença
+│       ├── dom.js      # Manipulação do DOM + Indicadores
+│       ├── main.js     # Orquestração + Tracking de presença
+│       └── api.js      # Comunicação com APIs
+└── tests/
+    └── presence-fallback-test.html # Teste do sistema de presença
+```
 
 ### **📂 services/** - Serviços Core
 ```
@@ -113,6 +162,7 @@ services/
 ```
 tests/
 ├── index.html          # Índice centralizado de testes
+├── presence-fallback-test.html # Teste do sistema de presença
 ├── chat-app/           # Testes da aplicação principal
 │   ├── unit/           # Testes unitários
 │   ├── integration/    # Testes de integração
@@ -121,12 +171,6 @@ tests/
 │   └── utils/         # Utilitários de teste
 └── [outros testes existentes]
 ```
-
-### **📂 admin/** - Painel Administrativo
-- **Dashboard**: Monitoramento de serviços
-- **Usuários**: Gerenciamento de usuários
-- **GPTs**: Configuração de modelos de IA
-- **Logs**: Sistema de logs e monitoramento
 
 ## 🧪 Sistema de Testes
 
@@ -143,11 +187,15 @@ tests/
 2. **Integração**: Interação entre módulos
 3. **E2E**: Cenários completos
 4. **Performance**: Métricas de qualidade
+5. **Presença**: Sistema de presença em tempo real 🆕
 
 ### **Execução de Testes**
 ```bash
 # Teste específico
 open http://localhost:8000/tests/chat-app/unit/services/stateManager.test.html
+
+# Teste do sistema de presença
+open http://localhost:8000/tests/presence-fallback-test.html
 
 # Índice completo
 open http://localhost:8000/tests/index.html
@@ -194,6 +242,11 @@ const appState = {
         selectedGPT: null,
         gptList: [],
         isLoading: false
+    },
+    presence: {  // 🆕 Sistema de presença
+        usersOnline: [],
+        lastSeen: {},
+        heartbeatInterval: null
     }
 };
 ```
@@ -205,12 +258,14 @@ const appState = {
 - **Performance**: Métricas de tempo de resposta
 - **Erros**: Captura e tratamento de erros
 - **Estado**: Monitoramento de mudanças de estado
+- **Presença**: Logs do sistema de presença em tempo real 🆕
 
 ### **Métricas Principais**
 - Tempo de carregamento da aplicação
 - Tempo de resposta das APIs
 - Uso de memória
 - Taxa de sucesso dos testes
+- **Usuários online em tempo real** 🆕
 
 ## 🚀 Deploy e Produção
 
@@ -219,12 +274,14 @@ const appState = {
 - Configuração de CORS
 - Variáveis de ambiente seguras
 - Monitoramento de performance
+- **Firebase configurado** (para presença)
 
 ### **Otimizações**
 - Minificação de assets
 - Compressão de recursos
 - Cache de dados
 - Lazy loading
+- **Sistema de fallback para presença** 🆕
 
 ## 📚 Documentação Adicional
 
@@ -233,6 +290,11 @@ const appState = {
 - [📖 README.md](tests/chat-app/README.md) - Documentação dos testes
 - [🔧 TECHNICAL_REFERENCE.md](docs/TECHNICAL_REFERENCE.md) - Referência técnica
 - [🎨 CHATBOT_COLOR_MANAGEMENT.md](docs/CHATBOT_COLOR_MANAGEMENT.md) - Gerenciamento de cores
+
+### **Sistema de Presença** 🆕
+- [👥 PRESENCE_SYSTEM.md](docs/PRESENCE_SYSTEM.md) - Documentação completa do sistema de presença
+- [🔧 FIREBASE_PERMISSION_FIX.md](docs/FIREBASE_PERMISSION_FIX.md) - Guia para resolver problemas de permissão
+- [🧪 presence-fallback-test.html](tests/presence-fallback-test.html) - Teste do sistema de fallback
 
 ### **Guias de Migração**
 - [🔄 MIGRATION_GUIDE.md](admin/MIGRATION_GUIDE.md) - Guia de migração
@@ -245,14 +307,16 @@ const appState = {
 - CSS com metodologia BEM
 - HTML semântico
 - Testes para todas as funcionalidades
+- **Sistema de presença com fallback** 🆕
 
 ### **Fluxo de Desenvolvimento**
 1. Crie uma branch para sua feature
 2. Implemente a funcionalidade
 3. Adicione testes
 4. Execute todos os testes
-5. Faça o commit com mensagem descritiva
-6. Abra um Pull Request
+5. **Teste o sistema de presença** 🆕
+6. Faça o commit com mensagem descritiva
+7. Abra um Pull Request
 
 ## 📞 Suporte
 
@@ -260,6 +324,7 @@ const appState = {
 - **Issues**: Reporte bugs e solicite features
 - **Documentação**: Consulte os guias técnicos
 - **Testes**: Use o sistema de testes para validação
+- **Presença**: Use o teste de fallback para diagnosticar problemas 🆕
 
 ### **Contatos**
 - **Desenvolvedor**: [Seu Nome]
@@ -274,18 +339,21 @@ const appState = {
 - ✅ Sistema de testes implementado
 - ✅ Documentação organizada
 - ✅ Estrutura modular definida
+- ✅ **Sistema de presença em tempo real implementado** 🆕
 
 ### **Próximas Funcionalidades**
 - 🔄 Implementação de testes restantes
 - 🔄 Otimizações de performance
 - 🔄 Novos modelos de IA
 - 🔄 Melhorias na interface
+- 🔄 **Status avançado de presença** (Ausente, Ocupado, Não perturbe) 🆕
 
 ### **Manutenção**
 - 🔄 Atualização de dependências
 - 🔄 Monitoramento contínuo
 - 🔄 Backup e segurança
+- 🔄 **Monitoramento do sistema de presença** 🆕
 
 ---
 
-**🧪 LexiDecis** - Sistema de Chat com IA | Versão 1.0 | Criado com ❤️ para qualidade 
+**🧪 LexiDecis** - Sistema de Chat com IA | Versão 1.1 | Criado com ❤️ para qualidade 

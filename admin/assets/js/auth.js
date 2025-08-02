@@ -5,17 +5,21 @@ import {
   sendPasswordResetEmail, 
   onAuthStateChanged 
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+import { doc, setDoc, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
 const AuthService = {
   user: null,
   observers: [],
+  presenceInterval: null,
 
   init() {
     onAuthStateChanged(auth, (user) => {
       this.user = user;
       if (user) {
         this.saveUserSession(user);
+        this.startPresenceTracking(user);
+      } else {
+        this.stopPresenceTracking();
       }
       this.notifyObservers(user);
     });
@@ -29,6 +33,7 @@ const AuthService = {
       const token = await userCredential.user.getIdToken();
       localStorage.setItem('authToken', token);
       this.saveUserSession(this.user);
+      this.startPresenceTracking(this.user);
       this.notifyObservers(this.user);
       return { success: true, user: this.user };
     } catch (error) {
@@ -39,6 +44,7 @@ const AuthService = {
 
   async logout() {
     try {
+      this.stopPresenceTracking();
       await signOut(auth);
       this.user = null;
       localStorage.removeItem('authToken');
@@ -62,11 +68,178 @@ const AuthService = {
 
   saveUserSession(user) {
     const userDoc = doc(db, "userSessions", user.uid);
-    return setDoc(userDoc, {
+    const sessionData = {
       email: user.email,
       displayName: user.displayName || "Usuário Anônimo",
-      lastLogin: serverTimestamp()
-    }, { merge: true });
+      lastLogin: serverTimestamp(),
+      online: true,
+      lastSeen: serverTimestamp()
+    };
+    
+    // Salva no Firestore
+    const firestorePromise = setDoc(userDoc, sessionData, { merge: true });
+    
+    // Salva no localStorage como backup
+    this.saveLocalPresenceData(user.uid, {
+      email: user.email,
+      displayName: user.displayName || "Usuário Anônimo",
+      online: true,
+      lastSeen: new Date()
+    });
+    
+    return firestorePromise;
+  },
+
+  startPresenceTracking(user) {
+    // Para o tracking anterior se existir
+    this.stopPresenceTracking();
+    
+    // Inicia heartbeat a cada 30 segundos
+    this.presenceInterval = setInterval(async () => {
+      try {
+        const userDoc = doc(db, "userSessions", user.uid);
+        await setDoc(userDoc, {
+          lastSeen: serverTimestamp(),
+          online: true
+        }, { merge: true });
+      } catch (error) {
+        console.error("Erro ao atualizar presença:", error);
+      }
+    }, 30000); // 30 segundos
+
+    // Marca como offline quando a página é fechada
+    window.addEventListener('beforeunload', () => {
+      this.markUserOffline(user.uid);
+    });
+  },
+
+  stopPresenceTracking() {
+    if (this.presenceInterval) {
+      clearInterval(this.presenceInterval);
+      this.presenceInterval = null;
+    }
+  },
+
+  async markUserOffline(uid) {
+    try {
+      const userDoc = doc(db, "userSessions", uid);
+      await setDoc(userDoc, {
+        online: false,
+        lastSeen: serverTimestamp()
+      }, { merge: true });
+    } catch (error) {
+      console.error("Erro ao marcar usuário como offline:", error);
+    }
+  },
+
+  // Função para obter status de presença de todos os usuários
+  async getUsersPresence(userIds) {
+    const presenceData = {};
+    
+    try {
+      const promises = userIds.map(async (uid) => {
+        const userDoc = doc(db, "userSessions", uid);
+        const unsubscribe = onSnapshot(userDoc, (doc) => {
+          if (doc.exists()) {
+            const data = doc.data();
+            presenceData[uid] = {
+              online: data.online || false,
+              lastSeen: data.lastSeen,
+              displayName: data.displayName,
+              email: data.email
+            };
+            // Dispara evento de mudança de presença
+            document.dispatchEvent(new CustomEvent("presenceChanged", { 
+              detail: { uid, presence: presenceData[uid] } 
+            }));
+          }
+        }, (error) => {
+          console.warn(`[getUsersPresence] ⚠️ Erro ao monitorar presença de ${uid}:`, error);
+          // Fallback: usar dados locais se Firestore falhar
+          this.useLocalPresenceFallback(uid, presenceData);
+        });
+        
+        // Retorna função para cancelar o listener
+        return unsubscribe;
+      });
+
+      const unsubscribes = await Promise.all(promises);
+      
+      // Retorna função para cancelar todos os listeners
+      return () => {
+        unsubscribes.forEach(unsubscribe => unsubscribe());
+      };
+    } catch (error) {
+      console.error("Erro ao obter presença dos usuários:", error);
+      // Fallback completo se Firestore não estiver disponível
+      this.useLocalPresenceFallback(userIds, presenceData);
+      return () => {};
+    }
+  },
+
+  // Fallback para quando Firestore não está disponível
+  useLocalPresenceFallback(userIds, presenceData) {
+    console.log('[useLocalPresenceFallback] 🔄 Usando fallback local para presença');
+    
+    // Se userIds é um array, processa todos
+    if (Array.isArray(userIds)) {
+      userIds.forEach(uid => {
+        const localData = this.getLocalPresenceData(uid);
+        presenceData[uid] = localData;
+        document.dispatchEvent(new CustomEvent("presenceChanged", {
+          detail: { uid, presence: localData }
+        }));
+      });
+    } else {
+      // Se userIds é um único ID
+      const localData = this.getLocalPresenceData(userIds);
+      presenceData[userIds] = localData;
+      document.dispatchEvent(new CustomEvent("presenceChanged", {
+        detail: { uid: userIds, presence: localData }
+      }));
+    }
+  },
+
+  // Obtém dados de presença do localStorage
+  getLocalPresenceData(uid) {
+    const key = `presence_${uid}`;
+    const stored = localStorage.getItem(key);
+    
+    if (stored) {
+      try {
+        const data = JSON.parse(stored);
+        // Verifica se os dados não são muito antigos (mais de 5 minutos)
+        const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+        if (data.timestamp && data.timestamp > fiveMinutesAgo) {
+          return {
+            online: data.online || false,
+            lastSeen: data.lastSeen ? new Date(data.lastSeen) : null,
+            displayName: data.displayName || 'Usuário',
+            email: data.email || ''
+          };
+        }
+      } catch (e) {
+        console.warn('[getLocalPresenceData] Erro ao parsear dados locais:', e);
+      }
+    }
+    
+    // Dados padrão se não houver dados locais
+    return {
+      online: false,
+      lastSeen: null,
+      displayName: 'Usuário',
+      email: ''
+    };
+  },
+
+  // Salva dados de presença no localStorage como backup
+  saveLocalPresenceData(uid, data) {
+    const key = `presence_${uid}`;
+    const dataToStore = {
+      ...data,
+      timestamp: Date.now()
+    };
+    localStorage.setItem(key, JSON.stringify(dataToStore));
   },
 
   notifyObservers(user) {

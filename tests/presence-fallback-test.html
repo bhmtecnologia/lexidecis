@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste do Sistema de Presença - Fallback</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .warning { background-color: #fff3cd; color: #856404; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .presence-data {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .presence-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste do Sistema de Presença - Fallback</h1>
+        
+        <div class="status info">
+            Este teste verifica se o sistema de fallback está funcionando quando o Firebase Firestore não está disponível.
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Status do Sistema</h3>
+            <div id="system-status">Carregando...</div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔧 Testes Disponíveis</h3>
+            <button onclick="testFirestoreConnection()">Testar Conexão Firestore</button>
+            <button onclick="testLocalStorage()">Testar localStorage</button>
+            <button onclick="simulatePresenceData()">Simular Dados de Presença</button>
+            <button onclick="clearTestData()">Limpar Dados de Teste</button>
+        </div>
+
+        <div class="test-section">
+            <h3>📋 Dados de Presença Simulados</h3>
+            <div id="presence-display" class="presence-data"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📝 Logs do Sistema</h3>
+            <div id="log-output" class="log"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import AuthService from "../admin/assets/js/auth.js";
+        import { updateUserPresence } from "../admin/assets/js/dom.js";
+
+        // Função para adicionar logs
+        function addLog(message, type = 'info') {
+            const logOutput = document.getElementById('log-output');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `<span style="color: #666;">[${timestamp}]</span> ${message}`;
+            logOutput.appendChild(logEntry);
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+
+        // Função para atualizar status do sistema
+        function updateSystemStatus(status, type = 'info') {
+            const statusDiv = document.getElementById('system-status');
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = status;
+        }
+
+        // Teste de conexão com Firestore
+        window.testFirestoreConnection = async function() {
+            addLog('🔍 Testando conexão com Firestore...');
+            try {
+                const { db } = await import("../admin/assets/js/firebase.js");
+                const { doc, getDoc } = await import("https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js");
+                
+                const testDoc = doc(db, "test", "connection");
+                await getDoc(testDoc);
+                
+                addLog('✅ Conexão com Firestore estabelecida com sucesso');
+                updateSystemStatus('Firestore: Conectado', 'success');
+            } catch (error) {
+                addLog(`❌ Erro na conexão com Firestore: ${error.message}`);
+                updateSystemStatus('Firestore: Erro de conexão', 'error');
+            }
+        };
+
+        // Teste do localStorage
+        window.testLocalStorage = function() {
+            addLog('🔍 Testando localStorage...');
+            try {
+                const testKey = 'presence_test';
+                const testData = {
+                    online: true,
+                    lastSeen: new Date(),
+                    displayName: 'Teste',
+                    email: 'teste@exemplo.com',
+                    timestamp: Date.now()
+                };
+                
+                localStorage.setItem(testKey, JSON.stringify(testData));
+                const retrieved = JSON.parse(localStorage.getItem(testKey));
+                
+                if (retrieved && retrieved.displayName === 'Teste') {
+                    addLog('✅ localStorage funcionando corretamente');
+                    updateSystemStatus('localStorage: Funcionando', 'success');
+                } else {
+                    throw new Error('Dados não foram salvos corretamente');
+                }
+                
+                localStorage.removeItem(testKey);
+            } catch (error) {
+                addLog(`❌ Erro no localStorage: ${error.message}`);
+                updateSystemStatus('localStorage: Erro', 'error');
+            }
+        };
+
+        // Simular dados de presença
+        window.simulatePresenceData = function() {
+            addLog('🎭 Simulando dados de presença...');
+            
+            const testUsers = [
+                { uid: 'user1', name: 'João Silva', email: 'joao@exemplo.com' },
+                { uid: 'user2', name: 'Maria Santos', email: 'maria@exemplo.com' },
+                { uid: 'user3', name: 'Pedro Costa', email: 'pedro@exemplo.com' }
+            ];
+
+            testUsers.forEach(user => {
+                const presenceData = {
+                    online: Math.random() > 0.5,
+                    lastSeen: new Date(Date.now() - Math.random() * 300000), // 0-5 minutos atrás
+                    displayName: user.name,
+                    email: user.email
+                };
+                
+                AuthService.saveLocalPresenceData(user.uid, presenceData);
+                addLog(`💾 Dados salvos para ${user.name}: ${presenceData.online ? 'Online' : 'Offline'}`);
+            });
+            
+            displayPresenceData();
+        };
+
+        // Exibir dados de presença
+        function displayPresenceData() {
+            const displayDiv = document.getElementById('presence-display');
+            displayDiv.innerHTML = '';
+            
+            const testUsers = ['user1', 'user2', 'user3'];
+            
+            testUsers.forEach(uid => {
+                const data = AuthService.getLocalPresenceData(uid);
+                const item = document.createElement('div');
+                item.className = 'presence-item';
+                item.innerHTML = `
+                    <strong>${data.displayName}</strong><br>
+                    <small>${data.email}</small><br>
+                    Status: <span style="color: ${data.online ? 'green' : 'red'}">${data.online ? 'Online' : 'Offline'}</span><br>
+                    Último visto: ${data.lastSeen ? data.lastSeen.toLocaleTimeString() : 'Nunca'}
+                `;
+                displayDiv.appendChild(item);
+            });
+        }
+
+        // Limpar dados de teste
+        window.clearTestData = function() {
+            addLog('🧹 Limpando dados de teste...');
+            const keys = Object.keys(localStorage);
+            keys.forEach(key => {
+                if (key.startsWith('presence_')) {
+                    localStorage.removeItem(key);
+                    addLog(`🗑️ Removido: ${key}`);
+                }
+            });
+            displayPresenceData();
+            addLog('✅ Dados de teste removidos');
+        };
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            addLog('🚀 Sistema de teste inicializado');
+            
+            // Testar conexão inicial
+            testFirestoreConnection();
+            testLocalStorage();
+            
+            // Exibir dados iniciais
+            displayPresenceData();
+            
+            // Listener para eventos de presença
+            document.addEventListener('presenceChanged', (event) => {
+                const { uid, presence } = event.detail;
+                addLog(`📡 Evento de presença recebido: ${uid} - ${presence.online ? 'Online' : 'Offline'}`);
+                displayPresenceData();
+            });
+        });
+    </script>
+</body>
+</html> 

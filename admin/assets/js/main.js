@@ -10,6 +10,7 @@ import { createFirebaseUserV2, processPendingFirebaseUids } from './firebase-uti
 
 export function initMain(AuthService, API, DOM) {
     let usersData = {};
+    let presenceUnsubscribe = null;
     // Elementos globais usados em vários pontos
     const createUserModalElement = document.getElementById('createUserModal');
     const editUserModalElement = document.getElementById('editUserModal');
@@ -214,9 +215,46 @@ export function initMain(AuthService, API, DOM) {
         // Atualiza a tabela
         DOM.updateUserTable(users, usersData);
         
+        // Inicia o tracking de presença dos usuários
+        startPresenceTracking(users);
+        
       } catch (error) {
         console.error('[refreshUsers] ❌ Erro ao buscar usuários:', error);
         alert('Erro ao carregar usuários. Verifique sua conexão.');
+      }
+    }
+
+    /**
+     * Inicia o tracking de presença dos usuários
+     * @param {Array} users - Lista de usuários
+     */
+    async function startPresenceTracking(users) {
+      try {
+        // Para o tracking anterior se existir
+        if (presenceUnsubscribe) {
+          presenceUnsubscribe();
+          presenceUnsubscribe = null;
+        }
+
+        // Filtra apenas usuários com Firebase UID válido
+        const validUserIds = users
+          .filter(user => /^[a-zA-Z0-9]{28}$/.test(user.id))
+          .map(user => user.id);
+
+        if (validUserIds.length > 0) {
+          console.log('[startPresenceTracking] 🔍 Iniciando tracking de presença para', validUserIds.length, 'usuários');
+          
+          // Inicia o tracking de presença
+          presenceUnsubscribe = await AuthService.getUsersPresence(validUserIds);
+          
+          // Configura listener para mudanças de presença
+          document.addEventListener('presenceChanged', (event) => {
+            const { uid, presence } = event.detail;
+            DOM.updateUserPresence(uid, presence);
+          });
+        }
+      } catch (error) {
+        console.error('[startPresenceTracking] ❌ Erro ao iniciar tracking de presença:', error);
       }
     }
   
@@ -625,7 +663,19 @@ export function initMain(AuthService, API, DOM) {
         document.getElementById('protected-section').classList.remove('d-none');
         refreshUsers();
       } else {
+        // Limpa o tracking de presença ao fazer logout
+        if (presenceUnsubscribe) {
+          presenceUnsubscribe();
+          presenceUnsubscribe = null;
+        }
         window.location.href = "login.html?redirect=" + encodeURIComponent(window.location.href);
+      }
+    });
+
+    // Limpa o tracking de presença quando a página é fechada
+    window.addEventListener('beforeunload', () => {
+      if (presenceUnsubscribe) {
+        presenceUnsubscribe();
       }
     });
   

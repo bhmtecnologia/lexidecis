@@ -200,6 +200,12 @@ Este índice organiza toda a documentação do projeto LexiDecis, facilitando a 
 - **Conteúdo**: ApiService vs fetch direto, configurações, troubleshooting
 - **Status**: ✅ Implementado
 
+### **🎯 Sistema de Seleção Visual de Chats**
+- **Arquivo**: `docs/CHAT_SELECTION_SYSTEM.md`
+- **Descrição**: Sistema de seleção visual e persistente de chats
+- **Conteúdo**: Efeito visual, persistência, restauração, troubleshooting
+- **Status**: ✅ Implementado e documentado
+
 ## 📁 Estrutura de Arquivos
 
 ### **Organização por Categoria**
@@ -229,7 +235,8 @@ docs/
 ├── 📈 UPDATE_PROGRESS_FIX.md              # Correção de progresso
 ├── 🔄 SPINNER_TO_BAR_UPDATE.md            # Spinner para barra
 ├── 📋 MANUAL_IMPLEMENTATION.md            # Implementação manual
-└── 🔗 API_ENDPOINT_CONFIGURATION.md       # Configuração de endpoints da API
+├── 🔗 API_ENDPOINT_CONFIGURATION.md       # Configuração de endpoints da API
+└── 🎯 CHAT_SELECTION_SYSTEM.md            # Sistema de seleção visual de chats
 ```
 
 ## 🎯 Como Usar Este Índice
@@ -264,6 +271,7 @@ docs/
 - DEVELOPER_GUIDE.md
 - INSTALLATION_GUIDE.md
 - BEST_PRACTICES.md
+- CHAT_SELECTION_SYSTEM.md
 
 ### **✅ Implementada e Documentada**
 - Sistema de presença
@@ -271,6 +279,7 @@ docs/
 - Integração Firebase
 - Sistema de loading
 - Sistema de logging
+- Sistema de seleção visual de chats
 
 ### **🔄 Em Atualização**
 - Documentação de novas funcionalidades

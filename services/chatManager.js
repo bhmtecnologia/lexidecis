@@ -178,7 +178,7 @@ class ChatManager {
     }
 
     /**
-     * Atualiza a URL com o chatId e gptId
+     * Atualiza a URL com o gptId primeiro, depois chatId
      * @param {string} chatId - ID do chat
      * @param {string} gptId - ID do GPT (opcional)
      */
@@ -186,22 +186,21 @@ class ChatManager {
         try {
             const url = new URL(window.location);
             
-            if (chatId) {
-                url.searchParams.set('chatId', chatId);
-                console.log('🔗 Atualizando URL com chatId:', chatId);
-            } else {
-                url.searchParams.delete('chatId');
-                console.log('🔗 Removendo chatId da URL');
-            }
+            // Limpa os parâmetros existentes
+            url.searchParams.delete('gptId');
+            url.searchParams.delete('chatId');
             
-            // Adiciona gptId se fornecido ou se há um GPT selecionado
+            // Adiciona gptId primeiro (se fornecido ou se há um GPT selecionado)
             const currentGptId = gptId || (this.stateManager.selectedGPT ? this.stateManager.selectedGPT.id : null);
             if (currentGptId) {
                 url.searchParams.set('gptId', currentGptId);
                 console.log('🔗 Atualizando URL com gptId:', currentGptId);
-            } else {
-                url.searchParams.delete('gptId');
-                console.log('🔗 Removendo gptId da URL');
+            }
+            
+            // Depois adiciona chatId
+            if (chatId) {
+                url.searchParams.set('chatId', chatId);
+                console.log('🔗 Atualizando URL com chatId:', chatId);
             }
             
             // Atualiza a URL sem recarregar a página
@@ -209,7 +208,7 @@ class ChatManager {
             
             console.log('🔗 URL atualizada para:', url.toString());
             console.log('🔗 URL original:', window.location.href);
-            debugLog(`URL atualizada com chatId: ${chatId}, gptId: ${currentGptId}`);
+            debugLog(`URL atualizada com gptId: ${currentGptId}, chatId: ${chatId}`);
         } catch (error) {
             console.error('🔗 Erro ao atualizar URL:', error);
         }
@@ -450,10 +449,6 @@ class ChatManager {
             console.log('🔗 Chat clicado, chatId:', chatId);
             console.log('🔗 URL antes do clique:', window.location.href);
 
-            // Atualiza a URL com o chatId e gptId
-            console.log('🔗 Chat clicado, atualizando URL com chatId:', chatId);
-            this.updateUrlWithChatId(chatId, gptId);
-
             // Mostrar loading de chat
             const loadingId = LoadingUtils.show('CHAT_LOADING', {
                 message: 'Carregando chat...',
@@ -474,6 +469,10 @@ class ChatManager {
                 showAlert('Este chat não está associado a nenhum GPT.', 'error');
                 return;
             }
+
+            // Atualiza a URL com o chatId e gptId
+            console.log('🔗 Chat clicado, atualizando URL com chatId:', chatId);
+            this.updateUrlWithChatId(chatId, gptId);
 
             // Obtém o GPT associado
             const associatedGPT = this.stateManager.getGPTById(gptId);

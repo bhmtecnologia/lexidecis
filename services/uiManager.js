@@ -440,24 +440,37 @@ class UIManager {
 
                                         console.log('🔗 Enviando mensagem para API:', payload);
 
-                                        const response = await fetch('https://webhook.power.tec.br/webhook/lexidecis/v2/chatmessage', {
-                                            method: "POST",
-                                            headers: { 
-                                                "Content-Type": "application/json",
-                                                "Authorization": `Bearer ${token}`
-                                            },
-                                            body: JSON.stringify(payload)
-                                        });
+                                        // Verifica se existe configuração createChatMessage
+                                        if (this.config.apiCredentials.createChatMessage) {
+                                            console.log('🔗 Usando ApiService para createChatMessage');
+                                            try {
+                                                const result = await this.apiService.request('createChatMessage', payload, 'POST');
+                                                console.log('🔗 Mensagem enviada para API com sucesso via ApiService:', result);
+                                            } catch (error) {
+                                                console.error('🔗 Erro no createChatMessage via ApiService:', error);
+                                                throw error;
+                                            }
+                                        } else {
+                                            console.log('🔗 Configuração createChatMessage não encontrada, usando fetch direto');
+                                            const response = await fetch('https://webhook.power.tec.br/webhook/lexidecis/v2/chatmessage', {
+                                                method: "POST",
+                                                headers: { 
+                                                    "Content-Type": "application/json",
+                                                    "Authorization": `Bearer ${token}`
+                                                },
+                                                body: JSON.stringify(payload)
+                                            });
 
-                                        console.log('🔗 Response status:', response.status);
+                                            console.log('🔗 Response status:', response.status);
 
-                                        if (!response.ok) {
-                                            const errorText = await response.text();
-                                            throw new Error("Erro ao salvar mensagem de chat: " + errorText);
+                                            if (!response.ok) {
+                                                const errorText = await response.text();
+                                                throw new Error("Erro ao salvar mensagem de chat: " + errorText);
+                                            }
+
+                                            const result = await response.json();
+                                            console.log('🔗 Mensagem enviada para API com sucesso:', result);
                                         }
-
-                                        const result = await response.json();
-                                        console.log('🔗 Mensagem enviada para API com sucesso:', result);
                                         
                                         // Faz o POST para o endpoint de chats (updateChat)
                                         console.log('🔗 Fazendo POST para endpoint de chats (updateChat)');

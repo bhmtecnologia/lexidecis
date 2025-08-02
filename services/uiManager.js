@@ -418,15 +418,34 @@ class UIManager {
                                             message: userInput
                                         });
                                         
-                                        // Faz o POST para a API de criar chat
-                                        await this.apiService.request('createChatMessage', {
-                                            chatflowid: selectedFlowiseConfig.chatflowId,
+                                        // Faz o POST direto para a API de criar chat
+                                        const user = this.auth.user;
+                                        if (!user) throw new Error("Usuário não autenticado");
+                                        const token = await user.getIdToken();
+
+                                        const payload = {
+                                            chatflowId: selectedFlowiseConfig.chatflowId,
                                             sessionId: this.stateManager.currentSessionId,
                                             role: 'user',
-                                            message: userInput
-                                        }, 'POST');
-                                        
-                                        console.log('🔗 Mensagem enviada para API com sucesso');
+                                            content: userInput
+                                        };
+
+                                        const response = await fetch('https://webhook.power.tec.br/webhook/lexidecis/v2/chatmessage', {
+                                            method: "POST",
+                                            headers: { 
+                                                "Content-Type": "application/json",
+                                                "Authorization": `Bearer ${token}`
+                                            },
+                                            body: JSON.stringify(payload)
+                                        });
+
+                                        if (!response.ok) {
+                                            const errorText = await response.text();
+                                            throw new Error("Erro ao salvar mensagem de chat: " + errorText);
+                                        }
+
+                                        const result = await response.json();
+                                        console.log('🔗 Mensagem enviada para API com sucesso:', result);
                                     }
                                 }
                             } catch (error) {

@@ -34,6 +34,7 @@ lexidecis/
 - ✅ Interface responsiva e moderna
 - ✅ Sistema de loading unificado
 - ✅ Tratamento de erros robusto
+- ✅ **Sistema de presença em tempo real** 🆕
 
 ### **Sistema de Presença em Tempo Real** 🆕
 - ✅ **Indicadores de status**: Online, Offline, Desconhecido
@@ -42,6 +43,13 @@ lexidecis/
 - ✅ **Sistema de fallback**: Funciona mesmo sem Firebase
 - ✅ **Interface visual**: Badges coloridos com animações
 - ✅ **Tooltips informativos**: Mostra último acesso
+
+### **Sistema de Presença no Chat** 🆕
+- ✅ **Contador de usuários ativos**: Exibido no user menu
+- ✅ **Atualização em tempo real**: Via Firestore listeners
+- ✅ **Observer pattern**: Notificações automáticas de mudanças
+- ✅ **Integração transparente**: Funciona automaticamente
+- ✅ **Testes dedicados**: Arquivo de teste específico
 
 ### **Gerenciamento de Estado**
 - ✅ StateManager centralizado
@@ -112,6 +120,9 @@ open http://localhost:8000/tests/index.html
 # Teste específico do sistema de presença
 open http://localhost:8000/tests/presence-fallback-test.html
 
+# Teste do sistema de presença no chat
+open http://localhost:8000/tests/presence-chat-test.html
+
 # Ou execute via script
 chmod +x tests/chat-app/scripts/run-all-tests.sh
 ./tests/chat-app/scripts/run-all-tests.sh
@@ -163,6 +174,7 @@ services/
 tests/
 ├── index.html          # Índice centralizado de testes
 ├── presence-fallback-test.html # Teste do sistema de presença
+├── presence-chat-test.html # Teste do sistema de presença no chat 🆕
 ├── chat-app/           # Testes da aplicação principal
 │   ├── unit/           # Testes unitários
 │   ├── integration/    # Testes de integração
@@ -196,6 +208,9 @@ open http://localhost:8000/tests/chat-app/unit/services/stateManager.test.html
 
 # Teste do sistema de presença
 open http://localhost:8000/tests/presence-fallback-test.html
+
+# Teste do sistema de presença no chat
+open http://localhost:8000/tests/presence-chat-test.html
 
 # Índice completo
 open http://localhost:8000/tests/index.html

@@ -19,6 +19,7 @@ if (!getApps().length) {
 }
 import './auth.js';
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import presenceService from './presenceService.js';
 
 // Endpoint configuration
 const ENDPOINT_URL = 'https://webhook.power.tec.br/webhook/lexidecis/endpoints';
@@ -256,11 +257,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         LoadingUtils.step(loadingId, 'Carregar Lista de Chats', 'completed');
         if (abortLoading) return;
 
+        // ETAPA 8: Inicializar Serviço de Presença
+        debugLog("[Renderer] Inicializando serviço de presença...");
+        await presenceService.init();
+        setupPresenceUI();
+        debugLog("[Renderer] -> Serviço de presença inicializado.");
+        if (abortLoading) return;
+
         // Finaliza com sucesso
         debugLog("[Renderer] Todas as etapas concluídas. Ocultando loading screen...");
         LoadingUtils.hide(loadingId);
         showAlert('LexiDecis: Estou pronto.', 'success');
         debugLog("[Renderer] Aplicação está pronta para uso.");
+
+        // Configura limpeza ao fechar a página
+        window.addEventListener('beforeunload', () => {
+            presenceService.destroy();
+        });
 
     } catch (error) {
         debugLog("[Renderer] Erro ao inicializar a aplicação:", error);
@@ -273,3 +286,45 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 });
+
+// Função para configurar a UI de presença
+function setupPresenceUI() {
+    try {
+        // Atualiza o contador de usuários ativos no user menu
+        presenceService.onActiveUsersChange((count) => {
+            updateActiveUsersCount(count);
+        });
+        
+        debugLog("[Renderer] UI de presença configurada");
+    } catch (error) {
+        debugLog("[Renderer] Erro ao configurar UI de presença:", error);
+    }
+}
+
+// Função para atualizar o contador de usuários ativos no user menu
+function updateActiveUsersCount(count) {
+    try {
+        // Procura por qualquer elemento que contenha "Usuários Ativos"
+        const menuItems = document.querySelectorAll('.lexi-user-menu-item');
+        let updated = false;
+        
+        menuItems.forEach(item => {
+            const text = item.textContent;
+            if (text.includes('Usuários Ativos')) {
+                const span = item.querySelector('span');
+                if (span) {
+                    span.textContent = `Usuários Ativos: ${count}`;
+                    updated = true;
+                }
+            }
+        });
+        
+        if (!updated) {
+            debugLog("[Renderer] Elemento de usuários ativos não encontrado no menu");
+        } else {
+            debugLog("[Renderer] Contador de usuários ativos atualizado:", count);
+        }
+    } catch (error) {
+        debugLog("[Renderer] Erro ao atualizar contador de usuários ativos:", error);
+    }
+}

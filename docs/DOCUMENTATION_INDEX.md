@@ -38,6 +38,12 @@ Este índice organiza toda a documentação do projeto LexiDecis, facilitando a 
 - **Conteúdo**: Arquitetura, funcionalidades, configuração, monitoramento
 - **Status**: ✅ Implementado e documentado
 
+### **💬 Sistema de Presença no Chat**
+- **Arquivo**: `docs/CHAT_PRESENCE_SYSTEM.md`
+- **Descrição**: Documentação do sistema de presença no chat
+- **Conteúdo**: Contador de usuários ativos, integração, testes
+- **Status**: ✅ Implementado e documentado
+
 ### **🔧 Correção de Permissões Firebase**
 - **Arquivo**: `docs/FIREBASE_PERMISSION_FIX.md`
 - **Descrição**: Guia específico para resolver problemas de permissão
@@ -56,6 +62,12 @@ Este índice organiza toda a documentação do projeto LexiDecis, facilitando a 
 - **Arquivo**: `tests/presence-fallback-test.html`
 - **Descrição**: Teste dedicado ao sistema de presença
 - **Conteúdo**: Testes de conexão, fallback, simulação
+- **Status**: ✅ Funcional
+
+### **🧪 Teste de Presença no Chat**
+- **Arquivo**: `tests/presence-chat-test.html`
+- **Descrição**: Teste dedicado ao sistema de presença no chat
+- **Conteúdo**: Testes de contador, integração, simulação
 - **Status**: ✅ Funcional
 
 ## 📊 Documentação Técnica

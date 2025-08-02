@@ -65,6 +65,8 @@ async function saveUserSession(user) {
             email: user.email,
             displayName: user.displayName || "Usuário Anônimo",
             lastLogin: serverTimestamp(), // Marca a última vez que o usuário fez login
+            online: true, // Marca o usuário como online
+            lastSeen: serverTimestamp() // Última atividade
         }, { merge: true }); // **merge: true** para atualizar sem sobrescrever outros campos
 
         debugLog("[Firestore] Sessão salva com sucesso para o usuário:", user.uid);
@@ -100,6 +102,13 @@ export async function login(email, password) {
         // Configura monitoramento de inatividade após login
         monitorInactivity();
 
+        // Configura listener para marcar usuário como offline quando a página for fechada
+        window.addEventListener('beforeunload', async () => {
+            if (userCredential.user) {
+                await markUserOffline(userCredential.user.uid);
+            }
+        });
+
         return userCredential.user;
     } catch (error) {
         console.error("[Login] Erro ao realizar login:", error);
@@ -129,11 +138,35 @@ export async function getJwt() {
 }
 
 /**
+ * Marca o usuário como offline no Firestore
+ */
+async function markUserOffline(uid) {
+    if (!uid) return;
+    
+    try {
+        const userDoc = doc(db, "userSessions", uid);
+        await setDoc(userDoc, {
+            online: false,
+            lastSeen: serverTimestamp()
+        }, { merge: true });
+        debugLog("[Firestore] Usuário marcado como offline:", uid);
+    } catch (error) {
+        console.error("[Firestore] Erro ao marcar usuário como offline:", error);
+    }
+}
+
+/**
  * Realiza o logout do usuário autenticado.
  */
 export async function logout() {
     try {
         const user = auth.currentUser; // Salva a referência ao usuário antes de deslogar
+        
+        // Marca o usuário como offline antes de deslogar
+        if (user) {
+            await markUserOffline(user.uid);
+        }
+        
         await signOut(auth);
         sessionStorage.clear();
         debugLog("[Logout] Usuário deslogado com sucesso.");

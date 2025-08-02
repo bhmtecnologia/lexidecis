@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Presença - Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            background: #f5f5f5;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .status {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 3px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        #log {
+            background: #000;
+            color: #0f0;
+            padding: 10px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Teste do Sistema de Presença - Chat</h1>
+    
+    <div class="test-section">
+        <h3>📊 Status do Sistema</h3>
+        <div id="system-status" class="status info">Carregando...</div>
+        <div id="active-users" class="status info">Usuários ativos: --</div>
+    </div>
+
+    <div class="test-section">
+        <h3>🔧 Controles de Teste</h3>
+        <button class="btn-primary" onclick="testPresenceService()">Testar Serviço de Presença</button>
+        <button class="btn-success" onclick="simulateUserOnline()">Simular Usuário Online</button>
+        <button class="btn-danger" onclick="simulateUserOffline()">Simular Usuário Offline</button>
+        <button onclick="clearLog()">Limpar Log</button>
+    </div>
+
+    <div class="test-section">
+        <h3>📝 Log de Eventos</h3>
+        <div id="log"></div>
+    </div>
+
+    <script type="module">
+        import presenceService from '../services/presenceService.js';
+        import { auth, db } from '../services/auth.js';
+        import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+        // Função para adicionar log
+        function addLog(message, type = 'info') {
+            const log = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            logEntry.className = type;
+            log.appendChild(logEntry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        // Função para atualizar status
+        function updateStatus(message, type = 'info') {
+            const status = document.getElementById('system-status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+        }
+
+        // Função para atualizar contador de usuários ativos
+        function updateActiveUsers(count) {
+            const element = document.getElementById('active-users');
+            element.textContent = `Usuários ativos: ${count}`;
+            addLog(`Contador de usuários ativos atualizado: ${count}`, 'success');
+        }
+
+        // Configura o serviço de presença
+        async function setupPresenceService() {
+            try {
+                addLog('Inicializando serviço de presença...', 'info');
+                await presenceService.init();
+                
+                // Configura observer para mudanças na contagem
+                presenceService.onActiveUsersChange(updateActiveUsers);
+                
+                updateStatus('Serviço de presença inicializado com sucesso', 'success');
+                addLog('Serviço de presença inicializado com sucesso', 'success');
+            } catch (error) {
+                updateStatus(`Erro ao inicializar: ${error.message}`, 'error');
+                addLog(`Erro ao inicializar serviço de presença: ${error.message}`, 'error');
+            }
+        }
+
+        // Função para testar o serviço de presença
+        window.testPresenceService = async function() {
+            addLog('Testando serviço de presença...', 'info');
+            
+            try {
+                const count = await presenceService.updateActiveUsersCount();
+                addLog(`Teste concluído. Usuários ativos: ${count}`, 'success');
+            } catch (error) {
+                addLog(`Erro no teste: ${error.message}`, 'error');
+            }
+        };
+
+        // Função para simular usuário online
+        window.simulateUserOnline = async function() {
+            try {
+                const user = auth.currentUser;
+                if (!user) {
+                    addLog('Nenhum usuário autenticado', 'error');
+                    return;
+                }
+
+                const userDoc = doc(db, "userSessions", user.uid);
+                await setDoc(userDoc, {
+                    email: user.email,
+                    displayName: user.displayName || "Usuário Teste",
+                    online: true,
+                    lastSeen: serverTimestamp()
+                }, { merge: true });
+
+                addLog(`Usuário ${user.email} marcado como online`, 'success');
+            } catch (error) {
+                addLog(`Erro ao simular usuário online: ${error.message}`, 'error');
+            }
+        };
+
+        // Função para simular usuário offline
+        window.simulateUserOffline = async function() {
+            try {
+                const user = auth.currentUser;
+                if (!user) {
+                    addLog('Nenhum usuário autenticado', 'error');
+                    return;
+                }
+
+                const userDoc = doc(db, "userSessions", user.uid);
+                await setDoc(userDoc, {
+                    online: false,
+                    lastSeen: serverTimestamp()
+                }, { merge: true });
+
+                addLog(`Usuário ${user.email} marcado como offline`, 'success');
+            } catch (error) {
+                addLog(`Erro ao simular usuário offline: ${error.message}`, 'error');
+            }
+        };
+
+        // Função para limpar log
+        window.clearLog = function() {
+            document.getElementById('log').innerHTML = '';
+        };
+
+        // Inicializa o teste quando a página carrega
+        document.addEventListener('DOMContentLoaded', () => {
+            addLog('Página carregada. Iniciando teste...', 'info');
+            setupPresenceService();
+        });
+    </script>
+</body>
+</html> 

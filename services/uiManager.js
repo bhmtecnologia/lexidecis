@@ -463,6 +463,12 @@ class UIManager {
 
                                         const result = await response.json();
                                         console.log('🔗 Mensagem enviada para API com sucesso:', result);
+                                        
+                                        // Chama handleLoadingState para fazer updateChat
+                                        if (this.chatManager && typeof this.chatManager.handleLoadingState === 'function') {
+                                            console.log('🔗 Chamando handleLoadingState para updateChat');
+                                            await this.chatManager.handleLoadingState(loading);
+                                        }
                                     } else {
                                         console.log('🔗 Textarea não encontrado ou sem valor');
                                     }

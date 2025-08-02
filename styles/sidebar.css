@@ -99,9 +99,11 @@
         background-color: #343a40 !important;
     }
 
-    .lexi-chat-list .list-group-item.active {
-        background-color: #0d6efd !important;
-        border-color: #0d6efd !important;
+    .lexi-chat-list .list-group-item.active,
+    #chat-list .list-group-item.active {
+        background-color: #343a40 !important;
+        color: white !important;
+        border-color: #495057 !important;
     }
 
     /* Cabeçalhos de data - NAMESPACE ESPECÍFICO */
@@ -662,9 +664,12 @@
     background-color: #343a40 !important;
 }
 
-.lexi-chat-list .list-group-item.active {
-    background-color: #0d6efd !important;
-    border-color: #0d6efd !important;
+.lexi-chat-list .list-group-item.active,
+#chat-list .list-group-item.active,
+#sidebarMenu .lexi-chat-list .list-group-item.active {
+    background-color: #343a40 !important;
+    color: white !important;
+    border-color: #495057 !important;
 }
 
 /* CORREÇÃO GLOBAL: Menu do usuário sempre visível */

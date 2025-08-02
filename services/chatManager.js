@@ -423,6 +423,9 @@ class ChatManager {
         });
 
         chatList.appendChild(fragment);
+        
+        // Restaura a seleção do chat após popular a lista
+        this.restoreChatSelection();
     }
 
     /**
@@ -676,7 +679,8 @@ class ChatManager {
     selectChatItem(chatId) {
         debugLog('selectChatItem chamado com chatId:', chatId);
 
-        const chatItems = Array.from(document.querySelectorAll('#chat-list .chat-item'))
+        // Corrigido o seletor para pegar todos os itens de chat (que têm a classe list-group-item e chat-item)
+        const chatItems = Array.from(document.querySelectorAll('#chat-list .list-group-item.chat-item'))
             .filter(item => item.dataset.chatId);
 
         chatItems.forEach(item => {
@@ -696,6 +700,25 @@ class ChatManager {
 
         if (chatItems.length === 0) {
             debugLog('Nenhum chat válido encontrado na lista.');
+        }
+    }
+
+    /**
+     * Restaura a seleção do chat baseado no localStorage ou URL
+     */
+    restoreChatSelection() {
+        // Primeiro tenta pegar da URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const chatIdFromUrl = urlParams.get('chatId');
+        
+        // Se não tem na URL, tenta do localStorage
+        const chatIdFromStorage = localStorage.getItem('selectedChatId');
+        
+        const chatIdToSelect = chatIdFromUrl || chatIdFromStorage;
+        
+        if (chatIdToSelect) {
+            debugLog('Restaurando seleção do chat:', chatIdToSelect);
+            this.selectChatItem(chatIdToSelect);
         }
     }
 

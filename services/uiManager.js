@@ -433,9 +433,8 @@ class UIManager {
                                         });
                                         
                                         // Faz o POST direto para a API de criar chat
-                                        const user = this.auth.user;
-                                        if (!user) throw new Error("Usuário não autenticado");
-                                        const token = await user.getIdToken();
+                                        const { getJwt } = await import('./auth.js');
+                                        const token = await getJwt();
 
                                         const payload = {
                                             chatflowId: selectedFlowiseConfig.chatflowId,

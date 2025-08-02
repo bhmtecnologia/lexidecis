@@ -464,10 +464,38 @@ class UIManager {
                                         const result = await response.json();
                                         console.log('🔗 Mensagem enviada para API com sucesso:', result);
                                         
-                                        // Chama handleLoadingState para fazer updateChat
-                                        if (this.chatManager && typeof this.chatManager.handleLoadingState === 'function') {
-                                            console.log('🔗 Chamando handleLoadingState para updateChat');
-                                            await this.chatManager.handleLoadingState(loading);
+                                        // Faz o POST para o endpoint de chats (updateChat)
+                                        console.log('🔗 Fazendo POST para endpoint de chats (updateChat)');
+                                        const chatParams = {
+                                            gpt_id: this.stateManager.selectedGPT?.id,
+                                            user_name: this.config.userName,
+                                            user_id: this.config.userId,
+                                            sessionid: this.stateManager.currentSessionId
+                                        };
+                                        
+                                        console.log('🔗 Parâmetros para updateChat:', chatParams);
+                                        
+                                        try {
+                                            const chatResponse = await fetch('https://webhook.power.tec.br/webhook/lexidecis/chats', {
+                                                method: 'POST',
+                                                headers: { 
+                                                    'Content-Type': 'application/json',
+                                                    'Authorization': `Bearer ${token}`
+                                                },
+                                                body: JSON.stringify(chatParams)
+                                            });
+                                            
+                                            console.log('🔗 Response status do updateChat:', chatResponse.status);
+                                            
+                                            if (chatResponse.ok) {
+                                                const chatResult = await chatResponse.json();
+                                                console.log('🔗 UpdateChat realizado com sucesso:', chatResult);
+                                            } else {
+                                                const errorText = await chatResponse.text();
+                                                console.error('🔗 Erro no updateChat:', errorText);
+                                            }
+                                        } catch (error) {
+                                            console.error('🔗 Erro ao fazer updateChat:', error);
                                         }
                                     } else {
                                         console.log('🔗 Textarea não encontrado ou sem valor');

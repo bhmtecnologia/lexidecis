@@ -237,6 +237,13 @@ docs/
 ├── 📋 MANUAL_IMPLEMENTATION.md            # Implementação manual
 ├── 🔗 API_ENDPOINT_CONFIGURATION.md       # Configuração de endpoints da API
 └── 🎯 CHAT_SELECTION_SYSTEM.md            # Sistema de seleção visual de chats
+ 
+## 🗺️ Planejamento e Roadmap
+
+### **Plano de Melhorias**
+- **Arquivo**: `docs/IMPROVEMENT_PLAN.md`
+- **Descrição**: Plano priorizado de melhorias com status e próximos passos
+- **Status**: 🟡 Em andamento
 ```
 
 ## 🎯 Como Usar Este Índice

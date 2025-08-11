@@ -12,11 +12,6 @@ import ChatManager from './chatManager.js';
 import UIManager from './uiManager.js';
 import StatusCheck from './statusCheck.js';
 import { getJwt } from './auth.js';
-import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { firebaseConfig } from './auth.js';
-if (!getApps().length) {
-  initializeApp(firebaseConfig);
-}
 import './auth.js';
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import presenceService from './presenceService.js';

@@ -1,18 +1,9 @@
 // presenceService.js
-import { auth, firebaseConfig } from './auth.js';
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-import { getFirestore, doc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+import { auth, db } from './auth.js';
+import { doc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import logService from './logService.js';
 
-// Inicializa Firebase e Firestore internamente
-let db = null;
-try {
-    const app = initializeApp(firebaseConfig);
-    db = getFirestore(app);
-    logService.info('PresenceService', 'Firestore inicializado internamente');
-} catch (error) {
-    logService.warn('PresenceService', 'Erro ao inicializar Firestore internamente:', error);
-}
+// Usa Firestore centralizado do auth.js
 
 class PresenceService {
     constructor() {

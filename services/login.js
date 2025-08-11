@@ -1,10 +1,5 @@
 //login.js
 
-import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { firebaseConfig } from './auth.js';
-if (!getApps().length) {
-  initializeApp(firebaseConfig);
-}
 import './auth.js';
 import { showAlert } from './alertManager.js'; // Importa a função showAlert
 import { login, getJwt } from './auth.js';

@@ -509,32 +509,51 @@ export default class GPTManager {
     async selectGPTItem(gpt) {
         this.stateManager.setSelectedGPT(gpt);
 
-        if (gpt.id) {
-            await this.fetchGPTConfig(gpt.id);
-
-            // Sempre cria uma nova sessão quando troca de GPT
-            const newSessionId = this.generateSessionId();
-            this.stateManager.setSessionId(newSessionId);
-            
-            // Cria um novo chat com o GPT selecionado
-            const newChat = {
-                id: newSessionId,
-                name: gpt.name,
-                date: new Date().toISOString(),
-                fk_gpt_id: gpt.id
-            };
-            this.stateManager.addChat(newChat);
-            this.uiManager.chatManager.populateChatMenu(this.stateManager.chats);
-            
-            // Atualiza a URL com o novo chat
-            if (this.uiManager.chatManager && typeof this.uiManager.chatManager.updateUrlWithChatId === 'function') {
-                this.uiManager.chatManager.updateUrlWithChatId(newSessionId, gpt.id);
-            }
-
-            await this.uiManager.initializeChatbot();
-        } else {
+        if (!gpt.id) {
             console.error('GPT selecionado não possui um id válido.');
+            return;
         }
+
+        // 1) Garantir que o usuário tem permissão: gpt precisa existir na lista carregada
+        const allowedGpts = this.stateManager.getGPTs && this.stateManager.getGPTs();
+        const isAllowed = Array.isArray(allowedGpts) && allowedGpts.some(item => String(item.id) === String(gpt.id));
+        if (!isAllowed) {
+            this.uiManager.showError('Você não tem permissão para usar este GPT.');
+            return;
+        }
+
+        // 2) Buscar configuração; se falhar ou não vier flowiseConfig, abortar
+        try {
+            await this.fetchGPTConfig(gpt.id);
+        } catch (e) {
+            // fetchGPTConfig já loga/mostra erro; apenas aborta
+            return;
+        }
+
+        const flowiseCfg = this.stateManager.getFlowiseConfig && this.stateManager.getFlowiseConfig();
+        if (!flowiseCfg || !flowiseCfg.chatflowId || !flowiseCfg.apiHost) {
+            this.uiManager.showError('Configuração do GPT indisponível. Contate o suporte.');
+            return;
+        }
+
+        // 3) Criar sessão e iniciar UI somente após permissões e config válidas
+        const newSessionId = this.generateSessionId();
+        this.stateManager.setSessionId(newSessionId);
+
+        const newChat = {
+            id: newSessionId,
+            name: gpt.name,
+            date: new Date().toISOString(),
+            fk_gpt_id: gpt.id
+        };
+        this.stateManager.addChat(newChat);
+        this.uiManager.chatManager.populateChatMenu(this.stateManager.chats);
+
+        if (this.uiManager.chatManager && typeof this.uiManager.chatManager.updateUrlWithChatId === 'function') {
+            this.uiManager.chatManager.updateUrlWithChatId(newSessionId, gpt.id);
+        }
+
+        await this.uiManager.initializeChatbot();
 
         localStorage.setItem('selectedGPT', JSON.stringify(this.stateManager.selectedGPT));
         localStorage.setItem('selectedGPTId', this.stateManager.selectedGPTId);

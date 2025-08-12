@@ -76,14 +76,13 @@ class ChatManager {
             console.log('🔗 handleUrlChange chamado. gptId na URL:', gptId);
             console.log('🔗 URL atual:', window.location.href);
             
-            // Se há um gptId na URL, seleciona o GPT primeiro
+            // Se há um gptId na URL, apenas marca seleção em memória (sem iniciar chat automaticamente)
             if (gptId && this.uiManager && this.uiManager.gptManager) {
-                console.log('🔗 GptId encontrado na URL, selecionando GPT:', gptId);
+                console.log('🔗 gptId encontrado na URL:', gptId);
                 const gpt = this.uiManager.gptManager.getGPTById(gptId);
                 if (gpt) {
-                    this.uiManager.gptManager.selectGPTItem(gpt);
-                    this.stateManager.setSelectedGPT(gpt);
-                    console.log('🔗 GPT selecionado da URL:', gpt.name);
+                    this.stateManager.setSelectedGPT(gpt); // não chama selectGPTItem para evitar auto-inicialização
+                    console.log('🔗 GPT registrado em memória a partir da URL (sem iniciar):', gpt.name);
                 } else {
                     console.warn('🔗 GPT com ID', gptId, 'não encontrado');
                 }
@@ -94,9 +93,14 @@ class ChatManager {
                 console.log('🔗 ChatId encontrado na URL, carregando chat:', chatId);
                 this.loadChatFromUrl(chatId);
             } else if (gptId) {
-                // Se há apenas gptId na URL, cria um novo chat com esse GPT
-                console.log('🔗 Apenas gptId na URL, criando novo chat com GPT:', gptId);
-                this.createNewChatWithGpt(gptId);
+                // Só inicia automaticamente se houver start=1 na URL
+                const shouldAutoStart = urlParams.get('start') === '1';
+                if (shouldAutoStart) {
+                    console.log('🔗 gptId + start=1 na URL, criando novo chat com GPT:', gptId);
+                    this.createNewChatWithGpt(gptId);
+                } else {
+                    console.log('🔗 gptId na URL sem start=1; não iniciando chat automaticamente.');
+                }
             } else {
                 // Se não há chatId nem gptId, limpa a seleção atual
                 console.log('🔗 Nenhum chatId ou gptId na URL, limpando seleção');
@@ -704,21 +708,15 @@ class ChatManager {
     }
 
     /**
-     * Restaura a seleção do chat baseado no localStorage ou URL
+     * Restaura a seleção do chat somente pela URL (não usa localStorage)
+     * para garantir que a página abra na tela de boas-vindas por padrão.
      */
     restoreChatSelection() {
-        // Primeiro tenta pegar da URL
         const urlParams = new URLSearchParams(window.location.search);
         const chatIdFromUrl = urlParams.get('chatId');
-        
-        // Se não tem na URL, tenta do localStorage
-        const chatIdFromStorage = localStorage.getItem('selectedChatId');
-        
-        const chatIdToSelect = chatIdFromUrl || chatIdFromStorage;
-        
-        if (chatIdToSelect) {
-            debugLog('Restaurando seleção do chat:', chatIdToSelect);
-            this.selectChatItem(chatIdToSelect);
+        if (chatIdFromUrl) {
+            debugLog('Restaurando seleção do chat (URL):', chatIdFromUrl);
+            this.selectChatItem(chatIdFromUrl);
         }
     }
 

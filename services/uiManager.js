@@ -36,6 +36,29 @@ class UIManager {
         // Configurar listener para mudanças de autenticação
         this.setupAuthListener();
         
+        // Utilitário para controlar visibilidade de ações de chat
+        this.setChatActionsVisible = (visible) => {
+            const newChatButton = document.getElementById('new-chat-button');
+            const selectGPTButton = document.getElementById('select-gpt-button');
+            const startNewChatBtn = document.getElementById('start-new-chat-button');
+
+            const displayValue = visible ? 'inline-flex' : 'none';
+            if (newChatButton) newChatButton.style.setProperty('display', displayValue, 'important');
+            if (selectGPTButton) selectGPTButton.style.setProperty('display', displayValue, 'important');
+            if (startNewChatBtn) startNewChatBtn.style.setProperty('display', visible ? 'block' : 'none', 'important');
+        };
+
+        // Utilitário para controlar visibilidade de itens do user menu
+        this.setUserMenuActionsVisible = (visible) => {
+            const profileButton = document.getElementById('profile-button');
+            const configButton = document.getElementById('config-button');
+            const manualButton = document.getElementById('manual-button');
+            const displayFlex = visible ? 'flex' : 'none';
+            if (profileButton) profileButton.style.setProperty('display', displayFlex, 'important');
+            if (configButton) configButton.style.setProperty('display', displayFlex, 'important');
+            if (manualButton) manualButton.style.setProperty('display', displayFlex, 'important');
+        };
+
         // Bind ação do botão "Iniciar nova conversa" (welcome screen)
         const startNewChatBtn = document.getElementById('start-new-chat-button');
         if (startNewChatBtn) {
@@ -958,6 +981,8 @@ class UIManager {
                     
                     // Verificar se o usuário tem permissão de admin
                     const hasAdminPermission = profile && profile.routes && profile.routes.includes('#admin');
+                    // Determina se usuário tem permissão para usar chat (provisionado)
+                    const hasChatPermission = !!profile && (Array.isArray(profile.routes) ? profile.routes.includes('#chat') || profile.routes.includes('#admin') : true);
                     this.debugLog('[UIManager] Routes:', profile?.routes);
                     this.debugLog('[UIManager] Has admin permission:', hasAdminPermission);
                     
@@ -998,6 +1023,10 @@ class UIManager {
                         adminButton.style.setProperty('display', 'none', 'important');
                         this.debugLog('[UIManager] Usuário não tem permissão de admin - botão oculto');
                     }
+
+                    // Aplicar visibilidade das ações de chat e itens de menu conforme permissão
+                    this.setChatActionsVisible(!!hasChatPermission);
+                    this.setUserMenuActionsVisible(!!hasChatPermission);
                     
                     // Controle do contador de usuários ativos - só mostrar para admins
                     const activeUsersCounter = document.getElementById('active-users-counter');
@@ -1027,6 +1056,10 @@ class UIManager {
                     if (activeUsersCounter) {
                         activeUsersCounter.style.setProperty('display', 'none', 'important');
                     }
+
+                    // Em caso de erro, ocultar ações de chat e itens do menu por segurança
+                    this.setChatActionsVisible(false);
+                    this.setUserMenuActionsVisible(false);
                 }
             } else {
                 this.debugLog('[UIManager] Botão admin-button não encontrado no DOM');
@@ -1052,6 +1085,10 @@ class UIManager {
             if (activeUsersCounter) {
                 activeUsersCounter.style.setProperty('display', 'none', 'important');
             }
+
+            // Sem usuário autenticado: ocultar ações de chat e itens do menu
+            this.setChatActionsVisible(false);
+            this.setUserMenuActionsVisible(false);
         }
     }
 

@@ -59,6 +59,9 @@ class UIManager {
             if (manualButton) manualButton.style.setProperty('display', displayFlex, 'important');
         };
 
+        // Flag simples para evitar múltiplas atualizações concorrentes do perfil
+        this._isUpdatingUserInfo = false;
+
         // Bind ação do botão "Iniciar nova conversa" (welcome screen)
         const startNewChatBtn = document.getElementById('start-new-chat-button');
         if (startNewChatBtn) {
@@ -927,6 +930,11 @@ class UIManager {
     /* --- Método para atualizar informações do usuário --- */
     async updateUserInfo() {
         this.debugLog('[UIManager] updateUserInfo() chamada');
+        if (this._isUpdatingUserInfo) {
+            this.debugLog('[UIManager] updateUserInfo já em execução; ignorando chamada duplicada');
+            return;
+        }
+        this._isUpdatingUserInfo = true;
         const user = this.auth.currentUser;
         
         if (user) {
@@ -981,8 +989,9 @@ class UIManager {
                     
                     // Verificar se o usuário tem permissão de admin
                     const hasAdminPermission = profile && profile.routes && profile.routes.includes('#admin');
-                    // Determina se usuário tem permissão para usar chat (provisionado)
-                    const hasChatPermission = !!profile && (Array.isArray(profile.routes) ? profile.routes.includes('#chat') || profile.routes.includes('#admin') : true);
+                    // Permite chat para qualquer usuário provisionado (profile válido),
+                    // mesmo que não tenha '#admin' ou '#chat' nas rotas.
+                    const hasChatPermission = !!profile; 
                     this.debugLog('[UIManager] Routes:', profile?.routes);
                     this.debugLog('[UIManager] Has admin permission:', hasAdminPermission);
                     
@@ -1115,7 +1124,17 @@ class UIManager {
             throw new Error("Erro ao obter lista de usuários: " + errorText);
         }
 
-        const usersData = await usersResponse.json();
+        // Tenta parsear JSON com fallback para corpo vazio
+        const usersText = await usersResponse.text();
+        let usersData = [];
+        if (usersText && usersText.trim().length > 0) {
+            try {
+                usersData = JSON.parse(usersText);
+            } catch (e) {
+                this.debugLog('[UIManager] users: resposta não-JSON; usando lista vazia');
+                usersData = [];
+            }
+        }
         this.debugLog('[UIManager] Lista de usuários obtida:', usersData);
         
         // Encontrar o usuário atual na lista
@@ -1149,7 +1168,18 @@ class UIManager {
             throw new Error("Erro ao obter perfil do usuário: " + errorText);
         }
 
-        const data = await response.json();
+        const profileText = await response.text();
+        if (!profileText || profileText.trim().length === 0) {
+            this.debugLog('[UIManager] Perfil vazio retornado pela API');
+            return null;
+        }
+        let data;
+        try {
+            data = JSON.parse(profileText);
+        } catch (e) {
+            this.debugLog('[UIManager] Perfil: resposta não-JSON');
+            return null;
+        }
         this.debugLog('[UIManager] Resposta bruta da API original:', data);
         this.debugLog('[UIManager] Tipo da resposta:', typeof data);
         this.debugLog('[UIManager] É array?', Array.isArray(data));
@@ -1188,6 +1218,7 @@ class UIManager {
             this.debugLog('[UIManager] Modal do manual não encontrado no DOM');
             showAlert('Erro ao abrir o manual do usuário.', 'error');
         }
+        this._isUpdatingUserInfo = false;
     }
 }
 

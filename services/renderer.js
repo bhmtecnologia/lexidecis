@@ -168,7 +168,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}`);
                 }
-                const json = await response.json();
+                // Trata respostas 200 sem corpo (evita Unexpected end of JSON input)
+                const text = await response.text();
+                const json = text && text.trim().length > 0 ? JSON.parse(text) : null;
                 data = json;
                 debugLog(`[Renderer] Endpoints carregados na tentativa ${attempt}.`);
                 break;
@@ -176,19 +178,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 clearTimeout(timer);
                 debugLog(`[Renderer] Tentativa ${attempt} falhou:`, err);
                 if (attempt === ENDPOINT_MAX_RETRIES) {
-                    // Fallback UX: informar e oferecer recarregar
-                    showAlert('Não foi possível carregar configurações. Verifique sua conexão e clique em Recarregar Configurações.', 'error');
-                    LoadingUtils.hide(loadingId);
-                    return;
+                    // Fallback: seguir com configuração mínima para que a UI inicialize (logout disponível)
+                    debugLog('[Renderer] Aplicando fallback de endpoints vazios');
+                    data = { endpoints: { flowise: {}, apiCredentials: {} } };
+                    break;
                 }
                 // Exponential backoff entre tentativas
                 await new Promise(res => setTimeout(res, ENDPOINT_TIMEOUT_MS));
             }
         }
-        const endpoints = data?.endpoints;
-        if (!endpoints || !endpoints.flowise || !endpoints.apiCredentials) {
-            throw new Error("Dados de endpoints inválidos ou não encontrados.");
-        }
+        const endpoints = data?.endpoints || {};
+        if (!endpoints.flowise) endpoints.flowise = {};
+        if (!endpoints.apiCredentials) endpoints.apiCredentials = {};
         CONFIG.flowise = { ...endpoints.flowise };
         CONFIG.apiCredentials = { ...endpoints.apiCredentials };
         debugLog("[Renderer] CONFIG atualizado com endpoints:", CONFIG);

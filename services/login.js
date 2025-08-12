@@ -2,7 +2,7 @@
 
 import './auth.js';
 import { showAlert } from './alertManager.js'; // Importa a função showAlert
-import { login, getJwt } from './auth.js';
+import { login, getJwt, resetPassword } from './auth.js';
 
 // --- INÍCIO: Autenticação Google ---
 import { getAuth, GoogleAuthProvider, signInWithPopup, OAuthProvider } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -14,7 +14,7 @@ if (googleBtn) {
         const provider = new GoogleAuthProvider();
         try {
             await signInWithPopup(auth, provider);
-            window.location.href = '/pages/chat.html';
+            window.location.href = 'chat.html';
         } catch (error) {
             alert('Erro ao autenticar com Google: ' + (error.message || error));
         }
@@ -28,7 +28,7 @@ if (microsoftBtn) {
         const provider = new OAuthProvider('microsoft.com');
         try {
             await signInWithPopup(auth, provider);
-            window.location.href = '/pages/chat.html';
+            window.location.href = 'chat.html';
         } catch (error) {
             alert('Erro ao autenticar com Microsoft: ' + (error.message || error));
         }

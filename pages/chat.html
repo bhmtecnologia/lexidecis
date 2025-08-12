@@ -158,5 +158,26 @@
     
     <!-- Scripts de Autenticação e Renderização -->
     <script type="module" src="../services/renderer.js"></script>
+
+    <!-- Fallback de Logout: garante que o botão funcione mesmo se a inicialização falhar -->
+    <script type="module">
+        import { logout } from '../services/auth.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('logout-button');
+            if (btn && !btn.dataset.bound) {
+                btn.addEventListener('click', async (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    try {
+                        await logout();
+                    } catch (err) {
+                        console.error('Logout (fallback) falhou:', err);
+                        window.location.href = '../index.html';
+                    }
+                });
+                btn.dataset.bound = 'true';
+            }
+        });
+    </script>
 </body>
 </html>

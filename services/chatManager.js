@@ -29,7 +29,7 @@ class ChatManager {
         this.config = config;
         this.uiManager = null; // Inicializa o uiManager como nulo para evitar quebras
         
-        console.log('🔗 ChatManager constructor chamado');
+        debugLog('ChatManager constructor chamado');
         
         // Inicializa o sistema de URL (apenas o listener, não a verificação inicial)
         this.initializeUrlListener();
@@ -39,28 +39,28 @@ class ChatManager {
      * Inicializa apenas o listener de URL (sem verificação inicial)
      */
     initializeUrlListener() {
-        console.log('🔗 Inicializando listener de URL...');
+        debugLog('Inicializando listener de URL...');
         
         // Listener para mudanças na URL (navegação do browser)
         window.addEventListener('popstate', (event) => {
-            console.log('🔗 Evento popstate detectado:', event);
+            debugLog('Evento popstate detectado:', event);
             this.handleUrlChange();
         });
         
-        console.log('🔗 Listener de URL inicializado');
+        debugLog('Listener de URL inicializado');
     }
 
     /**
      * Inicializa o sistema completo de gerenciamento de URL (chamado após carregar chats)
      */
     initializeUrlManagement() {
-        console.log('🔗 Inicializando sistema completo de gerenciamento de URL...');
+        debugLog('Inicializando sistema completo de gerenciamento de URL...');
         
         // Verifica se há chatId na URL
-        console.log('🔗 Verificando URL inicial...');
+        debugLog('Verificando URL inicial...');
         this.handleUrlChange();
         
-        console.log('🔗 Sistema completo de gerenciamento de URL inicializado');
+        debugLog('Sistema completo de gerenciamento de URL inicializado');
     }
 
     /**
@@ -72,38 +72,38 @@ class ChatManager {
             const chatId = urlParams.get('chatId');
             const gptId = urlParams.get('gptId');
             
-            console.log('🔗 handleUrlChange chamado. chatId na URL:', chatId);
-            console.log('🔗 handleUrlChange chamado. gptId na URL:', gptId);
-            console.log('🔗 URL atual:', window.location.href);
+            debugLog('handleUrlChange chamado. chatId na URL:', chatId);
+            debugLog('handleUrlChange chamado. gptId na URL:', gptId);
+            debugLog('URL atual:', window.location.href);
             
             // Se há um gptId na URL, apenas marca seleção em memória (sem iniciar chat automaticamente)
             if (gptId && this.uiManager && this.uiManager.gptManager) {
-                console.log('🔗 gptId encontrado na URL:', gptId);
+                debugLog('gptId encontrado na URL:', gptId);
                 const gpt = this.uiManager.gptManager.getGPTById(gptId);
                 if (gpt) {
                     this.stateManager.setSelectedGPT(gpt); // não chama selectGPTItem para evitar auto-inicialização
-                    console.log('🔗 GPT registrado em memória a partir da URL (sem iniciar):', gpt.name);
+                    debugLog('GPT registrado em memória a partir da URL (sem iniciar):', gpt.name);
                 } else {
-                    console.warn('🔗 GPT com ID', gptId, 'não encontrado');
+                    debugLog('GPT com ID não encontrado:', gptId);
                 }
             }
             
             if (chatId) {
                 // Se há um chatId na URL, tenta carregar o chat
-                console.log('🔗 ChatId encontrado na URL, carregando chat:', chatId);
+                debugLog('ChatId encontrado na URL, carregando chat:', chatId);
                 this.loadChatFromUrl(chatId);
             } else if (gptId) {
                 // Só inicia automaticamente se houver start=1 na URL
                 const shouldAutoStart = urlParams.get('start') === '1';
                 if (shouldAutoStart) {
-                    console.log('🔗 gptId + start=1 na URL, criando novo chat com GPT:', gptId);
+                    debugLog('gptId + start=1 na URL, criando novo chat com GPT:', gptId);
                     this.createNewChatWithGpt(gptId);
                 } else {
-                    console.log('🔗 gptId na URL sem start=1; não iniciando chat automaticamente.');
+                    debugLog('gptId na URL sem start=1; não iniciando chat automaticamente.');
                 }
             } else {
                 // Se não há chatId nem gptId, limpa a seleção atual
-                console.log('🔗 Nenhum chatId ou gptId na URL, limpando seleção');
+                debugLog('Nenhum chatId ou gptId na URL, limpando seleção');
                 this.clearChatSelection();
             }
         } catch (error) {

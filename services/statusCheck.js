@@ -103,7 +103,6 @@ export default class StatusCheck {
             const status = data.status.description;
 
             debugLog(`Status recebido da OpenAI: ${status}`);
-            console.log(`Status recebido da API: ${status}`);
 
             // Mapeia os status para mensagens amigáveis
             const friendlyMessages = {
@@ -129,7 +128,7 @@ export default class StatusCheck {
             debugLog('Status operacional. Nenhum alerta exibido.');
             return true;
         } catch (error) {
-            console.error('Erro ao verificar o status da OpenAI:', error);
+            debugLog('Erro ao verificar o status da OpenAI:', error);
             return await this.showDecisionModal(
                 'Erro na Conexão',
                 'Não foi possível verificar o status da OpenAI devido a um problema de rede. Por favor, verifique sua conexão ou tente novamente mais tarde.'

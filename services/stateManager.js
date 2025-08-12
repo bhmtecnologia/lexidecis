@@ -8,7 +8,7 @@
 // 1. CONFIGURAÇÕES E UTILITÁRIOS
 // ============================
 
-const DEBUG_MODE = true; // Sempre ativo para facilitar manutenção
+const DEBUG_MODE = ['localhost', '127.0.0.1'].includes(window.location.hostname);
 
 function debugLog(context, message, data = null) {
     if (DEBUG_MODE) {

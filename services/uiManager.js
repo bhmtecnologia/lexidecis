@@ -36,6 +36,22 @@ class UIManager {
         // Configurar listener para mudanças de autenticação
         this.setupAuthListener();
         
+        // Bind ação do botão "Iniciar nova conversa" (welcome screen)
+        const startNewChatBtn = document.getElementById('start-new-chat-button');
+        if (startNewChatBtn) {
+            startNewChatBtn.addEventListener('click', async () => {
+                try {
+                    if (this.stateManager.selectedGPT) {
+                        await this.createNewChat();
+                    } else if (this.gptManager) {
+                        await this.gptManager.openModal();
+                    }
+                } catch (e) {
+                    this.showError('Não foi possível iniciar uma nova conversa.');
+                }
+            });
+        }
+
         // Atualizar informações do usuário após o primeiro paint (melhor perceived perf)
         requestAnimationFrame(() => this.updateUserInfo().catch(error => {
             if (DEBUG_MODE) {

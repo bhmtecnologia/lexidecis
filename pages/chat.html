@@ -104,8 +104,13 @@
 
     <!-- Conteúdo Principal -->
     <div class="content">
-        <div id="welcome-message" class="d-flex justify-content-center align-items-center vh-100">
+        <div id="welcome-message" class="d-flex flex-column gap-3 justify-content-center align-items-center vh-100 text-center px-3">
             <h1>Bem-vindo à LexiDecis!</h1>
+            <p class="text-white-50 m-0">Pronto para começar? Inicie uma nova conversa.</p>
+            <button id="start-new-chat-button" class="btn btn-success btn-lg w-100" style="max-width: 360px;">
+                <i class="bi bi-chat-dots me-2"></i>
+                Iniciar nova conversa
+            </button>
         </div>
         
         <div id="chatbot-container" class="d-none">

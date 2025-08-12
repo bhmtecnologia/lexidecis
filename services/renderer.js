@@ -147,45 +147,83 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
         debugLog("[Renderer] CONFIG atualizado após autenticação:", CONFIG);
 
-        // ETAPA 3: Carregar Endpoints (via n8n) com timeout e retry
+        // ETAPA 3: Carregar Endpoints (via n8n) com cache e retry (SWR)
         if (abortLoading) return;
         debugLog("[Renderer] Carregando endpoints via", ENDPOINT_URL);
         const jwt = await getJwt();
         let data;
-        for (let attempt = 1; attempt <= ENDPOINT_MAX_RETRIES; attempt++) {
-            const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), ENDPOINT_TIMEOUT_MS);
-            try {
-                const response = await fetch(ENDPOINT_URL, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${jwt}`,
-                        'Content-Type': 'application/json'
-                    },
-                    signal: controller.signal
-                });
-                clearTimeout(timer);
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
+
+        // Cache simples com TTL para endpoints (SWR)
+        const CACHE_KEY = 'lexi_endpoints_cache_v1';
+        const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
+        try {
+            const cachedRaw = localStorage.getItem(CACHE_KEY);
+            if (cachedRaw) {
+                const cached = JSON.parse(cachedRaw);
+                const isFresh = Date.now() - (cached.timestamp || 0) < CACHE_TTL_MS;
+                if (isFresh && cached.data && cached.data.endpoints) {
+                    debugLog('[Renderer] Usando endpoints do cache (fresh)');
+                    data = cached.data;
                 }
-                // Trata respostas 200 sem corpo (evita Unexpected end of JSON input)
-                const text = await response.text();
-                const json = text && text.trim().length > 0 ? JSON.parse(text) : null;
-                data = json;
-                debugLog(`[Renderer] Endpoints carregados na tentativa ${attempt}.`);
-                break;
-            } catch (err) {
-                clearTimeout(timer);
-                debugLog(`[Renderer] Tentativa ${attempt} falhou:`, err);
-                if (attempt === ENDPOINT_MAX_RETRIES) {
-                    // Fallback: seguir com configuração mínima para que a UI inicialize (logout disponível)
-                    debugLog('[Renderer] Aplicando fallback de endpoints vazios');
-                    data = { endpoints: { flowise: {}, apiCredentials: {} } };
-                    break;
-                }
-                // Exponential backoff entre tentativas
-                await new Promise(res => setTimeout(res, ENDPOINT_TIMEOUT_MS));
             }
+        } catch (e) {
+            debugLog('[Renderer] Falha ao ler cache de endpoints:', e);
+        }
+
+        const fetchEndpoints = async () => {
+            for (let attempt = 1; attempt <= ENDPOINT_MAX_RETRIES; attempt++) {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), ENDPOINT_TIMEOUT_MS);
+                try {
+                    const response = await fetch(ENDPOINT_URL, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${jwt}`,
+                            'Content-Type': 'application/json'
+                        },
+                        signal: controller.signal
+                    });
+                    clearTimeout(timer);
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    // Trata respostas 200 sem corpo (evita Unexpected end of JSON input)
+                    const text = await response.text();
+                    const json = text && text.trim().length > 0 ? JSON.parse(text) : null;
+                    if (json && json.endpoints) {
+                        debugLog(`[Renderer] Endpoints carregados na tentativa ${attempt}.`);
+                        try {
+                            localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data: json }));
+                        } catch (e) {
+                            debugLog('[Renderer] Falha ao salvar endpoints no cache:', e);
+                        }
+                        return json;
+                    }
+                } catch (err) {
+                    clearTimeout(timer);
+                    debugLog(`[Renderer] Tentativa ${attempt} falhou:`, err);
+                    // Exponential backoff entre tentativas
+                    await new Promise(res => setTimeout(res, ENDPOINT_TIMEOUT_MS));
+                }
+            }
+            // Fallback: configuração mínima para a UI inicializar
+            debugLog('[Renderer] Aplicando fallback de endpoints vazios');
+            return { endpoints: { flowise: {}, apiCredentials: {} } };
+        };
+
+        if (!data) {
+            // Sem cache fresh: busca bloqueante
+            data = await fetchEndpoints();
+        } else {
+            // Com cache fresh: revalida em background (não bloqueia)
+            (async () => {
+                try {
+                    await fetchEndpoints();
+                    debugLog('[Renderer] Revalidação de endpoints concluída');
+                } catch (e) {
+                    debugLog('[Renderer] Revalidação de endpoints falhou:', e);
+                }
+            })();
         }
         const endpoints = data?.endpoints || {};
         if (!endpoints.flowise) endpoints.flowise = {};
@@ -212,11 +250,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         tooltipTriggerList.map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
         debugLog("[Renderer] Serviços e gerenciadores inicializados.");
 
-        debugLog("[Renderer] Chamando gptManager.preloadGPTs()...");
-        await gptManager.preloadGPTs();
-        debugLog("[Renderer] -> Pré-carregamento de GPTs finalizado.");
+        // Paraleliza: pré-carregar GPTs e carregar lista de chats
+        debugLog("[Renderer] Chamando gptManager.preloadGPTs() e chatManager.loadChatList() em paralelo...");
+        const preloadGptsPromise = (async () => {
+            await gptManager.preloadGPTs();
+            debugLog('[Renderer] -> Pré-carregamento de GPTs finalizado.');
+            LoadingUtils.step(loadingId, 'Pré-carregar GPTs', 'completed');
+        })();
+        const loadChatsPromise = (async () => {
+            try {
+                await chatManager.loadChatList(chatManager.populateChatMenu.bind(chatManager));
+                debugLog('[Renderer] -> Lista de chats carregada (paralelo).');
+            } catch (err) {
+                debugLog('[Renderer] Falha ao carregar chats (paralelo):', err);
+            }
+        })();
         LoadingUtils.step(loadingId, 'Carregar Endpoints', 'completed');
-        LoadingUtils.step(loadingId, 'Pré-carregar GPTs', 'completed');
+        await preloadGptsPromise; // garantir GPTs antes de selecionar padrão
         if (abortLoading) return;
 
         // ETAPA 5: Selecionar GPT Padrão (caso nenhum chat esteja selecionado)
@@ -261,9 +311,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         LoadingUtils.step(loadingId, 'Inicializar Chatbot', 'completed');
         if (abortLoading) return;
 
-        // ETAPA 7: Carregar Lista de Chats (realizada ao final)
-        debugLog("[Renderer] Carregando lista de chats via chatManager.loadChatList()...");
-        await chatManager.loadChatList(chatManager.populateChatMenu.bind(chatManager));
+        // ETAPA 7: Carregar Lista de Chats (aguarda promessa paralela)
+        debugLog("[Renderer] Aguardando conclusão da carga da lista de chats...");
+        try { await loadChatsPromise; } catch {}
         stateManager.loadSelectedChat();
         debugLog("[Renderer] -> Lista de chats carregada e chat selecionado (se houver).");
         LoadingUtils.step(loadingId, 'Carregar Lista de Chats', 'completed');

@@ -132,7 +132,7 @@ export default class GPTManager {
 
     createModal() {
         if (document.getElementById('gpt-modal')) {
-            console.log('Modal já existe.');
+            if (DEBUG_MODE) console.log('Modal já existe.');
             return;
         }
 
@@ -356,7 +356,7 @@ export default class GPTManager {
     async openModal() {
         showAlert('Carregando lista de GPTs...', 'info');
         if (this.stateManager.isLoadingGPTsActive()) {
-            console.log('A lista de GPTs já está sendo carregada.');
+            debugLog && console.log('');
             return;
         }
 
@@ -375,7 +375,7 @@ export default class GPTManager {
 
     async loadGPTList() {
         if (this.stateManager.isLoadingGPTsActive()) {
-            console.log('A lista de GPTs já está sendo carregada.');
+            if (DEBUG_MODE) console.log('A lista de GPTs já está sendo carregada.');
             return;
         }
 

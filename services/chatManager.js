@@ -1,4 +1,4 @@
-const DEBUG_MODE = false; // Altere para true se quiser habilitar os logs
+const DEBUG_MODE = ['localhost', '127.0.0.1'].includes(window.location.hostname);
 
 function debugLog(...args) {
     if (DEBUG_MODE) {

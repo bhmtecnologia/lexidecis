@@ -36,14 +36,14 @@ class UIManager {
         // Configurar listener para mudanças de autenticação
         this.setupAuthListener();
         
-        // Atualizar informações do usuário imediatamente se já estiver logado
-        this.updateUserInfo().catch(error => {
+        // Atualizar informações do usuário após o primeiro paint (melhor perceived perf)
+        requestAnimationFrame(() => this.updateUserInfo().catch(error => {
             if (DEBUG_MODE) {
                 console.error('[UIManager] Erro ao atualizar informações do usuário:', error);
             } else {
                 console.warn('[UIManager] Erro ao atualizar informações do usuário');
             }
-        });
+        }));
     }
 
     /* Método auxiliar para logs */

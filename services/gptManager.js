@@ -157,7 +157,36 @@ export default class GPTManager {
                                 >
                                 <button class="btn btn-outline-secondary" type="button" id="gpt-clear-search" aria-label="Limpar pesquisa">×</button>
                             </div>
-                            <div class="row" id="gpt-list"></div>
+                            <div class="row" id="gpt-list">
+                                <!-- Skeletons enquanto carrega -->
+                                <div class="col-12 col-sm-6 col-lg-4 mb-4 gpt-skeleton" aria-hidden="true">
+                                    <div class="card" style="height: 320px; opacity: 0.6;">
+                                        <div class="card-img-top" style="height: 200px; background: #2b2b2b;"></div>
+                                        <div class="card-body">
+                                            <div style="height: 20px; background:#2b2b2b; margin-bottom: 8px;"></div>
+                                            <div style="height: 12px; background:#2b2b2b; width: 80%;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6 col-lg-4 mb-4 gpt-skeleton" aria-hidden="true">
+                                    <div class="card" style="height: 320px; opacity: 0.6;">
+                                        <div class="card-img-top" style="height: 200px; background: #2b2b2b;"></div>
+                                        <div class="card-body">
+                                            <div style="height: 20px; background:#2b2b2b; margin-bottom: 8px;"></div>
+                                            <div style="height: 12px; background:#2b2b2b; width: 60%;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6 col-lg-4 mb-4 gpt-skeleton" aria-hidden="true">
+                                    <div class="card" style="height: 320px; opacity: 0.6;">
+                                        <div class="card-img-top" style="height: 200px; background: #2b2b2b;"></div>
+                                        <div class="card-body">
+                                            <div style="height: 20px; background:#2b2b2b; margin-bottom: 8px;"></div>
+                                            <div style="height: 12px; background:#2b2b2b; width: 70%;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
@@ -382,6 +411,7 @@ export default class GPTManager {
             return;
         }
 
+        // Limpa skeletons
         gptList.innerHTML = '';
 
         if (!gpts || gpts.length === 0) {
@@ -427,6 +457,7 @@ export default class GPTManager {
             return;
         }
 
+        // Limpa skeletons
         gptList.innerHTML = '';
 
         if (gpts.length === 0) {

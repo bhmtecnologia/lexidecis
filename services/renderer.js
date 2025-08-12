@@ -269,45 +269,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         await preloadGptsPromise; // garantir GPTs antes de selecionar padrão
         if (abortLoading) return;
 
-        // ETAPA 5: Selecionar GPT Padrão (caso nenhum chat esteja selecionado)
-        if (!stateManager.selectedChat) {
-            debugLog("[Renderer] Nenhum chat selecionado; verificando se há chatId ou gptId na URL...");
-            
-            // Verifica se há chatId ou gptId na URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const chatIdFromUrl = urlParams.get('chatId');
-            const gptIdFromUrl = urlParams.get('gptId');
-            
-            if (chatIdFromUrl || gptIdFromUrl) {
-                debugLog("[Renderer] ChatId encontrado na URL:", chatIdFromUrl);
-                debugLog("[Renderer] GptId encontrado na URL:", gptIdFromUrl);
-                debugLog("[Renderer] Aguardando carregamento da lista de chats para selecionar o chat/GPT da URL...");
-                // Não cria novo chat, aguarda o carregamento da lista de chats
-            } else {
-                debugLog("[Renderer] Nenhum chatId ou gptId na URL; criando novo chat...");
-                const defaultGPTId = "6d71f8f4-b91d-45ed-80a9-803ae61a7c98"; // Exemplo
-                const defaultGPT = gptManager.getGPTById(defaultGPTId);
-                if (defaultGPT) {
-                    debugLog("[Renderer] GPT padrão encontrado:", defaultGPT);
-                    await gptManager.selectGPTItem(defaultGPT);
-                    stateManager.setSelectedGPT(defaultGPT);
-                    debugLog(`[Renderer] GPT padrão selecionado: ${defaultGPT.name}`);
-                    await uiManager.createNewChat();
-                } else {
-                    showAlert('GPT padrão não encontrado. Consulte o suporte.', 'error');
-                    throw new Error('GPT padrão não encontrado.');
-                }
-            }
-        } else {
-            debugLog("[Renderer] Já existe um chat selecionado. Pulando GPT padrão...");
-        }
+        // ETAPA 5: Selecionar GPT Padrão (adiado para ação do usuário)
+        debugLog("[Renderer] Seleção de GPT adiada para ação do usuário.");
         LoadingUtils.step(loadingId, 'Selecionar GPT Padrão', 'completed');
         if (abortLoading) return;
 
-        // ETAPA 6: Inicializar Chatbot (UI e listeners)
-        debugLog("[Renderer] Inicializando chatbot via uiManager.initializeChatbot()...");
-        await uiManager.initializeChatbot();
-        debugLog("[Renderer] -> Chatbot inicializado.");
+        // ETAPA 6: Inicializar Chatbot (adiado para quando usuário selecionar GPT/Chat)
+        debugLog("[Renderer] Inicialização do chatbot adiada até seleção de GPT/Chat.");
         LoadingUtils.step(loadingId, 'Inicializar Chatbot', 'completed');
         if (abortLoading) return;
 
@@ -319,12 +287,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         LoadingUtils.step(loadingId, 'Carregar Lista de Chats', 'completed');
         if (abortLoading) return;
 
-        // ETAPA 8: Inicializar Serviço de Presença
-        debugLog("[Renderer] Inicializando serviço de presença...");
-        await presenceService.init();
-        setupPresenceUI();
-        debugLog("[Renderer] -> Serviço de presença inicializado.");
-        if (abortLoading) return;
+        // ETAPA 8: Inicializar Serviço de Presença (adiado para background)
+        debugLog("[Renderer] Inicialização do serviço de presença adiada para background.");
 
         // Finaliza com sucesso
         debugLog("[Renderer] Todas as etapas concluídas. Ocultando loading screen...");

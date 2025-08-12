@@ -509,14 +509,20 @@
       async function checkAiEngineStatus() {
         try {
           const status = await API.checkFlowiseStatus();
-          console.log('Status do AI Agents Engine:', status);
+                          if (['localhost', '127.0.0.1'].includes(window.location.hostname)) {
+                    console.log('Status do AI Agents Engine:', status);
+                }
           
           // Exemplo de como usar o status
           if (status.status === 'ok') {
-            console.log('✅ AI Agents Engine está funcionando:', status.message);
+                            if (['localhost', '127.0.0.1'].includes(window.location.hostname)) {
+                    console.log('✅ AI Agents Engine está funcionando:', status.message);
+                }
             // Aqui você poderia atualizar algum elemento da interface
           } else {
-            console.log('❌ AI Agents Engine com problema:', status.message);
+                            if (['localhost', '127.0.0.1'].includes(window.location.hostname)) {
+                    console.log('❌ AI Agents Engine com problema:', status.message);
+                }
             // Aqui você poderia mostrar um alerta ou notificação
           }
         } catch (error) {

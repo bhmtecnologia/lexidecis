@@ -238,7 +238,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const apiService = new ApiService(CONFIG);
         const stateManager = new StateManager();
         const chatManager = new ChatManager(apiService, stateManager, CONFIG);
-        console.log('🔗 ChatManager instanciado no renderer');
+        debugLog('ChatManager instanciado no renderer');
         const uiManager = new UIManager(apiService, stateManager, chatManager, CONFIG, auth);
         const gptManager = new GPTManager(apiService, stateManager, uiManager, CONFIG);
 

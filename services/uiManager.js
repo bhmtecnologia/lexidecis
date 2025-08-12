@@ -347,7 +347,7 @@ class UIManager {
             await this.initializeChatbot();
 
             // Adiciona o chat à lista e atualiza a URL
-            console.log('🔗 createNewChat: adicionando chat à lista e atualizando URL:', newSessionId);
+            this.debugLog('createNewChat: adicionando chat à lista e atualizando URL:', newSessionId);
             
             // Adiciona o chat ao StateManager
             const newChat = {
@@ -398,11 +398,11 @@ class UIManager {
             if (!this.stateManager.currentSessionId) {
                 const newSessionId = this.gptManager.generateSessionId();
                 this.stateManager.setSessionId(newSessionId);
-                console.log('🔗 Nova sessão criada:', newSessionId);
+                this.debugLog('Nova sessão criada:', newSessionId);
                 // Removido: adição automática do chat à lista
                 // O chat só será adicionado após o envio da primeira mensagem
             } else {
-                console.log('🔗 Usando sessão existente:', this.stateManager.currentSessionId);
+                this.debugLog('Usando sessão existente:', this.stateManager.currentSessionId);
             }
 
             // Limpar histórico injetado
@@ -445,29 +445,29 @@ class UIManager {
                     observeUserInput: (userInput) => this.logUserInput(userInput),
                     observeMessages: (messages) => this.logMessages(messages),
                     observeLoading: async (loading) => {
-                        console.log('🔗 observeLoading chamado com loading:', loading);
+                        this.debugLog('observeLoading chamado com loading:', loading);
                         
                         if (loading) {
                             try {
-                                console.log('🔗 Loading ativo, capturando input do usuário...');
+                                this.debugLog('Loading ativo, capturando input do usuário...');
                                 
                                 // Captura o input do usuário do textarea do chatbot
                                 const chatbotElement = document.querySelector('flowise-fullchatbot');
-                                console.log('🔗 Chatbot element encontrado:', !!chatbotElement);
+                                this.debugLog('Chatbot element encontrado:', !!chatbotElement);
                                 
                                 if (chatbotElement && chatbotElement.shadowRoot) {
-                                    console.log('🔗 ShadowRoot encontrado');
+                                    this.debugLog('ShadowRoot encontrado');
                                     const textarea = chatbotElement.shadowRoot.querySelector('textarea');
-                                    console.log('🔗 Textarea encontrado:', !!textarea);
+                                    this.debugLog('Textarea encontrado:', !!textarea);
                                     
                                     if (textarea) {
-                                        console.log('🔗 Valor do textarea:', textarea.value);
-                                        console.log('🔗 Textarea tem valor?', !!textarea.value);
+                                        this.debugLog('Valor do textarea:', textarea.value);
+                                        this.debugLog('Textarea tem valor?', !!textarea.value);
                                     }
                                     
                                     if (textarea && textarea.value) {
                                         const userInput = textarea.value;
-                                        console.log('🔗 Input capturado:', userInput);
+                                        this.debugLog('Input capturado:', userInput);
                                         
                                         // Faz o POST para a API de criar chat
                                         const { getJwt } = await import('./auth.js');
@@ -480,20 +480,20 @@ class UIManager {
                                             content: userInput
                                         };
 
-                                        console.log('🔗 Enviando mensagem para API:', payload);
+                                        this.debugLog('Enviando mensagem para API:', payload);
 
                                         // Verifica se existe configuração createChatMessage
                                         if (this.config.apiCredentials.createChatMessage) {
-                                            console.log('🔗 Usando ApiService para createChatMessage');
+                                            this.debugLog('Usando ApiService para createChatMessage');
                                             try {
                                                 const result = await this.apiService.request('createChatMessage', payload, 'POST');
-                                                console.log('🔗 Mensagem enviada para API com sucesso via ApiService:', result);
+                                                this.debugLog('Mensagem enviada para API com sucesso via ApiService:', result);
                                             } catch (error) {
                                                 console.error('🔗 Erro no createChatMessage via ApiService:', error);
                                                 throw error;
                                             }
                                         } else {
-                                            console.log('🔗 Configuração createChatMessage não encontrada, usando fetch direto');
+                                            this.debugLog('Configuração createChatMessage não encontrada, usando fetch direto');
                                             const response = await fetch('https://webhook.power.tec.br/webhook/lexidecis/v2/chatmessage', {
                                                 method: "POST",
                                                 headers: { 
@@ -503,7 +503,7 @@ class UIManager {
                                                 body: JSON.stringify(payload)
                                             });
 
-                                            console.log('🔗 Response status:', response.status);
+                                            this.debugLog('Response status:', response.status);
 
                                             if (!response.ok) {
                                                 const errorText = await response.text();
@@ -511,11 +511,11 @@ class UIManager {
                                             }
 
                                             const result = await response.json();
-                                            console.log('🔗 Mensagem enviada para API com sucesso:', result);
+                                            this.debugLog('Mensagem enviada para API com sucesso:', result);
                                         }
                                         
                                         // Faz o POST para o endpoint de chats (updateChat)
-                                        console.log('🔗 Fazendo POST para endpoint de chats (updateChat)');
+                                        this.debugLog('Fazendo POST para endpoint de chats (updateChat)');
                                         const chatParams = {
                                             gpt_id: this.stateManager.selectedGPT?.id,
                                             user_name: this.config.userName,
@@ -523,20 +523,20 @@ class UIManager {
                                             sessionid: this.stateManager.currentSessionId
                                         };
                                         
-                                        console.log('🔗 Parâmetros para updateChat:', chatParams);
-                                        console.log('🔗 apiCredentials disponíveis:', Object.keys(this.config.apiCredentials));
+                                                                        this.debugLog('Parâmetros para updateChat:', chatParams);
+                                this.debugLog('apiCredentials disponíveis:', Object.keys(this.config.apiCredentials));
                                         
                                         // Verifica se existe configuração updateChat
                                         if (this.config.apiCredentials.updateChat) {
-                                            console.log('🔗 Usando ApiService para updateChat');
+                                            this.debugLog('Usando ApiService para updateChat');
                                             try {
                                                 const chatResult = await this.apiService.request('updateChat', chatParams, 'POST', null, { includeParamsInQuery: true });
-                                                console.log('🔗 UpdateChat realizado com sucesso via ApiService:', chatResult);
+                                                this.debugLog('UpdateChat realizado com sucesso via ApiService:', chatResult);
                                             } catch (error) {
                                                 console.error('🔗 Erro no updateChat via ApiService:', error);
                                             }
                                         } else {
-                                            console.log('🔗 Configuração updateChat não encontrada, usando fetch direto');
+                                            this.debugLog('Configuração updateChat não encontrada, usando fetch direto');
                                             const chatResponse = await fetch('https://webhook.power.tec.br/webhook/lexidecis/chats', {
                                                 method: 'POST',
                                                 headers: { 
@@ -546,27 +546,27 @@ class UIManager {
                                                 body: JSON.stringify(chatParams)
                                             });
                                             
-                                            console.log('🔗 Response status do updateChat:', chatResponse.status);
+                                            this.debugLog('Response status do updateChat:', chatResponse.status);
                                             
                                             if (chatResponse.ok) {
                                                 const chatResult = await chatResponse.json();
-                                                console.log('🔗 UpdateChat realizado com sucesso:', chatResult);
+                                                this.debugLog('UpdateChat realizado com sucesso:', chatResult);
                                             } else {
                                                 const errorText = await chatResponse.text();
                                                 console.error('🔗 Erro no updateChat:', errorText);
                                             }
                                         }
                                     } else {
-                                        console.log('🔗 Textarea não encontrado ou sem valor');
+                                        this.debugLog('Textarea não encontrado ou sem valor');
                                     }
                                 } else {
-                                    console.log('🔗 Chatbot element ou shadowRoot não encontrado');
+                                    this.debugLog('Chatbot element ou shadowRoot não encontrado');
                                 }
                             } catch (error) {
                                 console.error('🔗 Erro ao enviar mensagem para API:', error);
                             }
                         } else {
-                            console.log('🔗 Loading inativo, não fazendo nada');
+                            this.debugLog('Loading inativo, não fazendo nada');
                         }
                     }
                 },
@@ -905,7 +905,7 @@ class UIManager {
     async logout() {
         try {
             await logout();
-            console.log('Usuário desconectado.');
+            this.debugLog('Usuário desconectado.');
             sessionStorage.clear();
             localStorage.clear();
             window.location.href = '../index.html';

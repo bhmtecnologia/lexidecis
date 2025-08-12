@@ -289,6 +289,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // ETAPA 8: Inicializar Serviço de Presença (adiado para background)
         debugLog("[Renderer] Inicialização do serviço de presença adiada para background.");
+        requestAnimationFrame(() => {
+            presenceService.init();
+            setupPresenceUI();
+            debugLog("[Renderer] -> Serviço de presença inicializado (adiado).");
+        });
 
         // Finaliza com sucesso
         debugLog("[Renderer] Todas as etapas concluídas. Ocultando loading screen...");

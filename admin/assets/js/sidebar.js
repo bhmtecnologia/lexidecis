@@ -39,7 +39,9 @@ export class SidebarManager {
     // Restaurar estado salvo do collapse (desktop)
     this.restoreCollapsedState();
     
-    console.log('✅ Sidebar unificado inicializado');
+    if (['localhost', '127.0.0.1'].includes(window.location.hostname)) {
+      console.log('✅ Sidebar unificado inicializado');
+    }
     this.isInitialized = true;
   }
 
@@ -88,7 +90,9 @@ export class SidebarManager {
     const isCollapsed = this.sidebar.classList.contains('collapsed');
     localStorage.setItem('sidebarCollapsed', isCollapsed);
     
-    console.log('🎯 Sidebar', isCollapsed ? 'colapsada' : 'expandida');
+    if (['localhost', '127.0.0.1'].includes(window.location.hostname)) {
+      console.log('🎯 Sidebar', isCollapsed ? 'colapsada' : 'expandida');
+    }
   }
 
   /**
@@ -98,7 +102,9 @@ export class SidebarManager {
     const savedCollapsed = localStorage.getItem('sidebarCollapsed');
     if (savedCollapsed === 'true') {
       this.sidebar.classList.add('collapsed');
-      console.log('🔄 Estado collapsed restaurado do localStorage');
+      if (['localhost', '127.0.0.1'].includes(window.location.hostname)) {
+        console.log('🔄 Estado collapsed restaurado do localStorage');
+      }
     }
   }
 

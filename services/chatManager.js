@@ -145,7 +145,7 @@ class ChatManager {
      */
     async selectChatFromUrl(chat) {
         try {
-            console.log('🔗 selectChatFromUrl chamado com chat:', chat);
+            debugLog('selectChatFromUrl chamado com chat:', chat);
             
             // Atualiza o estado usando a propriedade selectedChat
             this.stateManager.selectedChat = chat;
@@ -155,7 +155,7 @@ class ChatManager {
             
             // Inicializa o chatbot com o chat selecionado
             if (this.uiManager && typeof this.uiManager.initializeChatbot === 'function') {
-                console.log('🔗 Inicializando chatbot para chat da URL:', chat.id || chat.session_id);
+                debugLog('Inicializando chatbot para chat da URL:', chat.id || chat.session_id);
                 await this.uiManager.initializeChatbot();
             }
             
@@ -171,7 +171,7 @@ class ChatManager {
      */
     async createNewChatWithGpt(gptId) {
         try {
-            console.log('🔗 createNewChatWithGpt chamado com gptId:', gptId);
+            debugLog('createNewChatWithGpt chamado com gptId:', gptId);
             
             // Verifica se o GPT existe
             if (!this.uiManager || !this.uiManager.gptManager) {
@@ -189,12 +189,12 @@ class ChatManager {
             if (!this.stateManager.selectedGPT || this.stateManager.selectedGPT.id !== gptId) {
                 await this.uiManager.gptManager.selectGPTItem(gpt);
                 this.stateManager.setSelectedGPT(gpt);
-                console.log('🔗 GPT selecionado para novo chat:', gpt.name);
+                debugLog('GPT selecionado para novo chat:', gpt.name);
             }
             
             // Cria um novo chat usando o UIManager
             if (this.uiManager && typeof this.uiManager.createNewChat === 'function') {
-                console.log('🔗 Criando novo chat com GPT:', gpt.name);
+                debugLog('Criando novo chat com GPT:', gpt.name);
                 await this.uiManager.createNewChat();
             } else {
                 console.error('UIManager ou método createNewChat não disponível');
@@ -242,20 +242,20 @@ class ChatManager {
             const currentGptId = gptId || (this.stateManager.selectedGPT ? this.stateManager.selectedGPT.id : null);
             if (currentGptId) {
                 url.searchParams.set('gptId', currentGptId);
-                console.log('🔗 Atualizando URL com gptId:', currentGptId);
+                debugLog('Atualizando URL com gptId:', currentGptId);
             }
             
             // Depois adiciona chatId
             if (chatId) {
                 url.searchParams.set('chatId', chatId);
-                console.log('🔗 Atualizando URL com chatId:', chatId);
+                debugLog('Atualizando URL com chatId:', chatId);
             }
             
             // Atualiza a URL sem recarregar a página
             window.history.pushState({ chatId, gptId: currentGptId }, '', url.toString());
             
-            console.log('🔗 URL atualizada para:', url.toString());
-            console.log('🔗 URL original:', window.location.href);
+            debugLog('URL atualizada para:', url.toString());
+            debugLog('URL original:', window.location.href);
             debugLog(`URL atualizada com gptId: ${currentGptId}, chatId: ${chatId}`);
         } catch (error) {
             console.error('🔗 Erro ao atualizar URL:', error);
@@ -316,7 +316,7 @@ class ChatManager {
             }
             
             // Inicializa o sistema completo de URL após carregar os chats
-            console.log('🔗 Chats carregados, inicializando sistema completo de URL...');
+            debugLog('Chats carregados, inicializando sistema completo de URL...');
             this.initializeUrlManagement();
         } catch (error) {
             console.error('Erro ao carregar lista de chats:', error);
@@ -491,19 +491,19 @@ class ChatManager {
     async handleChatClick(event) {
         try {
             event.preventDefault();
-            console.log('🔗 handleChatClick chamado, event.currentTarget:', event.currentTarget);
-            console.log('🔗 dataset do elemento:', event.currentTarget.dataset);
+            debugLog('handleChatClick chamado, event.currentTarget:', event.currentTarget);
+            debugLog('dataset do elemento:', event.currentTarget.dataset);
             const chatId = event.currentTarget.dataset.chatId;
 
             if (!chatId) {
                 debugLog('Chat sem ID válido:', event);
-                console.log('🔗 Chat sem ID válido, dataset completo:', event.currentTarget.dataset);
+                debugLog('Chat sem ID válido, dataset completo:', event.currentTarget.dataset);
                 return;
             }
 
             debugLog('Chat clicado:', chatId);
-            console.log('🔗 Chat clicado, chatId:', chatId);
-            console.log('🔗 URL antes do clique:', window.location.href);
+            debugLog('Chat clicado, chatId:', chatId);
+            debugLog('URL antes do clique:', window.location.href);
 
             // Mostrar loading de chat
             const loadingId = LoadingUtils.show('CHAT_LOADING', {
@@ -527,7 +527,7 @@ class ChatManager {
             }
 
             // Atualiza a URL com o chatId e gptId
-            console.log('🔗 Chat clicado, atualizando URL com chatId:', chatId);
+            debugLog('Chat clicado, atualizando URL com chatId:', chatId);
             this.updateUrlWithChatId(chatId, gptId);
 
             // Obtém o GPT associado
@@ -700,7 +700,7 @@ class ChatManager {
                 localStorage.setItem('selectedChatId', chatId);
                 
                 // Atualiza a URL com o chatId selecionado
-                console.log('🔗 selectChatItem: atualizando URL com chatId:', chatId);
+                debugLog('selectChatItem: atualizando URL com chatId:', chatId);
                 this.updateUrlWithChatId(chatId);
             } else {
                 item.classList.remove('active');

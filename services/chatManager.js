@@ -132,7 +132,7 @@ class ChatManager {
             } else {
                 // Se não encontrou, pode ser um chat que ainda não foi carregado
                 // ou um ID inválido
-                console.warn(`Chat com ID ${chatId} não encontrado na lista atual`);
+                debugLog(`Chat com ID ${chatId} não encontrado na lista atual`);
             }
         } catch (error) {
             console.error('Erro ao carregar chat da URL:', error);
@@ -299,11 +299,16 @@ class ChatManager {
                 throw new Error('Resposta da API inválida.');
             }
 
-            // Atualiza o estado com os chats recebidos
-            this.stateManager.chats = dataArray.map(chat => ({
+            // Atualiza o estado com os chats recebidos (mesclando com chats locais não persistidos ainda)
+            const serverChats = dataArray.map(chat => ({
                 ...chat,
                 date: chat.last_modified || new Date().toISOString()
             })).filter(chat => chat.date !== null);
+
+            const existingChats = Array.isArray(this.stateManager.chats) ? this.stateManager.chats : [];
+            const serverIds = new Set(serverChats.map(c => c.id));
+            const localOnlyChats = existingChats.filter(c => c && c.id && !serverIds.has(c.id));
+            this.stateManager.chats = [...serverChats, ...localOnlyChats];
 
             // Chama o callback para popular o menu de chats
             if (typeof populateCallback === 'function') {

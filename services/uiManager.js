@@ -395,15 +395,11 @@ class UIManager {
                 throw new Error('flowiseConfig está indefinido ou incompleto para o GPT selecionado.');
             }
 
-            if (!this.stateManager.currentSessionId) {
-                const newSessionId = this.gptManager.generateSessionId();
-                this.stateManager.setSessionId(newSessionId);
-                this.debugLog('Nova sessão criada:', newSessionId);
-                // Removido: adição automática do chat à lista
-                // O chat só será adicionado após o envio da primeira mensagem
-            } else {
-                this.debugLog('Usando sessão existente:', this.stateManager.currentSessionId);
-            }
+            // Sempre gera um novo ID de sessão para o chatbot
+            // Não reutiliza sessões do localStorage para evitar conflitos com IDs existentes no banco
+            const newSessionId = this.gptManager.generateSessionId();
+            this.stateManager.setSessionId(newSessionId);
+            this.debugLog('Nova sessão criada:', newSessionId);
 
             // Limpar histórico injetado
             const selectedFlowiseConfig = this.stateManager.selectedGPT.flowiseConfig.flowise;

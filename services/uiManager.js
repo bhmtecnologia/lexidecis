@@ -440,7 +440,7 @@ class UIManager {
                                 observersConfig: {
                     observeUserInput: (userInput) => {
                         this.debugLog('observeUserInput chamado com:', userInput);
-                        // Captura o input ANTES do loading ser ativado
+                        // Captura o input para uso posterior
                         this.lastUserInput = userInput;
                     },
                     observeMessages: (messages) => this.logMessages(messages),
@@ -449,65 +449,23 @@ class UIManager {
                         
                         if (loading && this.lastUserInput) {
                             try {
-                                this.debugLog('Loading ativo, enviando input capturado:', this.lastUserInput);
+                                this.debugLog('Loading ativo, registrando chat na API após resposta do Flowise');
                                 
-                                // Faz o POST para a API de criar chat
+                                // A mensagem já foi enviada para o Flowise automaticamente
+                                // Agora registramos o chat na nossa API
                                 const { getJwt } = await import('./auth.js');
                                 const token = await getJwt();
 
-                                const payload = {
-                                    chatflowId: selectedFlowiseConfig.chatflowId,
-                                    sessionId: this.stateManager.currentSessionId,
-                                    role: 'user',
-                                    content: this.lastUserInput
-                                };
-
-                                this.debugLog('Enviando mensagem para API:', payload);
-
-                                // Usa endpoint dinâmico createChatMessage ou fallback v1
-                                if (this.config.apiCredentials.createChatMessage) {
-                                    this.debugLog('Usando ApiService para createChatMessage');
-                                    try {
-                                        const result = await this.apiService.request('createChatMessage', payload, 'POST');
-                                        this.debugLog('Mensagem enviada para API com sucesso via ApiService:', result);
-                                    } catch (error) {
-                                        console.error('🔗 Erro no createChatMessage via ApiService:', error);
-                                        throw error;
-                                    }
-                                } else {
-                                    // Fallback para v1 - createChatMessage não configurado no webhook
-                                    console.warn('⚠️ createChatMessage não encontrado nos endpoints, usando v1 como fallback');
-                                    this.debugLog('Usando fallback v1 para createChatMessage');
-                                    const response = await fetch('https://webhook.power.tec.br/webhook/lexidecis/v1/chatmessage', {
-                                        method: "POST",
-                                        headers: { 
-                                            "Content-Type": "application/json",
-                                            "Authorization": `Bearer ${token}`
-                                        },
-                                        body: JSON.stringify(payload)
-                                    });
-
-                                    this.debugLog('Response status (fallback v1):', response.status);
-
-                                    if (!response.ok) {
-                                        const errorText = await response.text();
-                                        throw new Error("Erro ao salvar mensagem de chat (fallback v1): " + errorText);
-                                    }
-
-                                    const result = await response.json();
-                                    this.debugLog('Mensagem enviada para API com sucesso (fallback v1):', result);
-                                }
-                                
-                                // Faz o POST para o endpoint de chats (updateChat)
-                                this.debugLog('Fazendo POST para endpoint de chats (updateChat)');
+                                // Registra o chat na nossa API
                                 const chatParams = {
                                     gpt_id: this.stateManager.selectedGPT?.id,
                                     user_name: this.config.userName,
                                     user_id: this.config.userId,
-                                    sessionid: this.stateManager.currentSessionId
+                                    sessionid: this.stateManager.currentSessionId,
+                                    message_content: this.lastUserInput
                                 };
                                 
-                                this.debugLog('Parâmetros para updateChat:', chatParams);
+                                this.debugLog('Registrando chat na API:', chatParams);
                                 this.debugLog('apiCredentials disponíveis:', Object.keys(this.config.apiCredentials));
                                 
                                 // Usa endpoint dinâmico updateChat
@@ -515,7 +473,7 @@ class UIManager {
                                     this.debugLog('Usando ApiService para updateChat');
                                     try {
                                         const chatResult = await this.apiService.request('updateChat', chatParams, 'POST', null, { includeParamsInQuery: true });
-                                        this.debugLog('UpdateChat realizado com sucesso via ApiService:', chatResult);
+                                        this.debugLog('Chat registrado com sucesso via ApiService:', chatResult);
                                     } catch (error) {
                                         console.error('🔗 Erro no updateChat via ApiService:', error);
                                     }
@@ -524,11 +482,11 @@ class UIManager {
                                     console.error('🔗 Endpoints disponíveis:', Object.keys(this.config.apiCredentials));
                                 }
                                 
-                                // Limpa o input capturado após enviar
+                                // Limpa o input capturado após registrar
                                 this.lastUserInput = null;
                                 
                             } catch (error) {
-                                console.error('🔗 Erro ao enviar mensagem para API:', error);
+                                console.error('🔗 Erro ao registrar chat na API:', error);
                             }
                         } else if (loading) {
                             this.debugLog('Loading ativo mas sem input capturado');

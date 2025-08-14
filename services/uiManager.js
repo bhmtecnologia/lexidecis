@@ -478,7 +478,7 @@ class UIManager {
 
                                         this.debugLog('Enviando mensagem para API:', payload);
 
-                                        // Verifica se existe configuração createChatMessage
+                                        // Usa apenas endpoint dinâmico createChatMessage
                                         if (this.config.apiCredentials.createChatMessage) {
                                             this.debugLog('Usando ApiService para createChatMessage');
                                             try {
@@ -489,25 +489,8 @@ class UIManager {
                                                 throw error;
                                             }
                                         } else {
-                                            this.debugLog('Configuração createChatMessage não encontrada, usando fetch direto');
-                                            const response = await fetch('https://webhook.power.tec.br/webhook/lexidecis/v2/chatmessage', {
-                                                method: "POST",
-                                                headers: { 
-                                                    "Content-Type": "application/json",
-                                                    "Authorization": `Bearer ${token}`
-                                                },
-                                                body: JSON.stringify(payload)
-                                            });
-
-                                            this.debugLog('Response status:', response.status);
-
-                                            if (!response.ok) {
-                                                const errorText = await response.text();
-                                                throw new Error("Erro ao salvar mensagem de chat: " + errorText);
-                                            }
-
-                                            const result = await response.json();
-                                            this.debugLog('Mensagem enviada para API com sucesso:', result);
+                                            console.error('🔗 Configuração createChatMessage não encontrada nos endpoints');
+                                            throw new Error('Configuração createChatMessage não disponível');
                                         }
                                         
                                         // Faz o POST para o endpoint de chats (updateChat)
@@ -522,7 +505,7 @@ class UIManager {
                                                                         this.debugLog('Parâmetros para updateChat:', chatParams);
                                 this.debugLog('apiCredentials disponíveis:', Object.keys(this.config.apiCredentials));
                                         
-                                        // Verifica se existe configuração updateChat
+                                        // Usa apenas endpoint dinâmico updateChat
                                         if (this.config.apiCredentials.updateChat) {
                                             this.debugLog('Usando ApiService para updateChat');
                                             try {
@@ -532,25 +515,8 @@ class UIManager {
                                                 console.error('🔗 Erro no updateChat via ApiService:', error);
                                             }
                                         } else {
-                                            this.debugLog('Configuração updateChat não encontrada, usando fetch direto');
-                                            const chatResponse = await fetch('https://webhook.power.tec.br/webhook/lexidecis/chats', {
-                                                method: 'POST',
-                                                headers: { 
-                                                    'Content-Type': 'application/json',
-                                                    'Authorization': `Bearer ${token}`
-                                                },
-                                                body: JSON.stringify(chatParams)
-                                            });
-                                            
-                                            this.debugLog('Response status do updateChat:', chatResponse.status);
-                                            
-                                            if (chatResponse.ok) {
-                                                const chatResult = await chatResponse.json();
-                                                this.debugLog('UpdateChat realizado com sucesso:', chatResult);
-                                            } else {
-                                                const errorText = await chatResponse.text();
-                                                console.error('🔗 Erro no updateChat:', errorText);
-                                            }
+                                            console.error('🔗 Configuração updateChat não encontrada nos endpoints');
+                                            throw new Error('Configuração updateChat não disponível');
                                         }
                                     } else {
                                         this.debugLog('Textarea não encontrado ou sem valor');

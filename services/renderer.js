@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const stateManager = new StateManager();
         const chatManager = new ChatManager(apiService, stateManager, CONFIG);
         debugLog('ChatManager instanciado no renderer');
-        const uiManager = new UIManager(apiService, stateManager, chatManager, CONFIG, auth);
+        const uiManager = new UIManager(apiService, stateManager, chatManager, CONFIG, auth, Chatbot);
         const gptManager = new GPTManager(apiService, stateManager, uiManager, CONFIG);
 
         // Ajusta referências cruzadas

@@ -10,12 +10,13 @@ import { showAlert } from './alertManager.js';
 import { createMessageLoading, replaceWithMessageLoading, withMessageLoading, setMessageLoadingEnabled, isMessageLoadingEnabled, toggleMessageLoading } from './messageLoading.js';
 
 class UIManager {
-    constructor(apiService, stateManager, chatManager, config, auth) {
+    constructor(apiService, stateManager, chatManager, config, auth, chatbot) {
         this.apiService = apiService;
         this.stateManager = stateManager;
         this.chatManager = chatManager; // Referência ao ChatManager (agora com funcionalidades de histórico integradas)
         this.config = config; // Armazena o CONFIG na instância
         this.auth = auth; // Instância do Firebase Auth
+        this.chatbot = chatbot; // Instância do Chatbot para inicialização
 
         // Inicializar o GPTManager com o CONFIG correto
         this.gptManager = new GPTManager(this.apiService, this.stateManager, this, this.config);
@@ -433,7 +434,7 @@ class UIManager {
 
             this.debugLog('Chatflow Config:', chatflowConfig);
 
-            Chatbot.initFull({
+            this.chatbot.initFull({
                 chatflowid: selectedFlowiseConfig.chatflowId,
                 apiHost: selectedFlowiseConfig.apiHost,
                 chatflowConfig: chatflowConfig,

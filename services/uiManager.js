@@ -478,20 +478,38 @@ class UIManager {
 
                                         this.debugLog('Enviando mensagem para API:', payload);
 
-                                        // Usa endpoint dinâmico createChat
-                                        if (this.config.apiCredentials.createChat) {
-                                            this.debugLog('Usando ApiService para createChat');
+                                        // Usa endpoint dinâmico createChatMessage ou fallback v1
+                                        if (this.config.apiCredentials.createChatMessage) {
+                                            this.debugLog('Usando ApiService para createChatMessage');
                                             try {
-                                                const result = await this.apiService.request('createChat', payload, 'POST');
+                                                const result = await this.apiService.request('createChatMessage', payload, 'POST');
                                                 this.debugLog('Mensagem enviada para API com sucesso via ApiService:', result);
                                             } catch (error) {
-                                                console.error('🔗 Erro no createChat via ApiService:', error);
+                                                console.error('🔗 Erro no createChatMessage via ApiService:', error);
                                                 throw error;
                                             }
                                         } else {
-                                            console.error('🔗 Configuração createChat não encontrada nos endpoints');
-                                            console.error('🔗 Endpoints disponíveis:', Object.keys(this.config.apiCredentials));
-                                            throw new Error('Configuração createChat não disponível');
+                                            // Fallback para v1 - createChatMessage não configurado no webhook
+                                            console.warn('⚠️ createChatMessage não encontrado nos endpoints, usando v1 como fallback');
+                                            this.debugLog('Usando fallback v1 para createChatMessage');
+                                            const response = await fetch('https://webhook.power.tec.br/webhook/lexidecis/v1/chatmessage', {
+                                                method: "POST",
+                                                headers: { 
+                                                    "Content-Type": "application/json",
+                                                    "Authorization": `Bearer ${token}`
+                                                },
+                                                body: JSON.stringify(payload)
+                                            });
+
+                                            this.debugLog('Response status (fallback v1):', response.status);
+
+                                            if (!response.ok) {
+                                                const errorText = await response.text();
+                                                throw new Error("Erro ao salvar mensagem de chat (fallback v1): " + errorText);
+                                            }
+
+                                            const result = await response.json();
+                                            this.debugLog('Mensagem enviada para API com sucesso (fallback v1):', result);
                                         }
                                         
                                         // Faz o POST para o endpoint de chats (updateChat)

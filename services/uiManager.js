@@ -90,6 +90,9 @@ class UIManager {
                 console.warn('[UIManager] Erro ao atualizar informações do usuário');
             }
         }));
+
+        // Adicionar listener global para capturar erros do Flowise
+        this.setupFlowiseErrorListener();
     }
 
     /* Método auxiliar para logs */
@@ -97,6 +100,93 @@ class UIManager {
         if (DEBUG_MODE) {
             console.log(...args);
         }
+    }
+
+    setupFlowiseErrorListener() {
+        // Listener para erros de rede do Flowise
+        window.addEventListener('error', (event) => {
+            if (event.target && event.target.src && event.target.src.includes('flowise')) {
+                this.debugLog('Erro de carregamento do Flowise detectado:', event);
+                this.handleFlowiseError({
+                    message: 'Erro ao carregar recursos do Flowise',
+                    type: 'resource_error'
+                });
+            }
+        });
+
+        // Listener para erros de fetch/XMLHttpRequest
+        window.addEventListener('unhandledrejection', (event) => {
+            if (event.reason && (
+                event.reason.message?.includes('403') ||
+                event.reason.message?.includes('Forbidden') ||
+                event.reason.message?.includes('Não autorizado') ||
+                event.reason.status === 403
+            )) {
+                this.debugLog('Erro de autorização não tratado detectado:', event.reason);
+                this.handleFlowiseError(event.reason);
+                event.preventDefault(); // Previne o erro de aparecer no console
+            }
+        });
+
+        // Listener para erros específicos do console
+        const originalConsoleError = console.error;
+        console.error = (...args) => {
+            // Chama o console.error original
+            originalConsoleError.apply(console, args);
+            
+            // Verifica se é erro do Flowise
+            const errorMessage = args.join(' ');
+            if (errorMessage.includes('flowise') || 
+                errorMessage.includes('403') || 
+                errorMessage.includes('Forbidden') ||
+                errorMessage.includes('Não autorizado') ||
+                errorMessage.includes('EventSource Error')) {
+                
+                this.debugLog('Erro do Flowise detectado no console:', errorMessage);
+                
+                // Extrair informações do erro
+                const error = {
+                    message: errorMessage,
+                    source: 'console_error',
+                    timestamp: new Date().toISOString()
+                };
+                
+                // Processar o erro
+                this.handleFlowiseError(error);
+            }
+        };
+
+        // Listener específico para erros do EventSource
+        this.setupEventSourceErrorListener();
+
+        this.debugLog('Listener de erros do Flowise configurado');
+    }
+
+    setupEventSourceErrorListener() {
+        // Interceptar EventSource para capturar erros de conexão
+        const originalEventSource = window.EventSource;
+        window.EventSource = function(url, options) {
+            const eventSource = new originalEventSource(url, options);
+            
+            eventSource.addEventListener('error', (event) => {
+                this.debugLog('EventSource error detectado:', event);
+                
+                if (url.includes('flowise')) {
+                    const error = {
+                        message: 'Erro de conexão com o servidor de chat',
+                        source: 'eventsource_error',
+                        url: url,
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    this.handleFlowiseError(error);
+                }
+            });
+            
+            return eventSource;
+        }.bind(this);
+        
+        this.debugLog('Listener de EventSource configurado');
     }
 
     /* --- Configuração de Eventos da UI --- */
@@ -541,6 +631,11 @@ class UIManager {
                         } else {
                             this.debugLog('Loading inativo, não fazendo nada');
                         }
+                    },
+                    // Adicionar observador de erros do Flowise
+                    observeError: (error) => {
+                        this.debugLog('Erro do Flowise detectado:', error);
+                        this.handleFlowiseError(error);
                     }
                 },
                 theme: {
@@ -1267,6 +1362,93 @@ class UIManager {
     }
 
     /* --- Outros Métodos Auxiliares --- */
+
+    handleFlowiseError(error) {
+        this.debugLog('Tratando erro do Flowise:', error);
+        
+        // Verificar se é erro de autenticação/autorização
+        if (error && (
+            error.status === 403 || 
+            error.statusText === 'Forbidden' ||
+            error.message === 'Não autorizado' ||
+            error.message?.includes('Não autorizado') ||
+            error.message?.includes('Forbidden') ||
+            error.message?.includes('403') ||
+            error.message?.includes('flowise') && error.message?.includes('403')
+        )) {
+            this.debugLog('Erro de autenticação/autorização do Flowise detectado');
+            showAlert('❌ **Acesso Negado**\n\nVocê não tem permissão para usar este GPT ou sua sessão expirou.\n\n**Possíveis causas:**\n• GPT não autorizado para seu usuário\n• Sessão expirada\n• Permissões insuficientes\n\n**Solução:**\n• Faça login novamente\n• Entre em contato com o suporte', 'error');
+            
+            // Resetar estado e mostrar tela de seleção de GPT
+            this.resetChatbotInitialization();
+            this.showGPTSelectionScreen();
+            
+        } else if (error && (
+            error.status === 500 ||
+            error.status === 502 ||
+            error.status === 503 ||
+            error.status === 504
+        )) {
+            this.debugLog('Erro de servidor do Flowise detectado');
+            showAlert('🔧 **Erro do Servidor**\n\nO serviço de chat está temporariamente indisponível.\n\n**Tente novamente em alguns minutos.**', 'warning');
+            
+        } else if (error && (
+            error.message?.includes('Network') ||
+            error.message?.includes('fetch') ||
+            error.message?.includes('timeout')
+        )) {
+            this.debugLog('Erro de rede detectado');
+            showAlert('🌐 **Erro de Conexão**\n\nVerifique sua conexão com a internet e tente novamente.', 'warning');
+            
+        } else if (error && error.source === 'console_error') {
+            // Erro capturado do console
+            this.debugLog('Erro do console relacionado ao Flowise:', error);
+            
+            if (error.message.includes('403') || error.message.includes('Forbidden')) {
+                showAlert('❌ **Acesso Negado**\n\nErro de autorização detectado.\n\n**Solução:**\n• Recarregue a página\n• Faça login novamente\n• Entre em contato com o suporte', 'error');
+                this.resetChatbotInitialization();
+                this.showGPTSelectionScreen();
+            } else {
+                showAlert('⚠️ **Aviso**\n\nProblema detectado com o chat.\n\n**Detalhes:**\n' + error.message + '\n\n**Solução:**\n• Recarregue a página\n• Entre em contato com o suporte', 'warning');
+            }
+            
+        } else if (error && error.source === 'eventsource_error') {
+            // Erro específico do EventSource
+            this.debugLog('Erro do EventSource do Flowise:', error);
+            
+            if (error.message.includes('Não autorizado') || error.message.includes('403')) {
+                showAlert('❌ **Conexão Interrompida**\n\nSua conexão com o chat foi interrompida por falta de autorização.\n\n**Solução:**\n• Recarregue a página\n• Faça login novamente\n• Entre em contato com o suporte', 'error');
+                this.resetChatbotInitialization();
+                this.showGPTSelectionScreen();
+            } else {
+                showAlert('🔌 **Conexão Perdida**\n\nA conexão com o servidor de chat foi perdida.\n\n**Solução:**\n• Verifique sua internet\n• Recarregue a página\n• Entre em contato com o suporte', 'warning');
+            }
+            
+        } else {
+            this.debugLog('Erro inesperado do Flowise:', error);
+            showAlert('❓ **Erro Inesperado**\n\nOcorreu um problema inesperado com o chat.\n\n**Detalhes técnicos:**\n' + (error?.message || 'Erro desconhecido') + '\n\n**Solução:**\n• Recarregue a página\n• Entre em contato com o suporte', 'error');
+        }
+    }
+
+    showGPTSelectionScreen() {
+        // Esconder chatbot e mostrar tela de seleção
+        const chatbotContainer = document.getElementById('chatbot-container');
+        const welcomeMessage = document.getElementById('welcome-message');
+        
+        if (chatbotContainer) {
+            chatbotContainer.classList.add('d-none');
+        }
+        
+        if (welcomeMessage) {
+            welcomeMessage.classList.remove('d-none');
+        }
+        
+        // Limpar estado selecionado
+        this.stateManager.setSelectedGPT(null);
+        this.stateManager.setSessionId(null);
+        
+        this.debugLog('Tela de seleção de GPT exibida após erro');
+    }
 }
 
 export default UIManager;

@@ -18,6 +18,9 @@ class UIManager {
         this.auth = auth; // Instância do Firebase Auth
         this.chatbot = chatbot; // Instância do Chatbot para inicialização
 
+        // Flag para evitar dupla inicialização do chatbot
+        this.isChatbotInitialized = false;
+
         // Inicializar o GPTManager com o CONFIG correto
         this.gptManager = new GPTManager(this.apiService, this.stateManager, this, this.config);
 
@@ -340,6 +343,20 @@ class UIManager {
                 throw new Error('Nenhum GPT selecionado. Por favor, selecione um GPT antes de iniciar.');
             }
 
+            // Verifica se é o mesmo GPT do chat anterior para evitar dupla inicialização desnecessária
+            const currentSessionId = this.stateManager.currentSessionId;
+            const previousChat = this.stateManager.chats.find(chat => chat.id === currentSessionId);
+            
+            if (previousChat && previousChat.fk_gpt_id === selectedGPT.id) {
+                // Mesmo GPT, apenas reseta a flag para permitir nova inicialização
+                this.debugLog('Mesmo GPT selecionado, resetando flag de inicialização...');
+                this.resetChatbotInitialization();
+            } else {
+                // GPT diferente, reseta a flag para permitir nova inicialização
+                this.debugLog('GPT diferente selecionado, resetando flag de inicialização...');
+                this.resetChatbotInitialization();
+            }
+
             // Gera um novo ID de sessão e salva no StateManager
             const newSessionId = this.gptManager.generateSessionId();
             this.stateManager.setSessionId(newSessionId);
@@ -384,6 +401,12 @@ class UIManager {
     /* --- Funções de Inicialização do Chatbot --- */
     async initializeChatbot() {
         try {
+            // Verifica se o chatbot já foi inicializado para evitar dupla inicialização
+            if (this.isChatbotInitialized) {
+                this.debugLog('Chatbot já foi inicializado, pulando inicialização...');
+                return;
+            }
+
             // Adicione logs para depuração
             this.debugLog('Iniciando a inicialização do chatbot...');
             this.debugLog('selectedGPT:', this.stateManager.selectedGPT);
@@ -410,6 +433,13 @@ class UIManager {
             // Agora, em vez de usar HistoryManager, delegamos a injeção do histórico ao ChatManager
             await this.chatManager.injectChatHistory(this.stateManager.currentSessionId, this.stateManager.selectedGPT.flowiseConfig);
 
+            // Aplicar override da configuração antes de inicializar o chatbot
+            await this.applyConfigOverride();
+
+            // Verificar se a configuração foi aplicada corretamente
+            const currentConfig = this.stateManager.gptConfig;
+            this.debugLog('Configuração atual após override:', currentConfig);
+
             // Manipular visibilidade dos elementos
             const welcomeMessage = document.getElementById('welcome-message');
             const chatbotContainer = document.getElementById('chatbot-container');
@@ -429,10 +459,27 @@ class UIManager {
             const chatflowConfig = {
                 sessionId: this.stateManager.currentSessionId,
                 ...this.stateManager.selectedGPT.flowiseConfig,
-                ...this.stateManager.gptConfig,
+                ...this.stateManager.gptConfig, // Usar configuração atualizada após override
+                // Priorizar configurações do override se disponíveis
+                ...(currentConfig.systemMessage && { systemMessage: currentConfig.systemMessage }),
+                ...(currentConfig.temperature && { temperature: currentConfig.temperature }),
+                ...(currentConfig.maxTokens && { maxTokens: currentConfig.maxTokens }),
+                ...(currentConfig.topP && { topP: currentConfig.topP }),
+                ...(currentConfig.frequencyPenalty && { frequencyPenalty: currentConfig.frequencyPenalty }),
+                ...(currentConfig.presencePenalty && { presencePenalty: currentConfig.presencePenalty }),
             };
 
-            this.debugLog('Chatflow Config:', chatflowConfig);
+            this.debugLog('Chatflow Config (após override):', chatflowConfig);
+            this.debugLog('Configuração completa do GPT:', this.stateManager.gptConfig);
+            this.debugLog('Configuração flowise do GPT:', this.stateManager.selectedGPT.flowiseConfig);
+            this.debugLog('Configurações específicas aplicadas:', {
+                systemMessage: currentConfig.systemMessage,
+                temperature: currentConfig.temperature,
+                maxTokens: currentConfig.maxTokens,
+                topP: currentConfig.topP,
+                frequencyPenalty: currentConfig.frequencyPenalty,
+                presencePenalty: currentConfig.presencePenalty
+            });
 
             this.chatbot.initFull({
                 chatflowid: selectedFlowiseConfig.chatflowId,
@@ -708,6 +755,10 @@ class UIManager {
                     chatbotElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
             }, 500);
+
+            // Marca o chatbot como inicializado para evitar dupla inicialização
+            this.isChatbotInitialized = true;
+            this.debugLog('Chatbot inicializado com sucesso. Flag isChatbotInitialized definida como true.');
         } catch (error) {
             console.error('Erro ao inicializar o chatbot:', error);
             this.showError('Erro ao inicializar o chatbot. Consulte o console para mais detalhes.');
@@ -1146,6 +1197,76 @@ class UIManager {
         }
         this._isUpdatingUserInfo = false;
     }
+
+    /* --- Método para resetar a flag de inicialização do chatbot --- */
+    resetChatbotInitialization() {
+        this.isChatbotInitialized = false;
+        this.debugLog('Flag isChatbotInitialized resetada para false.');
+    }
+
+    /* --- Método para aplicar override da configuração --- */
+    async applyConfigOverride() {
+        try {
+            this.debugLog('Aplicando override da configuração...');
+            
+            if (!this.stateManager.selectedGPT || !this.stateManager.selectedGPT.id) {
+                this.debugLog('Nenhum GPT selecionado para aplicar override');
+                return;
+            }
+
+            // Buscar configurações personalizadas do GPT
+            const params = {
+                gpt_id: this.stateManager.selectedGPT.id,
+                company_name: this.config.companyName,
+                user_name: this.config.userName,
+                user_id: this.config.userId,
+            };
+
+            this.debugLog('Buscando configurações personalizadas com params:', params);
+
+            const configData = await this.apiService.request('overrideConfig', params, 'GET');
+            this.debugLog('Configurações personalizadas recebidas:', configData);
+
+            if (configData && Array.isArray(configData) && configData.length > 0) {
+                // Agregar todas as configurações
+                const aggregatedConfig = configData.reduce((acc, current) => {
+                    if (current && current.value) {
+                        return {
+                            ...acc,
+                            ...current.value,
+                            flowise: {
+                                ...acc.flowise,
+                                ...current.value.flowise
+                            }
+                        };
+                    }
+                    return acc;
+                }, {});
+
+                this.debugLog('Configuração agregada para override:', aggregatedConfig);
+
+                // Aplicar a configuração no stateManager
+                this.stateManager.setGPTConfig(aggregatedConfig);
+
+                // Verificar se a configuração foi aplicada
+                const flowiseConfig = this.stateManager.getFlowiseConfig();
+                this.debugLog('Configuração flowise após override:', flowiseConfig);
+
+                if (flowiseConfig && flowiseConfig.chatflowId && flowiseConfig.apiHost) {
+                    this.debugLog('Override da configuração aplicado com sucesso');
+                } else {
+                    this.debugLog('ATENÇÃO: Configuração flowise incompleta após override');
+                }
+            } else {
+                this.debugLog('Nenhuma configuração personalizada encontrada para override');
+            }
+        } catch (error) {
+            this.debugLog('Erro ao aplicar override da configuração:', error);
+            // Não falha a inicialização se o override falhar
+        }
+    }
+
+    /* --- Outros Métodos Auxiliares --- */
 }
 
 export default UIManager;

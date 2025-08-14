@@ -208,8 +208,25 @@ class GPTManager extends EventEmitter {
         if (!gpt.id) {
             throw new Error('GPT deve ter um ID');
         }
+        
+        // Log para debug
+        debugLog('GPT', 'setSelectedGPT chamado:', {
+            gpt: gpt,
+            hasFlowiseConfig: !!gpt.flowiseConfig,
+            flowiseConfig: gpt.flowiseConfig
+        });
+        
         this.selectedGPT = gpt;
         this.selectedGPTId = gpt.id;
+        
+        // Se o GPT tem configuração flowise, define ela automaticamente
+        if (gpt.flowiseConfig && gpt.flowiseConfig.flowise) {
+            debugLog('GPT', 'Configuração flowise encontrada no GPT, definindo automaticamente');
+            this.setGPTConfig({
+                flowise: gpt.flowiseConfig.flowise
+            });
+        }
+        
         this.saveToStorage();
         this.emit('gptSelected', gpt);
         debugLog('GPT', `GPT selecionado: ${gpt.id}`);
@@ -218,6 +235,16 @@ class GPTManager extends EventEmitter {
     setGPTConfig(config) {
         validateData(config, 'config');
         this.gptConfig = config;
+        
+        // Log para debug
+        debugLog('GPT', 'Configuração do GPT definida:', {
+            config: config,
+            flowise: config?.flowise,
+            hasFlowise: !!config?.flowise,
+            hasChatflowId: !!config?.flowise?.chatflowId,
+            hasApiHost: !!config?.flowise?.apiHost
+        });
+        
         this.saveToStorage();
         this.emit('gptConfigUpdated', config);
         debugLog('GPT', 'Configuração do GPT atualizada');
@@ -252,7 +279,18 @@ class GPTManager extends EventEmitter {
     }
 
     getFlowiseConfig() {
-        return this.gptConfig?.flowise || null;
+        const flowiseConfig = this.gptConfig?.flowise || null;
+        
+        // Log para debug
+        debugLog('GPT', 'getFlowiseConfig chamado:', {
+            gptConfig: this.gptConfig,
+            flowise: this.gptConfig?.flowise,
+            result: flowiseConfig,
+            hasChatflowId: !!flowiseConfig?.chatflowId,
+            hasApiHost: !!flowiseConfig?.apiHost
+        });
+        
+        return flowiseConfig;
     }
 
     async loadSelectedGPT(defaultGPTId, apiService) {
@@ -321,10 +359,15 @@ class GPTManager extends EventEmitter {
         if (storedGPT) {
             this.selectedGPT = storedGPT;
             this.selectedGPTId = storedGPT.id;
+            debugLog('GPT', 'GPT carregado do localStorage:', storedGPT.id);
         }
         
         if (storedConfig) {
             this.gptConfig = storedConfig;
+            debugLog('GPT', 'Configuração do GPT carregada do localStorage:', {
+                hasFlowise: !!storedConfig.flowise,
+                flowise: storedConfig.flowise
+            });
         }
     }
 
@@ -337,10 +380,12 @@ class GPTManager extends EventEmitter {
             }
         }
         
-        if (Object.keys(this.gptConfig).length > 0) {
-            const serialized = safeJsonStringify(this.gptConfig);
-            if (serialized) {
-                localStorage.setItem('gptConfig', serialized);
+        // Salva também a configuração do GPT se disponível
+        if (this.gptConfig && Object.keys(this.gptConfig).length > 0) {
+            const serializedConfig = safeJsonStringify(this.gptConfig);
+            if (serializedConfig) {
+                localStorage.setItem('gptConfig', serializedConfig);
+                debugLog('GPT', 'Configuração do GPT salva no localStorage');
             }
         }
     }

@@ -153,10 +153,25 @@ class ChatManager {
             // Seleciona visualmente o item na lista
             this.selectChatItem(chat.id || chat.session_id);
             
-            // Inicializa o chatbot com o chat selecionado
-            if (this.uiManager && typeof this.uiManager.initializeChatbot === 'function') {
-                debugLog('Inicializando chatbot para chat da URL:', chat.id || chat.session_id);
-                await this.uiManager.initializeChatbot();
+            // Verifica se o GPT do chat selecionado é diferente do atual
+            const currentGPT = this.stateManager.selectedGPT;
+            const chatGPT = this.stateManager.getGPTs().find(gpt => gpt.id === chat.fk_gpt_id);
+            
+            if (currentGPT && chatGPT && currentGPT.id === chatGPT.id) {
+                // Mesmo GPT, não precisa inicializar o chatbot novamente
+                debugLog('Chat selecionado usa o mesmo GPT, pulando inicialização do chatbot...');
+            } else {
+                // GPT diferente ou não há GPT selecionado, inicializa o chatbot
+                if (this.uiManager && typeof this.uiManager.initializeChatbot === 'function') {
+                    // Reseta a flag de inicialização para permitir nova inicialização
+                    if (this.uiManager.resetChatbotInitialization) {
+                        this.uiManager.resetChatbotInitialization();
+                        debugLog('Flag de inicialização resetada para chat com GPT diferente');
+                    }
+                    
+                    debugLog('Inicializando chatbot para chat da URL:', chat.id || chat.session_id);
+                    await this.uiManager.initializeChatbot();
+                }
             }
             
             debugLog(`Chat carregado da URL: ${chat.id || chat.session_id}`);
@@ -569,8 +584,26 @@ class ChatManager {
             // Inicializa o chatbot, caso não tenha sido feito no GPTManager
             if (this.uiManager) {
                 LoadingUtils.updateProgress(loadingId, 75, 'Inicializando chatbot...');
-                await this.uiManager.initializeChatbot();
-                LoadingUtils.updateProgress(loadingId, 90, 'Chatbot inicializado');
+                
+                // Verifica se o GPT do chat clicado é diferente do atual
+                const currentGPT = this.stateManager.selectedGPT;
+                const chatGPT = this.stateManager.getGPTs().find(gpt => gpt.id === chat.fk_gpt_id);
+                
+                if (currentGPT && chatGPT && currentGPT.id === chatGPT.id) {
+                    // Mesmo GPT, não precisa inicializar o chatbot novamente
+                    LoadingUtils.updateProgress(loadingId, 90, 'Chatbot já estava inicializado para este GPT');
+                    debugLog('Chat clicado usa o mesmo GPT, pulando inicialização do chatbot...');
+                } else {
+                    // GPT diferente ou não há GPT selecionado, inicializa o chatbot
+                    // Reseta a flag de inicialização para permitir nova inicialização
+                    if (this.uiManager.resetChatbotInitialization) {
+                        this.uiManager.resetChatbotInitialization();
+                        debugLog('Flag de inicialização resetada para chat com GPT diferente');
+                    }
+                    
+                    await this.uiManager.initializeChatbot();
+                    LoadingUtils.updateProgress(loadingId, 90, 'Chatbot inicializado');
+                }
             }
 
             // Esconder loading após sucesso (com pequeno delay para mostrar mensagem final)

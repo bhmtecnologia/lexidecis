@@ -507,60 +507,90 @@ export default class GPTManager {
     }
 
     async selectGPTItem(gpt) {
-        this.stateManager.setSelectedGPT(gpt);
-
-        if (!gpt.id) {
-            console.error('GPT selecionado não possui um id válido.');
-            return;
-        }
-
-        // 1) Garantir que o usuário tem permissão: gpt precisa existir na lista carregada
-        const allowedGpts = this.stateManager.getGPTs && this.stateManager.getGPTs();
-        const isAllowed = Array.isArray(allowedGpts) && allowedGpts.some(item => String(item.id) === String(gpt.id));
-        if (!isAllowed) {
-            this.uiManager.showError('Você não tem permissão para usar este GPT.');
-            return;
-        }
-
-        // 2) Buscar configuração; se falhar ou não vier flowiseConfig, abortar
         try {
-            await this.fetchGPTConfig(gpt.id);
-        } catch (e) {
-            // fetchGPTConfig já loga/mostra erro; apenas aborta
-            return;
-        }
+            this.stateManager.setSelectedGPT(gpt);
 
-        const flowiseCfg = this.stateManager.getFlowiseConfig && this.stateManager.getFlowiseConfig();
-        if (!flowiseCfg || !flowiseCfg.chatflowId || !flowiseCfg.apiHost) {
-            this.uiManager.showError('Configuração do GPT indisponível. Contate o suporte.');
-            return;
-        }
+            if (!gpt.id) {
+                console.error('GPT selecionado não possui um id válido.');
+                this.uiManager.showError('GPT selecionado não possui um ID válido.');
+                return;
+            }
 
-        // 3) Criar sessão e iniciar UI somente após permissões e config válidas
-        const newSessionId = this.generateSessionId();
-        this.stateManager.setSessionId(newSessionId);
+            // 1) Garantir que o usuário tem permissão
+            const allowedGpts = this.stateManager.getGPTs && this.stateManager.getGPTs();
+            const isAllowed = Array.isArray(allowedGpts) && allowedGpts.some(item => String(item.id) === String(gpt.id));
+            if (!isAllowed) {
+                this.uiManager.showError('Você não tem permissão para usar este GPT.');
+                return;
+            }
 
-        const newChat = {
-            id: newSessionId,
-            name: gpt.name,
-            date: new Date().toISOString(),
-            fk_gpt_id: gpt.id
-        };
-        this.stateManager.addChat(newChat);
-        this.uiManager.chatManager.populateChatMenu(this.stateManager.chats);
+            // 2) Buscar configuração do GPT
+            try {
+                await this.fetchGPTConfig(gpt.id);
+            } catch (e) {
+                debugLog('Erro ao buscar configuração, tentando usar configuração do GPT:', e);
+            }
 
-        if (this.uiManager.chatManager && typeof this.uiManager.chatManager.updateUrlWithChatId === 'function') {
-            this.uiManager.chatManager.updateUrlWithChatId(newSessionId, gpt.id);
-        }
+            // 3) Verificar se temos configuração válida
+            let flowiseCfg = this.stateManager.getFlowiseConfig && this.stateManager.getFlowiseConfig();
+            
+            // Se não tem configuração da API, tenta usar do próprio GPT
+            if (!flowiseCfg || !flowiseCfg.chatflowId || !flowiseCfg.apiHost) {
+                if (gpt.flowiseConfig && gpt.flowiseConfig.flowise) {
+                    flowiseCfg = gpt.flowiseConfig.flowise;
+                    // Define a configuração no stateManager
+                    this.stateManager.setGPTConfig({ flowise: flowiseCfg });
+                } else {
+                    this.uiManager.showError('Configuração do GPT indisponível. Contate o suporte.');
+                    return;
+                }
+            }
 
-        await this.uiManager.initializeChatbot();
+            // 4) Resetar flag de inicialização
+            if (this.uiManager && typeof this.uiManager.resetChatbotInitialization === 'function') {
+                this.uiManager.resetChatbotInitialization();
+            }
 
-        localStorage.setItem('selectedGPT', JSON.stringify(this.stateManager.selectedGPT));
-        localStorage.setItem('selectedGPTId', this.stateManager.selectedGPTId);
-        localStorage.setItem('gptConfig', JSON.stringify(this.stateManager.gptConfig));
+            // 5) Criar nova sessão e chat
+            const newSessionId = this.generateSessionId();
+            this.stateManager.setSessionId(newSessionId);
 
-        if (this.modal) {
-            this.modal.hide();
+            const newChat = {
+                id: newSessionId,
+                name: gpt.name,
+                date: new Date().toISOString(),
+                fk_gpt_id: gpt.id
+            };
+            this.stateManager.addChat(newChat);
+            this.uiManager.chatManager.populateChatMenu(this.stateManager.chats);
+
+            // 6) Atualizar URL
+            if (this.uiManager.chatManager && typeof this.uiManager.chatManager.updateUrlWithChatId === 'function') {
+                this.uiManager.chatManager.updateUrlWithChatId(newSessionId, gpt.id);
+            }
+
+            // 7) Inicializar chatbot
+            await this.uiManager.initializeChatbot();
+
+            // 8) Salvar no localStorage
+            localStorage.setItem('selectedGPT', JSON.stringify(this.stateManager.selectedGPT));
+            localStorage.setItem('selectedGPTId', this.stateManager.selectedGPTId);
+            localStorage.setItem('gptConfig', JSON.stringify(this.stateManager.gptConfig));
+
+            // 9) Fechar modal
+            if (this.modal) {
+                this.modal.hide();
+            }
+
+            debugLog('GPT selecionado com sucesso:', gpt.name);
+        } catch (error) {
+            console.error('Erro ao selecionar GPT:', error);
+            this.uiManager.showError('Erro ao selecionar GPT. Verifique o console para mais detalhes.');
+            
+            // Garantir que o modal seja fechado mesmo em caso de erro
+            if (this.modal) {
+                this.modal.hide();
+            }
         }
     }
 
@@ -576,14 +606,26 @@ export default class GPTManager {
             user_id: this.config.userId,
         };
 
+        debugLog('Buscando configuração do GPT:', gptId, 'com params:', params);
+
         try {
             // 'overrideConfig' deve retornar um array de objetos { value: { ... } }
             // Exemplo: [ { value: { systemMessage: "...", flowise: {...}, ...} } ]
             const configData = await this.apiService.request('overrideConfig', params, 'GET');
+            debugLog('Resposta da API overrideConfig:', configData);
+
+            if (!configData || !Array.isArray(configData)) {
+                throw new Error('Resposta da API não é um array válido');
+            }
 
             // Aqui agregamos todos os "value" num único objeto
             // e garantimos que flowise ao menos seja um objeto vazio se não vier do servidor
             const aggregatedConfig = configData.reduce((acc, current) => {
+                if (!current || !current.value) {
+                    debugLog('Item de configuração inválido ignorado:', current);
+                    return acc;
+                }
+                
                 return {
                     ...acc,
                     ...current.value,
@@ -595,11 +637,27 @@ export default class GPTManager {
                 };
             }, {});
 
+            debugLog('Configuração agregada:', aggregatedConfig);
             this.stateManager.setGPTConfig(aggregatedConfig);
-            debugLog("flowiseConfig definido:", this.stateManager.getFlowiseConfig());
+            
+            const flowiseConfig = this.stateManager.getFlowiseConfig && this.stateManager.getFlowiseConfig();
+            debugLog("flowiseConfig definido:", flowiseConfig);
+            
+            if (!flowiseConfig || !flowiseConfig.chatflowId || !flowiseConfig.apiHost) {
+                debugLog('ATENÇÃO: flowiseConfig incompleto após agregação:', flowiseConfig);
+            }
+            
         } catch (error) {
             console.error('Erro ao buscar configurações do GPT:', error);
-            this.uiManager.showError('Erro ao buscar configurações do GPT. Verifique o console para mais detalhes.');
+            debugLog('Erro detalhado ao buscar configurações:', {
+                error: error.message,
+                stack: error.stack,
+                gptId: gptId,
+                params: params
+            });
+            
+            // Não mostra erro para o usuário aqui, deixa o selectGPTItem tratar
+            throw error;
         }
     }
 

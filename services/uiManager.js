@@ -478,38 +478,20 @@ class UIManager {
 
                                         this.debugLog('Enviando mensagem para API:', payload);
 
-                                        // Usa endpoint dinâmico createChatMessage ou fallback temporário
-                                        if (this.config.apiCredentials.createChatMessage) {
-                                            this.debugLog('Usando ApiService para createChatMessage');
+                                        // Usa endpoint dinâmico createChat
+                                        if (this.config.apiCredentials.createChat) {
+                                            this.debugLog('Usando ApiService para createChat');
                                             try {
-                                                const result = await this.apiService.request('createChatMessage', payload, 'POST');
+                                                const result = await this.apiService.request('createChat', payload, 'POST');
                                                 this.debugLog('Mensagem enviada para API com sucesso via ApiService:', result);
                                             } catch (error) {
-                                                console.error('🔗 Erro no createChatMessage via ApiService:', error);
+                                                console.error('🔗 Erro no createChat via ApiService:', error);
                                                 throw error;
                                             }
                                         } else {
-                                            // FALLBACK TEMPORÁRIO: createChatMessage não configurado no webhook
-                                            console.warn('⚠️ createChatMessage não encontrado nos endpoints, usando fallback temporário');
-                                            this.debugLog('Usando fallback temporário para createChatMessage');
-                                            const response = await fetch('https://webhook.power.tec.br/webhook/lexidecis/v1/chatmessage', {
-                                                method: "POST",
-                                                headers: { 
-                                                    "Content-Type": "application/json",
-                                                    "Authorization": `Bearer ${token}`
-                                                },
-                                                body: JSON.stringify(payload)
-                                            });
-
-                                            this.debugLog('Response status (fallback):', response.status);
-
-                                            if (!response.ok) {
-                                                const errorText = await response.text();
-                                                throw new Error("Erro ao salvar mensagem de chat (fallback): " + errorText);
-                                            }
-
-                                            const result = await response.json();
-                                            this.debugLog('Mensagem enviada para API com sucesso (fallback):', result);
+                                            console.error('🔗 Configuração createChat não encontrada nos endpoints');
+                                            console.error('🔗 Endpoints disponíveis:', Object.keys(this.config.apiCredentials));
+                                            throw new Error('Configuração createChat não disponível');
                                         }
                                         
                                         // Faz o POST para o endpoint de chats (updateChat)
@@ -524,7 +506,7 @@ class UIManager {
                                                                         this.debugLog('Parâmetros para updateChat:', chatParams);
                                 this.debugLog('apiCredentials disponíveis:', Object.keys(this.config.apiCredentials));
                                         
-                                        // Usa endpoint dinâmico updateChat (disponível nos logs)
+                                        // Usa endpoint dinâmico updateChat
                                         if (this.config.apiCredentials.updateChat) {
                                             this.debugLog('Usando ApiService para updateChat');
                                             try {
@@ -534,27 +516,8 @@ class UIManager {
                                                 console.error('🔗 Erro no updateChat via ApiService:', error);
                                             }
                                         } else {
-                                            // FALLBACK TEMPORÁRIO: updateChat não configurado no webhook
-                                            console.warn('⚠️ updateChat não encontrado nos endpoints, usando fallback temporário');
-                                            this.debugLog('Usando fallback temporário para updateChat');
-                                            const chatResponse = await fetch('https://webhook.power.tec.br/webhook/lexidecis/v1/chats', {
-                                                method: 'POST',
-                                                headers: { 
-                                                    'Content-Type': 'application/json',
-                                                    'Authorization': `Bearer ${token}`
-                                                },
-                                                body: JSON.stringify(chatParams)
-                                            });
-                                            
-                                            this.debugLog('Response status do updateChat (fallback):', chatResponse.status);
-                                            
-                                            if (chatResponse.ok) {
-                                                const chatResult = await chatResponse.json();
-                                                this.debugLog('UpdateChat realizado com sucesso (fallback):', chatResult);
-                                            } else {
-                                                const errorText = await chatResponse.text();
-                                                console.error('🔗 Erro no updateChat (fallback):', errorText);
-                                            }
+                                            console.error('🔗 Configuração updateChat não encontrada nos endpoints');
+                                            console.error('🔗 Endpoints disponíveis:', Object.keys(this.config.apiCredentials));
                                         }
                                     } else {
                                         this.debugLog('Textarea não encontrado ou sem valor');

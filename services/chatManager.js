@@ -563,7 +563,16 @@ class ChatManager {
             }
 
             // Define a sessão atual para o chatId
-            this.stateManager.setSessionId(chatId);
+            // IMPORTANTE: Usar a sessão existente do chat, não criar uma nova
+            if (selectedChat.session_id) {
+                // Se o chat tem uma sessão existente, use-a
+                this.stateManager.setSessionId(selectedChat.session_id);
+                debugLog('Usando sessão existente do chat:', selectedChat.session_id);
+            } else {
+                // Se não tem sessão, use o chatId como fallback
+                this.stateManager.setSessionId(chatId);
+                debugLog('Chat sem sessão existente, usando chatId como sessão:', chatId);
+            }
 
             // Carrega histórico, se existir um historyManager integrado via UIManager
             if (this.uiManager && this.uiManager.historyManager) {
@@ -576,6 +585,33 @@ class ChatManager {
                 
                 // Atualizar progresso
                 LoadingUtils.updateProgress(loadingId, 100, 'Chat carregado!');
+            } else {
+                // Carrega histórico usando o método local do chatManager
+                debugLog('Carregando histórico usando método local do chatManager');
+                
+                // Atualizar mensagem do loading
+                LoadingUtils.updateProgress(loadingId, 50, 'Carregando histórico...');
+                
+                try {
+                    // Usar a sessão correta para carregar o histórico
+                    const sessionId = selectedChat.session_id || chatId;
+                    const gptConfig = this.stateManager.getGPTConfig();
+                    
+                    if (gptConfig && gptConfig.flowise) {
+                        await this.injectChatHistory(sessionId, gptConfig);
+                        debugLog('Histórico carregado com sucesso para sessão:', sessionId);
+                    } else {
+                        debugLog('Configuração do GPT não encontrada, pulando carregamento de histórico');
+                    }
+                    
+                    // Atualizar progresso
+                    LoadingUtils.updateProgress(loadingId, 100, 'Chat carregado!');
+                } catch (error) {
+                    console.error('Erro ao carregar histórico:', error);
+                    debugLog('Erro ao carregar histórico, continuando sem histórico');
+                    // Atualizar progresso mesmo com erro
+                    LoadingUtils.updateProgress(loadingId, 100, 'Chat carregado (sem histórico)');
+                }
             }
 
             // Destaca o chat selecionado na interface

@@ -587,7 +587,7 @@ class ChatManager {
                 
                 // Verifica se o GPT do chat clicado é diferente do atual
                 const currentGPT = this.stateManager.selectedGPT;
-                const chatGPT = this.stateManager.getGPTs().find(gpt => gpt.id === chat.fk_gpt_id);
+                const chatGPT = this.stateManager.getGPTs().find(gpt => gpt.id === selectedChat.fk_gpt_id);
                 
                 if (currentGPT && chatGPT && currentGPT.id === chatGPT.id) {
                     // Mesmo GPT, não precisa inicializar o chatbot novamente

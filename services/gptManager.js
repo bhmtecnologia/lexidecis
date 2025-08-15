@@ -26,8 +26,13 @@ export default class GPTManager {
 
         this.modal = null;
         this.isEventLocked = false;
+        this.mediaElementPool = new Map(); // Pool para reutilizar elementos de mídia
+        this.maxMediaElements = 10; // Limite máximo de elementos de mídia
 
         this.createModal();
+
+        // Configurar limpeza periódica do pool de elementos de mídia
+        this.setupPeriodicCleanup();
     }
 
     /**
@@ -52,19 +57,45 @@ export default class GPTManager {
         const isVideo = /\.(mp4|webm|ogg)$/i.test(url);
         let mediaEl;
         if (isVideo) {
-            mediaEl = document.createElement('video');
-            mediaEl.src = url;
-            // iOS Safari inline autoplay support
-            mediaEl.setAttribute('playsinline', '');
-            mediaEl.setAttribute('webkit-playsinline', '');
-            // Custom video behavior: no controls, muted, loop, preload, style, always autoplay
-            mediaEl.muted = true;
-            mediaEl.loop = true;
-            mediaEl.preload = 'metadata';
-            mediaEl.autoplay = true;
-            mediaEl.playsInline = true;
-            // Ensure playback starts
-            mediaEl.load();
+            // Verificar se já existe um elemento de vídeo para esta URL
+            let existingVideo = this.mediaElementPool.get(url);
+            
+            if (!existingVideo) {
+                // Criar novo elemento apenas se não exceder o limite
+                if (this.mediaElementPool.size >= this.maxMediaElements) {
+                    // Limpar elementos antigos se necessário
+                    this.cleanupMediaElementPool();
+                }
+                
+                existingVideo = document.createElement('video');
+                existingVideo.src = url;
+                // iOS Safari inline autoplay support
+                existingVideo.setAttribute('playsinline', '');
+                existingVideo.setAttribute('webkit-playsinline', '');
+                // Custom video behavior: no controls, muted, loop, preload, style, always autoplay
+                existingVideo.muted = true;
+                existingVideo.loop = true;
+                existingVideo.preload = 'metadata';
+                existingVideo.autoplay = true;
+                existingVideo.playsInline = true;
+                // Ensure playback starts
+                existingVideo.load();
+                existingVideo.style.border = 'none';
+                existingVideo.style.objectFit = 'contain';
+                existingVideo.style.width = '100%';
+                existingVideo.style.height = 'auto';
+                const maxH = window.innerWidth < 768 ? '200px' : '300px';
+                existingVideo.style.maxHeight = maxH;
+                existingVideo.style.minHeight = maxH;
+                
+                // Adicionar ao pool
+                existingVideo.creationTime = Date.now(); // Timestamp para controle de idade
+                this.mediaElementPool.set(url, existingVideo);
+            }
+            
+            // Clonar o elemento para reutilização
+            mediaEl = existingVideo.cloneNode(true);
+            // Reaplicar estilos e atributos que podem ter sido perdidos na clonagem
             mediaEl.style.border = 'none';
             mediaEl.style.objectFit = 'contain';
             mediaEl.style.width = '100%';
@@ -411,6 +442,9 @@ export default class GPTManager {
             return;
         }
 
+        // Limpar elementos de mídia antes de limpar o HTML
+        this.cleanupMediaElements(gptList);
+        
         // Limpa skeletons
         gptList.innerHTML = '';
 
@@ -457,6 +491,9 @@ export default class GPTManager {
             return;
         }
 
+        // Limpar elementos de mídia antes de limpar o HTML
+        this.cleanupMediaElements(gptList);
+        
         // Limpa skeletons
         gptList.innerHTML = '';
 
@@ -694,5 +731,95 @@ export default class GPTManager {
         const foundGPT = gpts.find(gpt => gpt.id === gptId) || null;
         debugLog('GPT encontrado:', foundGPT);
         return foundGPT;
+    }
+
+    /**
+     * Destrói o manager e limpa todos os recursos de mídia.
+     */
+    destroy() {
+        // Limpar todos os elementos de mídia ao destruir o manager
+        this.cleanupMediaElementPool();
+        this.mediaElementPool.clear();
+        
+        // Limpar outros recursos se necessário
+        if (this.modal) {
+            this.modal.remove();
+            this.modal = null;
+        }
+    }
+
+    /**
+     * Limpa o pool de elementos de mídia, removendo elementos que não foram reutilizados.
+     */
+    cleanupMediaElementPool() {
+        // Limpar elementos não utilizados ou antigos
+        for (const [url, element] of this.mediaElementPool) {
+            // Se o elemento não está sendo usado em nenhum lugar do DOM
+            if (element.parentNode === null || !document.contains(element)) {
+                // Pausar e limpar o vídeo antes de remover
+                if (element.tagName === 'VIDEO') {
+                    element.pause();
+                    element.src = '';
+                    element.load();
+                }
+                element.remove();
+                this.mediaElementPool.delete(url);
+            }
+        }
+        
+        // Se ainda exceder o limite, remover os elementos mais antigos
+        if (this.mediaElementPool.size >= this.maxMediaElements) {
+            const entries = Array.from(this.mediaElementPool.entries());
+            // Ordenar por timestamp de criação (mais antigos primeiro)
+            entries.sort((a, b) => (a[1].creationTime || 0) - (b[1].creationTime || 0));
+            
+            // Remover os elementos mais antigos até ficar abaixo do limite
+            const toRemove = entries.slice(0, this.mediaElementPool.size - this.maxMediaElements + 1);
+            toRemove.forEach(([url, element]) => {
+                if (element.tagName === 'VIDEO') {
+                    element.pause();
+                    element.src = '';
+                    element.load();
+                }
+                element.remove();
+                this.mediaElementPool.delete(url);
+            });
+        }
+    }
+
+    /**
+     * Limpa os elementos de mídia que foram removidos do DOM.
+     * @param {HTMLElement} container - O container onde os elementos de mídia foram removidos.
+     */
+    cleanupMediaElements(container) {
+        if (!container) return;
+
+        const mediaElements = Array.from(container.children).filter(
+            (child) => child.tagName === 'VIDEO' || child.tagName === 'IMG'
+        );
+
+        for (const element of mediaElements) {
+            // Se o elemento não está sendo usado em nenhum lugar do DOM
+            if (element.parentNode === null || !document.contains(element)) {
+                // Pausar e limpar o vídeo antes de remover
+                if (element.tagName === 'VIDEO') {
+                    element.pause();
+                    element.src = '';
+                    element.load();
+                }
+                element.remove();
+            }
+        }
+    }
+
+    /**
+     * Configura um intervalo para limpar o pool de elementos de mídia periodicamente.
+     */
+    setupPeriodicCleanup() {
+        const cleanupInterval = 10000; // 10 segundos
+        setInterval(() => {
+            this.cleanupMediaElementPool();
+            debugLog('Pool de elementos de mídia limpo.');
+        }, cleanupInterval);
     }
 }

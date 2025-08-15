@@ -594,19 +594,10 @@ export default class GPTManager {
                 const newSessionId = this.generateSessionId();
                 this.stateManager.setSessionId(newSessionId);
 
-                const newChat = {
-                    id: newSessionId,
-                    name: gpt.name,
-                    date: new Date().toISOString(),
-                    fk_gpt_id: gpt.id
-                };
-                this.stateManager.addChat(newChat);
-                this.uiManager.chatManager.populateChatMenu(this.stateManager.chats);
-
-                // 6) Atualizar URL
-                if (this.uiManager.chatManager && typeof this.uiManager.chatManager.updateUrlWithChatId === 'function') {
-                    this.uiManager.chatManager.updateUrlWithChatId(newSessionId, gpt.id);
-                }
+                // ✅ NÃO criar chat fantasma - será criado pela API quando necessário
+                debugLog('✅ Nova sessão criada - chat será criado pela API quando necessário');
+                // ✅ NÃO atualizar menu - não há chat para mostrar
+                // ✅ NÃO atualizar URL - não há chat real ainda
 
                 // 7) ✅ Inicializar chatbot para novo chat
                 debugLog('🚀 Inicializando chatbot para novo chat...');
@@ -626,23 +617,15 @@ export default class GPTManager {
                 debugLog('✅ Sessão existente encontrada, mas GPT mudou');
                 debugLog('🔄 Criando novo chat para o novo GPT selecionado');
                 
-                // Criar nova sessão para o novo GPT
+                // ✅ Criar nova sessão para o novo GPT (sem chat fantasma)
                 const newSessionId = this.generateSessionId();
                 this.stateManager.setSessionId(newSessionId);
 
-                const newChat = {
-                    id: newSessionId,
-                    name: gpt.name,
-                    date: new Date().toISOString(),
-                    fk_gpt_id: gpt.id
-                };
-                this.stateManager.addChat(newChat);
-                this.uiManager.chatManager.populateChatMenu(this.stateManager.chats);
+                // ✅ NÃO criar chat fantasma - será criado pela API quando necessário
+                debugLog('✅ Nova sessão criada para novo GPT - chat será criado pela API quando necessário');
+                // ✅ NÃO atualizar menu - não há chat para mostrar
 
-                // Atualizar URL
-                if (this.uiManager.chatManager && typeof this.uiManager.chatManager.updateUrlWithChatId === 'function') {
-                    this.uiManager.chatManager.updateUrlWithChatId(newSessionId, gpt.id);
-                }
+                // ✅ NÃO atualizar URL - não há chat real ainda
                 
                 // ✅ Inicializar chatbot para novo GPT
                 debugLog('🚀 Inicializando chatbot para novo GPT...');

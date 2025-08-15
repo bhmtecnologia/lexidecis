@@ -473,35 +473,15 @@ class UIManager {
             // Agora, em vez de usar HistoryManager, delegamos a injeção do histórico ao ChatManager
             await this.chatManager.injectChatHistory(this.stateManager.currentSessionId, this.stateManager.selectedGPT.flowiseConfig);
 
-            // Inicializa o chatbot, mas não adiciona o chat ainda
+            // ✅ Inicializa o chatbot (sem criar chat fantasma)
             await this.initializeChatbot();
 
-            // Adiciona o chat à lista e atualiza a URL
-            this.debugLog('createNewChat: adicionando chat à lista e atualizando URL:', this.stateManager.currentSessionId);
+            // ✅ NÃO adiciona chat à lista - será criado pela API quando necessário
+            this.debugLog('✅ Chatbot inicializado - chat será criado pela API quando necessário');
             
-            // Adiciona o chat ao StateManager
-            const newChat = {
-                id: this.stateManager.currentSessionId,
-                name: selectedGPT.name || 'Novo Chat',
-                date: new Date().toISOString(),
-                fk_gpt_id: selectedGPT.id
-            };
-            this.stateManager.addChat(newChat);
-            
-            // Atualiza a URL com o ID do novo chat criado e gptId
-            if (this.chatManager && typeof this.chatManager.updateUrlWithChatId === 'function') {
-                this.chatManager.updateUrlWithChatId(this.stateManager.currentSessionId, selectedGPT.id);
-            }
-
-            // Recarrega a lista de chats para incluir o novo chat
-            if (this.chatManager && typeof this.chatManager.loadChatList === 'function') {
-                await this.chatManager.loadChatList(this.chatManager.populateChatMenu.bind(this.chatManager));
-            }
-
-            // Seleciona o chat recém-criado na interface
-            if (this.chatManager && typeof this.chatManager.selectChatItem === 'function') {
-                this.chatManager.selectChatItem(this.stateManager.currentSessionId);
-            }
+            // ✅ NÃO atualiza URL - não há chat real ainda
+            // ✅ NÃO recarrega lista - não há chat para mostrar
+            // ✅ NÃO seleciona chat - não há chat para selecionar
 
             this.debugLog('Sessão criada e chatbot inicializado com sucesso.');
         } catch (error) {

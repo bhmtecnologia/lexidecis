@@ -597,9 +597,22 @@ class ChatManager {
                     const sessionId = selectedChat.session_id || chatId;
                     const gptConfig = this.stateManager.getGPTConfig();
                     
-                    if (gptConfig && gptConfig.flowise) {
-                        await this.injectChatHistory(sessionId, gptConfig);
-                        debugLog('Histórico carregado com sucesso para sessão:', sessionId);
+                    // Proteção contra múltiplas chamadas para o mesmo chat
+                    const historyCacheKey = `history_loaded_${chatId}`;
+                    if (localStorage.getItem(historyCacheKey)) {
+                        debugLog('Histórico já foi carregado para este chat, pulando...');
+                    } else if (gptConfig && gptConfig.flowise) {
+                        // Verificar se a configuração está completa
+                        if (!gptConfig.flowise.apiHost || !gptConfig.flowise.chatflowId) {
+                            debugLog('Configuração do Flowise incompleta, pulando carregamento de histórico');
+                            debugLog('Configuração atual:', gptConfig.flowise);
+                        } else {
+                            await this.injectChatHistory(sessionId, gptConfig);
+                            debugLog('Histórico carregado com sucesso para sessão:', sessionId);
+                            
+                            // Marcar como carregado para evitar reprocessamento
+                            localStorage.setItem(historyCacheKey, 'true');
+                        }
                     } else {
                         debugLog('Configuração do GPT não encontrada, pulando carregamento de histórico');
                     }
@@ -609,6 +622,7 @@ class ChatManager {
                 } catch (error) {
                     console.error('Erro ao carregar histórico:', error);
                     debugLog('Erro ao carregar histórico, continuando sem histórico');
+                    debugLog('Detalhes do erro:', error.message);
                     // Atualizar progresso mesmo com erro
                     LoadingUtils.updateProgress(loadingId, 100, 'Chat carregado (sem histórico)');
                 }
@@ -630,15 +644,21 @@ class ChatManager {
                     LoadingUtils.updateProgress(loadingId, 90, 'Chatbot já estava inicializado para este GPT');
                     debugLog('Chat clicado usa o mesmo GPT, pulando inicialização do chatbot...');
                 } else {
-                    // GPT diferente ou não há GPT selecionado, inicializa o chatbot
-                    // Reseta a flag de inicialização para permitir nova inicialização
-                    if (this.uiManager.resetChatbotInitialization) {
-                        this.uiManager.resetChatbotInitialization();
-                        debugLog('Flag de inicialização resetada para chat com GPT diferente');
+                    // GPT diferente ou não há GPT selecionado
+                    // IMPORTANTE: Se o chat tem uma sessão existente, NÃO resetar o chatbot
+                    if (selectedChat.session_id) {
+                        debugLog('Chat com sessão existente, mantendo chatbot atual para preservar histórico');
+                        LoadingUtils.updateProgress(loadingId, 90, 'Chatbot mantido (sessão existente)');
+                    } else {
+                        // Apenas resetar se não há sessão existente
+                        if (this.uiManager.resetChatbotInitialization) {
+                            this.uiManager.resetChatbotInitialization();
+                            debugLog('Flag de inicialização resetada para chat sem sessão existente');
+                        }
+                        
+                        await this.uiManager.initializeChatbot();
+                        LoadingUtils.updateProgress(loadingId, 90, 'Chatbot inicializado');
                     }
-                    
-                    await this.uiManager.initializeChatbot();
-                    LoadingUtils.updateProgress(loadingId, 90, 'Chatbot inicializado');
                 }
             }
 
@@ -898,6 +918,19 @@ class ChatManager {
      * @returns {Promise<Array>} - Histórico de mensagens formatado.
      */
     async _fetchAndFormatHistory(sessionId, config) {
+        // Validar configuração antes de fazer a requisição
+        if (!config || !config.flowise) {
+            throw new Error('Configuração do Flowise não encontrada');
+        }
+        
+        if (!config.flowise.apiHost || !config.flowise.chatflowId) {
+            debugLog('Configuração incompleta do Flowise:', {
+                apiHost: config.flowise.apiHost,
+                chatflowId: config.flowise.chatflowId
+            });
+            throw new Error('Configuração incompleta do Flowise: apiHost ou chatflowId não definidos');
+        }
+        
         const apiURL = `${config.flowise.apiHost}/api/v1/chatmessage/${config.flowise.chatflowId}?sessionId=${sessionId}`;
         debugLog('Tentando buscar histórico em:', apiURL);
         
@@ -938,6 +971,14 @@ class ChatManager {
      */
     async injectChatHistory(sessionId, config) {
         try {
+            // Proteção contra múltiplas chamadas simultâneas
+            if (this._historyInjectionInProgress) {
+                debugLog('Injeção de histórico já em progresso, pulando...');
+                return;
+            }
+            
+            this._historyInjectionInProgress = true;
+            
             const formattedHistory = await this._fetchAndFormatHistory(sessionId, config);
             const chatData = {
                 chatHistory: formattedHistory,
@@ -948,23 +989,18 @@ class ChatManager {
             localStorage.setItem(historyKey, JSON.stringify(chatData));
             localStorage.setItem(`${config.flowise.chatflowId}_historyInjected`, 'true');
             
-            // IMPORTANTE: Recarregar o chatbot para exibir o histórico
-            if (this.uiManager && this.uiManager.resetChatbotInitialization) {
-                debugLog('Recarregando chatbot para exibir histórico...');
-                this.uiManager.resetChatbotInitialization();
-                
-                // Aguardar um pouco para o reset ser processado
-                await new Promise(resolve => setTimeout(resolve, 100));
-                
-                // Re-inicializar o chatbot para carregar o histórico
-                if (this.uiManager.initializeChatbot) {
-                    await this.uiManager.initializeChatbot();
-                    debugLog('Chatbot recarregado com sucesso para exibir histórico');
-                }
-            }
+            debugLog('Histórico injetado no localStorage com sucesso');
+            
+            // NÃO recarregar o chatbot automaticamente aqui
+            // O chatbot já foi inicializado e deve usar a sessão existente
+            // O histórico será carregado automaticamente pelo Flowise
+            
         } catch (error) {
             console.error('Erro ao injetar histórico no localStorage:', error);
             throw new Error('Erro ao buscar histórico de mensagens da API.');
+        } finally {
+            // Sempre limpar a flag de proteção
+            this._historyInjectionInProgress = false;
         }
     }
 
@@ -1079,6 +1115,47 @@ class ChatManager {
             LoadingUtils.hide(loadingId);
             throw error;
         }
+    }
+
+    /**
+     * Destrói o manager e limpa todos os recursos de mídia.
+     */
+    destroy() {
+        // Limpar pool de elementos de mídia
+        this.cleanupMediaElementPool();
+        
+        // Limpar cache de histórico
+        this.clearHistoryCache();
+        
+        // Limpar listeners
+        if (this.urlChangeListener) {
+            window.removeEventListener('popstate', this.urlChangeListener);
+        }
+        
+        debugLog('ChatManager destruído e recursos limpos');
+    }
+
+    /**
+     * Limpa o cache de histórico carregado.
+     */
+    clearHistoryCache() {
+        const keys = Object.keys(localStorage);
+        keys.forEach(key => {
+            if (key.startsWith('history_loaded_')) {
+                localStorage.removeItem(key);
+            }
+        });
+        debugLog('Cache de histórico limpo');
+    }
+
+    /**
+     * Limpa o cache de histórico de um chat específico.
+     * @param {string} chatId - ID do chat para limpar cache.
+     */
+    clearChatHistoryCache(chatId) {
+        const historyCacheKey = `history_loaded_${chatId}`;
+        localStorage.removeItem(historyCacheKey);
+        debugLog(`Cache de histórico limpo para chat: ${chatId}`);
     }
 }
 

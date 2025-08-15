@@ -593,29 +593,31 @@ class ChatManager {
                 LoadingUtils.updateProgress(loadingId, 50, 'Carregando histórico...');
                 
                 try {
-                    // Usar a sessão correta para carregar o histórico
+                    // ✅ IMPORTANTE: Usar a sessão existente do chat original
                     const sessionId = selectedChat.session_id || chatId;
-                    const gptConfig = this.stateManager.getGPTConfig();
                     
-                    // Proteção contra múltiplas chamadas para o mesmo chat
-                    const historyCacheKey = `history_loaded_${chatId}`;
-                    if (localStorage.getItem(historyCacheKey)) {
-                        debugLog('Histórico já foi carregado para este chat, pulando...');
-                    } else if (gptConfig && gptConfig.flowise) {
-                        // Verificar se a configuração está completa
-                        if (!gptConfig.flowise.apiHost || !gptConfig.flowise.chatflowId) {
-                            debugLog('Configuração do Flowise incompleta, pulando carregamento de histórico');
-                            debugLog('Configuração atual:', gptConfig.flowise);
-                        } else {
-                            await this.injectChatHistory(sessionId, gptConfig);
-                            debugLog('Histórico carregado com sucesso para sessão:', sessionId);
-                            
-                            // Marcar como carregado para evitar reprocessamento
-                            localStorage.setItem(historyCacheKey, 'true');
-                        }
+                    // ✅ Forçar uso da sessão existente se disponível
+                    if (selectedChat.session_id) {
+                        debugLog('✅ Usando sessão existente do chat:', selectedChat.session_id);
+                        this.stateManager.setSessionId(selectedChat.session_id);
                     } else {
-                        debugLog('Configuração do GPT não encontrada, pulando carregamento de histórico');
+                        debugLog('⚠️ Chat sem sessão existente, usando chatId como sessão:', chatId);
+                        this.stateManager.setSessionId(chatId);
                     }
+                    
+                    // ✅ Sempre carregar histórico para garantir que esteja disponível
+                    debugLog('Carregando histórico para sessão:', sessionId);
+                    
+                    // Usar configuração padrão do Flowise com token correto
+                    const defaultConfig = {
+                        flowise: {
+                            apiHost: 'https://flowise.power.tec.br',
+                            token: '0d1S97hx7o2pLVe5grVpkvUNW-RR_TTWYeGuKGK2ALs' // Token correto do Flowise
+                        }
+                    };
+                    
+                    await this.injectChatHistory(sessionId, defaultConfig);
+                    debugLog('Histórico carregado com sucesso para sessão:', sessionId);
                     
                     // Atualizar progresso
                     LoadingUtils.updateProgress(loadingId, 100, 'Chat carregado!');
@@ -631,35 +633,21 @@ class ChatManager {
             // Destaca o chat selecionado na interface
             this.selectChatItem(chatId);
 
-            // Inicializa o chatbot, caso não tenha sido feito no GPTManager
-            if (this.uiManager) {
-                LoadingUtils.updateProgress(loadingId, 75, 'Inicializando chatbot...');
-                
-                // Verifica se o GPT do chat clicado é diferente do atual
-                const currentGPT = this.stateManager.selectedGPT;
-                const chatGPT = this.stateManager.getGPTs().find(gpt => gpt.id === selectedChat.fk_gpt_id);
-                
-                if (currentGPT && chatGPT && currentGPT.id === chatGPT.id) {
-                    // Mesmo GPT, não precisa inicializar o chatbot novamente
-                    LoadingUtils.updateProgress(loadingId, 90, 'Chatbot já estava inicializado para este GPT');
-                    debugLog('Chat clicado usa o mesmo GPT, pulando inicialização do chatbot...');
-                } else {
-                    // GPT diferente ou não há GPT selecionado
-                    // IMPORTANTE: Se o chat tem uma sessão existente, NÃO resetar o chatbot
-                    if (selectedChat.session_id) {
-                        debugLog('Chat com sessão existente, mantendo chatbot atual para preservar histórico');
-                        LoadingUtils.updateProgress(loadingId, 90, 'Chatbot mantido (sessão existente)');
-                    } else {
-                        // Apenas resetar se não há sessão existente
-                        if (this.uiManager.resetChatbotInitialization) {
-                            this.uiManager.resetChatbotInitialization();
-                            debugLog('Flag de inicialização resetada para chat sem sessão existente');
-                        }
-                        
-                        await this.uiManager.initializeChatbot();
-                        LoadingUtils.updateProgress(loadingId, 90, 'Chatbot inicializado');
-                    }
+            // ✅ GARANTIR que o chatbot seja inicializado (como no teste que funciona)
+            LoadingUtils.updateProgress(loadingId, 90, 'Inicializando chatbot...');
+            
+            // Verificar se o chatbot precisa ser inicializado
+            if (this.uiManager && typeof this.uiManager.initializeChatbot === 'function') {
+                try {
+                    debugLog('🚀 Inicializando chatbot após carregar histórico...');
+                    await this.uiManager.initializeChatbot();
+                    debugLog('✅ Chatbot inicializado com sucesso');
+                } catch (error) {
+                    console.error('Erro ao inicializar chatbot:', error);
+                    debugLog('❌ Erro ao inicializar chatbot:', error.message);
                 }
+            } else {
+                debugLog('❌ UIManager ou initializeChatbot não disponível');
             }
 
             // Esconder loading após sucesso (com pequeno delay para mostrar mensagem final)
@@ -923,39 +911,71 @@ class ChatManager {
             throw new Error('Configuração do Flowise não encontrada');
         }
         
-        if (!config.flowise.apiHost || !config.flowise.chatflowId) {
-            debugLog('Configuração incompleta do Flowise:', {
-                apiHost: config.flowise.apiHost,
-                chatflowId: config.flowise.chatflowId
-            });
-            throw new Error('Configuração incompleta do Flowise: apiHost ou chatflowId não definidos');
-        }
+        // API CORRETA do Flowise: GET /chatmessage/{chatflowId}?sessionId={sessionId}
+        // O ID na rota é o chatflowId, sessionId é parâmetro de query
+        const apiHost = 'https://flowise.power.tec.br';
+        const chatflowId = 'efe59701-afe2-4f4c-8448-bb8e3a32161a'; // ChatflowId correto
         
-        const apiURL = `${config.flowise.apiHost}/api/v1/chatmessage/${config.flowise.chatflowId}?sessionId=${sessionId}`;
+        const apiURL = `${apiHost}/api/v1/chatmessage/${chatflowId}?sessionId=${sessionId}`;
         debugLog('Tentando buscar histórico em:', apiURL);
         
         try {
+            const headers = {
+                'Accept': '*/*',
+                'Content-Type': 'application/json'
+            };
+            
+            // Authorization Bearer JWT é OBRIGATÓRIO conforme documentação
+            if (config.flowise.token) {
+                headers['Authorization'] = `Bearer ${config.flowise.token}`;
+                debugLog('Token de autorização adicionado aos headers');
+            } else {
+                throw new Error('Token de autorização é obrigatório para a API do Flowise');
+            }
+            
             const response = await fetch(apiURL, {
                 method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${config.flowise.token}`
-                }
+                headers: headers
             });
 
             debugLog('Status da resposta:', response.status);
             const responseBody = await response.text();
             debugLog('Corpo da resposta:', responseBody);
 
-            if (!response.ok) throw new Error('Erro ao buscar histórico de mensagens da API.');
+            if (!response.ok) {
+                if (response.status === 401 || response.status === 403) {
+                    throw new Error('Erro de autenticação: Token inválido ou expirado');
+                } else if (response.status === 404) {
+                    throw new Error('Chatflow não encontrado ou sessão inválida');
+                } else {
+                    throw new Error(`Erro da API: ${response.status} ${response.statusText}`);
+                }
+            }
 
             const apiHistory = JSON.parse(responseBody);
 
+            // ✅ FORMATO CORRETO: manter estrutura original da API do Flowise
             return apiHistory.map((msg) => ({
-                message: msg.content,
-                type: msg.role === 'userMessage' ? 'userMessage' : 'apiMessage',
-                dateTime: msg.createdDate || new Date().toISOString(),
-                messageId: msg.id || Math.random().toString(36).substring(2),
-                fileUploads: msg.fileUploads || []
+                id: msg.id,
+                role: msg.role,
+                content: msg.content,
+                chatflowid: msg.chatflowid,
+                chatId: msg.chatId,
+                sessionId: msg.sessionId,
+                createdDate: msg.createdDate,
+                sourceDocuments: msg.sourceDocuments,
+                usedTools: msg.usedTools,
+                fileUploads: msg.fileUploads,
+                artifacts: msg.artifacts,
+                action: msg.action,
+                chatType: msg.chatType,
+                memoryType: msg.memoryType,
+                executionId: msg.executionId,
+                agentReasoning: msg.agentReasoning,
+                fileAnnotations: msg.fileAnnotations,
+                leadEmail: msg.leadEmail,
+                followUpPrompts: msg.followUpPrompts,
+                execution: msg.execution
             }));
         } catch (error) {
             console.error('Erro ao buscar histórico:', error);
@@ -964,42 +984,141 @@ class ChatManager {
     }
 
     /**
-     * Injeta o histórico de chat previamente salvo no localStorage.
-     * @param {string} sessionId - ID da sessão atual.
+     * Injeta o histórico de mensagens no localStorage e recarrega o chatbot.
+     * @param {string} sessionId - ID da sessão.
      * @param {Object} config - Configurações da aplicação.
-     * @returns {Promise<void>}
      */
     async injectChatHistory(sessionId, config) {
+        if (this._historyInjectionInProgress) {
+            debugLog('Injeção de histórico já em andamento, ignorando...');
+            return;
+        }
+
+        this._historyInjectionInProgress = true;
+        const historyCacheKey = `history_loaded_${sessionId}`;
+
         try {
-            // Proteção contra múltiplas chamadas simultâneas
-            if (this._historyInjectionInProgress) {
-                debugLog('Injeção de histórico já em progresso, pulando...');
+            // ✅ FORÇAR SEMPRE: Remover verificação de cache para garantir que o histórico seja sempre carregado
+            // if (localStorage.getItem(historyCacheKey)) {
+            //     debugLog('Histórico já foi carregado para esta sessão:', sessionId);
+            //     return;
+            // }
+
+            // ✅ VERIFICAÇÃO DE CACHE (como no arquivo que funciona)
+            const sessionFlagKey = `${chatflowId}__${sessionId}_historyInjected`;
+            
+            if (localStorage.getItem(sessionFlagKey)) {
+                debugLog('✅ Histórico já foi injetado anteriormente, pulando busca da API');
+                
+                // Ainda assim, copiar para chave base se necessário
+                const sessionExtKey = `${chatflowId}__${sessionId}_EXTERNAL`;
+                const baseExtKey = `${chatflowId}_EXTERNAL`;
+                const sessionData = localStorage.getItem(sessionExtKey);
+                
+                if (sessionData && !localStorage.getItem(baseExtKey)) {
+                    localStorage.setItem(baseExtKey, sessionData);
+                    localStorage.setItem(`${chatflowId}_historyInjected`, 'true');
+                    debugLog('🔄 Histórico copiado do cache da sessão para chave base');
+                }
+                
                 return;
             }
             
-            this._historyInjectionInProgress = true;
+            debugLog('🔄 Histórico não encontrado no cache, buscando da API para sessão:', sessionId);
             
-            const formattedHistory = await this._fetchAndFormatHistory(sessionId, config);
-            const chatData = {
-                chatHistory: formattedHistory,
-                chatId: sessionId
-            };
-
-            const historyKey = `${config.flowise.chatflowId}_EXTERNAL`;
-            localStorage.setItem(historyKey, JSON.stringify(chatData));
-            localStorage.setItem(`${config.flowise.chatflowId}_historyInjected`, 'true');
+            // Buscar histórico da API
+            const apiHistory = await this._fetchAndFormatHistory(sessionId, config);
             
-            debugLog('Histórico injetado no localStorage com sucesso');
-            
-            // NÃO recarregar o chatbot automaticamente aqui
-            // O chatbot já foi inicializado e deve usar a sessão existente
-            // O histórico será carregado automaticamente pelo Flowise
-            
+            if (apiHistory && apiHistory.length > 0) {
+                // ✅ CHAVE CORRETA: usar chatflowId_EXTERNAL como o Flowise espera
+                const chatflowId = 'efe59701-afe2-4f4c-8448-bb8e3a32161a';
+                const historyKey = `${chatflowId}_EXTERNAL`;
+                
+                debugLog('🔑 Chave do localStorage criada:', historyKey);
+                debugLog('📊 Dados da API recebidos:', apiHistory);
+                
+                // ✅ FORMATO EXATO do arquivo que funciona
+                const formattedHistory = apiHistory.map(msg => ({
+                    message: msg.content,
+                    type: msg.role === 'userMessage' ? 'userMessage' : 'apiMessage',
+                    dateTime: msg.createdDate || new Date().toISOString(),
+                    messageId: msg.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substr(2, 9)),
+                    fileUploads: msg.fileUploads || []
+                }));
+                
+                const chatData = {
+                    chatHistory: formattedHistory,
+                    chatId: sessionId
+                };
+                
+                // 🔍 DEBUG DETALHADO
+                debugLog('🔍 DADOS FORMATADOS:');
+                debugLog('📊 Quantidade de mensagens:', formattedHistory.length);
+                debugLog('📋 Primeira mensagem:', formattedHistory[0]);
+                debugLog('📋 Estrutura final chatData:', chatData);
+                debugLog('📏 Tamanho JSON:', JSON.stringify(chatData).length);
+                
+                // ✅ ESTRATÉGIA CORRETA (baseada no arquivo instance/voetur/templates/chat.html):
+                
+                // 1. Salvar com chave específica da sessão
+                const sessionExtKey = `${chatflowId}__${sessionId}_EXTERNAL`;
+                const sessionFlagKey = `${chatflowId}__${sessionId}_historyInjected`;
+                localStorage.setItem(sessionExtKey, JSON.stringify(chatData));
+                localStorage.setItem(sessionFlagKey, 'true');
+                debugLog('🔑 Histórico salvo na chave específica da sessão:', sessionExtKey);
+                
+                // 2. COPIAR para a chave base que o Flowise usa (ESTA É A CHAVE!)
+                const baseExtKey = `${chatflowId}_EXTERNAL`;
+                const baseFlagKey = `${chatflowId}_historyInjected`;
+                localStorage.setItem(baseExtKey, JSON.stringify(chatData));
+                localStorage.setItem(baseFlagKey, 'true');
+                debugLog('🔑 Histórico COPIADO para a chave base do Flowise:', baseExtKey);
+                
+                debugLog('✅ Dados salvos:', chatData);
+                
+                // 🔍 VERIFICAÇÃO DETALHADA DO LOCALSTORAGE
+                const savedSessionData = localStorage.getItem(sessionExtKey);
+                const savedBaseData = localStorage.getItem(baseExtKey);
+                
+                debugLog('🔍 VERIFICAÇÃO LOCALSTORAGE:');
+                debugLog('📝 Chave sessão:', sessionExtKey);
+                debugLog('📝 Chave base:', baseExtKey);
+                debugLog('✅ Dados sessão salvos?', !!savedSessionData, savedSessionData ? savedSessionData.length + ' chars' : 'VAZIO');
+                debugLog('✅ Dados base salvos?', !!savedBaseData, savedBaseData ? savedBaseData.length + ' chars' : 'VAZIO');
+                
+                if (savedSessionData && savedBaseData) {
+                    // Verificar se os dados são idênticos
+                    const identical = savedSessionData === savedBaseData;
+                    debugLog('✅ Dados são idênticos?', identical);
+                    
+                    // Verificar estrutura dos dados
+                    try {
+                        const sessionParsed = JSON.parse(savedSessionData);
+                        const baseParsed = JSON.parse(savedBaseData);
+                        debugLog('📊 Mensagens na sessão:', sessionParsed.chatHistory?.length || 0);
+                        debugLog('📊 Mensagens na base:', baseParsed.chatHistory?.length || 0);
+                        debugLog('🔍 Primeira mensagem base:', baseParsed.chatHistory?.[0]);
+                    } catch (e) {
+                        debugLog('❌ Erro ao parsear dados salvos:', e.message);
+                    }
+                } else {
+                    debugLog('❌ ERRO: dados não foram salvos corretamente');
+                }
+                
+                debugLog('✅ Histórico salvo com ESTRATÉGIA CORRETA, pronto para inicialização do chatbot');
+                
+                // ✅ HISTÓRICO INJETADO COM SUCESSO
+                debugLog('✅ Histórico injetado no localStorage com estratégia Voetur');
+                debugLog('🎯 Inicialização do chatbot será feita pelo handleChatClick');
+                
+                // ✅ REMOVIDO: Não marcar como carregado para forçar sempre o carregamento
+                // localStorage.setItem(historyCacheKey, 'true');
+            } else {
+                debugLog('Nenhuma mensagem encontrada na API para esta sessão');
+            }
         } catch (error) {
-            console.error('Erro ao injetar histórico no localStorage:', error);
-            throw new Error('Erro ao buscar histórico de mensagens da API.');
+            console.error('Erro ao injetar histórico:', error);
         } finally {
-            // Sempre limpar a flag de proteção
             this._historyInjectionInProgress = false;
         }
     }

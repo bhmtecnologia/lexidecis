@@ -588,26 +588,33 @@ export default class GPTManager {
                 this.uiManager.resetChatbotInitialization();
             }
 
-            // 5) Criar nova sessão e chat
-            const newSessionId = this.generateSessionId();
-            this.stateManager.setSessionId(newSessionId);
+            // 5) ✅ IMPORTANTE: NÃO criar nova sessão se já existe uma válida
+            if (!this.stateManager.currentSessionId || this.stateManager.currentSessionId === '') {
+                // Criar nova sessão apenas se não existir
+                const newSessionId = this.generateSessionId();
+                this.stateManager.setSessionId(newSessionId);
 
-            const newChat = {
-                id: newSessionId,
-                name: gpt.name,
-                date: new Date().toISOString(),
-                fk_gpt_id: gpt.id
-            };
-            this.stateManager.addChat(newChat);
-            this.uiManager.chatManager.populateChatMenu(this.stateManager.chats);
+                const newChat = {
+                    id: newSessionId,
+                    name: gpt.name,
+                    date: new Date().toISOString(),
+                    fk_gpt_id: gpt.id
+                };
+                this.stateManager.addChat(newChat);
+                this.uiManager.chatManager.populateChatMenu(this.stateManager.chats);
 
-            // 6) Atualizar URL
-            if (this.uiManager.chatManager && typeof this.uiManager.chatManager.updateUrlWithChatId === 'function') {
-                this.uiManager.chatManager.updateUrlWithChatId(newSessionId, gpt.id);
+                // 6) Atualizar URL
+                if (this.uiManager.chatManager && typeof this.uiManager.chatManager.updateUrlWithChatId === 'function') {
+                    this.uiManager.chatManager.updateUrlWithChatId(newSessionId, gpt.id);
+                }
+
+                // 7) Inicializar chatbot
+                await this.uiManager.initializeChatbot();
+            } else {
+                // ✅ Sessão existente, não criar novo chat
+                debugLog('✅ Sessão existente encontrada, mantendo:', this.stateManager.currentSessionId);
+                debugLog('✅ Não criando novo chat, usando sessão existente');
             }
-
-            // 7) Inicializar chatbot
-            await this.uiManager.initializeChatbot();
 
             // 8) Salvar no localStorage
             localStorage.setItem('selectedGPT', JSON.stringify(this.stateManager.selectedGPT));

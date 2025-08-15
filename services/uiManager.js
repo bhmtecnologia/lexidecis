@@ -447,19 +447,35 @@ class UIManager {
                 this.resetChatbotInitialization();
             }
 
-            // Gera um novo ID de sessão e salva no StateManager
-            const newSessionId = this.gptManager.generateSessionId();
-            this.stateManager.setSessionId(newSessionId);
+            // ✅ IMPORTANTE: Verificar se já existe uma sessão válida
+            if (this.stateManager.currentSessionId && this.stateManager.currentSessionId !== '') {
+                this.debugLog('✅ Sessão existente encontrada, mantendo:', this.stateManager.currentSessionId);
+                // Não criar nova sessão se já existe uma válida
+            } else {
+                // Criar nova sessão apenas se não existir
+                this.debugLog('Criando nova sessão...');
+                const newSessionId = this.gptManager.generateSessionId();
+                this.stateManager.setSessionId(newSessionId);
+                this.debugLog('Nova sessão criada:', newSessionId);
+            }
+
+            // Limpar histórico injetado
+            const selectedFlowiseConfig = this.stateManager.selectedGPT.flowiseConfig.flowise;
+            localStorage.removeItem(`${selectedFlowiseConfig.chatflowId}_historyInjected`);
+            localStorage.removeItem(`${selectedFlowiseConfig.chatflowId}_EXTERNAL`);
+
+            // Agora, em vez de usar HistoryManager, delegamos a injeção do histórico ao ChatManager
+            await this.chatManager.injectChatHistory(this.stateManager.currentSessionId, this.stateManager.selectedGPT.flowiseConfig);
 
             // Inicializa o chatbot, mas não adiciona o chat ainda
             await this.initializeChatbot();
 
             // Adiciona o chat à lista e atualiza a URL
-            this.debugLog('createNewChat: adicionando chat à lista e atualizando URL:', newSessionId);
+            this.debugLog('createNewChat: adicionando chat à lista e atualizando URL:', this.stateManager.currentSessionId);
             
             // Adiciona o chat ao StateManager
             const newChat = {
-                id: newSessionId,
+                id: this.stateManager.currentSessionId,
                 name: selectedGPT.name || 'Novo Chat',
                 date: new Date().toISOString(),
                 fk_gpt_id: selectedGPT.id
@@ -468,7 +484,7 @@ class UIManager {
             
             // Atualiza a URL com o ID do novo chat criado e gptId
             if (this.chatManager && typeof this.chatManager.updateUrlWithChatId === 'function') {
-                this.chatManager.updateUrlWithChatId(newSessionId, selectedGPT.id);
+                this.chatManager.updateUrlWithChatId(this.stateManager.currentSessionId, selectedGPT.id);
             }
 
             // Recarrega a lista de chats para incluir o novo chat
@@ -478,7 +494,7 @@ class UIManager {
 
             // Seleciona o chat recém-criado na interface
             if (this.chatManager && typeof this.chatManager.selectChatItem === 'function') {
-                this.chatManager.selectChatItem(newSessionId);
+                this.chatManager.selectChatItem(this.stateManager.currentSessionId);
             }
 
             this.debugLog('Sessão criada e chatbot inicializado com sucesso.');
@@ -509,19 +525,34 @@ class UIManager {
                 throw new Error('flowiseConfig está indefinido ou incompleto para o GPT selecionado.');
             }
 
-            // Sempre gera um novo ID de sessão para o chatbot
-            // Não reutiliza sessões do localStorage para evitar conflitos com IDs existentes no banco
-            const newSessionId = this.gptManager.generateSessionId();
-            this.stateManager.setSessionId(newSessionId);
-            this.debugLog('Nova sessão criada:', newSessionId);
+            // ✅ IMPORTANTE: NÃO criar nova sessão se já existe uma válida
+            if (!this.stateManager.currentSessionId || this.stateManager.currentSessionId === '') {
+                this.debugLog('Criando nova sessão...');
+                const newSessionId = this.gptManager.generateSessionId();
+                this.stateManager.setSessionId(newSessionId);
+                this.debugLog('Nova sessão criada:', newSessionId);
+            } else {
+                this.debugLog('✅ Sessão existente encontrada, mantendo:', this.stateManager.currentSessionId);
+            }
 
-            // Limpar histórico injetado
-            const selectedFlowiseConfig = this.stateManager.selectedGPT.flowiseConfig.flowise;
-            localStorage.removeItem(`${selectedFlowiseConfig.chatflowId}_historyInjected`);
-            localStorage.removeItem(`${selectedFlowiseConfig.chatflowId}_EXTERNAL`);
+            // ✅ IMPORTANTE: NÃO limpar histórico se já existe uma sessão válida
+            // O histórico será injetado pelo ChatManager se necessário
+            if (!this.stateManager.currentSessionId || this.stateManager.currentSessionId === '') {
+                const selectedFlowiseConfig = this.stateManager.selectedGPT.flowiseConfig.flowise;
+                localStorage.removeItem(`${selectedFlowiseConfig.chatflowId}_historyInjected`);
+                localStorage.removeItem(`${selectedFlowiseConfig.chatflowId}_EXTERNAL`);
+                this.debugLog('Histórico limpo para nova sessão');
+            } else {
+                this.debugLog('✅ Mantendo histórico existente para sessão:', this.stateManager.currentSessionId);
+            }
 
-            // Agora, em vez de usar HistoryManager, delegamos a injeção do histórico ao ChatManager
-            await this.chatManager.injectChatHistory(this.stateManager.currentSessionId, this.stateManager.selectedGPT.flowiseConfig);
+            // ✅ IMPORTANTE: Só injetar histórico se não existe uma sessão válida
+            // Se já existe uma sessão, o histórico já foi carregado pelo ChatManager
+            if (!this.stateManager.currentSessionId || this.stateManager.currentSessionId === '') {
+                await this.chatManager.injectChatHistory(this.stateManager.currentSessionId, this.stateManager.selectedGPT.flowiseConfig);
+            } else {
+                this.debugLog('✅ Mantendo histórico existente para sessão:', this.stateManager.currentSessionId);
+            }
 
             // Aplicar override da configuração antes de inicializar o chatbot
             await this.applyConfigOverride();
@@ -538,9 +569,22 @@ class UIManager {
                 welcomeMessage.classList.add('d-none');
             }
             
+            // ✅ IMPORTANTE: Verificar histórico ANTES de criar o elemento do chatbot
+            const selectedFlowiseConfigEarly = this.stateManager.selectedGPT.flowiseConfig.flowise;
+            const historyKeyEarly = `${selectedFlowiseConfigEarly.chatflowId}_EXTERNAL`;
+            const existingHistoryEarly = localStorage.getItem(historyKeyEarly);
+            this.debugLog('🔍 Verificando histórico ANTES de criar elemento:', {
+                key: historyKeyEarly,
+                exists: !!existingHistoryEarly,
+                size: existingHistoryEarly ? existingHistoryEarly.length : 0,
+                preview: existingHistoryEarly ? JSON.parse(existingHistoryEarly).chatHistory?.length : 0
+            });
+
             if (chatbotContainer) {
                 chatbotContainer.classList.remove('d-none');
+                // ✅ IMPORTANTE: Criar elemento DEPOIS de verificar histórico
                 chatbotContainer.innerHTML = '<flowise-fullchatbot></flowise-fullchatbot>';
+                this.debugLog('🔧 Elemento flowise-fullchatbot criado, histórico deve estar disponível');
             } else {
                 console.error('Elemento chatbot-container não encontrado.');
                 return;
@@ -571,6 +615,13 @@ class UIManager {
                 presencePenalty: currentConfig.presencePenalty
             });
 
+            // ✅ IMPORTANTE: Definir selectedFlowiseConfig antes de usar
+            const selectedFlowiseConfig = this.stateManager.selectedGPT.flowiseConfig.flowise;
+            this.debugLog('selectedFlowiseConfig para inicialização:', selectedFlowiseConfig);
+
+            // ✅ INICIALIZAÇÃO SIMPLES (como na página de teste que funciona)
+            this.debugLog('🚀 Inicializando chatbot...');
+            
             this.chatbot.initFull({
                 chatflowid: selectedFlowiseConfig.chatflowId,
                 apiHost: selectedFlowiseConfig.apiHost,
@@ -1448,6 +1499,57 @@ class UIManager {
         this.stateManager.setSessionId(null);
         
         this.debugLog('Tela de seleção de GPT exibida após erro');
+    }
+
+    /**
+     * Recarrega o chatbot para exibir o histórico carregado.
+     * @param {string} sessionId - ID da sessão que tem histórico.
+     * @returns {Promise<void>}
+     */
+    async reloadChatbot(sessionId = null) {
+        try {
+            this.debugLog('Recarregando chatbot para exibir histórico...');
+            
+            // ✅ IMPORTANTE: Usar a sessão que tem histórico
+            if (sessionId) {
+                this.debugLog('✅ Usando sessão existente com histórico:', sessionId);
+                this.stateManager.setSessionId(sessionId);
+            }
+            
+            // Verificar se o chatbot está inicializado
+            if (!this.isChatbotInitialized) {
+                this.debugLog('Chatbot não inicializado, inicializando...');
+                await this.initializeChatbot();
+                return;
+            }
+            
+            // Tentar usar método reload se disponível
+            if (this.chatbot && typeof this.chatbot.reload === 'function') {
+                this.debugLog('Chamando reload() do chatbot...');
+                this.chatbot.reload();
+            } else {
+                this.debugLog('Método reload() não disponível, destruindo e reinicializando...');
+                
+                // Destruir chatbot atual
+                if (this.chatbot && typeof this.chatbot.destroy === 'function') {
+                    this.debugLog('Destruindo chatbot atual...');
+                    this.chatbot.destroy();
+                }
+                
+                // Resetar flag
+                this.isChatbotInitialized = false;
+                
+                // Reinicializar com a sessão que tem histórico
+                this.debugLog('Reinicializando chatbot com sessão existente...');
+                await this.initializeChatbot();
+            }
+            
+            this.debugLog('Chatbot recarregado com sucesso');
+            
+        } catch (error) {
+            this.debugLog('❌ Erro ao recarregar chatbot:', error);
+            throw error;
+        }
     }
 }
 

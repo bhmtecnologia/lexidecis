@@ -608,12 +608,57 @@ export default class GPTManager {
                     this.uiManager.chatManager.updateUrlWithChatId(newSessionId, gpt.id);
                 }
 
-                // 7) NÃO inicializar chatbot aqui - será feito pelo handleChatClick
-                debugLog('⏳ Chatbot será inicializado pelo handleChatClick após injetar histórico');
+                // 7) ✅ Inicializar chatbot para novo chat
+                debugLog('🚀 Inicializando chatbot para novo chat...');
+                if (this.uiManager && typeof this.uiManager.initializeChatbot === 'function') {
+                    try {
+                        await this.uiManager.initializeChatbot();
+                        debugLog('✅ Chatbot inicializado com sucesso para novo chat');
+                    } catch (error) {
+                        console.error('Erro ao inicializar chatbot:', error);
+                        debugLog('❌ Erro ao inicializar chatbot:', error.message);
+                    }
+                } else {
+                    debugLog('❌ UIManager ou initializeChatbot não disponível');
+                }
             } else {
-                // ✅ Sessão existente, não criar novo chat
-                debugLog('✅ Sessão existente encontrada, mantendo:', this.stateManager.currentSessionId);
-                debugLog('✅ Não criando novo chat, usando sessão existente');
+                // ✅ Sessão existente, mas GPT mudou - criar novo chat
+                debugLog('✅ Sessão existente encontrada, mas GPT mudou');
+                debugLog('🔄 Criando novo chat para o novo GPT selecionado');
+                
+                // Criar nova sessão para o novo GPT
+                const newSessionId = this.generateSessionId();
+                this.stateManager.setSessionId(newSessionId);
+
+                const newChat = {
+                    id: newSessionId,
+                    name: gpt.name,
+                    date: new Date().toISOString(),
+                    fk_gpt_id: gpt.id
+                };
+                this.stateManager.addChat(newChat);
+                this.uiManager.chatManager.populateChatMenu(this.stateManager.chats);
+
+                // Atualizar URL
+                if (this.uiManager.chatManager && typeof this.uiManager.chatManager.updateUrlWithChatId === 'function') {
+                    this.uiManager.chatManager.updateUrlWithChatId(newSessionId, gpt.id);
+                }
+                
+                // ✅ Inicializar chatbot para novo GPT
+                debugLog('🚀 Inicializando chatbot para novo GPT...');
+                if (this.uiManager && typeof this.uiManager.initializeChatbot === 'function') {
+                    try {
+                        await this.uiManager.initializeChatbot();
+                        debugLog('✅ Chatbot inicializado com sucesso para novo GPT');
+                    } catch (error) {
+                        console.error('Erro ao inicializar chatbot:', error);
+                        debugLog('❌ Erro ao inicializar chatbot:', error.message);
+                    }
+                } else {
+                    debugLog('❌ UIManager ou initializeChatbot não disponível');
+                }
+                
+                debugLog('✅ Novo chat criado para GPT:', gpt.name);
             }
 
             // 8) Salvar no localStorage

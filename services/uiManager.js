@@ -507,11 +507,8 @@ class UIManager {
     /* --- Funções de Inicialização do Chatbot --- */
     async initializeChatbot() {
         try {
-            // Verifica se o chatbot já foi inicializado para evitar dupla inicialização
-            if (this.isChatbotInitialized) {
-                this.debugLog('Chatbot já foi inicializado, pulando inicialização...');
-                return;
-            }
+            // ✅ Permitir reinicialização do chatbot quando necessário
+            this.debugLog('Iniciando inicialização do chatbot...');
 
             // Adicione logs para depuração
             this.debugLog('Iniciando a inicialização do chatbot...');

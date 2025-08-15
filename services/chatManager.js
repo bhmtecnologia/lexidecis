@@ -556,20 +556,27 @@ class ChatManager {
             // ✅ CRÍTICO: Selecionar o GPT ANTES de carregar histórico
             if (this.uiManager && this.uiManager.gptManager) {
                 debugLog('🔍 Selecionando GPT associado ao chat:', associatedGPT.name);
-                await this.uiManager.gptManager.selectGPTItem(associatedGPT);
                 
-                // ✅ Aguardar um pouco para garantir que o GPT seja selecionado
-                debugLog('⏳ Aguardando seleção do GPT...');
-                await new Promise(resolve => setTimeout(resolve, 100));
-                
-                // ✅ Verificar se o GPT foi selecionado corretamente
-                const currentGPT = this.stateManager.selectedGPT;
-                debugLog('🔍 GPT selecionado após selectGPTItem:', currentGPT?.name);
-                
-                if (!currentGPT || currentGPT.id !== gptId) {
-                    debugLog('❌ GPT não foi selecionado corretamente');
-                    showAlert('Erro ao selecionar GPT do chat.', 'error');
-                    return;
+                // ✅ IMPORTANTE: NÃO chamar selectGPTItem se já temos o GPT correto
+                if (this.stateManager.selectedGPT?.id !== associatedGPT.id) {
+                    debugLog('🔄 GPT diferente, selecionando novo GPT...');
+                    await this.uiManager.gptManager.selectGPTItem(associatedGPT);
+                    
+                    // ✅ Aguardar um pouco para garantir que o GPT seja selecionado
+                    debugLog('⏳ Aguardando seleção do GPT...');
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    
+                    // ✅ Verificar se o GPT foi selecionado corretamente
+                    const currentGPT = this.stateManager.selectedGPT;
+                    debugLog('🔍 GPT selecionado após selectGPTItem:', currentGPT?.name);
+                    
+                    if (!currentGPT || currentGPT.id !== associatedGPT.id) {
+                        debugLog('❌ GPT não foi selecionado corretamente');
+                        showAlert('Erro ao selecionar GPT do chat.', 'error');
+                        return;
+                    }
+                } else {
+                    debugLog('✅ GPT já está selecionado corretamente:', associatedGPT.name);
                 }
             } else {
                 console.error('Instância do GPTManager não está disponível no uiManager.');
@@ -616,12 +623,24 @@ class ChatManager {
             
             debugLog('🔍 GPT selecionado:', selectedGPT?.name);
             debugLog('🔍 Configuração do GPT:', gptConfig);
+            debugLog('🔍 gptConfig.flowise:', gptConfig?.flowise);
+            debugLog('🔍 gptConfig.flowise?.chatflowId:', gptConfig?.flowise?.chatflowId);
+            debugLog('🔍 selectedGPT.flowiseConfig:', selectedGPT?.flowiseConfig);
+            debugLog('🔍 selectedGPT.flowiseConfig?.flowise:', selectedGPT?.flowiseConfig?.flowise);
             
             // Obter chatflowId do GPT selecionado
-            const chatflowId = gptConfig?.flowise?.chatflowId;
+            let chatflowId = gptConfig?.flowise?.chatflowId;
+            
+            // ✅ FALLBACK: Se não encontrou no gptConfig, tenta no selectedGPT
+            if (!chatflowId && selectedGPT?.flowiseConfig?.flowise?.chatflowId) {
+                chatflowId = selectedGPT.flowiseConfig.flowise.chatflowId;
+                debugLog('✅ chatflowId encontrado no selectedGPT:', chatflowId);
+            }
             
             if (!chatflowId) {
                 debugLog('❌ chatflowId não encontrado na configuração do GPT');
+                debugLog('❌ Estrutura completa do gptConfig:', JSON.stringify(gptConfig, null, 2));
+                debugLog('❌ Estrutura completa do selectedGPT:', JSON.stringify(selectedGPT, null, 2));
                 return;
             }
             

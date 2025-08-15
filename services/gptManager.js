@@ -608,8 +608,8 @@ export default class GPTManager {
                     this.uiManager.chatManager.updateUrlWithChatId(newSessionId, gpt.id);
                 }
 
-                // 7) Inicializar chatbot
-                await this.uiManager.initializeChatbot();
+                // 7) NÃO inicializar chatbot aqui - será feito pelo handleChatClick
+                debugLog('⏳ Chatbot será inicializado pelo handleChatClick após injetar histórico');
             } else {
                 // ✅ Sessão existente, não criar novo chat
                 debugLog('✅ Sessão existente encontrada, mantendo:', this.stateManager.currentSessionId);

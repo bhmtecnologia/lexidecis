@@ -553,9 +553,24 @@ class ChatManager {
                 return;
             }
 
-            // Reutiliza a lógica do GPTManager para selecionar o GPT
+            // ✅ CRÍTICO: Selecionar o GPT ANTES de carregar histórico
             if (this.uiManager && this.uiManager.gptManager) {
+                debugLog('🔍 Selecionando GPT associado ao chat:', associatedGPT.name);
                 await this.uiManager.gptManager.selectGPTItem(associatedGPT);
+                
+                // ✅ Aguardar um pouco para garantir que o GPT seja selecionado
+                debugLog('⏳ Aguardando seleção do GPT...');
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                // ✅ Verificar se o GPT foi selecionado corretamente
+                const currentGPT = this.stateManager.selectedGPT;
+                debugLog('🔍 GPT selecionado após selectGPTItem:', currentGPT?.name);
+                
+                if (!currentGPT || currentGPT.id !== gptId) {
+                    debugLog('❌ GPT não foi selecionado corretamente');
+                    showAlert('Erro ao selecionar GPT do chat.', 'error');
+                    return;
+                }
             } else {
                 console.error('Instância do GPTManager não está disponível no uiManager.');
                 showAlert('Erro interno: GPTManager não encontrado.', 'error');
@@ -574,64 +589,76 @@ class ChatManager {
                 debugLog('Chat sem sessão existente, usando chatId como sessão:', chatId);
             }
 
-            // Carrega histórico, se existir um historyManager integrado via UIManager
-            if (this.uiManager && this.uiManager.historyManager) {
-                debugLog('Carregando histórico do chat:', chatId);
-                
-                // Atualizar mensagem do loading
-                LoadingUtils.updateProgress(loadingId, 50, 'Carregando histórico...');
-                
-                await this.uiManager.historyManager.loadHistory(chatId);
-                
-                // Atualizar progresso
-                LoadingUtils.updateProgress(loadingId, 100, 'Chat carregado!');
+            // ✅ SEMPRE carregar histórico usando o método local do chatManager
+            debugLog('Carregando histórico usando método local do chatManager');
+            
+            // Atualizar mensagem do loading
+            LoadingUtils.updateProgress(loadingId, 50, 'Carregando histórico...');
+            
+            // ✅ IMPORTANTE: Usar a sessão existente do chat original
+            const sessionId = selectedChat.session_id || chatId;
+            
+            // ✅ Forçar uso da sessão existente se disponível
+            if (selectedChat.session_id) {
+                debugLog('✅ Usando sessão existente do chat:', selectedChat.session_id);
+                this.stateManager.setSessionId(selectedChat.session_id);
             } else {
-                // Carrega histórico usando o método local do chatManager
-                debugLog('Carregando histórico usando método local do chatManager');
-                
-                // Atualizar mensagem do loading
-                LoadingUtils.updateProgress(loadingId, 50, 'Carregando histórico...');
-                
-                try {
-                    // ✅ IMPORTANTE: Usar a sessão existente do chat original
-                    const sessionId = selectedChat.session_id || chatId;
-                    
-                    // ✅ Forçar uso da sessão existente se disponível
-                    if (selectedChat.session_id) {
-                        debugLog('✅ Usando sessão existente do chat:', selectedChat.session_id);
-                        this.stateManager.setSessionId(selectedChat.session_id);
-                    } else {
-                        debugLog('⚠️ Chat sem sessão existente, usando chatId como sessão:', chatId);
-                        this.stateManager.setSessionId(chatId);
-                    }
-                    
-                    // ✅ Sempre carregar histórico para garantir que esteja disponível
-                    debugLog('Carregando histórico para sessão:', sessionId);
-                    
-                    // Usar configuração padrão do Flowise com token correto
-                    const defaultConfig = {
-                        flowise: {
-                            apiHost: 'https://flowise.power.tec.br',
-                            token: '0d1S97hx7o2pLVe5grVpkvUNW-RR_TTWYeGuKGK2ALs' // Token correto do Flowise
-                        }
-                    };
-                    
-                    await this.injectChatHistory(sessionId, defaultConfig);
-                    debugLog('Histórico carregado com sucesso para sessão:', sessionId);
-                    
-                    // Atualizar progresso
-                    LoadingUtils.updateProgress(loadingId, 100, 'Chat carregado!');
-                } catch (error) {
-                    console.error('Erro ao carregar histórico:', error);
-                    debugLog('Erro ao carregar histórico, continuando sem histórico');
-                    debugLog('Detalhes do erro:', error.message);
-                    // Atualizar progresso mesmo com erro
-                    LoadingUtils.updateProgress(loadingId, 100, 'Chat carregado (sem histórico)');
-                }
+                debugLog('⚠️ Chat sem sessão existente, usando chatId como sessão:', chatId);
+                this.stateManager.setSessionId(chatId);
             }
+            
+            // ✅ Sempre carregar histórico para garantir que esteja disponível
+            debugLog('Carregando histórico para sessão:', sessionId);
+            
+            // ✅ Usar chatflowId do GPT selecionado (não da API readChat)
+            const selectedGPT = this.stateManager.selectedGPT;
+            const gptConfig = this.stateManager.gptConfig;
+            
+            debugLog('🔍 GPT selecionado:', selectedGPT?.name);
+            debugLog('🔍 Configuração do GPT:', gptConfig);
+            
+            // Obter chatflowId do GPT selecionado
+            const chatflowId = gptConfig?.flowise?.chatflowId;
+            
+            if (!chatflowId) {
+                debugLog('❌ chatflowId não encontrado na configuração do GPT');
+                return;
+            }
+            
+            debugLog('🔍 chatflowId extraído do GPT:', chatflowId);
+            
+            // Usar configuração do GPT com chatflowId correto
+            const dynamicConfig = {
+                flowise: {
+                    apiHost: 'https://flowise.power.tec.br',
+                    token: '0d1S97hx7o2pLVe5grVpkvUNW-RR_TTWYeGuKGK2ALs',
+                    chatflowId: chatflowId
+                }
+            };
+            
+            debugLog('🔍 Configuração dinâmica criada:', dynamicConfig);
+            
+            await this.injectChatHistory(sessionId, dynamicConfig);
+            
+            // ✅ CRÍTICO: Aguardar para garantir que o localStorage esteja disponível
+            debugLog('⏳ Aguardando localStorage estar disponível...');
+            await new Promise(resolve => setTimeout(resolve, 200));
+            
+            // ✅ VERIFICAR se o _EXTERNAL foi criado
+            const externalKey = `${chatflowId}_EXTERNAL`;
+            const externalData = localStorage.getItem(externalKey);
+            debugLog('🔍 Verificação pós-injeção:', { externalKey, hasData: !!externalData, dataSize: externalData?.length || 0 });
+            debugLog('Histórico carregado com sucesso para sessão:', sessionId);
+            
+            // Atualizar progresso
+            LoadingUtils.updateProgress(loadingId, 100, 'Chat carregado!');
 
             // Destaca o chat selecionado na interface
             this.selectChatItem(chatId);
+
+            // ✅ CRÍTICO: Aguardar mais um pouco antes de inicializar o chatbot
+            debugLog('⏳ Aguardando antes de inicializar chatbot...');
+            await new Promise(resolve => setTimeout(resolve, 300));
 
             // ✅ GARANTIR que o chatbot seja inicializado (como no teste que funciona)
             LoadingUtils.updateProgress(loadingId, 90, 'Inicializando chatbot...');
@@ -989,6 +1016,9 @@ class ChatManager {
      * @param {Object} config - Configurações da aplicação.
      */
     async injectChatHistory(sessionId, config) {
+        debugLog('🚀 INJECTCHATHISTORY INICIADA');
+        debugLog('📋 Parâmetros recebidos:', { sessionId, config });
+        
         if (this._historyInjectionInProgress) {
             debugLog('Injeção de histórico já em andamento, ignorando...');
             return;
@@ -998,26 +1028,20 @@ class ChatManager {
         const historyCacheKey = `history_loaded_${sessionId}`;
 
         try {
-            // ✅ FORÇAR SEMPRE: Remover verificação de cache para garantir que o histórico seja sempre carregado
-            // if (localStorage.getItem(historyCacheKey)) {
-            //     debugLog('Histórico já foi carregado para esta sessão:', sessionId);
-            //     return;
-            // }
-
             // ✅ VERIFICAÇÃO DE CACHE (como no arquivo que funciona)
-            const sessionFlagKey = `${chatflowId}__${sessionId}_historyInjected`;
+            const sessionFlagKey = `${config?.flowise?.chatflowId || config?.chatflowId}__${sessionId}_historyInjected`;
             
             if (localStorage.getItem(sessionFlagKey)) {
                 debugLog('✅ Histórico já foi injetado anteriormente, pulando busca da API');
                 
                 // Ainda assim, copiar para chave base se necessário
-                const sessionExtKey = `${chatflowId}__${sessionId}_EXTERNAL`;
-                const baseExtKey = `${chatflowId}_EXTERNAL`;
+                const sessionExtKey = `${config?.flowise?.chatflowId || config?.chatflowId}__${sessionId}_EXTERNAL`;
+                const baseExtKey = `${config?.flowise?.chatflowId || config?.chatflowId}_EXTERNAL`;
                 const sessionData = localStorage.getItem(sessionExtKey);
                 
                 if (sessionData && !localStorage.getItem(baseExtKey)) {
                     localStorage.setItem(baseExtKey, sessionData);
-                    localStorage.setItem(`${chatflowId}_historyInjected`, 'true');
+                    localStorage.setItem(`${config?.flowise?.chatflowId || config?.chatflowId}_historyInjected`, 'true');
                     debugLog('🔄 Histórico copiado do cache da sessão para chave base');
                 }
                 
@@ -1030,8 +1054,13 @@ class ChatManager {
             const apiHistory = await this._fetchAndFormatHistory(sessionId, config);
             
             if (apiHistory && apiHistory.length > 0) {
-                // ✅ CHAVE CORRETA: usar chatflowId_EXTERNAL como o Flowise espera
-                const chatflowId = 'efe59701-afe2-4f4c-8448-bb8e3a32161a';
+                // ✅ CHAVE CORRETA: usar chatflowId do config do GPT
+                const chatflowId = config?.flowise?.chatflowId || config?.chatflowId;
+                if (!chatflowId) {
+                    debugLog('❌ chatflowId não encontrado no config:', config);
+                    return;
+                }
+                debugLog('🔍 chatflowId extraído do config:', chatflowId);
                 const historyKey = `${chatflowId}_EXTERNAL`;
                 
                 debugLog('🔑 Chave do localStorage criada:', historyKey);

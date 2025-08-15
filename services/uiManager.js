@@ -447,22 +447,28 @@ class UIManager {
                 this.resetChatbotInitialization();
             }
 
-            // ✅ IMPORTANTE: Verificar se já existe uma sessão válida
-            if (this.stateManager.currentSessionId && this.stateManager.currentSessionId !== '') {
-                this.debugLog('✅ Sessão existente encontrada, mantendo:', this.stateManager.currentSessionId);
-                // Não criar nova sessão se já existe uma válida
-            } else {
-                // Criar nova sessão apenas se não existir
-                this.debugLog('Criando nova sessão...');
-                const newSessionId = this.gptManager.generateSessionId();
-                this.stateManager.setSessionId(newSessionId);
-                this.debugLog('Nova sessão criada:', newSessionId);
-            }
+            // ✅ IMPORTANTE: SEMPRE criar nova sessão para novo chat
+            this.debugLog('🔄 Criando nova sessão para novo chat...');
+            const newSessionId = this.gptManager.generateSessionId();
+            this.stateManager.setSessionId(newSessionId);
+            this.debugLog('✅ Nova sessão criada:', newSessionId);
 
-            // Limpar histórico injetado
+            // ✅ LIMPAR histórico anterior para garantir chat limpo
             const selectedFlowiseConfig = this.stateManager.selectedGPT.flowiseConfig.flowise;
-            localStorage.removeItem(`${selectedFlowiseConfig.chatflowId}_historyInjected`);
-            localStorage.removeItem(`${selectedFlowiseConfig.chatflowId}_EXTERNAL`);
+            const chatflowId = selectedFlowiseConfig.chatflowId;
+            
+            // Limpar chaves relacionadas ao chatflowId
+            const keysToRemove = [
+                `${chatflowId}_historyInjected`,
+                `${chatflowId}_EXTERNAL`
+            ];
+            
+            keysToRemove.forEach(key => {
+                if (localStorage.getItem(key)) {
+                    localStorage.removeItem(key);
+                    this.debugLog('🗑️ Removido do localStorage:', key);
+                }
+            });
 
             // Agora, em vez de usar HistoryManager, delegamos a injeção do histórico ao ChatManager
             await this.chatManager.injectChatHistory(this.stateManager.currentSessionId, this.stateManager.selectedGPT.flowiseConfig);

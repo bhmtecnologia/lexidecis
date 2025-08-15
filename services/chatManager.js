@@ -947,6 +947,21 @@ class ChatManager {
             const historyKey = `${config.flowise.chatflowId}_EXTERNAL`;
             localStorage.setItem(historyKey, JSON.stringify(chatData));
             localStorage.setItem(`${config.flowise.chatflowId}_historyInjected`, 'true');
+            
+            // IMPORTANTE: Recarregar o chatbot para exibir o histórico
+            if (this.uiManager && this.uiManager.resetChatbotInitialization) {
+                debugLog('Recarregando chatbot para exibir histórico...');
+                this.uiManager.resetChatbotInitialization();
+                
+                // Aguardar um pouco para o reset ser processado
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                // Re-inicializar o chatbot para carregar o histórico
+                if (this.uiManager.initializeChatbot) {
+                    await this.uiManager.initializeChatbot();
+                    debugLog('Chatbot recarregado com sucesso para exibir histórico');
+                }
+            }
         } catch (error) {
             console.error('Erro ao injetar histórico no localStorage:', error);
             throw new Error('Erro ao buscar histórico de mensagens da API.');

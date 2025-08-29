@@ -539,10 +539,31 @@ input, button {
    23. Correções para Zoom Automático em Dispositivos Móveis
 =========================== */
 
-/* Previne zoom automático em TODOS os elementos */
-* {
+/* Previne zoom automático em TODOS os elementos - ULTIMA DEFESA */
+*,
+*::before,
+*::after {
     -webkit-text-size-adjust: 100% !important;
     text-size-adjust: 100% !important;
+    -webkit-transform: none !important;
+    transform: none !important;
+    -webkit-appearance: none !important;
+}
+
+/* CSS global para bloquear qualquer zoom */
+html {
+    -webkit-text-size-adjust: 100% !important;
+    text-size-adjust: 100% !important;
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: text !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
+
+/* Body com proteção máxima */
+body {
+    -webkit-text-size-adjust: 100% !important;
+    text-size-adjust: 100% !important;
+    touch-action: manipulation !important;
 }
 
 /* Previne zoom automático em inputs e textareas */

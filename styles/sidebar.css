@@ -36,6 +36,9 @@
         top: 10px;
         right: 10px;
         font-size: 1.2rem;
+        /* Safe area para iOS */
+        top: env(safe-area-inset-top, 10px);
+        top: max(10px, env(safe-area-inset-top));
     }
 
     /* ========================================
@@ -321,7 +324,10 @@
             display: block !important;
             position: fixed;
             z-index: 10000;
-            top: 10px;
+            /* Safe area para iOS - sempre abaixo da barra de status */
+            top: env(safe-area-inset-top, 10px);
+            top: max(10px, env(safe-area-inset-top));
+            top: calc(env(safe-area-inset-top, 0px) + 10px) !important;
             right: 10px;
         }
         
@@ -1027,7 +1033,9 @@ html body #sidebarMenu .lexi-user-menu-container {
         transform: translateX(-100%) !important;
         transition: transform 0.3s ease !important;
         position: fixed !important;
-        top: 0 !important;
+        /* Safe area para iOS - sempre abaixo da barra de status */
+        top: env(safe-area-inset-top, 0px) !important;
+        top: max(0px, env(safe-area-inset-top)) !important;
         left: 0 !important;
         width: 250px !important;
         z-index: 9999 !important;
@@ -1042,12 +1050,14 @@ html body #sidebarMenu .lexi-user-menu-container {
         overflow-y: hidden !important;
         display: flex !important;
         flex-direction: column !important;
+        /* Safe area para iOS - padding superior */
+        padding-top: env(safe-area-inset-top, 0px) !important;
     }
-    
+
     html body #sidebarMenu.lexi-sidebar-menu.active {
         transform: translateX(0%) !important;
     }
-    
+
     html body #sidebarMenu #chat-list.lexi-chat-list {
         flex: 1 !important;
         min-height: 0 !important;
@@ -1055,16 +1065,68 @@ html body #sidebarMenu .lexi-user-menu-container {
         max-height: none !important;
         background-color: #212529 !important;
     }
-    
+
     html body #sidebarMenu .lexi-user-menu-container {
         flex-shrink: 0 !important;
         background-color: #212529 !important;
         border-top: 1px solid #495057 !important;
         padding-top: 10px !important;
         margin-top: 10px !important;
+        /* Safe area para iOS - padding inferior */
         padding-bottom: env(safe-area-inset-bottom, 10px) !important;
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 10px) !important;
         position: relative !important;
         z-index: 10000 !important;
+    }
+}
+
+/* ========================================
+   REGRAS ESPECÍFICAS PARA iOS
+   ======================================== */
+
+/* iOS Safari - Otimizações específicas */
+@supports (-webkit-touch-callout: none) {
+    /* iOS Safari específico */
+    .lexi-toggle-sidebar-btn {
+        /* Safe area para iOS Safari */
+        top: env(safe-area-inset-top, 10px) !important;
+        top: max(10px, env(safe-area-inset-top)) !important;
+        top: calc(env(safe-area-inset-top, 0px) + 10px) !important;
+        /* Garantir que não fique atrás da barra de status */
+        margin-top: max(0px, env(safe-area-inset-top)) !important;
+    }
+
+    /* Sidebar para iOS Safari */
+    .lexi-sidebar-menu {
+        /* Safe area para iOS Safari */
+        top: env(safe-area-inset-top, 0px) !important;
+        padding-top: env(safe-area-inset-top, 0px) !important;
+    }
+
+    /* User menu para iOS Safari */
+    .lexi-user-menu-container {
+        /* Safe area para iOS Safari */
+        padding-bottom: env(safe-area-inset-bottom, 10px) !important;
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 10px) !important;
+    }
+}
+
+/* iOS - Corrigir viewport height issues */
+@supports (-webkit-appearance: none) {
+    /* Body para iOS */
+    .lexi-sidebar-body {
+        /* Safe area para iOS */
+        padding-top: env(safe-area-inset-top, 0px) !important;
+        padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+    }
+
+    /* Sidebar para iOS */
+    .lexi-sidebar-menu {
+        /* Safe area para iOS */
+        top: env(safe-area-inset-top, 0px) !important;
+        padding-top: env(safe-area-inset-top, 0px) !important;
+        /* Bottom safe area */
+        padding-bottom: env(safe-area-inset-bottom, 0px) !important;
     }
 }
 

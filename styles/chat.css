@@ -189,7 +189,10 @@ body.sidebar-active .content {
     display: none; /* Oculto por padrão */
     position: fixed;
     z-index: 10000;
-    top: 10px;
+    /* Safe area para iOS - sempre abaixo da barra de status */
+    top: env(safe-area-inset-top, 10px);
+    top: max(10px, env(safe-area-inset-top));
+    top: calc(env(safe-area-inset-top, 0px) + 10px);
     right: 10px;
     font-size: 1.2rem; /* Aproximadamente 20% menor que 1.5rem */
     background-color: var(--sidebar-toggle-bg);

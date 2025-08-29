@@ -37,7 +37,7 @@ const checks = [
     },
     {
         name: 'Ícone principal (512x512)',
-        path: 'images/vtc_contratos_seguros.png',
+        path: 'images/icons/icon-512x512-1.png',
         type: 'file',
         critical: true
     },

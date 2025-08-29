@@ -535,3 +535,85 @@ input, button {
     touch-action: manipulation; /* Melhora a responsividade dos toques */
 }
 
+/* ===========================
+   23. Correções para Zoom Automático em Dispositivos Móveis
+=========================== */
+
+/* Previne zoom automático em inputs e textareas */
+input, textarea, select {
+    font-size: 16px !important; /* Previne zoom em iOS */
+    -webkit-appearance: none;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Especificamente para o chatbot Flowise */
+flowise-fullchatbot {
+    -webkit-text-size-adjust: 100%;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+}
+
+/* Container do chatbot com melhor controle de toque */
+#chatbot-container {
+    touch-action: manipulation;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Correções específicas para dispositivos móveis */
+@media screen and (max-width: 768px) {
+    /* Previne zoom em inputs do chatbot */
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    textarea,
+    select {
+        font-size: 16px !important;
+        min-height: 44px; /* Tamanho mínimo para toque confortável */
+        border-radius: 4px;
+        -webkit-appearance: none;
+        -webkit-text-size-adjust: none;
+        text-size-adjust: none;
+    }
+
+    /* Botões com tamanho adequado para toque */
+    button {
+        min-height: 44px;
+        min-width: 44px;
+        -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+    }
+
+    /* Container principal sem overflow que cause zoom */
+    .content {
+        overflow: hidden;
+        -webkit-overflow-scrolling: auto;
+    }
+
+    /* Sidebar em mobile */
+    #sidebarMenu {
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-y;
+    }
+
+    /* Previne zoom no container do chatbot */
+    #chatbot-container {
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+        -webkit-perspective: 1000;
+        perspective: 1000;
+    }
+}
+
+/* Correções específicas para iOS */
+@media screen and (max-device-width: 896px) and (-webkit-min-device-pixel-ratio: 2) {
+    input, textarea {
+        -webkit-appearance: none;
+        -webkit-border-radius: 4px;
+        border-radius: 4px;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+    }
+}
+

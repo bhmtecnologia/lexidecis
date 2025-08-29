@@ -14,6 +14,18 @@ const CRITICAL_ASSETS = [
   '/services/login.js',
   '/services/auth.js',
   '/services/alertManager.js',
+  // Ícones PWA - TODOS os tamanhos
+  '/images/icons/icon-72x72.png',
+  '/images/icons/icon-96x96.png',
+  '/images/icons/icon-128x128.png',
+  '/images/icons/icon-144x144.png',
+  '/images/icons/icon-152x152.png',
+  '/images/icons/icon-192x192.png',
+  '/images/icons/icon-512x512.png',
+  '/images/icons/icon-512x512-1.png',
+  // Ícones auxiliares
+  '/images/gpts/image_lexi-ico.png',
+  // Bootstrap e dependências
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css',
   'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css',
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js',

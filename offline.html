@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LexiDecis - Offline</title>
+    <style>
+        :root {
+            --primary-color: #1ed760;
+            --bg-color: #000000;
+            --text-color: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .offline-container {
+            max-width: 400px;
+        }
+
+        .offline-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.7;
+        }
+
+        .offline-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .offline-message {
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            opacity: 0.8;
+            line-height: 1.5;
+        }
+
+        .retry-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .retry-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(30, 215, 96, 0.3);
+        }
+
+        .loading {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #333;
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="offline-icon">📡</div>
+        <h1 class="offline-title">Sem Conexão</h1>
+        <p class="offline-message">
+            Você está offline no momento. Verifique sua conexão com a internet e tente novamente.
+        </p>
+        <button class="retry-btn" onclick="retryConnection()">
+            Tentar Novamente
+        </button>
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+        </div>
+    </div>
+
+    <script>
+        function retryConnection() {
+            const btn = document.querySelector('.retry-btn');
+            const loading = document.getElementById('loading');
+
+            btn.style.display = 'none';
+            loading.style.display = 'block';
+
+            // Simular tentativa de reconexão
+            setTimeout(() => {
+                if (navigator.onLine) {
+                    window.location.href = '/';
+                } else {
+                    btn.style.display = 'block';
+                    loading.style.display = 'none';
+                    alert('Ainda sem conexão. Verifique sua internet e tente novamente.');
+                }
+            }, 2000);
+        }
+
+        // Verificar status da conexão
+        window.addEventListener('online', () => {
+            window.location.href = '/';
+        });
+
+        // Mostrar status da conexão
+        window.addEventListener('load', () => {
+            if (navigator.onLine) {
+                document.querySelector('.offline-message').textContent =
+                    'Conexão detectada! Redirecionando...';
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1000);
+            }
+        });
+    </script>
+</body>
+</html>

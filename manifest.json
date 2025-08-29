@@ -1,0 +1,65 @@
+{
+  "name": "LexiDecis - Inteligência Competitiva",
+  "short_name": "LexiDecis",
+  "description": "Transformando a Inteligência Competitiva com IA avançada para decisões jurídicas e empresariais",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#1ed760",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "pt-BR",
+  "categories": ["business", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "16x16 32x32 48x48",
+      "type": "image/x-icon",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/vtc_contratos_seguros.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/gpts/image_lexi-ico.png",
+      "sizes": "256x256",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Chat",
+      "short_name": "Chat",
+      "description": "Iniciar nova conversa",
+      "url": "/pages/chat.html",
+      "icons": [
+        {
+          "src": "/images/gpts/image_lexi-ico.png",
+          "sizes": "256x256"
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "short_name": "Admin",
+      "description": "Painel administrativo",
+      "url": "/admin/index.html",
+      "icons": [
+        {
+          "src": "/images/gpts/image_lexi-ico.png",
+          "sizes": "256x256"
+        }
+      ]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
+}

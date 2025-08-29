@@ -4,16 +4,39 @@
     <!-- Meta tags essenciais -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LexiDecis - Bem-vindo</title>
-    
+    <meta name="theme-color" content="#1ed760">
+    <meta name="msapplication-TileColor" content="#1ed760">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="LexiDecis">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="LexiDecis">
+    <meta name="description" content="Transformando a Inteligência Competitiva com IA avançada para decisões jurídicas e empresariais">
+    <meta name="keywords" content="IA, inteligência artificial, jurídica, empresarial, decisões, LexiDecis">
+    <meta name="author" content="LexiDecis">
+
+    <title>LexiDecis - Inteligência Competitiva</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+
+    <!-- Favicon e ícones -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/vtc_contratos_seguros.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/images/vtc_contratos_seguros.png">
+    <link rel="icon" type="image/png" sizes="256x256" href="/images/gpts/image_lexi-ico.png">
+
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
-    
-    <!-- GSAP para Animações -->
+
+        <!-- GSAP para Animações -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
-    
+
     <!-- Three.js para Animações 3D -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+
+    <!-- Gerenciador de Cache PWA -->
+    <script src="/cache-manager.js"></script>
     
     <!-- Estilos Internos -->
     <style>
@@ -133,9 +156,181 @@
                 font-size: 0.8rem;
             }
         }
+
+        /* PWA Install Banner */
+        .pwa-install-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #1ed760, #17b456);
+            color: white;
+            padding: 12px 20px;
+            text-align: center;
+            z-index: 1000;
+            transform: translateY(-100%);
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .pwa-install-banner.show {
+            transform: translateY(0);
+        }
+
+        .pwa-install-banner .banner-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .pwa-install-banner .banner-text {
+            flex: 1;
+            text-align: left;
+            margin-right: 20px;
+        }
+
+        .pwa-install-banner .banner-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .pwa-install-banner .banner-subtitle {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        .pwa-install-banner .install-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .pwa-install-banner .install-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-1px);
+        }
+
+        .pwa-install-banner .dismiss-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            margin-left: 10px;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        .pwa-install-banner .dismiss-btn:hover {
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .pwa-install-banner .banner-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .pwa-install-banner .banner-text {
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+        }
+
+        /* Offline Indicator */
+        .offline-indicator {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: #ff4444;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateY(100%);
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(255,68,68,0.3);
+        }
+
+        .offline-indicator.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Loading States */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .loading-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #333;
+            border-top: 3px solid #1ed760;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
+    <!-- PWA Install Banner -->
+    <div class="pwa-install-banner" id="pwa-install-banner">
+        <div class="banner-content">
+            <div class="banner-text">
+                <div class="banner-title">Instalar LexiDecis</div>
+                <div class="banner-subtitle">Instale o app para uma experiência completa offline</div>
+            </div>
+            <button class="install-btn" id="install-btn">Instalar</button>
+            <button class="dismiss-btn" id="dismiss-btn">×</button>
+        </div>
+    </div>
+
+    <!-- Offline Indicator -->
+    <div class="offline-indicator" id="offline-indicator">
+        📡 Sem conexão
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner"></div>
+    </div>
+
     <!-- Canvas para Animações 3D -->
     <canvas id="bg-canvas"></canvas>
 
@@ -146,67 +341,341 @@
         <button class="btn-start" id="start-button">Entrar</button>
     </div>
 
-    <!-- Scripts -->
+    <!-- Scripts PWA -->
     <script>
-        // Configuração do Three.js para Animações de Fundo
-        document.addEventListener('DOMContentLoaded', () => {
-            const canvas = document.getElementById('bg-canvas');
-            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
+        // Classe principal para gerenciamento da PWA
+        class LexiDecisPWA {
+            constructor() {
+                this.deferredPrompt = null;
+                this.isOnline = navigator.onLine;
+                this.init();
+            }
 
-            const scene = new THREE.Scene();
+            init() {
+                this.registerServiceWorker();
+                this.setupInstallPrompt();
+                this.setupNetworkMonitoring();
+                this.setupAnimations();
+                this.setupEventListeners();
+            }
 
-            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 5;
+            // Registro do Service Worker
+            async registerServiceWorker() {
+                if ('serviceWorker' in navigator) {
+                    try {
+                        const registration = await navigator.serviceWorker.register('/sw.js', {
+                            scope: '/'
+                        });
 
-            // Geometria e Material
-            const geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16);
-            const material = new THREE.MeshStandardMaterial({ color: 0x1ed760, metalness: 0.5, roughness: 0.1 });
-            const torusKnot = new THREE.Mesh(geometry, material);
-            scene.add(torusKnot);
+                        console.log('[PWA] Service Worker registrado:', registration.scope);
 
-            // Iluminação
-            const pointLight = new THREE.PointLight(0xffffff, 1);
-            pointLight.position.set(5, 5, 5);
-            scene.add(pointLight);
+                        // Monitorar atualizações do SW
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            if (newWorker) {
+                                newWorker.addEventListener('statechange', () => {
+                                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                        this.showUpdateNotification();
+                                    }
+                                });
+                            }
+                        });
 
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
-            scene.add(ambientLight);
+                        // Escutar mensagens do SW
+                        navigator.serviceWorker.addEventListener('message', (event) => {
+                            this.handleServiceWorkerMessage(event);
+                        });
 
-            // Animação
-            const animate = function () {
-                requestAnimationFrame(animate);
+                    } catch (error) {
+                        console.error('[PWA] Falha no registro do Service Worker:', error);
+                    }
+                }
+            }
 
-                torusKnot.rotation.x += 0.005;
-                torusKnot.rotation.y += 0.005;
+            // Configuração do prompt de instalação
+            setupInstallPrompt() {
+                window.addEventListener('beforeinstallprompt', (e) => {
+                    console.log('[PWA] beforeinstallprompt disparado');
+                    e.preventDefault();
+                    this.deferredPrompt = e;
+                    this.showInstallBanner();
+                });
 
-                renderer.render(scene, camera);
-            };
+                window.addEventListener('appinstalled', (e) => {
+                    console.log('[PWA] App instalado com sucesso');
+                    this.hideInstallBanner();
+                    this.showInstallSuccess();
+                });
+            }
 
-            animate();
+            // Monitoramento de conectividade
+            setupNetworkMonitoring() {
+                window.addEventListener('online', () => {
+                    console.log('[PWA] Conexão restaurada');
+                    this.isOnline = true;
+                    this.hideOfflineIndicator();
+                    this.syncDataIfNeeded();
+                });
 
-            // Responsividade
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
+                window.addEventListener('offline', () => {
+                    console.log('[PWA] Conexão perdida');
+                    this.isOnline = false;
+                    this.showOfflineIndicator();
+                });
+
+                // Verificar status inicial
+                if (!this.isOnline) {
+                    this.showOfflineIndicator();
+                }
+            }
+
+            // Configuração das animações
+            setupAnimations() {
+                // Configuração do Three.js
+                this.setupThreeJS();
+
+                // Animações de entrada com GSAP
+                window.addEventListener('load', () => {
+                    gsap.to(".logo", { duration: 1, opacity: 1, y: 0, ease: "power2.out" });
+                    gsap.to(".slogan", { duration: 1, opacity: 1, y: 0, delay: 0.5, ease: "power2.out" });
+                    gsap.to(".btn-start", { duration: 1, opacity: 1, scale: 1, delay: 1, ease: "power2.out" });
+                });
+            }
+
+            // Configuração do Three.js
+            setupThreeJS() {
+                const canvas = document.getElementById('bg-canvas');
+                if (!canvas) return;
+
+                const renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
                 renderer.setSize(window.innerWidth, window.innerHeight);
-            });
+                renderer.setPixelRatio(window.devicePixelRatio);
+
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                camera.position.z = 5;
+
+                // Geometria e Material
+                const geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16);
+                const material = new THREE.MeshStandardMaterial({
+                    color: 0x1ed760,
+                    metalness: 0.5,
+                    roughness: 0.1
+                });
+                const torusKnot = new THREE.Mesh(geometry, material);
+                scene.add(torusKnot);
+
+                // Iluminação
+                const pointLight = new THREE.PointLight(0xffffff, 1);
+                pointLight.position.set(5, 5, 5);
+                scene.add(pointLight);
+
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+                scene.add(ambientLight);
+
+                // Animação
+                const animate = () => {
+                    requestAnimationFrame(animate);
+                    torusKnot.rotation.x += 0.005;
+                    torusKnot.rotation.y += 0.005;
+                    renderer.render(scene, camera);
+                };
+                animate();
+
+                // Responsividade
+                window.addEventListener('resize', () => {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+            }
+
+            // Configuração dos event listeners
+            setupEventListeners() {
+                // Botão de instalação
+                document.getElementById('install-btn')?.addEventListener('click', () => {
+                    this.installPWA();
+                });
+
+                // Botão de dismiss do banner
+                document.getElementById('dismiss-btn')?.addEventListener('click', () => {
+                    this.hideInstallBanner();
+                });
+
+                // Botão de entrada
+                document.getElementById('start-button')?.addEventListener('click', () => {
+                    this.navigateToLogin();
+                });
+            }
+
+            // Mostrar banner de instalação
+            showInstallBanner() {
+                const banner = document.getElementById('pwa-install-banner');
+                if (banner && !this.isStandalone()) {
+                    banner.classList.add('show');
+                }
+            }
+
+            // Esconder banner de instalação
+            hideInstallBanner() {
+                const banner = document.getElementById('pwa-install-banner');
+                if (banner) {
+                    banner.classList.remove('show');
+                }
+            }
+
+            // Instalar PWA
+            async installPWA() {
+                if (!this.deferredPrompt) return;
+
+                this.showLoading();
+
+                try {
+                    const result = await this.deferredPrompt.prompt();
+                    console.log('[PWA] Resultado da instalação:', result.outcome);
+
+                    this.deferredPrompt = null;
+                    this.hideInstallBanner();
+
+                } catch (error) {
+                    console.error('[PWA] Erro na instalação:', error);
+                } finally {
+                    this.hideLoading();
+                }
+            }
+
+            // Mostrar indicador offline
+            showOfflineIndicator() {
+                const indicator = document.getElementById('offline-indicator');
+                if (indicator) {
+                    indicator.classList.add('show');
+                }
+            }
+
+            // Esconder indicador offline
+            hideOfflineIndicator() {
+                const indicator = document.getElementById('offline-indicator');
+                if (indicator) {
+                    indicator.classList.remove('show');
+                }
+            }
+
+            // Mostrar loading
+            showLoading() {
+                const overlay = document.getElementById('loading-overlay');
+                if (overlay) {
+                    overlay.classList.add('show');
+                }
+            }
+
+            // Esconder loading
+            hideLoading() {
+                const overlay = document.getElementById('loading-overlay');
+                if (overlay) {
+                    overlay.classList.remove('show');
+                }
+            }
+
+            // Verificar se está em modo standalone
+            isStandalone() {
+                return window.matchMedia('(display-mode: standalone)').matches ||
+                       window.navigator.standalone === true;
+            }
+
+            // Mostrar notificação de sucesso na instalação
+            showInstallSuccess() {
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    new Notification('LexiDecis Instalado!', {
+                        body: 'O aplicativo foi instalado com sucesso.',
+                        icon: '/images/gpts/image_lexi-ico.png',
+                        badge: '/images/gpts/image_lexi-ico.png'
+                    });
+                }
+            }
+
+            // Mostrar notificação de atualização
+            showUpdateNotification() {
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    new Notification('Atualização Disponível', {
+                        body: 'Uma nova versão do LexiDecis está disponível.',
+                        icon: '/images/gpts/image_lexi-ico.png',
+                        badge: '/images/gpts/image_lexi-ico.png',
+                        actions: [
+                            { action: 'update', title: 'Atualizar' },
+                            { action: 'dismiss', title: 'Depois' }
+                        ]
+                    });
+                }
+            }
+
+            // Navegação para login
+            navigateToLogin() {
+                gsap.to(".intro-container", {
+                    duration: 1,
+                    opacity: 0,
+                    scale: 0.8,
+                    ease: "power2.in",
+                    onComplete: () => {
+                        window.location.href = "pages/login.html";
+                    }
+                });
+            }
+
+            // Sincronização de dados quando volta online
+            syncDataIfNeeded() {
+                // Implementar sincronização de dados pendentes
+                console.log('[PWA] Sincronizando dados pendentes...');
+            }
+
+            // Manipular mensagens do Service Worker
+            handleServiceWorkerMessage(event) {
+                console.log('[PWA] Mensagem do SW:', event.data);
+
+                if (event.data && event.data.type === 'CACHE_INFO') {
+                    console.log('[PWA] Informações do cache:', event.data.cacheInfo);
+                }
+            }
+
+            // Solicitar informações do cache
+            async getCacheInfo() {
+                if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                    const channel = new MessageChannel();
+                    navigator.serviceWorker.controller.postMessage(
+                        { type: 'GET_CACHE_INFO' },
+                        [channel.port2]
+                    );
+
+                    return new Promise((resolve) => {
+                        channel.port1.onmessage = (event) => {
+                            resolve(event.data);
+                        };
+                    });
+                }
+                return null;
+            }
+        }
+
+        // Solicitar permissão para notificações
+        async function requestNotificationPermission() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                const permission = await Notification.requestPermission();
+                console.log('[PWA] Permissão de notificação:', permission);
+            }
+        }
+
+        // Inicializar PWA quando DOM estiver pronto
+        document.addEventListener('DOMContentLoaded', () => {
+            // Inicializar PWA
+            new LexiDecisPWA();
+
+            // Solicitar permissão para notificações
+            requestNotificationPermission();
         });
 
-        // Animações de Entrada com GSAP
-        window.addEventListener('load', () => {
-            gsap.to(".logo", { duration: 1, opacity: 1, y: 0, ease: "power2.out" });
-            gsap.to(".slogan", { duration: 1, opacity: 1, y: 0, delay: 0.5, ease: "power2.out" });
-            gsap.to(".btn-start", { duration: 1, opacity: 1, scale: 1, delay: 1, ease: "power2.out" });
-        });
-
-        // Redirecionamento com Animação ao Clicar no Botão
-        document.getElementById("start-button").addEventListener("click", () => {
-            gsap.to(".intro-container", { duration: 1, opacity: 0, scale: 0.8, ease: "power2.in", onComplete: () => {
-                window.location.href = "pages/login.html";
-            }});
-        });
+        // Fallback para navegadores sem suporte a módulos ES6
+        if (!window.Promise) {
+            window.Promise = Promise;
+        }
     </script>
 </body>
 </html>

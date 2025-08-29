@@ -4,13 +4,36 @@
     <!-- Meta tags essenciais -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LexiDecis - </title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <meta name="theme-color" content="#1ed760">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="LexiDecis">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="description" content="Login - LexiDecis - Transformando a Inteligência Competitiva">
+    <meta name="author" content="LexiDecis">
+
+    <title>LexiDecis - Login</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+
+    <!-- Favicon e ícones -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/vtc_contratos_seguros.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/images/vtc_contratos_seguros.png">
+    <link rel="icon" type="image/png" sizes="256x256" href="/images/gpts/image_lexi-ico.png">
+    <!-- CSS Offline SEMPRE ATIVO por padrão -->
+    <link rel="stylesheet" href="/styles/login-offline.css" id="offline-css">
+
+    <!-- Bootstrap CSS com fallback (desabilitado por padrão) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css" disabled onload="tryBootstrapMode()" onerror="stayOfflineMode()">
+    <!-- Bootstrap Icons com fallback (desabilitado por padrão) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" id="bootstrap-icons-css" disabled onload="tryBootstrapMode()" onerror="stayOfflineMode()">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Gerenciador de Cache PWA -->
+    <script src="/cache-manager.js"></script>
     <!-- Estilos Internos -->
     <style>
         /* Variáveis de Cores */
@@ -43,6 +66,17 @@
             color: var(--text-color);
             overflow: hidden;
             position: relative;
+        }
+
+        /* Estilos específicos para PWA */
+        .pwa-mode {
+            /* Ajustes para quando estiver rodando como PWA instalada */
+        }
+
+        .pwa-mode body {
+            /* Garantir que funcione bem no modo standalone */
+            -webkit-text-size-adjust: 100% !important;
+            text-size-adjust: 100% !important;
         }
 
         /* Efeitos de Partículas no Fundo */
@@ -235,9 +269,35 @@
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
     <!-- Firebase e Scripts Personalizados -->
     <script type="module" src="../services/login.js" defer></script>
-    <!-- Script para Configurar Partículas -->
+
+    <!-- SISTEMA SIMPLES DE PWA -->
     <script>
-        particlesJS("particles-js", {
+        // Sistema direto e simples para PWA
+        console.log('[Login PWA] Iniciando sistema PWA...');
+
+        // Registrar Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                .then(registration => console.log('[Login PWA] SW registrado'))
+                .catch(error => console.error('[Login PWA] Erro SW:', error));
+
+            // Detectar PWA
+            if (window.matchMedia('(display-mode: standalone)').matches ||
+                window.navigator.standalone === true) {
+                document.documentElement.classList.add('pwa-mode');
+                console.log('[Login PWA] Modo PWA detectado');
+            }
+        }
+
+        // SISTEMA ULTRA-SIMPLES: CSS OFFLINE JÁ ESTÁ FUNCIONANDO!
+        console.log('[Login PWA] Sistema funcionando com CSS offline!');
+    </script>
+
+    <!-- Script para Configurar Partículas (com fallback) -->
+    <script>
+        // Fallback caso particlesJS não esteja disponível
+        if (typeof particlesJS === 'function') {
+            particlesJS("particles-js", {
             "particles": {
                 "number": {
                     "value": 180, //Define a quantidade de Partículas
@@ -318,6 +378,15 @@
             },
             "retina_detect": true
         });
+        } else {
+            console.log('[Login PWA] Particles.js não disponível - usando background estático');
+            // Fallback: definir um background estático para o canvas
+            const particlesCanvas = document.getElementById('particles-js');
+            if (particlesCanvas) {
+                particlesCanvas.style.background = 'radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%), radial-gradient(circle at 40% 80%, rgba(120, 219, 255, 0.3) 0%, transparent 50%)';
+                particlesCanvas.style.backgroundSize = '100% 100%';
+            }
+        }
     </script>
 </body>
 </html>

@@ -4,7 +4,7 @@
 <head>
     <!-- Meta tags essenciais -->
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=no">
     <meta name="format-detection" content="telephone=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -171,8 +171,49 @@
 
     <!-- Script para melhorar experiência mobile -->
     <script>
-        // Previne zoom automático em dispositivos móveis
+        // Previne zoom automático em dispositivos móveis - versão aprimorada
         (function() {
+            // Função para forçar viewport consistente
+            function enforceViewport() {
+                var viewport = document.querySelector('meta[name=viewport]');
+                if (viewport) {
+                    viewport.setAttribute('content',
+                        'width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=no');
+                }
+            }
+
+            // Aplica estilos de anti-zoom a um elemento
+            function applyAntiZoomStyles(element) {
+                if (element) {
+                    element.style.fontSize = '16px';
+                    element.style.webkitAppearance = 'none';
+                    element.style.webkitTextSizeAdjust = '100%';
+                    element.style.textSizeAdjust = '100%';
+                    element.style.touchAction = 'manipulation';
+                    element.style.webkitTapHighlightColor = 'transparent';
+                }
+            }
+
+            // Aplica estilos a todos os elementos do chatbot
+            function applyChatbotStyles() {
+                var chatbot = document.querySelector('flowise-fullchatbot');
+                if (chatbot) {
+                    // Aplica aos inputs e textareas do chatbot
+                    var inputs = chatbot.querySelectorAll('input, textarea, select');
+                    inputs.forEach(function(input) {
+                        applyAntiZoomStyles(input);
+                        input.style.minHeight = '44px';
+                    });
+
+                    // Aplica a todos os elementos dentro do chatbot
+                    var allElements = chatbot.querySelectorAll('*');
+                    allElements.forEach(function(el) {
+                        el.style.webkitTextSizeAdjust = '100%';
+                        el.style.textSizeAdjust = '100%';
+                    });
+                }
+            }
+
             // Previne zoom duplo em iOS
             var lastTouchEnd = 0;
             document.addEventListener('touchend', function(event) {
@@ -183,45 +224,103 @@
                 lastTouchEnd = now;
             }, false);
 
-            // Previne zoom ao focar em inputs
-            document.addEventListener('DOMContentLoaded', function() {
-                var inputs = document.querySelectorAll('input, textarea, select');
-                inputs.forEach(function(input) {
-                    input.addEventListener('focus', function() {
-                        // Força viewport a não fazer zoom
-                        var viewport = document.querySelector('meta[name=viewport]');
-                        if (viewport) {
-                            viewport.setAttribute('content',
-                                'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
-                        }
-                    });
-                });
+            // Monitora foco em inputs
+            document.addEventListener('focusin', function(event) {
+                if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.tagName === 'SELECT') {
+                    enforceViewport();
+                    applyAntiZoomStyles(event.target);
+                }
+            }, true);
 
-                // Listener para quando o chatbot for inicializado
-                var observer = new MutationObserver(function(mutations) {
+            // Monitora toque
+            document.addEventListener('touchstart', function(event) {
+                enforceViewport();
+            }, true);
+
+            document.addEventListener('DOMContentLoaded', function() {
+                // Aplica estilos iniciais
+                var allInputs = document.querySelectorAll('input, textarea, select');
+                allInputs.forEach(applyAntiZoomStyles);
+
+                // Monitora continuamente o chatbot
+                var chatbotObserver = new MutationObserver(function(mutations) {
                     mutations.forEach(function(mutation) {
                         if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
                             mutation.addedNodes.forEach(function(node) {
                                 if (node.tagName === 'FLOWISE-FULLCHATBOT') {
-                                    // Aplica configurações mobile ao chatbot quando ele for carregado
-                                    setTimeout(function() {
-                                        var chatbotInputs = node.querySelectorAll('input, textarea');
-                                        chatbotInputs.forEach(function(input) {
-                                            input.style.fontSize = '16px';
-                                            input.style.webkitAppearance = 'none';
-                                            input.style.webkitTextSizeAdjust = '100%';
-                                        });
-                                    }, 1000);
+                                    // Aplica estilos imediatamente
+                                    applyChatbotStyles();
+                                    // Continua aplicando periodicamente
+                                    var styleInterval = setInterval(function() {
+                                        applyChatbotStyles();
+                                        // Para após 10 segundos
+                                        setTimeout(function() {
+                                            clearInterval(styleInterval);
+                                        }, 10000);
+                                    }, 500);
                                 }
                             });
                         }
                     });
                 });
 
-                observer.observe(document.getElementById('chatbot-container'), {
-                    childList: true,
-                    subtree: true
-                });
+                var container = document.getElementById('chatbot-container');
+                if (container) {
+                    chatbotObserver.observe(container, {
+                        childList: true,
+                        subtree: true
+                    });
+                }
+
+                // Verifica periodicamente se o chatbot foi carregado
+                var checkInterval = setInterval(function() {
+                    if (document.querySelector('flowise-fullchatbot')) {
+                        applyChatbotStyles();
+                        clearInterval(checkInterval);
+                    }
+                }, 100);
+
+                // Aplica estilos periodicamente para garantir
+                setInterval(function() {
+                    enforceViewport();
+                    applyChatbotStyles();
+                }, 2000);
+
+                // Injeta CSS adicional para máxima prioridade
+                var antiZoomCSS = `
+                    <style id="anti-zoom-css">
+                        /* CSS de máxima prioridade para prevenir zoom */
+                        flowise-fullchatbot input,
+                        flowise-fullchatbot textarea,
+                        flowise-fullchatbot select,
+                        flowise-fullchatbot button {
+                            font-size: 16px !important;
+                            -webkit-text-size-adjust: 100% !important;
+                            text-size-adjust: 100% !important;
+                            -webkit-appearance: none !important;
+                            touch-action: manipulation !important;
+                            -webkit-tap-highlight-color: transparent !important;
+                            min-height: 44px !important;
+                        }
+
+                        flowise-fullchatbot * {
+                            -webkit-text-size-adjust: 100% !important;
+                            text-size-adjust: 100% !important;
+                        }
+
+                        /* Previne zoom em qualquer input dentro do shadow DOM */
+                        flowise-fullchatbot ::shadow input,
+                        flowise-fullchatbot ::shadow textarea,
+                        flowise-fullchatbot ::shadow select {
+                            font-size: 16px !important;
+                            -webkit-text-size-adjust: 100% !important;
+                            text-size-adjust: 100% !important;
+                        }
+                    </style>
+                `;
+
+                // Injeta o CSS no head
+                document.head.insertAdjacentHTML('beforeend', antiZoomCSS);
             });
         })();
     </script>

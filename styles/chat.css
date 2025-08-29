@@ -539,30 +539,42 @@ input, button {
    23. Correções para Zoom Automático em Dispositivos Móveis
 =========================== */
 
-/* Previne zoom automático em inputs e textareas */
-input, textarea, select {
-    font-size: 16px !important; /* Previne zoom em iOS */
-    -webkit-appearance: none;
-    -webkit-text-size-adjust: 100%;
-    -webkit-tap-highlight-color: transparent;
+/* Previne zoom automático em TODOS os elementos */
+* {
+    -webkit-text-size-adjust: 100% !important;
+    text-size-adjust: 100% !important;
 }
 
-/* Especificamente para o chatbot Flowise */
+/* Previne zoom automático em inputs e textareas */
+input, textarea, select, button {
+    font-size: 16px !important; /* Previne zoom em iOS */
+    -webkit-appearance: none;
+    -webkit-text-size-adjust: 100% !important;
+    text-size-adjust: 100% !important;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+/* Especificamente para o chatbot Flowise - regras mais agressivas */
 flowise-fullchatbot {
-    -webkit-text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100% !important;
+    text-size-adjust: 100% !important;
     -webkit-transform: translateZ(0);
     transform: translateZ(0);
+    font-size: 16px !important;
 }
 
 /* Container do chatbot com melhor controle de toque */
 #chatbot-container {
     touch-action: manipulation;
     -webkit-overflow-scrolling: touch;
+    -webkit-text-size-adjust: 100% !important;
+    text-size-adjust: 100% !important;
 }
 
 /* Correções específicas para dispositivos móveis */
 @media screen and (max-width: 768px) {
-    /* Previne zoom em inputs do chatbot */
+    /* Previne zoom em TODOS os inputs do chatbot */
     input[type="text"],
     input[type="email"],
     input[type="password"],
@@ -571,9 +583,28 @@ flowise-fullchatbot {
         font-size: 16px !important;
         min-height: 44px; /* Tamanho mínimo para toque confortável */
         border-radius: 4px;
-        -webkit-appearance: none;
-        -webkit-text-size-adjust: none;
-        text-size-adjust: none;
+        -webkit-appearance: none !important;
+        -webkit-text-size-adjust: 100% !important;
+        text-size-adjust: 100% !important;
+        -webkit-user-select: text !important;
+        user-select: text !important;
+    }
+
+    /* Estilos específicos para o componente Flowise */
+    flowise-fullchatbot input,
+    flowise-fullchatbot textarea,
+    flowise-fullchatbot select {
+        font-size: 16px !important;
+        -webkit-text-size-adjust: 100% !important;
+        text-size-adjust: 100% !important;
+        min-height: 44px !important;
+        -webkit-appearance: none !important;
+    }
+
+    /* Todos os elementos dentro do Flowise */
+    flowise-fullchatbot * {
+        -webkit-text-size-adjust: 100% !important;
+        text-size-adjust: 100% !important;
     }
 
     /* Botões com tamanho adequado para toque */
@@ -581,18 +612,23 @@ flowise-fullchatbot {
         min-height: 44px;
         min-width: 44px;
         -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+        font-size: 16px !important;
     }
 
     /* Container principal sem overflow que cause zoom */
     .content {
         overflow: hidden;
         -webkit-overflow-scrolling: auto;
+        -webkit-text-size-adjust: 100% !important;
+        text-size-adjust: 100% !important;
     }
 
     /* Sidebar em mobile */
     #sidebarMenu {
         -webkit-overflow-scrolling: touch;
         touch-action: pan-y;
+        -webkit-text-size-adjust: 100% !important;
+        text-size-adjust: 100% !important;
     }
 
     /* Previne zoom no container do chatbot */
@@ -603,6 +639,8 @@ flowise-fullchatbot {
         backface-visibility: hidden;
         -webkit-perspective: 1000;
         perspective: 1000;
+        -webkit-text-size-adjust: 100% !important;
+        text-size-adjust: 100% !important;
     }
 }
 

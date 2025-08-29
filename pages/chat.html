@@ -265,6 +265,7 @@
 
             // Monitora carregamento do Flowise
             document.addEventListener('DOMContentLoaded', function() {
+                // Verifica periodicamente se o chatbot foi carregado
                 var checkInterval = setInterval(function() {
                     if (document.querySelector('flowise-fullchatbot')) {
                         applyBasicFix();

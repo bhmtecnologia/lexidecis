@@ -227,51 +227,10 @@
         })();
     </script>
 
-    <!-- Script para melhorar experiência mobile -->
+    <!-- Script simplificado para prevenir zoom -->
     <script>
-        // Previne zoom automático em dispositivos móveis - versão ULTIMA DEFESA
+        // SOLUÇÃO SIMPLIFICADA - Apenas o essencial
         (function() {
-            // Função para forçar viewport consistente
-            function enforceViewport() {
-                var viewport = document.querySelector('meta[name=viewport]');
-                if (viewport) {
-                    viewport.setAttribute('content',
-                        'width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=no');
-                }
-            }
-
-            // Aplica estilos de anti-zoom a um elemento
-            function applyAntiZoomStyles(element) {
-                if (element) {
-                    element.style.fontSize = '16px';
-                    element.style.webkitAppearance = 'none';
-                    element.style.webkitTextSizeAdjust = '100%';
-                    element.style.textSizeAdjust = '100%';
-                    element.style.touchAction = 'manipulation';
-                    element.style.webkitTapHighlightColor = 'transparent';
-                }
-            }
-
-            // Aplica estilos a todos os elementos do chatbot
-            function applyChatbotStyles() {
-                var chatbot = document.querySelector('flowise-fullchatbot');
-                if (chatbot) {
-                    // Aplica aos inputs e textareas do chatbot
-                    var inputs = chatbot.querySelectorAll('input, textarea, select');
-                    inputs.forEach(function(input) {
-                        applyAntiZoomStyles(input);
-                        input.style.minHeight = '44px';
-                    });
-
-                    // Aplica a todos os elementos dentro do chatbot
-                    var allElements = chatbot.querySelectorAll('*');
-                    allElements.forEach(function(el) {
-                        el.style.webkitTextSizeAdjust = '100%';
-                        el.style.textSizeAdjust = '100%';
-                    });
-                }
-            }
-
             // Previne zoom duplo em iOS
             var lastTouchEnd = 0;
             document.addEventListener('touchend', function(event) {
@@ -282,344 +241,50 @@
                 lastTouchEnd = now;
             }, false);
 
-            // Monitora foco em inputs
-            document.addEventListener('focusin', function(event) {
-                if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.tagName === 'SELECT') {
-                    enforceViewport();
-                    applyAntiZoomStyles(event.target);
+            // Força viewport consistente
+            function enforceViewport() {
+                var viewport = document.querySelector('meta[name=viewport]');
+                if (viewport) {
+                    viewport.setAttribute('content',
+                        'width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=no');
                 }
-            }, true);
+            }
 
-            // Monitora toque
-            document.addEventListener('touchstart', function(event) {
-                enforceViewport();
-            }, true);
+            // Aplica correção básica ao Flowise
+            function applyBasicFix() {
+                var chatbot = document.querySelector('flowise-fullchatbot');
+                if (chatbot) {
+                    var inputs = chatbot.querySelectorAll('input, textarea, select');
+                    inputs.forEach(function(input) {
+                        input.style.fontSize = '16px';
+                        input.style.webkitTextSizeAdjust = '100%';
+                        input.style.minHeight = '44px';
+                    });
+                }
+            }
 
+            // Monitora carregamento do Flowise
             document.addEventListener('DOMContentLoaded', function() {
-                // Aplica estilos iniciais
-                var allInputs = document.querySelectorAll('input, textarea, select');
-                allInputs.forEach(applyAntiZoomStyles);
-
-                // Monitora continuamente o chatbot
-                var chatbotObserver = new MutationObserver(function(mutations) {
-                    mutations.forEach(function(mutation) {
-                        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-                            mutation.addedNodes.forEach(function(node) {
-                                if (node.tagName === 'FLOWISE-FULLCHATBOT') {
-                                    // Aplica estilos imediatamente
-                                    applyChatbotStyles();
-                                    // Continua aplicando periodicamente
-                                    var styleInterval = setInterval(function() {
-                                        applyChatbotStyles();
-                                        // Para após 10 segundos
-                                        setTimeout(function() {
-                                            clearInterval(styleInterval);
-                                        }, 10000);
-                                    }, 500);
-                                }
-                            });
-                        }
-                    });
-                });
-
-                var container = document.getElementById('chatbot-container');
-                if (container) {
-                    chatbotObserver.observe(container, {
-                        childList: true,
-                        subtree: true
-                    });
-                }
-
-                // Verifica periodicamente se o chatbot foi carregado
                 var checkInterval = setInterval(function() {
                     if (document.querySelector('flowise-fullchatbot')) {
-                        applyChatbotStyles();
+                        applyBasicFix();
                         clearInterval(checkInterval);
                     }
-                }, 100);
+                }, 200);
 
-                // Aplica estilos periodicamente para garantir
+                // Aplica correção básica periodicamente
                 setInterval(function() {
                     enforceViewport();
-                    applyChatbotStyles();
-                }, 2000);
-
-                // Injeta CSS adicional para máxima prioridade
-                var antiZoomCSS = `
-                    <style id="anti-zoom-css">
-                        /* CSS de máxima prioridade para prevenir zoom */
-                        flowise-fullchatbot input,
-                        flowise-fullchatbot textarea,
-                        flowise-fullchatbot select,
-                        flowise-fullchatbot button,
-                        flowise-fullchatbot input:focus,
-                        flowise-fullchatbot textarea:focus,
-                        flowise-fullchatbot select:focus {
-                            font-size: 16px !important;
-                            -webkit-text-size-adjust: 100% !important;
-                            text-size-adjust: 100% !important;
-                            -webkit-appearance: none !important;
-                            touch-action: manipulation !important;
-                            -webkit-tap-highlight-color: transparent !important;
-                            min-height: 44px !important;
-                            max-height: none !important;
-                            transform: none !important;
-                            -webkit-transform: none !important;
-                        }
-
-                        flowise-fullchatbot * {
-                            -webkit-text-size-adjust: 100% !important;
-                            text-size-adjust: 100% !important;
-                            transform: none !important;
-                            -webkit-transform: none !important;
-                        }
-
-                        /* Previne zoom em qualquer input dentro do shadow DOM */
-                        flowise-fullchatbot ::shadow input,
-                        flowise-fullchatbot ::shadow textarea,
-                        flowise-fullchatbot ::shadow select,
-                        flowise-fullchatbot ::shadow input:focus,
-                        flowise-fullchatbot ::shadow textarea:focus,
-                        flowise-fullchatbot ::shadow select:focus {
-                            font-size: 16px !important;
-                            -webkit-text-size-adjust: 100% !important;
-                            text-size-adjust: 100% !important;
-                            -webkit-appearance: none !important;
-                            touch-action: manipulation !important;
-                            min-height: 44px !important;
-                        }
-
-                        /* Bloqueia qualquer tentativa de zoom no viewport */
-                        @media screen and (max-width: 768px) {
-                            body {
-                                -webkit-text-size-adjust: 100% !important;
-                                text-size-adjust: 100% !important;
-                            }
-                        }
-                    </style>
-                `;
-
-                // Injeta o CSS no head
-                document.head.insertAdjacentHTML('beforeend', antiZoomCSS);
-
-                // Script adicional para correção forçada do Flowise
-                var flowiseFixScript = `
-                    <script id="flowise-fix-script">
-                        (function() {
-                            // Função para corrigir Flowise agressivamente
-                            function forceFixFlowise() {
-                                var chatbot = document.querySelector('flowise-fullchatbot');
-                                if (!chatbot) return;
-
-                                try {
-                                    // Acessa shadow DOM se disponível
-                                    var shadow = chatbot.shadowRoot;
-                                    if (shadow) {
-                                        var inputs = shadow.querySelectorAll('input, textarea, select, button');
-                                        inputs.forEach(function(input) {
-                                            input.setAttribute('style',
-                                                'font-size: 16px !important; ' +
-                                                '-webkit-text-size-adjust: 100% !important; ' +
-                                                'text-size-adjust: 100% !important; ' +
-                                                '-webkit-appearance: none !important; ' +
-                                                'touch-action: manipulation !important; ' +
-                                                'min-height: 44px !important; ' +
-                                                'transform: none !important; ' +
-                                                '-webkit-transform: none !important;'
-                                            );
-                                        });
-                                    }
-
-                                    // Corrige elementos normais também
-                                    var allInputs = chatbot.querySelectorAll('input, textarea, select, button');
-                                    allInputs.forEach(function(input) {
-                                        input.setAttribute('style',
-                                            'font-size: 16px !important; ' +
-                                            '-webkit-text-size-adjust: 100% !important; ' +
-                                            'text-size-adjust: 100% !important; ' +
-                                            '-webkit-appearance: none !important; ' +
-                                            'touch-action: manipulation !important; ' +
-                                            'min-height: 44px !important; ' +
-                                            'transform: none !important; ' +
-                                            '-webkit-transform: none !important;'
-                                        );
-                                    });
-
-                                    // Corrige qualquer iframe dentro do Flowise
-                                    var iframes = chatbot.querySelectorAll('iframe');
-                                    iframes.forEach(function(iframe) {
-                                        try {
-                                            var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-                                            if (iframeDoc) {
-                                                var iframeInputs = iframeDoc.querySelectorAll('input, textarea, select, button');
-                                                iframeInputs.forEach(function(input) {
-                                                    input.setAttribute('style',
-                                                        'font-size: 16px !important; ' +
-                                                        '-webkit-text-size-adjust: 100% !important; ' +
-                                                        'text-size-adjust: 100% !important; ' +
-                                                        '-webkit-appearance: none !important;'
-                                                    );
-                                                });
-                                            }
-                                        } catch(e) {
-                                            // Ignora erros de cross-origin
-                                        }
-                                    });
-
-                                } catch(e) {
-                                    console.warn('Erro ao corrigir Flowise:', e);
-                                }
-                            }
-
-                            // Aplica correção imediatamente
-                            forceFixFlowise();
-
-                            // Monitora mudanças no DOM do Flowise
-                            var flowiseObserver = new MutationObserver(function(mutations) {
-                                mutations.forEach(function(mutation) {
-                                    if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-                                        setTimeout(forceFixFlowise, 100);
-                                    }
-                                });
-                            });
-
-                            // Observa o chatbot quando ele aparecer
-                            var chatbotCheck = setInterval(function() {
-                                var chatbot = document.querySelector('flowise-fullchatbot');
-                                if (chatbot) {
-                                    flowiseObserver.observe(chatbot, {
-                                        childList: true,
-                                        subtree: true,
-                                        attributes: true,
-                                        attributeFilter: ['style', 'class']
-                                    });
-                                    clearInterval(chatbotCheck);
-                                    forceFixFlowise();
-                                }
-                            }, 100);
-
-                            // Aplica correção a cada 1 segundo por 30 segundos
-                            var fixCount = 0;
-                            var fixInterval = setInterval(function() {
-                                forceFixFlowise();
-                                fixCount++;
-                                if (fixCount >= 30) {
-                                    clearInterval(fixInterval);
-                                }
-                            }, 1000);
-
-                            // Corrige quando há foco em qualquer elemento
-                            document.addEventListener('focusin', function(e) {
-                                setTimeout(forceFixFlowise, 10);
-                            }, true);
-
-                            // Corrige quando há toque
-                            document.addEventListener('touchstart', function(e) {
-                                setTimeout(forceFixFlowise, 10);
-                            }, true);
-
-                        })();
-                    </script>
-                `;
-
-                // Injeta o script de correção forçada
-                document.head.insertAdjacentHTML('beforeend', flowiseFixScript);
-
-                // Script final de interceptação de zoom
-                var zoomBlockScript = `
-                    <script id="zoom-block-script">
-                        (function() {
-                            // Detecta e bloqueia zoom do navegador
-                            function detectZoom() {
-                                var ratio = 0;
-                                var screen = window.screen;
-                                var ua = navigator.userAgent.toLowerCase();
-
-                                if (window.devicePixelRatio !== undefined) {
-                                    ratio = window.devicePixelRatio;
-                                } else if (~ua.indexOf('msie')) {
-                                    if (screen.deviceXDPI && screen.logicalXDPI) {
-                                        ratio = screen.deviceXDPI / screen.logicalXDPI;
-                                    }
-                                } else if (window.outerWidth !== undefined && window.innerWidth !== undefined) {
-                                    ratio = window.outerWidth / window.innerWidth;
-                                }
-
-                                if (ratio) {
-                                    ratio = Math.round(ratio * 100);
-                                }
-
-                                return ratio;
-                            }
-
-                            function blockZoom() {
-                                var currentZoom = detectZoom();
-                                if (currentZoom > 100) {
-                                    // Força viewport de volta ao normal
-                                    var viewport = document.querySelector('meta[name=viewport]');
-                                    if (viewport) {
-                                        viewport.setAttribute('content',
-                                            'width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=no');
-
-                                        // Tenta forçar o navegador a resetar o zoom
-                                        document.body.style.zoom = '1.0';
-                                        document.body.style.transform = 'scale(1.0)';
-                                        document.body.style.webkitTransform = 'scale(1.0)';
-
-                                        // Corrige Flowise imediatamente
-                                        forceFixFlowise();
-                                    }
-                                }
-                            }
-
-                            // Monitora mudanças de zoom
-                            var lastZoom = detectZoom();
-                            setInterval(function() {
-                                var currentZoom = detectZoom();
-                                if (currentZoom !== lastZoom) {
-                                    lastZoom = currentZoom;
-                                    if (currentZoom > 100) {
-                                        blockZoom();
-                                    }
-                                }
-                            }, 100);
-
-                            // Bloqueia zoom via eventos
-                            document.addEventListener('gesturestart', function(e) {
-                                e.preventDefault();
-                                blockZoom();
-                            }, false);
-
-                            document.addEventListener('gesturechange', function(e) {
-                                e.preventDefault();
-                                blockZoom();
-                            }, false);
-
-                            document.addEventListener('gestureend', function(e) {
-                                e.preventDefault();
-                                blockZoom();
-                            }, false);
-
-                            // Intercepta qualquer tentativa de mudança de viewport
-                            var originalSetAttribute = Element.prototype.setAttribute;
-                            Element.prototype.setAttribute = function(name, value) {
-                                if (name === 'content' && this.getAttribute('name') === 'viewport') {
-                                    // Verifica se está tentando mudar o viewport para zoom
-                                    if (value && (value.includes('initial-scale') || value.includes('maximum-scale'))) {
-                                        // Mantém nossas configurações
-                                        value = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=no';
-                                    }
-                                }
-                                return originalSetAttribute.call(this, name, value);
-                            };
-
-                        })();
-                    </script>
-                `;
-
-                // Injeta o script de bloqueio de zoom
-                document.head.insertAdjacentHTML('beforeend', zoomBlockScript);
+                    applyBasicFix();
+                }, 3000);
             });
+
+            // Corrige quando há foco
+            document.addEventListener('focusin', function(event) {
+                if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+                    enforceViewport();
+                }
+            }, true);
         })();
     </script>
 

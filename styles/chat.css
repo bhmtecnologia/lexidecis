@@ -539,31 +539,13 @@ input, button {
    23. Correções para Zoom Automático em Dispositivos Móveis
 =========================== */
 
-/* Previne zoom automático em TODOS os elementos - ULTIMA DEFESA */
-*,
-*::before,
-*::after {
-    -webkit-text-size-adjust: 100% !important;
-    text-size-adjust: 100% !important;
-    -webkit-transform: none !important;
-    transform: none !important;
-    -webkit-appearance: none !important;
-}
-
-/* CSS global para bloquear qualquer zoom */
-html {
+/* CSS global para prevenir zoom */
+html, body {
     -webkit-text-size-adjust: 100% !important;
     text-size-adjust: 100% !important;
     -webkit-touch-callout: none !important;
     -webkit-user-select: text !important;
     -webkit-tap-highlight-color: transparent !important;
-}
-
-/* Body com proteção máxima */
-body {
-    -webkit-text-size-adjust: 100% !important;
-    text-size-adjust: 100% !important;
-    touch-action: manipulation !important;
 }
 
 /* Previne zoom automático em inputs e textareas */
@@ -620,12 +602,15 @@ flowise-fullchatbot {
         text-size-adjust: 100% !important;
         min-height: 44px !important;
         -webkit-appearance: none !important;
+        touch-action: manipulation !important;
     }
 
-    /* Todos os elementos dentro do Flowise */
-    flowise-fullchatbot * {
+    /* Elementos básicos do Flowise */
+    flowise-fullchatbot button {
         -webkit-text-size-adjust: 100% !important;
         text-size-adjust: 100% !important;
+        font-size: 16px !important;
+        touch-action: manipulation !important;
     }
 
     /* Botões com tamanho adequado para toque */

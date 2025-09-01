@@ -1,5 +1,5 @@
 // SERVICE WORKER ULTRA-SIMPLES PARA LEXIDECIS PWA
-const CACHE_NAME = 'lexidecis-v3.2.0';
+const CACHE_NAME = 'lexidecis-v3.3.0';
 const CACHE_TIMESTAMP = Date.now();
 
 // TODOS os recursos críticos que DEVEM funcionar offline
@@ -112,6 +112,41 @@ self.addEventListener('fetch', (event) => {
         .catch((error) => {
           console.log('[SW] ❌ Erro ao buscar CSS da rede, tentando cache:', request.url);
           return caches.match(request);
+        })
+    );
+    return;
+  }
+
+  // ✅ CORREÇÃO: Para vídeos, sempre buscar da rede (nunca cachear)
+  if (request.url.includes('.mp4') || request.url.includes('.avi') || request.url.includes('.mov') || 
+      request.url.includes('.wmv') || request.url.includes('.flv') || request.url.includes('.webm')) {
+    console.log('[SW] 🎥 Vídeo detectado - buscando da rede (sem cache):', request.url);
+    event.respondWith(
+      fetch(request)
+        .catch((error) => {
+          console.warn('[SW] ❌ Erro ao buscar vídeo da rede:', request.url, error);
+          // Retorna uma resposta vazia para vídeos que falharam
+          return new Response('', {
+            status: 404,
+            headers: { 'Content-Type': 'video/mp4' }
+          });
+        })
+    );
+    return;
+  }
+
+  // ✅ CORREÇÃO: Para recursos externos problemáticos, ignorar erros silenciosamente
+  if (request.url.includes('googletagmanager.com') || request.url.includes('openai-original.svg')) {
+    console.log('[SW] 🌐 Recurso externo detectado - buscando da rede (ignorando erros):', request.url);
+    event.respondWith(
+      fetch(request)
+        .catch((error) => {
+          console.log('[SW] ⚠️ Recurso externo indisponível (ignorado):', request.url);
+          // Retorna uma resposta vazia para não quebrar a aplicação
+          return new Response('', {
+            status: 200,
+            headers: { 'Content-Type': 'text/plain' }
+          });
         })
     );
     return;
@@ -254,4 +289,4 @@ self.addEventListener('unhandledrejection', (event) => {
   console.error('[SW] Promessa rejeitada:', event.reason);
 });
 
-console.log('[SW] 🚀 Service Worker v3.2.0 inicializado com sucesso!');
+console.log('[SW] 🚀 Service Worker v3.3.0 inicializado com sucesso!');

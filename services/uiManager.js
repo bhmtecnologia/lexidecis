@@ -490,6 +490,372 @@ class UIManager {
         }
     }
 
+    /**
+     * 🔧 Tenta capturar input de sugestão ativa
+     */
+    getSuggestionInput() {
+        try {
+            // Procurar por elementos que podem conter sugestões ativas
+            const suggestionSelectors = [
+                '[data-suggestion-active]',
+                '.suggestion-active',
+                '[data-selected-suggestion]',
+                '.selected-suggestion',
+                '[aria-selected="true"]'
+            ];
+
+            for (const selector of suggestionSelectors) {
+                const element = document.querySelector(selector);
+                if (element && element.textContent && element.textContent.trim()) {
+                    this.debugLog('🎯 Sugestão ativa encontrada:', selector);
+                    return element.textContent.trim();
+                }
+            }
+
+            return null;
+        } catch (error) {
+            this.debugLog('❌ Erro ao buscar sugestão ativa:', error);
+            return null;
+        }
+    }
+
+    /**
+     * 🔧 Registra chat na API (versão simplificada)
+     */
+    async registerChatInApi(messageContent) {
+        try {
+            if (!messageContent || !messageContent.trim()) {
+                this.debugLog('❌ registerChatInApi: messageContent vazio');
+                return;
+            }
+
+            this.debugLog('🚀 Registrando chat na API:', messageContent);
+
+            // Verificar se temos as configurações necessárias
+            if (!this.config.apiCredentials?.updateChat) {
+                this.debugLog('❌ Configuração updateChat não encontrada');
+                return;
+            }
+
+            const { getJwt } = await import('./auth.js');
+            const token = await getJwt();
+
+            const chatParams = {
+                gpt_id: this.stateManager.selectedGPT?.id,
+                user_name: this.config.userName,
+                user_id: this.config.userId,
+                sessionid: this.stateManager.currentSessionId,
+                message_content: messageContent.trim()
+            };
+
+            this.debugLog('📡 Fazendo chamada para updateChat:', chatParams);
+
+            const chatResult = await this.apiService.request('updateChat', chatParams, 'POST', null, { includeParamsInQuery: true });
+            this.debugLog('✅ Chat registrado com sucesso:', chatResult);
+
+            return chatResult;
+        } catch (error) {
+            this.debugLog('❌ Erro ao registrar chat na API:', error);
+            return null;
+        }
+    }
+
+    /**
+     * 🔧 Configurar captura de mensagens de sugestão (follow-up) do Flowise
+     */
+    setupSuggestionCapture() {
+        try {
+            this.debugLog('🎯 Configurando captura de mensagens de sugestão...');
+
+            // Remover listeners anteriores
+            if (this.suggestionListener) {
+                document.removeEventListener('click', this.suggestionListener);
+            }
+
+            // Criar novo listener para mensagens de sugestão
+            this.suggestionListener = (event) => {
+                const target = event.target;
+
+                // ✅ MELHORIA: Log detalhado para debug
+                this.debugLog('🎯 CLIQUE DETECTADO:', {
+                    tagName: target.tagName,
+                    className: target.className,
+                    id: target.id,
+                    textContent: target.textContent?.substring(0, 50),
+                    innerText: target.innerText?.substring(0, 50),
+                    role: target.getAttribute('role'),
+                    'data-testid': target.getAttribute('data-testid'),
+                    onclick: !!target.onclick,
+                    'aria-label': target.getAttribute('aria-label')
+                });
+
+                // Verificar se é uma mensagem de sugestão do Flowise (MUITO MAIS AMPLO)
+                const isSuggestion = target.closest('[data-testid*="suggestion"]') ||
+                                   target.closest('.suggestion-button') ||
+                                   target.closest('.follow-up-button') ||
+                                   target.closest('button[aria-label*="suggestion"]') ||
+                                   target.closest('div[role="button"]') ||
+                                   target.closest('.message-suggestion') ||
+                                   target.closest('[class*="suggestion"]') ||
+                                   target.closest('[class*="followup"]') ||
+                                   target.closest('[class*="follow-up"]') ||
+                                   target.closest('button:not([type="submit"]):not([data-bs-toggle])') ||
+                                   target.closest('div[onclick]') ||
+                                   target.closest('span[onclick]') ||
+                                   // ✅ NOVOS: Capturar qualquer botão que pareça sugestão
+                                   target.closest('button:not([type="submit"]):not([data-bs-toggle]):not([aria-label*="close"]):not([aria-label*="fechar"])') ||
+                                   target.closest('div[class*="button"]') ||
+                                   target.closest('div[class*="option"]') ||
+                                   target.closest('div[class*="choice"]') ||
+                                   target.closest('div[class*="select"]') ||
+                                   target.closest('span[class*="button"]') ||
+                                   target.closest('span[class*="option"]') ||
+                                   target.closest('span[class*="choice"]') ||
+                                   target.closest('a[class*="button"]') ||
+                                   target.closest('a[class*="option"]') ||
+                                   target.closest('a[class*="choice"]') ||
+                                   // ✅ CAPTURAR QUALQUER ELEMENTO CLICÁVEL COM TEXTO
+                                   (target.matches('button, div, span, a') && 
+                                    target.textContent && 
+                                    target.textContent.trim().length > 0 &&
+                                    !target.closest('form') &&
+                                    !target.closest('[data-bs-toggle]') &&
+                                    !target.closest('[aria-label*="close"]') &&
+                                    !target.closest('[aria-label*="fechar"]') &&
+                                    !target.closest('.modal') &&
+                                    !target.closest('.dropdown'));
+
+                if (isSuggestion) {
+                    this.debugLog('🎯 Mensagem de sugestão detectada:', target.textContent || target.innerText);
+
+                    // Capturar o texto da sugestão
+                    const suggestionText = target.textContent || target.innerText || '';
+                    if (suggestionText.trim()) {
+                        this.debugLog('📝 Texto da sugestão capturado:', suggestionText);
+
+                        // Definir como lastUserInput
+                        this.lastUserInput = suggestionText.trim();
+
+                        // ✅ MELHORIA: Forçar registro na API IMEDIATAMENTE
+                        this.debugLog('🚀 Forçando registro da sugestão na API...');
+                        this.registerChatInApi(suggestionText.trim());
+
+                        // Simular observeUserInput para compatibilidade
+                        if (typeof this.observers?.observeUserInput === 'function') {
+                            this.observers.observeUserInput(suggestionText.trim());
+                        }
+                    }
+                } else {
+                    // ✅ DEBUG: Log quando não detecta como sugestão
+                    this.debugLog('❌ Clique NÃO detectado como sugestão:', {
+                        tagName: target.tagName,
+                        className: target.className,
+                        textContent: target.textContent?.substring(0, 30)
+                    });
+                }
+            };
+
+            // Adicionar listener ao documento
+            document.addEventListener('click', this.suggestionListener, true);
+            this.debugLog('✅ Listener de sugestões configurado com sucesso');
+
+        } catch (error) {
+            this.debugLog('❌ Erro ao configurar captura de sugestões:', error);
+        }
+    }
+
+    /**
+     * 🔧 Configura captura alternativa de entrada do usuário
+     * Método alternativo caso o observeUserInput do Flowise não funcione
+     */
+    setupAlternativeInputCapture() {
+        this.debugLog('🔧 Configurando captura alternativa de entrada do usuário...');
+
+        // Usar setTimeout para garantir que o DOM do chatbot seja carregado
+        setTimeout(() => {
+            try {
+                // Procurar pelo campo de input do chatbot
+                const inputSelectors = [
+                    'textarea[data-testid="chatbot-input"]',
+                    'input[placeholder*="Digite" i]',
+                    'input[placeholder*="mensagem" i]',
+                    'textarea[placeholder*="Digite" i]',
+                    'textarea[placeholder*="mensagem" i]',
+                    '.chat-input textarea',
+                    '.chat-input input',
+                    'flowise-fullchatbot textarea',
+                    'flowise-fullchatbot input'
+                ];
+
+                let inputElement = null;
+                for (const selector of inputSelectors) {
+                    inputElement = document.querySelector(selector);
+                    if (inputElement) {
+                        this.debugLog('✅ Campo de input encontrado com seletor:', selector);
+                        break;
+                    }
+                }
+
+                if (inputElement) {
+                    this.debugLog('🎯 Configurando listener no campo de input encontrado');
+
+                    // Remover listener anterior se existir
+                    if (this.inputListener) {
+                        inputElement.removeEventListener('input', this.inputListener);
+                        inputElement.removeEventListener('change', this.inputListener);
+                    }
+
+                    // Criar novo listener
+                    this.inputListener = (event) => {
+                        const value = event.target.value;
+                        if (value && value.trim() && value !== this.lastUserInput) {
+                            this.debugLog('🎯 [ALTERNATIVO] Input capturado:', value);
+                            this.lastUserInput = value;
+                        }
+                    };
+
+                    // Adicionar listeners
+                    inputElement.addEventListener('input', this.inputListener);
+                    inputElement.addEventListener('change', this.inputListener);
+
+                    this.debugLog('✅ Listener alternativo configurado com sucesso');
+                } else {
+                    this.debugLog('⚠️ Campo de input não encontrado, tentando novamente em 2 segundos...');
+
+                    // Tentar novamente em 2 segundos
+                    setTimeout(() => {
+                        this.setupAlternativeInputCapture();
+                    }, 2000);
+                }
+            } catch (error) {
+                this.debugLog('❌ Erro ao configurar captura alternativa:', error);
+            }
+        }, 1000);
+    }
+
+    /**
+     * 🔧 Gera um seletor CSS para um elemento
+     */
+    getSelectorForElement(element) {
+        if (element.id) {
+            return `#${element.id}`;
+        }
+        if (element.className) {
+            return `${element.tagName.toLowerCase()}.${element.className.split(' ').join('.')}`;
+        }
+        if (element.name) {
+            return `${element.tagName.toLowerCase()}[name="${element.name}"]`;
+        }
+        return `${element.tagName.toLowerCase()}`;
+    }
+
+    /**
+     * 🔧 Tenta capturar input alternativo do DOM
+     */
+    getAlternativeInput() {
+        try {
+            const inputSelectors = [
+                'textarea[data-testid="chatbot-input"]',
+                'input[placeholder*="Digite" i]',
+                'input[placeholder*="mensagem" i]',
+                'textarea[placeholder*="Digite" i]',
+                'textarea[placeholder*="mensagem" i]',
+                '.chat-input textarea',
+                '.chat-input input',
+                'flowise-fullchatbot textarea',
+                'flowise-fullchatbot input'
+            ];
+
+            for (const selector of inputSelectors) {
+                const element = document.querySelector(selector);
+                if (element && element.value && element.value.trim()) {
+                    this.debugLog('🎯 Input alternativo encontrado via seletor:', selector);
+                    return element.value.trim();
+                }
+            }
+
+            // Tentar encontrar qualquer textarea ou input dentro do chatbot
+            const chatbotElement = document.querySelector('flowise-fullchatbot');
+            if (chatbotElement) {
+                const inputs = chatbotElement.querySelectorAll('textarea, input');
+                for (const input of inputs) {
+                    if (input.value && input.value.trim()) {
+                        this.debugLog('🎯 Input alternativo encontrado dentro do chatbot');
+                        return input.value.trim();
+                    }
+                }
+            }
+
+            return null;
+        } catch (error) {
+            this.debugLog('❌ Erro ao buscar input alternativo:', error);
+            return null;
+        }
+    }
+
+    /**
+     * 🔧 Handler separado para registro de chat (pode ser chamado recursivamente)
+     */
+    async handleChatRegistration() {
+        if (!this.lastUserInput) {
+            this.debugLog('❌ handleChatRegistration chamado sem lastUserInput');
+            return;
+        }
+
+        try {
+            this.debugLog('🚀 Iniciando registro de chat alternativo...');
+            this.debugLog('📋 Dados para registro alternativo:', {
+                gpt_id: this.stateManager.selectedGPT?.id,
+                user_name: this.config.userName,
+                user_id: this.config.userId,
+                sessionid: this.stateManager.currentSessionId,
+                message_content: this.lastUserInput,
+                message_length: this.lastUserInput?.length
+            });
+
+            // A mensagem já foi enviada para o Flowise automaticamente
+            // Agora registramos o chat na nossa API
+            const { getJwt } = await import('./auth.js');
+            const token = await getJwt();
+
+            // Registra o chat na nossa API
+            const chatParams = {
+                gpt_id: this.stateManager.selectedGPT?.id,
+                user_name: this.config.userName,
+                user_id: this.config.userId,
+                sessionid: this.stateManager.currentSessionId,
+                message_content: this.lastUserInput
+            };
+
+            this.debugLog('Registrando chat alternativo na API:', chatParams);
+            this.debugLog('apiCredentials disponíveis:', Object.keys(this.config.apiCredentials));
+
+            // ✅ CORREÇÃO: Volta para updateChat (API correta)
+            if (this.config.apiCredentials.updateChat) {
+                this.debugLog('✅ Usando ApiService para updateChat (alternativo)');
+                this.debugLog('📡 Fazendo chamada alternativa para:', this.config.apiCredentials.updateChat);
+
+                try {
+                    const chatResult = await this.apiService.request('updateChat', chatParams, 'POST', null, { includeParamsInQuery: true });
+                    this.debugLog('✅ Chat registrado com sucesso via updateChat (alternativo):', chatResult);
+                } catch (error) {
+                    console.error('❌ Erro no updateChat alternativo via ApiService:', error);
+                    console.error('❌ Detalhes do erro alternativo:', error.message);
+                    console.error('❌ Stack trace alternativo:', error.stack);
+                }
+            } else {
+                console.error('❌ Configuração updateChat não encontrada nos endpoints (alternativo)');
+                console.error('❌ Endpoints disponíveis alternativo:', Object.keys(this.config.apiCredentials));
+            }
+
+            // Limpa o input capturado após registrar
+            this.lastUserInput = null;
+
+        } catch (error) {
+            console.error('🔗 Erro ao registrar chat alternativo na API:', error);
+        }
+    }
+
     /* --- Funções de Inicialização do Chatbot --- */
     async initializeChatbot() {
         try {
@@ -604,66 +970,72 @@ class UIManager {
 
             // ✅ INICIALIZAÇÃO SIMPLES (como na página de teste que funciona)
             this.debugLog('🚀 Inicializando chatbot...');
-            
+
+            // 🔧 ADICIONAL: Configurar listener alternativo para capturar entrada do usuário
+            this.setupAlternativeInputCapture();
+
+            // 🔧 ADICIONAL: Configurar captura de mensagens de sugestão
+            this.setupSuggestionCapture();
+
             this.chatbot.initFull({
                 chatflowid: selectedFlowiseConfig.chatflowId,
                 apiHost: selectedFlowiseConfig.apiHost,
                 chatflowConfig: chatflowConfig,
                                 observersConfig: {
                     observeUserInput: (userInput) => {
-                        this.debugLog('observeUserInput chamado com:', userInput);
-                        // Captura o input para uso posterior
-                        this.lastUserInput = userInput;
-                    },
-                    observeMessages: (messages) => this.logMessages(messages),
-                    observeLoading: async (loading) => {
-                        this.debugLog('observeLoading chamado com loading:', loading);
-                        
-                        if (loading && this.lastUserInput) {
-                            try {
-                                this.debugLog('Loading ativo, registrando chat na API após resposta do Flowise');
-                                
-                                // A mensagem já foi enviada para o Flowise automaticamente
-                                // Agora registramos o chat na nossa API
-                                const { getJwt } = await import('./auth.js');
-                                const token = await getJwt();
+                        this.debugLog('🔍 observeUserInput chamado com:', userInput);
 
-                                // Registra o chat na nossa API
-                                const chatParams = {
-                                    gpt_id: this.stateManager.selectedGPT?.id,
-                                    user_name: this.config.userName,
-                                    user_id: this.config.userId,
-                                    sessionid: this.stateManager.currentSessionId,
-                                    message_content: this.lastUserInput
-                                };
-                                
-                                this.debugLog('Registrando chat na API:', chatParams);
-                                this.debugLog('apiCredentials disponíveis:', Object.keys(this.config.apiCredentials));
-                                
-                                // Usa endpoint dinâmico updateChat
-                                if (this.config.apiCredentials.updateChat) {
-                                    this.debugLog('Usando ApiService para updateChat');
-                                    try {
-                                        const chatResult = await this.apiService.request('updateChat', chatParams, 'POST', null, { includeParamsInQuery: true });
-                                        this.debugLog('Chat registrado com sucesso via ApiService:', chatResult);
-                                    } catch (error) {
-                                        console.error('🔗 Erro no updateChat via ApiService:', error);
-                                    }
-                                } else {
-                                    console.error('🔗 Configuração updateChat não encontrada nos endpoints');
-                                    console.error('🔗 Endpoints disponíveis:', Object.keys(this.config.apiCredentials));
-                                }
-                                
-                                // Limpa o input capturado após registrar
-                                this.lastUserInput = null;
-                                
-                            } catch (error) {
-                                console.error('🔗 Erro ao registrar chat na API:', error);
-                            }
-                        } else if (loading) {
-                            this.debugLog('Loading ativo mas sem input capturado');
+                        // ✅ SIMPLIFICAÇÃO: Apenas armazenar o input, a API será chamada pelo observeLoading
+                        if (userInput && userInput.trim()) {
+                            this.lastUserInput = userInput.trim();
+                            this.debugLog('📝 Input armazenado para processamento posterior:', this.lastUserInput);
                         } else {
-                            this.debugLog('Loading inativo, não fazendo nada');
+                            this.debugLog('📝 Input vazio recebido');
+                        }
+                    },
+                    observeMessages: (messages) => {
+                        this.debugLog('📨 observeMessages chamado:', messages?.length || 0, 'mensagens');
+                        this.logMessages(messages);
+                    },
+                    observeLoading: async (loading) => {
+                        this.debugLog('🔄 observeLoading chamado com loading:', loading);
+
+                        if (loading) {
+                            this.debugLog('🚀 LOADING ATIVADO - Iniciando captura de input e registro na API');
+
+                            // ✅ SIMPLIFICAÇÃO: Sempre tentar capturar input quando loading=true
+                            let capturedInput = this.lastUserInput;
+
+                            // Se não temos lastUserInput, tentar capturar
+                            if (!capturedInput) {
+                                this.debugLog('🔍 Não há lastUserInput, tentando capturar...');
+                                capturedInput = this.getAlternativeInput();
+
+                                if (!capturedInput) {
+                                    this.debugLog('🔍 Tentando captura de sugestão...');
+                                    capturedInput = this.getSuggestionInput();
+                                }
+                            }
+
+                            if (capturedInput) {
+                                this.debugLog('✅ Input capturado:', capturedInput);
+                                await this.registerChatInApi(capturedInput);
+                            } else {
+                                this.debugLog('❌ Nenhum input capturado quando loading=true');
+                                this.debugLog('🔍 Estado atual:', {
+                                    lastUserInput: this.lastUserInput,
+                                    hasAlternativeInput: !!this.getAlternativeInput(),
+                                    hasSuggestionInput: !!this.getSuggestionInput()
+                                });
+                            }
+
+                            return;
+                        }
+
+                        // Loading desativado
+                        if (!loading) {
+                            this.debugLog('⏸️ Loading desativado, limpando lastUserInput');
+                            this.lastUserInput = null;
                         }
                     },
                     // Adicionar observador de erros do Flowise
@@ -1535,5 +1907,1506 @@ class UIManager {
         }
     }
 }
+
+// 🔧 DEBUG: Função global para testar JWT
+window.testJWT = async () => {
+    try {
+        console.log('🔐 TESTANDO JWT...');
+
+        // Importar função getJwt
+        const { getJwt, auth } = await import('./auth.js');
+
+        // Verificar se usuário está logado
+        const user = auth.currentUser;
+        console.log('👤 Usuário atual:', user ? {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName
+        } : 'NÃO LOGADO');
+
+        if (!user) {
+            console.error('❌ ERRO: Usuário não está logado!');
+            console.log('💡 Faça login primeiro antes de testar a API');
+            return;
+        }
+
+        // Obter JWT
+        console.log('🔑 Obtendo JWT...');
+        const jwt = await getJwt();
+        console.log('✅ JWT obtido:', jwt.substring(0, 50) + '...');
+        console.log('📏 Tamanho do JWT:', jwt.length);
+
+        // Testar se JWT funciona na API
+        const testUrl = 'https://webhook.power.tec.br/webhook/lexidecis/chats';
+        const testData = {
+            gpt_id: 'test-jwt',
+            user_name: user.email,
+            user_id: user.uid,
+            sessionid: 'test-session-jwt',
+            message_content: 'Teste de JWT válido',
+            timestamp: new Date().toISOString()
+        };
+
+        console.log('📡 Testando API com JWT válido...');
+        const response = await fetch(testUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${jwt}`
+            },
+            body: JSON.stringify(testData)
+        });
+
+        console.log('📡 Status da resposta:', response.status);
+        if (response.ok) {
+            console.log('✅ JWT FUNCIONANDO! API respondeu com sucesso');
+        } else {
+            const errorText = await response.text();
+            console.log('❌ JWT pode estar expirado ou inválido:', errorText);
+        }
+
+    } catch (error) {
+        console.error('❌ Erro ao testar JWT:', error);
+    }
+};
+
+// 🔧 DEBUG: Função global para testar API diretamente
+window.testDirectAPI = async () => {
+    const testUrl = 'https://webhook.power.tec.br/webhook/lexidecis/chats';
+    console.log('✅ API CONFIRMADA FUNCIONANDO!');
+    console.log('📡 URL correta: https://webhook.power.tec.br/webhook/lexidecis/chats');
+    console.log('🔧 Status: 200 OK - Webhook está ativo e registrado');
+    const testData = {
+        gpt_id: 'test-gpt-123',
+        user_name: 'Test User',
+        user_id: 'test-user-123',
+        sessionid: 'test-session-123',
+        message_content: 'Mensagem de teste direto via fetch',
+        timestamp: new Date().toISOString()
+    };
+
+    console.log('🧪 TESTANDO API DIRETA...');
+    console.log('📡 URL:', testUrl);
+    console.log('📋 Dados:', testData);
+
+    try {
+        const response = await fetch(testUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer test-token'
+            },
+            body: JSON.stringify(testData)
+        });
+
+        console.log('📡 Status da resposta:', response.status);
+        console.log('📡 Headers da resposta:', Object.fromEntries(response.headers.entries()));
+
+        const responseText = await response.text();
+        console.log('📋 Corpo da resposta:', responseText);
+
+        if (response.ok) {
+            console.log('✅ API respondeu com sucesso!');
+        } else {
+            console.log('❌ API retornou erro:', response.status);
+        }
+
+    } catch (error) {
+        console.error('❌ Erro na requisição:', error);
+        console.error('❌ Detalhes do erro:', error.message);
+    }
+};
+
+// 🔧 DEBUG: Função global para testar múltiplas URLs
+window.testMultipleURLs = async () => {
+    const urlsToTest = [
+        'https://webhook.power.tec.br/webhook/lexidecis/chats', // ✅ CONFIRMADO FUNCIONANDO
+        'https://webhook.power.tec.br/webhook/lexidecis/v2/chats',
+        'https://n8n.power.tec.br/webhook-test/lexidecis/chats', // ❌ 404
+        'https://n8n.power.tec.br/webhook/lexidecis/chats'
+    ];
+
+    const testData = {
+        gpt_id: 'test-multi-url',
+        user_name: 'Test User',
+        user_id: 'test-user-multi',
+        sessionid: 'test-session-multi',
+        message_content: 'Teste múltiplas URLs - ' + new Date().toLocaleString(),
+        timestamp: new Date().toISOString()
+    };
+
+    console.log('🔄 TESTANDO MÚLTIPLAS URLs POSSÍVEIS...');
+
+    for (const url of urlsToTest) {
+        try {
+            console.log(`\n📡 Testando: ${url}`);
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer test-token'
+                },
+                body: JSON.stringify(testData)
+            });
+
+            console.log(`✅ Status: ${response.status}`);
+            if (response.ok) {
+                const responseText = await response.text();
+                console.log(`📋 Resposta: ${responseText}`);
+                console.log(`🎉 URL FUNCIONANDO: ${url}`);
+                return url; // Retorna a primeira URL que funciona
+            } else {
+                console.log(`❌ Erro: ${response.status}`);
+            }
+        } catch (error) {
+            console.log(`❌ Erro de conexão: ${error.message}`);
+        }
+    }
+
+    console.log('\n❌ Nenhuma URL funcionou. Verifique:');
+    console.log('1. Se o workflow N8N está ativo');
+    console.log('2. Se o webhook está corretamente configurado');
+    console.log('3. Se o domínio está correto');
+};
+
+// 🔧 DEBUG: Função para analisar performance do Flowise
+window.analyzeFlowisePerformance = () => {
+    console.log('🔍 ANALISANDO PERFORMANCE DO FLOWISE...');
+
+    // Verificar configuração atual
+    const uiManager = window.uiManagerInstance;
+    const currentConfig = uiManager?.stateManager?.gptConfig;
+
+    console.log('📊 Configuração atual do GPT:');
+    console.log('- Temperature:', currentConfig?.temperature);
+    console.log('- Max Tokens:', currentConfig?.maxTokens);
+    console.log('- Top P:', currentConfig?.topP);
+    console.log('- Model:', currentConfig?.name);
+
+    console.log('\n⚙️ Configuração do Flowise:');
+    console.log('- API Host:', uiManager?.stateManager?.selectedGPT?.flowiseConfig?.flowise?.apiHost);
+    console.log('- Chatflow ID:', uiManager?.stateManager?.selectedGPT?.flowiseConfig?.flowise?.chatflowId);
+
+    // Medir tempo de resposta
+    console.log('\n⏱️ Para medir tempo de resposta:');
+    console.log('1. Execute: window.startPerformanceTimer()');
+    console.log('2. Faça uma pergunta no chat');
+    console.log('3. Quando receber resposta, execute: window.stopPerformanceTimer()');
+};
+
+// 🔧 DEBUG: Timer de performance
+window.startPerformanceTimer = () => {
+    window.performanceStart = Date.now();
+    console.log('⏱️ Timer de performance iniciado...');
+};
+
+window.stopPerformanceTimer = () => {
+    if (!window.performanceStart) {
+        console.log('❌ Timer não foi iniciado. Execute window.startPerformanceTimer() primeiro.');
+        return;
+    }
+
+    const elapsed = Date.now() - window.performanceStart;
+    console.log(`⏱️ Tempo total: ${elapsed}ms (${(elapsed/1000).toFixed(2)}s)`);
+
+    if (elapsed < 2000) {
+        console.log('✅ Performance EXCELENTE (< 2s)');
+    } else if (elapsed < 5000) {
+        console.log('⚠️ Performance RAZOÁVEL (2-5s)');
+    } else {
+        console.log('❌ Performance LENTA (> 5s)');
+        console.log('💡 Possíveis causas:');
+        console.log('   - Modelo muito complexo');
+        console.log('   - Temperature muito baixa');
+        console.log('   - Max tokens muito alto');
+        console.log('   - Problemas de rede');
+        console.log('   - Workflow do Flowise mal otimizado');
+    }
+
+    window.performanceStart = null;
+};
+
+// 🔧 DEBUG: Verificar latência de rede
+window.testNetworkLatency = async () => {
+    console.log('🌐 TESTANDO LATÊNCIA DE REDE...');
+
+    const urls = [
+        'https://flowise.power.tec.br/ping',
+        'https://webhook.power.tec.br/webhook/lexidecis/endpoints',
+        'https://firestore.googleapis.com'
+    ];
+
+    for (const url of urls) {
+        try {
+            const start = Date.now();
+            const response = await fetch(url, { method: 'GET' });
+            const latency = Date.now() - start;
+
+            console.log(`📡 ${url}: ${latency}ms - ${response.status}`);
+
+            if (latency > 1000) {
+                console.log(`⚠️ ALTA LATÊNCIA para ${url}`);
+            }
+        } catch (error) {
+            console.log(`❌ ERRO em ${url}: ${error.message}`);
+        }
+    }
+};
+
+// 🔧 DEBUG: Otimizar configurações
+window.optimizeFlowiseConfig = () => {
+    console.log('⚡ OTIMIZANDO CONFIGURAÇÕES DO FLOWISE...');
+
+    const uiManager = window.uiManagerInstance;
+    if (!uiManager?.stateManager?.gptConfig) {
+        console.log('❌ GPT não configurado');
+        return;
+    }
+
+    const config = uiManager.stateManager.gptConfig;
+
+    console.log('📊 Configuração ATUAL:');
+    console.log(`   Temperature: ${config.temperature}`);
+    console.log(`   Max Tokens: ${config.maxTokens}`);
+    console.log(`   Top P: ${config.topP}`);
+
+    // Sugestões de otimização
+    console.log('\n🎯 SUGESTÕES DE OTIMIZAÇÃO:');
+
+    if (config.temperature > 0.7) {
+        console.log('⚠️ Temperature alta pode tornar respostas mais lentas');
+        console.log('💡 Recomendado: 0.3-0.7 para melhor performance');
+    }
+
+    if (config.maxTokens > 1000) {
+        console.log('⚠️ Max Tokens alto pode tornar respostas mais lentas');
+        console.log('💡 Recomendado: 500-800 tokens para melhor performance');
+    }
+
+    if (!config.topP || config.topP > 0.9) {
+        console.log('⚠️ Top P alto pode tornar respostas mais lentas');
+        console.log('💡 Recomendado: 0.7-0.9 para melhor performance');
+    }
+
+    console.log('\n🚀 CONFIGURAÇÃO OTIMIZADA SUGERIDA:');
+    console.log('   Temperature: 0.5');
+    console.log('   Max Tokens: 600');
+    console.log('   Top P: 0.8');
+    console.log('   Frequency Penalty: 0.1');
+    console.log('   Presence Penalty: 0.1');
+
+    console.log('\n📝 Para aplicar: Configure essas opções no painel admin do GPT');
+};
+
+// 🔧 DEBUG: Testar Flowise diretamente
+window.testFlowiseDirectly = async () => {
+    console.log('🔬 TESTANDO FLOWISE DIRETAMENTE...');
+
+    try {
+        const uiManager = window.uiManagerInstance;
+        const flowiseConfig = uiManager?.stateManager?.selectedGPT?.flowiseConfig?.flowise;
+
+        if (!flowiseConfig) {
+            console.log('❌ Configuração do Flowise não encontrada');
+            return;
+        }
+
+        const apiHost = flowiseConfig.apiHost;
+        const chatflowId = flowiseConfig.chatflowId;
+
+        console.log(`📡 API Host: ${apiHost}`);
+        console.log(`🆔 Chatflow ID: ${chatflowId}`);
+
+        // 1. Testar ping
+        console.log('\n🏓 Testando PING do Flowise...');
+        const pingUrl = `${apiHost}/ping`;
+        const pingStart = Date.now();
+        const pingResponse = await fetch(pingUrl);
+        const pingTime = Date.now() - pingStart;
+
+        console.log(`✅ Ping: ${pingTime}ms - Status: ${pingResponse.status}`);
+
+        if (pingResponse.status !== 200) {
+            console.log('❌ Flowise não está respondendo ao ping');
+            return;
+        }
+
+        // 2. Testar configuração do chatflow
+        console.log('\n🔧 Testando configuração do Chatflow...');
+        const configUrl = `${apiHost}/api/v1/public-chatbotConfig/${chatflowId}`;
+        const configStart = Date.now();
+        const configResponse = await fetch(configUrl);
+        const configTime = Date.now() - configStart;
+
+        console.log(`✅ Config: ${configTime}ms - Status: ${configResponse.status}`);
+
+        if (configResponse.status === 200) {
+            const configData = await configResponse.json();
+            console.log('📊 Configuração recebida:', {
+                name: configData.name,
+                type: configData.type,
+                hasApiConfig: !!configData.apiConfig
+            });
+        }
+
+        // 3. Testar chat streaming (simulação)
+        console.log('\n💬 Testando chat streaming...');
+        const chatUrl = `${apiHost}/api/v1/chatflows-streaming/${chatflowId}`;
+
+        const testMessage = {
+            question: "Olá, teste de performance",
+            history: [],
+            overrideConfig: {
+                sessionId: "test-session-" + Date.now()
+            }
+        };
+
+        const chatStart = Date.now();
+        const chatResponse = await fetch(chatUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${flowiseConfig.token || 'test-token'}`
+            },
+            body: JSON.stringify(testMessage)
+        });
+        const chatTime = Date.now() - chatStart;
+
+        console.log(`✅ Chat: ${chatTime}ms - Status: ${chatResponse.status}`);
+
+        if (chatResponse.status === 200) {
+            console.log('🎉 Flowise está funcionando perfeitamente!');
+            console.log(`⚡ Performance geral: ${pingTime + configTime + chatTime}ms`);
+        } else {
+            const errorText = await chatResponse.text();
+            console.log('❌ Erro no chat:', errorText);
+        }
+
+        // 4. Verificar se há problemas de cache
+        console.log('\n💾 Verificando cache do navegador...');
+        const cacheKeys = Object.keys(localStorage).filter(key =>
+            key.includes(chatflowId) || key.includes('flowise')
+        );
+
+        console.log(`📦 Chaves relacionadas no localStorage: ${cacheKeys.length}`);
+        cacheKeys.forEach(key => {
+            const value = localStorage.getItem(key);
+            console.log(`   - ${key}: ${value?.length || 0} chars`);
+        });
+
+    } catch (error) {
+        console.log('❌ Erro ao testar Flowise:', error.message);
+        console.log('💡 Possíveis causas:');
+        console.log('   - Flowise não está rodando');
+        console.log('   - Problemas de CORS');
+        console.log('   - Token inválido');
+        console.log('   - Rede bloqueada');
+    }
+};
+
+// 🔧 DEBUG: Verificar saúde geral do sistema
+window.checkSystemHealth = async () => {
+    console.log('🏥 VERIFICAÇÃO DE SAÚDE DO SISTEMA');
+    console.log('==================================');
+
+    const checks = [
+        { name: 'Flowise Ping', url: 'https://flowise.power.tec.br/ping', critical: true },
+        { name: 'Webhook API', url: 'https://webhook.power.tec.br/webhook/lexidecis/endpoints', critical: true },
+        { name: 'Firebase Auth', url: 'https://www.googleapis.com/identitytoolkit/v3/relyingparty/getProjectConfig?key=AIzaSyD7Gh-UfV-LyueKtlUcY9nny_o-UWmlmJM', critical: false },
+        { name: 'Firestore', url: 'https://firestore.googleapis.com/google.firestore.v1.Firestore/Write/channel', critical: false }
+    ];
+
+    let allHealthy = true;
+
+    for (const check of checks) {
+        try {
+            const start = Date.now();
+            const response = await fetch(check.url, {
+                method: 'GET',
+                mode: check.critical ? 'cors' : 'no-cors'
+            });
+            const time = Date.now() - start;
+
+            const status = check.critical ?
+                (response.ok ? '✅' : '❌') :
+                (response.type === 'opaque' ? '✅' : '⚠️');
+
+            console.log(`${status} ${check.name}: ${time}ms`);
+
+            if (check.critical && !response.ok && response.type !== 'opaque') {
+                allHealthy = false;
+            }
+
+        } catch (error) {
+            console.log(`❌ ${check.name}: ${error.message}`);
+            if (check.critical) allHealthy = false;
+        }
+    }
+
+    console.log('\n📊 RESULTADO GERAL:');
+    if (allHealthy) {
+        console.log('✅ SISTEMA SAUDÁVEL - Todos os serviços críticos funcionando');
+    } else {
+        console.log('❌ PROBLEMAS DETECTADOS - Verificar serviços críticos');
+        console.log('💡 Execute: window.testFlowiseDirectly() para diagnóstico detalhado');
+    }
+
+    return allHealthy;
+};
+
+// 🔧 DEBUG: Diagnóstico de erro 403 do Flowise
+window.diagnoseFlowise403Error = async () => {
+    console.log('🚫 DIAGNÓSTICO DE ERRO 403 - FLOWISE');
+    console.log('====================================');
+
+    try {
+        const uiManager = window.uiManagerInstance;
+        const selectedGPT = uiManager?.stateManager?.selectedGPT;
+
+        console.log('🔍 GPT SELECIONADO:');
+        console.log(`   ID: ${selectedGPT?.id}`);
+        console.log(`   Nome: ${selectedGPT?.name}`);
+        console.log(`   Chatflow ID: ${selectedGPT?.flowiseConfig?.flowise?.chatflowId}`);
+        console.log(`   API Host: ${selectedGPT?.flowiseConfig?.flowise?.apiHost}`);
+        console.log(`   Token: ${selectedGPT?.flowiseConfig?.flowise?.token ? 'Presente' : 'AUSENTE'}`);
+
+        // Testar endpoints críticos
+        console.log('\n🔧 TESTANDO ENDPOINTS:');
+
+        const endpoints = [
+            {
+                name: 'Prediction API',
+                url: `${selectedGPT?.flowiseConfig?.flowise?.apiHost}/api/v1/prediction/${selectedGPT?.flowiseConfig?.flowise?.chatflowId}`,
+                method: 'POST'
+            },
+            {
+                name: 'Chatflow Config',
+                url: `${selectedGPT?.flowiseConfig?.flowise?.apiHost}/api/v1/public-chatbotConfig/${selectedGPT?.flowiseConfig?.flowise?.chatflowId}`,
+                method: 'GET'
+            },
+            {
+                name: 'Chat Streaming',
+                url: `${selectedGPT?.flowiseConfig?.flowise?.apiHost}/api/v1/chatflows-streaming/${selectedGPT?.flowiseConfig?.flowise?.chatflowId}`,
+                method: 'GET'
+            }
+        ];
+
+        for (const endpoint of endpoints) {
+            try {
+                console.log(`\n📡 Testando ${endpoint.name}...`);
+                const response = await fetch(endpoint.url, {
+                    method: endpoint.method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${selectedGPT?.flowiseConfig?.flowise?.token || 'test-token'}`
+                    }
+                });
+
+                console.log(`   Status: ${response.status} ${response.statusText}`);
+                console.log(`   Headers:`, Object.fromEntries(response.headers.entries()));
+
+                if (response.status === 403) {
+                    console.log('   ❌ ERRO 403: Forbidden - Problema de autorização!');
+                    console.log('   💡 POSSÍVEIS CAUSAS:');
+                    console.log('      - Token inválido ou expirado');
+                    console.log('      - Chatflow não autorizado para este usuário');
+                    console.log('      - Permissões insuficientes no Flowise');
+                    console.log('      - CORS ou política de segurança');
+                }
+
+            } catch (error) {
+                console.log(`   ❌ ERRO: ${error.message}`);
+            }
+        }
+
+        // Verificar configuração do GPT
+        console.log('\n⚙️ CONFIGURAÇÃO DO GPT:');
+        const gptConfig = uiManager?.stateManager?.gptConfig;
+        console.log(`   Temperature: ${gptConfig?.temperature}`);
+        console.log(`   Max Tokens: ${gptConfig?.maxTokens}`);
+        console.log(`   Model: ${gptConfig?.name}`);
+
+        // Verificar localStorage
+        console.log('\n💾 LOCALSTORAGE:');
+        const keys = Object.keys(localStorage).filter(key =>
+            key.includes('flowise') || key.includes('gpt') || key.includes('session')
+        );
+        console.log(`   Chaves relacionadas: ${keys.length}`);
+        keys.forEach(key => {
+            const value = localStorage.getItem(key);
+            console.log(`   - ${key}: ${value?.length || 0} chars`);
+        });
+
+        // Recomendações
+        console.log('\n🎯 RECOMENDAÇÕES PARA CORREÇÃO:');
+        console.log('   1. ✅ Verificar se o token do Flowise está válido');
+        console.log('   2. ✅ Confirmar se o chatflow está público no Flowise');
+        console.log('   3. ✅ Verificar permissões do usuário no Flowise');
+        console.log('   4. ✅ Testar com outro chatflow ID');
+        console.log('   5. ✅ Limpar cache e tentar novamente');
+        console.log('   6. ✅ Verificar se o Flowise está rodando corretamente');
+
+        console.log('\n🛠️ SOLUÇÕES IMEDIATAS:');
+        console.log('   - Execute: window.testFlowiseDirectly()');
+        console.log('   - Execute: window.checkSystemHealth()');
+        console.log('   - Limpe localStorage: localStorage.clear()');
+
+    } catch (error) {
+        console.log('❌ Erro no diagnóstico:', error.message);
+    }
+};
+
+// 🔧 DEBUG: Limpar cache e reinicializar
+window.forceFlowiseReset = () => {
+    console.log('🔄 FORÇANDO RESET COMPLETO DO FLOWISE...');
+
+    try {
+        // 1. Limpar localStorage relacionado ao Flowise
+        const keysToRemove = Object.keys(localStorage).filter(key =>
+            key.includes('flowise') ||
+            key.includes('gpt') ||
+            key.includes('session') ||
+            key.includes('chat')
+        );
+
+        console.log(`🗑️ Removendo ${keysToRemove.length} chaves do localStorage...`);
+        keysToRemove.forEach(key => {
+            localStorage.removeItem(key);
+            console.log(`   - Removido: ${key}`);
+        });
+
+        // 2. Limpar sessionStorage
+        console.log('🗑️ Limpando sessionStorage...');
+        sessionStorage.clear();
+
+        // 3. Limpar cache do Service Worker
+        if ('caches' in window) {
+            console.log('🗑️ Limpando cache do Service Worker...');
+            caches.keys().then(names => {
+                names.forEach(name => {
+                    caches.delete(name);
+                    console.log(`   - Cache removido: ${name}`);
+                });
+            });
+        }
+
+        // 4. Resetar estado da aplicação
+        if (window.uiManagerInstance) {
+            console.log('🔄 Resetando estado da aplicação...');
+            window.uiManagerInstance.stateManager.reset();
+        }
+
+        console.log('✅ Reset completo realizado!');
+        console.log('🔄 Recarregue a página para aplicar as mudanças.');
+
+    } catch (error) {
+        console.log('❌ Erro durante o reset:', error.message);
+    }
+};
+
+// 🔧 DEBUG: Testar token do Flowise
+window.testFlowiseToken = async () => {
+    console.log('🔐 TESTANDO TOKEN DO FLOWISE...');
+
+    try {
+        const uiManager = window.uiManagerInstance;
+        const token = uiManager?.stateManager?.selectedGPT?.flowiseConfig?.flowise?.token;
+        const apiHost = uiManager?.stateManager?.selectedGPT?.flowiseConfig?.flowise?.apiHost;
+        const chatflowId = uiManager?.stateManager?.selectedGPT?.flowiseConfig?.flowise?.chatflowId;
+
+        if (!token) {
+            console.log('❌ Token não encontrado!');
+            console.log('💡 SOLUÇÃO: Selecione um GPT primeiro ou verifique configuração no painel admin');
+            return;
+        }
+
+        console.log(`📡 API Host: ${apiHost}`);
+        console.log(`🆔 Chatflow ID: ${chatflowId}`);
+        console.log(`🔑 Token presente: ${token ? 'Sim' : 'Não'}`);
+        console.log(`🔑 Tamanho do token: ${token?.length || 0} caracteres`);
+
+        // Testar endpoints com o token
+        const testUrl = `${apiHost}/api/v1/public-chatbotConfig/${chatflowId}`;
+
+        console.log(`\n🔧 Testando endpoint: ${testUrl}`);
+
+        const response = await fetch(testUrl, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        console.log(`📊 Resposta: ${response.status} ${response.statusText}`);
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log('✅ Token válido! Configuração recebida.');
+            console.log('📋 Dados:', data);
+        } else {
+            console.log('❌ Token inválido ou problema de autorização!');
+            console.log('📋 Headers de resposta:', Object.fromEntries(response.headers.entries()));
+
+            if (response.status === 403) {
+                console.log('\n💡 SOLUÇÕES PARA ERRO 403:');
+                console.log('   1. Verificar se o token está correto no painel admin');
+                console.log('   2. Confirmar se o chatflow está público');
+                console.log('   3. Verificar permissões do usuário no Flowise');
+                console.log('   4. Regenerar token no Flowise se necessário');
+            }
+        }
+
+    } catch (error) {
+        console.log('❌ Erro ao testar token:', error.message);
+    }
+};
+
+// 🔧 DEBUG: Solução rápida para erro 403
+window.fixFlowise403Error = async () => {
+    console.log('🚀 SOLUÇÃO RÁPIDA PARA ERRO 403 DO FLOWISE');
+    console.log('=========================================');
+
+    try {
+        // 1. Limpar cache relacionado ao Flowise
+        console.log('1️⃣ 🧹 Limpando cache do Flowise...');
+        const keysToRemove = Object.keys(localStorage).filter(key =>
+            key.includes('flowise') ||
+            key.includes('gpt') ||
+            key.includes('session') ||
+            key.includes('chat')
+        );
+
+        keysToRemove.forEach(key => {
+            localStorage.removeItem(key);
+            console.log(`   ✅ Removido: ${key}`);
+        });
+
+        // 2. Resetar estado da aplicação
+        console.log('\n2️⃣ 🔄 Resetando estado da aplicação...');
+        if (window.uiManagerInstance?.stateManager) {
+            window.uiManagerInstance.stateManager.reset();
+        }
+
+        // 3. Verificar se há GPT selecionado
+        console.log('\n3️⃣ 🔍 Verificando GPT selecionado...');
+        const uiManager = window.uiManagerInstance;
+        const selectedGPT = uiManager?.stateManager?.selectedGPT;
+
+        if (!selectedGPT) {
+            console.log('❌ Nenhum GPT selecionado!');
+            console.log('💡 SOLUÇÃO: Selecione um GPT na interface antes de usar o chat');
+            return;
+        }
+
+        console.log(`✅ GPT selecionado: ${selectedGPT.name}`);
+        console.log(`🆔 ID: ${selectedGPT.id}`);
+
+        // 4. Verificar configuração do Flowise
+        console.log('\n4️⃣ ⚙️ Verificando configuração do Flowise...');
+        const flowiseConfig = selectedGPT.flowiseConfig?.flowise;
+
+        if (!flowiseConfig) {
+            console.log('❌ Configuração do Flowise não encontrada!');
+            console.log('💡 SOLUÇÃO: Verifique se o GPT tem configuração válida no painel admin');
+            return;
+        }
+
+        console.log(`📡 API Host: ${flowiseConfig.apiHost}`);
+        console.log(`🆔 Chatflow ID: ${flowiseConfig.chatflowId}`);
+        console.log(`🔑 Token: ${flowiseConfig.token ? 'Presente' : 'AUSENTE'}`);
+
+        // 5. Testar conexão direta com Flowise
+        console.log('\n5️⃣ 🔬 Testando conexão direta com Flowise...');
+
+        const testUrl = `${flowiseConfig.apiHost}/api/v1/public-chatbotConfig/${flowiseConfig.chatflowId}`;
+        const response = await fetch(testUrl, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${flowiseConfig.token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        console.log(`📊 Status da resposta: ${response.status} ${response.statusText}`);
+
+        if (response.ok) {
+            console.log('✅ Flowise está funcionando!');
+            const data = await response.json();
+            console.log('📋 Configuração recebida com sucesso');
+        } else if (response.status === 403) {
+            console.log('❌ ERRO 403: Problema de autorização');
+            console.log('\n🛠️ SOLUÇÕES ESPECÍFICAS PARA 403:');
+            console.log('   1. ✅ Verificar token no painel admin do Flowise');
+            console.log('   2. ✅ Confirmar que o chatflow está público');
+            console.log('   3. ✅ Verificar permissões do usuário');
+            console.log('   4. ✅ Regenerar API key se necessário');
+            console.log('   5. ✅ Testar com outro chatflow');
+        } else {
+            console.log(`❌ Erro inesperado: ${response.status}`);
+        }
+
+        // 6. Recomendações finais
+        console.log('\n6️⃣ 🎯 PRÓXIMOS PASSOS:');
+        console.log('   ✅ Recarregue a página (F5)');
+        console.log('   ✅ Selecione o GPT novamente');
+        console.log('   ✅ Teste o chat');
+        console.log('   ✅ Se ainda der erro, execute: window.diagnoseFlowise403Error()');
+
+    } catch (error) {
+        console.log('❌ Erro na solução rápida:', error.message);
+    }
+};
+
+// 🔧 DEBUG: Diagnóstico de captura de input
+window.diagnoseInputCapture = () => {
+    console.log('🔍 DIAGNÓSTICO DE CAPTURA DE INPUT');
+    console.log('==================================');
+
+    // 1. Verificar elementos do DOM
+    console.log('\n1️⃣ ELEMENTOS DO DOM:');
+    const inputSelectors = [
+        'input[placeholder*="Digite" i]',
+        'input[placeholder*="digite" i]',
+        'textarea[placeholder*="Digite" i]',
+        'textarea[placeholder*="digite" i]',
+        '.chat-input input',
+        '.chat-input textarea',
+        '#flowise-fullchatbot input',
+        '#flowise-fullchatbot textarea',
+        '[contenteditable="true"]',
+        '[role="textbox"]'
+    ];
+
+    inputSelectors.forEach((selector, index) => {
+        const elements = document.querySelectorAll(selector);
+        if (elements.length > 0) {
+            console.log(`   ✅ ${index + 1}. ${selector}: ${elements.length} encontrado(s)`);
+            elements.forEach((el, i) => {
+                console.log(`      ${i + 1}. Tag: ${el.tagName}, Type: ${el.type || 'N/A'}, Placeholder: "${el.placeholder || el.textContent?.substring(0, 50) || 'N/A'}"`);
+                console.log(`         Value: "${el.value || el.textContent || ''}"`);
+            });
+        }
+    });
+
+    // 2. Verificar estado do UIManager
+    console.log('\n2️⃣ ESTADO DO UIMANAGER:');
+    const uiManager = window.uiManagerInstance;
+    if (uiManager) {
+        console.log('   ✅ UIManager encontrado');
+        console.log('   📝 lastUserInput:', uiManager.lastUserInput || 'VAZIO');
+        console.log('   🎯 isChatbotInitialized:', uiManager.isChatbotInitialized);
+    } else {
+        console.log('   ❌ UIManager não encontrado');
+    }
+
+    // 3. Verificar Flowise
+    console.log('\n3️⃣ FLOWISE STATUS:');
+    const flowiseElement = document.querySelector('#flowise-fullchatbot');
+    if (flowiseElement) {
+        console.log('   ✅ Elemento Flowise encontrado');
+        const inputs = flowiseElement.querySelectorAll('input, textarea, [contenteditable]');
+        console.log(`   📝 Inputs dentro do Flowise: ${inputs.length}`);
+        inputs.forEach((input, i) => {
+            console.log(`      ${i + 1}. ${input.tagName}: "${input.value || input.textContent || ''}"`);
+        });
+    } else {
+        console.log('   ❌ Elemento Flowise não encontrado');
+    }
+
+    // 4. Verificar listeners
+    console.log('\n4️⃣ LISTENERS CONFIGURADOS:');
+    const allInputs = document.querySelectorAll('input, textarea, [contenteditable]');
+    console.log(`   📊 Total de inputs na página: ${allInputs.length}`);
+
+    console.log('\n💡 DICAS PARA DEPURAÇÃO:');
+    console.log('   - Execute: diagnoseInputCapture()');
+    console.log('   - Digite algo no chat e veja os logs');
+    console.log('   - Procure por "observeUserInput" nos logs');
+};
+
+// 🔧 DEBUG: Diagnóstico completo de Flowise
+window.diagnoseFlowiseIssue = () => {
+    console.log('🔬 DIAGNÓSTICO COMPLETO DO FLOWISE');
+    console.log('==================================');
+
+    // 1. Verificar se o script do Flowise foi carregado
+    console.log('\n1️⃣ VERIFICAÇÃO DE SCRIPTS:');
+    const scripts = document.querySelectorAll('script');
+    const flowiseScripts = Array.from(scripts).filter(script =>
+        script.src && script.src.includes('flowise')
+    );
+    console.log(`   📜 Scripts relacionados ao Flowise: ${flowiseScripts.length}`);
+    flowiseScripts.forEach((script, i) => {
+        console.log(`      ${i + 1}. ${script.src}`);
+        console.log(`         Loaded: ${script.complete}, Error: ${script.error || 'N/A'}`);
+    });
+
+    // 2. Verificar elementos customizados
+    console.log('\n2️⃣ ELEMENTOS CUSTOMIZADOS:');
+    const customElements = document.querySelectorAll('*');
+    const flowiseElements = Array.from(customElements).filter(el =>
+        el.tagName && el.tagName.toLowerCase().includes('flowise')
+    );
+    console.log(`   🎯 Elementos Flowise encontrados: ${flowiseElements.length}`);
+    flowiseElements.forEach((el, i) => {
+        console.log(`      ${i + 1}. Tag: ${el.tagName}, ID: ${el.id || 'N/A'}`);
+        console.log(`         Visible: ${el.offsetWidth > 0 && el.offsetHeight > 0}`);
+        console.log(`         Position: ${el.offsetTop || 0}px, ${el.offsetLeft || 0}px`);
+    });
+
+    // 3. Verificar se o componente foi definido
+    console.log('\n3️⃣ COMPONENTE DEFINIDO:');
+    const isDefined = customElements.get('flowise-fullchatbot');
+    console.log(`   🏷️  Componente 'flowise-fullchatbot' definido: ${!!isDefined}`);
+    if (isDefined) {
+        console.log('   ✅ Componente está registrado no navegador');
+    } else {
+        console.log('   ❌ Componente NÃO está registrado!');
+    }
+
+    // 4. Verificar configuração atual
+    console.log('\n4️⃣ CONFIGURAÇÃO ATUAL:');
+    const uiManager = window.uiManagerInstance;
+    if (uiManager?.stateManager?.selectedGPT) {
+        const gpt = uiManager.stateManager.selectedGPT;
+        console.log('   🤖 GPT selecionado:', gpt.name);
+        console.log('   🆔 GPT ID:', gpt.id);
+
+        if (gpt.flowiseConfig?.flowise) {
+            const flowise = gpt.flowiseConfig.flowise;
+            console.log('   🌐 API Host:', flowise.apiHost);
+            console.log('   🆔 Chatflow ID:', flowise.chatflowId);
+            console.log('   🔑 Token presente:', !!flowise.token);
+        } else {
+            console.log('   ❌ Configuração Flowise ausente!');
+        }
+    } else {
+        console.log('   ❌ Nenhum GPT selecionado');
+    }
+
+    // 5. Verificar erros no console
+    console.log('\n5️⃣ VERIFICAÇÃO DE ERROS:');
+    console.log('   🔍 Procure por erros relacionados a Flowise nos logs acima');
+    console.log('   📡 Verifique se há problemas de CORS ou rede');
+
+    // 6. Verificar se o script está sendo carregado
+    console.log('\n6️⃣ VERIFICAÇÃO DE CARREGAMENTO DO SCRIPT:');
+    const flowiseScript = document.querySelector('script[src*="flowise"]');
+    if (flowiseScript) {
+        console.log('   ✅ Script do Flowise encontrado');
+        console.log(`   📄 Status: ${flowiseScript.readyState}`);
+        console.log(`   🔗 URL: ${flowiseScript.src}`);
+
+        // Verificar se o script definiu funções globais
+        console.log(`   🌐 Função global definida: ${typeof window.FlowiseChatbot !== 'undefined'}`);
+        console.log(`   🔧 Componente registrado: ${customElements.get('flowise-fullchatbot') !== undefined}`);
+    } else {
+        console.log('   ❌ Script do Flowise NÃO encontrado!');
+        console.log('   💡 Isso pode indicar problema no carregamento');
+    }
+
+    // 7. Verificar configuração do GPT
+    console.log('\n7️⃣ CONFIGURAÇÃO DO GPT ATUAL:');
+    const uiManagerInstance = window.uiManagerInstance;
+    if (uiManagerInstance?.stateManager?.selectedGPT) {
+        const gpt = uiManagerInstance.stateManager.selectedGPT;
+        console.log(`   🤖 GPT: ${gpt.name}`);
+        console.log(`   🆔 ID: ${gpt.id}`);
+        console.log(`   🔧 Habilitado: ${gpt.enabled}`);
+        console.log(`   🎯 Categoria: ${gpt.category}`);
+
+        if (gpt.flowiseConfig) {
+            console.log('   ✅ Configuração Flowise presente');
+            console.log(`   🌐 API Host: ${gpt.flowiseConfig.flowise?.apiHost}`);
+            console.log(`   🆔 Chatflow ID: ${gpt.flowiseConfig.flowise?.chatflowId}`);
+            console.log(`   🔑 Token presente: ${!!gpt.flowiseConfig.flowise?.token}`);
+        } else {
+            console.log('   ❌ Configuração Flowise AUSENTE!');
+        }
+    }
+
+    // 8. Verificar se o script pode ser carregado manualmente
+    console.log('\n8️⃣ TESTE DE CARREGAMENTO MANUAL:');
+    console.log('   ✅ Execute: window.loadFlowiseScriptManually()');
+    console.log('   ✅ Execute: window.testFlowiseComponentCreation()');
+
+    // 9. Sugestões de correção
+    console.log('\n9️⃣ SUGESTÕES DE CORREÇÃO:');
+    console.log('   ✅ Execute: window.forceFlowiseReload()');
+    console.log('   ✅ Execute: window.checkFlowiseNetwork()');
+    console.log('   ✅ Verifique se o domínio flowise.power.tec.br está acessível');
+    console.log('   ✅ Teste o ping do Flowise: window.testFlowisePing()');
+};
+
+// 🔧 DEBUG: Forçar recarregamento do Flowise
+window.forceFlowiseReload = () => {
+    console.log('🔄 FORÇANDO RECARREGAMENTO DO FLOWISE...');
+
+    // Remover elementos existentes
+    const existingElements = document.querySelectorAll('flowise-fullchatbot, [id*="flowise"]');
+    existingElements.forEach(el => {
+        console.log(`🗑️ Removendo elemento: ${el.tagName}#${el.id}`);
+        el.remove();
+    });
+
+    // Limpar scripts relacionados
+    const scripts = document.querySelectorAll('script');
+    scripts.forEach(script => {
+        if (script.src && script.src.includes('flowise')) {
+            console.log(`🗑️ Removendo script: ${script.src}`);
+            script.remove();
+        }
+    });
+
+    // Forçar recarregamento da página em 2 segundos
+    setTimeout(() => {
+        console.log('🔄 Recarregando página...');
+        window.location.reload();
+    }, 2000);
+};
+
+// 🔧 DEBUG: Teste de conectividade com Flowise
+window.checkFlowiseNetwork = async () => {
+    console.log('🌐 TESTANDO CONECTIVIDADE COM FLOWISE...');
+
+    const tests = [
+        { name: 'Ping do Flowise', url: 'https://flowise.power.tec.br/ping' },
+        { name: 'Configuração do Chatflow', url: 'https://flowise.power.tec.br/api/v1/public-chatbotConfig/efe59701-afe2-4f4c-8448-bb8e3a32161a' },
+        { name: 'Predição (sem token)', url: 'https://flowise.power.tec.br/api/v1/prediction/efe59701-afe2-4f4c-8448-bb8e3a32161a' }
+    ];
+
+    for (const test of tests) {
+        try {
+            console.log(`\n📡 Testando: ${test.name}`);
+            console.log(`   🔗 URL: ${test.url}`);
+
+            const startTime = Date.now();
+            const response = await fetch(test.url);
+            const endTime = Date.now();
+
+            console.log(`   📊 Status: ${response.status}`);
+            console.log(`   ⏱️  Tempo: ${endTime - startTime}ms`);
+
+            if (response.ok) {
+                console.log(`   ✅ ${test.name}: FUNCIONANDO`);
+            } else {
+                console.log(`   ❌ ${test.name}: ERRO ${response.status}`);
+                const text = await response.text();
+                console.log(`   📄 Resposta: ${text.substring(0, 100)}...`);
+            }
+        } catch (error) {
+            console.log(`   💥 ${test.name}: FALHA - ${error.message}`);
+        }
+    }
+};
+
+// 🔧 DEBUG: Forçar captura manual de input
+window.forceCaptureInput = () => {
+    console.log('🎯 FORÇANDO CAPTURA MANUAL DE INPUT...');
+
+    const uiManager = window.uiManagerInstance;
+    if (!uiManager) {
+        console.log('❌ UIManager não encontrado');
+        return;
+    }
+
+    // Buscar todos os inputs possíveis
+    const allInputs = document.querySelectorAll('input, textarea, [contenteditable]');
+    console.log(`📊 Total de inputs encontrados: ${allInputs.length}`);
+
+    let capturedInput = null;
+    let capturedSelector = null;
+
+    allInputs.forEach((input, index) => {
+        const value = input.value || input.textContent || '';
+        const selector = uiManager.getSelectorForElement(input);
+
+        if (value.trim()) {
+            console.log(`   ✅ Input ${index + 1} (${selector}): "${value.substring(0, 50)}${value.length > 50 ? '...' : ''}"`);
+            if (!capturedInput) {
+                capturedInput = value.trim();
+                capturedSelector = selector;
+            }
+        } else {
+            console.log(`   📝 Input ${index + 1} (${selector}): [VAZIO]`);
+        }
+    });
+
+    if (capturedInput) {
+        console.log('🎉 INPUT CAPTURADO MANUALMENTE!');
+        console.log(`   📝 Valor: "${capturedInput}"`);
+        console.log(`   🎯 Seletor: ${capturedSelector}`);
+
+        // Forçar o registro do chat
+        uiManager.lastUserInput = capturedInput;
+        console.log('🚀 Chamando registro de chat...');
+        uiManager.handleChatRegistration();
+
+        return capturedInput;
+    } else {
+        console.log('❌ NENHUM INPUT COM CONTEÚDO ENCONTRADO');
+        return null;
+    }
+};
+
+// 🔧 DEBUG: Testar captura de sugestões
+window.testSuggestionCapture = () => {
+    console.log('🎯 TESTANDO CAPTURA DE SUGESTÕES...');
+
+
+
+    const uiManager = window.uiManagerInstance;
+    if (!uiManager) {
+        console.log('❌ UIManager não encontrado');
+        return;
+    }
+
+    // Verificar se o listener está configurado
+    if (uiManager.suggestionListener) {
+        console.log('✅ Listener de sugestões está configurado');
+    } else {
+        console.log('❌ Listener de sugestões NÃO está configurado');
+        console.log('🔧 Chamando setupSuggestionCapture()...');
+        uiManager.setupSuggestionCapture();
+    }
+
+    // Procurar por elementos que podem ser sugestões (MUITO MAIS AMPLO)
+    const possibleSuggestions = document.querySelectorAll(`
+        button:not([type="submit"]):not([data-bs-toggle]):not([aria-label*="close"]):not([aria-label*="fechar"]),
+        div[role="button"],
+        div[class*="button"],
+        div[class*="option"],
+        div[class*="choice"],
+        div[class*="select"],
+        span[class*="button"],
+        span[class*="option"],
+        span[class*="choice"],
+        a[class*="button"],
+        a[class*="option"],
+        a[class*="choice"],
+        [data-testid*="suggestion"],
+        [class*="suggestion"],
+        [class*="followup"],
+        [class*="follow-up"],
+        [onclick]
+    `);
+
+    console.log(`📊 Encontrados ${possibleSuggestions.length} elementos que podem ser sugestões`);
+
+    possibleSuggestions.forEach((element, index) => {
+        const text = element.textContent || element.innerText || '';
+        if (text.trim()) {
+            console.log(`   ${index + 1}. "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`);
+            console.log(`      👆 ${element.tagName}.${element.className || 'sem-classe'} (${element.id || 'sem-id'})`);
+            console.log(`      🎯 Role: ${element.getAttribute('role') || 'não definido'}`);
+            console.log(`      📝 Data-testid: ${element.getAttribute('data-testid') || 'não definido'}`);
+        }
+    });
+
+    console.log('\n💡 Para testar: clique em uma sugestão e veja se aparece nos logs');
+    console.log('🔍 Procure por: "🎯 Mensagem de sugestão detectada"');
+    console.log('❌ Se não aparecer, procure por: "❌ Clique NÃO detectado como sugestão"');
+};
+
+// 🔧 DEBUG: Simular clique em sugestão
+window.simulateSuggestionClick = () => {
+    console.log('🖱️ SIMULANDO CLIQUE EM SUGESTÃO...');
+
+    // Criar um elemento de teste
+    const testSuggestion = document.createElement('button');
+    testSuggestion.textContent = 'Sugestão de teste - Que horas são?';
+    testSuggestion.className = 'suggestion-button';
+    testSuggestion.style.cssText = 'position: fixed; top: 100px; right: 100px; z-index: 9999; background: green; color: white; padding: 10px; border-radius: 5px;';
+
+    // Adicionar ao DOM
+    document.body.appendChild(testSuggestion);
+
+    // Simular clique após 2 segundos
+    setTimeout(() => {
+        console.log('🎯 Simulando clique na sugestão...');
+        testSuggestion.click();
+
+        // Remover após 3 segundos
+        setTimeout(() => {
+            if (testSuggestion.parentNode) {
+                testSuggestion.parentNode.removeChild(testSuggestion);
+                console.log('🗑️ Elemento de teste removido');
+            }
+        }, 3000);
+    }, 2000);
+
+    console.log('✅ Elemento de teste criado no canto superior direito');
+    console.log('⏳ Aguardando 2 segundos para simular clique...');
+};
+
+// 🔧 DEBUG: Testar o fluxo simplificado
+window.testSimplifiedFlow = () => {
+    console.log('🚀 TESTANDO FLUXO SIMPLIFICADO...');
+
+    const uiManager = window.uiManagerInstance;
+    if (!uiManager) {
+        console.log('❌ UIManager não encontrado');
+        return;
+    }
+
+    console.log('📊 Estado atual:');
+    console.log('   - lastUserInput:', uiManager.lastUserInput);
+    console.log('   - config.apiCredentials:', Object.keys(uiManager.config.apiCredentials || {}));
+    console.log('   - updateChat URL:', uiManager.config.apiCredentials?.updateChat);
+
+    // Simular observeLoading(true)
+    console.log('\n🎯 Simulando observeLoading(true)...');
+    uiManager.observers?.observeLoading?.(true).then(() => {
+        console.log('✅ Simulação concluída');
+    }).catch(error => {
+        console.log('❌ Erro na simulação:', error);
+    });
+};
+
+// 🔧 DEBUG: Monitorar inputs em tempo real
+window.monitorInputs = () => {
+    console.log('👁️ MONITORANDO INPUTS EM TEMPO REAL...');
+
+    const checkInputs = () => {
+        const allInputs = document.querySelectorAll('input, textarea, [contenteditable]');
+        let hasContent = false;
+
+        allInputs.forEach((input, index) => {
+            const value = input.value || input.textContent || '';
+            if (value.trim()) {
+                console.log(`📝 Input ${index + 1}: "${value.substring(0, 30)}${value.length > 30 ? '...' : ''}"`);
+                hasContent = true;
+            }
+        });
+
+        if (!hasContent) {
+            console.log('😴 Nenhum input com conteúdo...');
+        }
+    };
+
+    // Verificar a cada 2 segundos
+    const interval = setInterval(checkInputs, 2000);
+
+    console.log('✅ Monitoramento iniciado (a cada 2s)');
+    console.log('🛑 Para parar: clearInterval(interval); mas o ID do intervalo foi perdido');
+
+    // Retornar função para parar o monitoramento
+    return () => {
+        clearInterval(interval);
+        console.log('🛑 Monitoramento parado');
+    };
+};
+
+// 🔧 DEBUG: Teste direto da API updateChat
+window.testUpdateChatDirectly = async () => {
+    console.log('🚀 TESTANDO API UPDATECHAT DIRETAMENTE...');
+
+    const uiManager = window.uiManagerInstance;
+    const testMessage = 'Teste direto da API updateChat - ' + new Date().toLocaleString();
+
+    const testData = {
+        gpt_id: uiManager?.stateManager?.selectedGPT?.id || 'gpt-nao-selecionado',
+        user_name: uiManager?.config?.userName || 'usuario-nao-logado',
+        user_id: uiManager?.config?.userId || 'user-nao-logado',
+        sessionid: uiManager?.stateManager?.currentSessionId || 'session-nao-criada',
+        message_content: testMessage,
+        timestamp: new Date().toISOString()
+    };
+
+    console.log('📋 Dados do teste:', testData);
+
+    try {
+        const jwt = await getJwt();
+        console.log('🔑 JWT obtido com sucesso');
+
+        const response = await fetch('https://webhook.power.tec.br/webhook/lexidecis/chats', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${jwt}`
+            },
+            body: JSON.stringify(testData)
+        });
+
+        console.log('📡 Status da resposta:', response.status);
+        console.log('📡 Headers:', Object.fromEntries(response.headers.entries()));
+
+        const responseText = await response.text();
+        console.log('📄 Corpo da resposta:', responseText);
+
+        if (response.ok) {
+            console.log('✅ API updateChat FUNCIONANDO!');
+        } else {
+            console.log('❌ API updateChat com erro:', response.status, responseText);
+        }
+    } catch (error) {
+        console.error('💥 Erro no teste:', error);
+    }
+};
+
+// 🔧 DEBUG: Carregar script do Flowise manualmente
+window.loadFlowiseScriptManually = async () => {
+    console.log('📜 CARREGANDO SCRIPT DO FLOWISE MANUALMENTE...');
+
+    // Verificar se já existe
+    const existingScript = document.querySelector('script[src*="flowise"]');
+    if (existingScript) {
+        console.log('⚠️ Script já existe, removendo primeiro...');
+        existingScript.remove();
+    }
+
+    try {
+        // URL do script do Flowise (baseado no que vimos nos logs)
+        const scriptUrl = 'https://flowise.power.tec.br/js/init.js';
+
+        console.log(`🔗 Carregando: ${scriptUrl}`);
+
+        // Criar novo script
+        const script = document.createElement('script');
+        script.src = scriptUrl;
+        script.async = true;
+        script.defer = true;
+
+        // Promise para aguardar carregamento
+        const loadPromise = new Promise((resolve, reject) => {
+            script.onload = () => {
+                console.log('✅ Script carregado com sucesso!');
+                resolve();
+            };
+            script.onerror = (error) => {
+                console.error('❌ Erro ao carregar script:', error);
+                reject(error);
+            };
+        });
+
+        // Adicionar ao DOM
+        document.head.appendChild(script);
+
+        // Aguardar carregamento
+        await loadPromise;
+
+        // Verificar se o componente foi definido
+        setTimeout(() => {
+            const componentDefined = customElements.get('flowise-fullchatbot');
+            console.log(`🔧 Componente definido após carregamento: ${!!componentDefined}`);
+
+            if (componentDefined) {
+                console.log('✅ Componente Flowise está pronto para uso!');
+                console.log('💡 Agora você pode executar: window.testFlowiseComponentCreation()');
+            } else {
+                console.log('⚠️ Script carregado mas componente não definido');
+                console.log('🔍 Verifique se há erros no console');
+            }
+        }, 1000);
+
+    } catch (error) {
+        console.error('💥 Falha no carregamento manual:', error);
+        console.log('💡 Possíveis causas:');
+        console.log('   - URL incorreta do script');
+        console.log('   - Problemas de CORS');
+        console.log('   - Servidor Flowise indisponível');
+    }
+};
+
+// 🔧 DEBUG: Testar criação do componente Flowise
+window.testFlowiseComponentCreation = () => {
+    console.log('🧪 TESTANDO CRIAÇÃO DO COMPONENTE FLOWISE...');
+
+    try {
+        // Verificar se o componente está definido
+        const componentDefined = customElements.get('flowise-fullchatbot');
+        console.log(`🔧 Componente definido: ${!!componentDefined}`);
+
+        if (!componentDefined) {
+            console.log('❌ Componente não definido - execute primeiro: window.loadFlowiseScriptManually()');
+            return;
+        }
+
+        // Obter configuração atual
+        const uiManager = window.uiManagerInstance;
+        if (!uiManager?.stateManager?.selectedGPT) {
+            console.log('❌ Nenhum GPT selecionado');
+            return;
+        }
+
+        const gpt = uiManager.stateManager.selectedGPT;
+        console.log(`🤖 GPT selecionado: ${gpt.name}`);
+
+        if (!gpt.flowiseConfig?.flowise) {
+            console.log('❌ Configuração Flowise ausente');
+            return;
+        }
+
+        const flowise = gpt.flowiseConfig.flowise;
+        console.log('🔧 Criando componente com configuração:');
+        console.log(`   🌐 API Host: ${flowise.apiHost}`);
+        console.log(`   🆔 Chatflow ID: ${flowise.chatflowId}`);
+        console.log(`   🔑 Token: ${flowise.token ? 'Presente' : 'Ausente'}`);
+        console.log(`   📝 Session ID: ${uiManager.stateManager.currentSessionId}`);
+
+        // Criar elemento
+        const flowiseElement = document.createElement('flowise-fullchatbot');
+        flowiseElement.id = 'flowise-fullchatbot-test';
+
+        // Definir atributos
+        flowiseElement.setAttribute('api-host', flowise.apiHost);
+        flowiseElement.setAttribute('chatflowid', flowise.chatflowId);
+
+        if (flowise.token) {
+            flowiseElement.setAttribute('token', flowise.token);
+        }
+
+        // Definir propriedades via JavaScript
+        flowiseElement.apiHost = flowise.apiHost;
+        flowiseElement.chatflowid = flowise.chatflowId;
+        flowiseElement.token = flowise.token;
+        flowiseElement.sessionId = uiManager.stateManager.currentSessionId;
+
+        console.log('📝 Elemento criado:', flowiseElement);
+
+        // Adicionar ao DOM (temporariamente)
+        const testContainer = document.createElement('div');
+        testContainer.id = 'flowise-test-container';
+        testContainer.style.cssText = 'position: fixed; top: 50px; right: 50px; width: 300px; height: 400px; border: 2px solid red; z-index: 9999; background: white;';
+
+        testContainer.appendChild(flowiseElement);
+        document.body.appendChild(testContainer);
+
+        console.log('✅ Componente adicionado ao DOM para teste');
+        console.log('🔍 Verifique se o chat aparece no canto superior direito');
+        console.log('🗑️ Para remover: document.getElementById("flowise-test-container").remove()');
+
+        // Observar mudanças no elemento
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                console.log('🔄 Mudança detectada no componente:', mutation.type);
+            });
+        });
+        observer.observe(flowiseElement, { attributes: true, childList: true, subtree: true });
+
+        // Testar depois de alguns segundos
+        setTimeout(() => {
+            console.log('⏰ Teste após 3 segundos:');
+            console.log(`   👁️ Visível: ${flowiseElement.offsetWidth > 0 && flowiseElement.offsetHeight > 0}`);
+            console.log(`   📏 Dimensões: ${flowiseElement.offsetWidth}x${flowiseElement.offsetHeight}`);
+            console.log(`   👶 Filhos: ${flowiseElement.children.length}`);
+        }, 3000);
+
+    } catch (error) {
+        console.error('💥 Erro na criação do componente:', error);
+    }
+};
+
+// 🔧 DEBUG: Função global para testar com dados reais
+window.testWithRealData = async () => {
+    // Pegar dados reais da aplicação
+    const uiManager = window.uiManagerInstance;
+    const testData = {
+        gpt_id: uiManager?.stateManager?.selectedGPT?.id || 'gpt-nao-selecionado',
+        user_name: uiManager?.config?.userName || 'usuario-nao-logado',
+        user_id: uiManager?.config?.userId || 'user-nao-logado',
+        sessionid: uiManager?.stateManager?.currentSessionId || 'session-nao-criada',
+        message_content: 'Teste com dados reais da aplicação - ' + new Date().toLocaleString(),
+        timestamp: new Date().toISOString()
+    };
+
+    const testUrl = 'https://webhook.power.tec.br/webhook/lexidecis/chats';
+
+    console.log('🎯 TESTANDO COM DADOS REAIS DA APLICAÇÃO...');
+    console.log('📡 URL:', testUrl);
+    console.log('📋 Dados reais:', testData);
+
+    try {
+        const response = await fetch(testUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer test-token'
+            },
+            body: JSON.stringify(testData)
+        });
+
+        console.log('📡 Status:', response.status);
+        const responseText = await response.text();
+        console.log('📋 Resposta:', responseText);
+
+        if (response.ok) {
+            console.log('✅ API respondeu com dados reais!');
+        } else {
+            console.log('❌ Erro com dados reais:', response.status);
+        }
+
+    } catch (error) {
+        console.error('❌ Erro na requisição com dados reais:', error);
+    }
+};
+
+// 🔧 DEBUG: Função global para testar updateChat (API correta para registrar chats)
+window.testUpdateChat = async () => {
+    try {
+        console.log('🧪 Testando updateChat API...');
+        console.log('Verificando se UIManager está disponível...');
+
+        // Tenta encontrar a instância do UIManager
+        const uiManagerInstances = [];
+        for (let key in window) {
+            if (window[key] && window[key].constructor && window[key].constructor.name === 'UIManager') {
+                uiManagerInstances.push(window[key]);
+            }
+        }
+
+        if (uiManagerInstances.length === 0) {
+            console.log('Nenhuma instância UIManager encontrada, criando teste básico...');
+
+            // Teste básico sem instância
+            const testParams = {
+                gpt_id: 'test-gpt-id',
+                user_name: 'test-user',
+                user_id: 'test-user-id',
+                sessionid: 'test-session',
+                message_content: 'Test message from console'
+            };
+
+            console.log('Test params:', testParams);
+            console.log('Para testar a API, use:');
+            console.log(`
+fetch('https://webhook.power.tec.br/webhook/lexidecis/chats?gpt_id=test-gpt-id&user_name=test-user&user_id=test-user-id&sessionid=test-session&message_content=Test+message+from+console', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }
+})
+.then(r => r.json())
+.then(console.log)
+            `);
+            return testParams;
+        }
+
+        const uiManager = uiManagerInstances[0];
+        console.log('UIManager encontrado:', uiManager);
+        console.log('Config atual:', uiManager.config);
+        console.log('apiCredentials:', uiManager.config?.apiCredentials);
+
+        if (!uiManager.config?.apiCredentials?.updateChat) {
+            console.error('❌ updateChat não configurado');
+            return;
+        }
+
+        const testParams = {
+            gpt_id: 'test-gpt-id',
+            user_name: 'test-user',
+            user_id: 'test-user-id',
+            sessionid: 'test-session',
+            message_content: 'Test message from console'
+        };
+
+        console.log('📡 Fazendo chamada de teste para updateChat...');
+        const result = await uiManager.apiService.request('updateChat', testParams, 'POST', null, { includeParamsInQuery: true });
+        console.log('✅ Teste bem-sucedido:', result);
+        return result;
+    } catch (error) {
+        console.error('❌ Erro no teste:', error);
+        return error;
+    }
+};
 
 export default UIManager;

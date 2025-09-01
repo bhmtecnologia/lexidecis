@@ -56,8 +56,11 @@ export default class ApiService {
         };
 
         // Adicionar o JWT automaticamente para todos os métodos
+        debugLog(`🔐 Obtendo JWT para requisição ${apiKey}...`);
         const jwt = await getJwt(); // Obtenha o JWT diretamente
+        debugLog(`✅ JWT obtido (${jwt.length} chars) para ${apiKey}`);
         fetchOptions.headers['Authorization'] = `Bearer ${jwt}`;
+        debugLog(`🔑 Header Authorization definido para ${apiKey}`);
 
         // Incluir 'body' se for fornecido e o método for apropriado
         if (body && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
@@ -68,10 +71,28 @@ export default class ApiService {
         debugLog(`Fazendo requisição para ${url} com opções:`, fetchOptions);
 
         try {
+            debugLog(`📡 Enviando requisição ${apiKey} para ${url}`);
             const response = await fetch(url, fetchOptions);
-            if (!response.ok) throw new Error(`Erro na requisição ${apiKey}: ${response.status} ${response.statusText}`);
-            return response.json();
+            debugLog(`📡 Resposta recebida ${apiKey}: ${response.status} ${response.statusText}`);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                debugLog(`❌ Erro na resposta ${apiKey}:`, errorText);
+
+                if (response.status === 401) {
+                    debugLog(`🚫 ERRO 401: JWT pode estar expirado ou inválido para ${apiKey}`);
+                    throw new Error(`JWT expirado ou inválido. Faça login novamente.`);
+                }
+
+                throw new Error(`Erro na requisição ${apiKey}: ${response.status} ${response.statusText} - ${errorText}`);
+            }
+
+            const result = await response.json();
+            debugLog(`✅ Requisição ${apiKey} concluída com sucesso`);
+            return result;
+
         } catch (error) {
+            debugLog(`❌ Falha na requisição ${apiKey}:`, error.message);
             throw new Error(`Falha ao realizar a requisição ${apiKey}: ${error.message}`);
         }
     }

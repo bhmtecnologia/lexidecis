@@ -242,4 +242,193 @@ export function debugLog(...args) {
     if (isDevelopment) {
         console.log(...args);
     }
+}
+
+// 🔧 CONTROLE DE LOGS VERBOSOS - FIRESTORE E SERVICE WORKER
+
+// Configuração inicial dos filtros
+window.logFilter = {
+    firestore: false,      // Desabilitado por padrão (muito verboso)
+    serviceWorker: false,  // Desabilitado por padrão (muito verboso)
+    uiManager: true,
+    apiService: true,
+    renderer: true,
+    gptManager: true,
+    presence: true,
+    stateManager: true,
+    chatManager: true,
+    verbose: false
+};
+
+// Armazenar referências das funções originais do console
+const originalConsoleLog = console.log;
+const originalConsoleWarn = console.warn;
+const originalConsoleError = console.error;
+
+// Sobrescrever console.log para filtrar logs verbosos
+console.log = function(...args) {
+    const message = args.join(' ');
+
+    // Filtrar logs do Firestore se estiver desabilitado
+    if (!window.logFilter.firestore && (
+        message.includes('firestore.googleapis.com') ||
+        message.includes('Firestore/Write') ||
+        message.includes('Firestore/Listen') ||
+        message.includes('google.firestore.v1') ||
+        message.includes('firestore.googleapis.com')
+    )) {
+        return; // Suprime o log
+    }
+
+    // Filtrar logs do Service Worker se estiver desabilitado
+    if (!window.logFilter.serviceWorker && (
+        message.includes('[SW]') ||
+        message.includes('sw.js:') ||
+        message.includes('✅ Servindo do cache') ||
+        message.includes('💾 Armazenado no cache') ||
+        message.includes('🔄 Buscando da rede')
+    )) {
+        return; // Suprime o log
+    }
+
+    // Filtrar outros logs verbosos se verbose estiver desabilitado
+    if (!window.logFilter.verbose && (
+        message.includes('updateUserInfo()') ||
+        message.includes('Pool de elementos de mídia limpo') ||
+        message.includes('Computed style') ||
+        message.includes('Teste:') ||
+        message.includes('Estado final')
+    )) {
+        return; // Suprime o log
+    }
+
+    // Aplicar filtro original
+    originalConsoleLog.apply(console, args);
+};
+
+// Sobrescrever console.warn para filtrar logs verbosos
+console.warn = function(...args) {
+    const message = args.join(' ');
+
+    // Filtrar logs do Firestore se estiver desabilitado
+    if (!window.logFilter.firestore && (
+        message.includes('firestore.googleapis.com') ||
+        message.includes('Firestore/Write') ||
+        message.includes('Firestore/Listen') ||
+        message.includes('google.firestore.v1')
+    )) {
+        return; // Suprime o log
+    }
+
+    originalConsoleWarn.apply(console, args);
+};
+
+// Sobrescrever console.error para filtrar logs verbosos
+console.error = function(...args) {
+    const message = args.join(' ');
+
+    // Filtrar logs do Firestore se estiver desabilitado
+    if (!window.logFilter.firestore && (
+        message.includes('firestore.googleapis.com') ||
+        message.includes('Firestore/Write') ||
+        message.includes('Firestore/Listen') ||
+        message.includes('google.firestore.v1')
+    )) {
+        return; // Suprime o log
+    }
+
+    originalConsoleError.apply(console, args);
+};
+
+// 🔧 FUNÇÕES DE CONTROLE DE LOGS
+
+/**
+ * Ativar/desativar logs do Firestore
+ */
+window.toggleFirestoreLogs = () => {
+    window.logFilter.firestore = !window.logFilter.firestore;
+    console.log(`🔧 Logs do Firestore: ${window.logFilter.firestore ? '✅ ATIVADOS' : '❌ DESATIVADOS'}`);
+};
+
+/**
+ * Ativar/desativar logs do Service Worker
+ */
+window.toggleServiceWorkerLogs = () => {
+    window.logFilter.serviceWorker = !window.logFilter.serviceWorker;
+    console.log(`🔧 Logs do Service Worker: ${window.logFilter.serviceWorker ? '✅ ATIVADOS' : '❌ DESATIVADOS'}`);
+};
+
+/**
+ * Ativar/desativar logs verbosos em geral
+ */
+window.toggleVerboseLogs = () => {
+    window.logFilter.verbose = !window.logFilter.verbose;
+    console.log(`🔧 Logs verbosos: ${window.logFilter.verbose ? '✅ ATIVADOS' : '❌ DESATIVADOS'}`);
+};
+
+/**
+ * Mostrar status atual de todos os filtros
+ */
+window.showLogStatus = () => {
+    console.log('📊 STATUS DOS FILTROS DE LOG:');
+    Object.entries(window.logFilter).forEach(([key, value]) => {
+        console.log(`   ${key}: ${value ? '✅ ATIVO' : '❌ SUPRIMIDO'}`);
+    });
+};
+
+/**
+ * Desabilitar todos os logs verbosos (recomendado para produção)
+ */
+window.disableVerboseLogs = () => {
+    window.logFilter.firestore = false;
+    window.logFilter.serviceWorker = false;
+    window.logFilter.verbose = false;
+    console.log('🔇 Todos os logs verbosos foram desabilitados');
+    console.log('💡 Use showLogStatus() para ver o status atual');
+};
+
+/**
+ * Habilitar todos os logs (modo debug completo)
+ */
+window.enableAllLogs = () => {
+    Object.keys(window.logFilter).forEach(key => {
+        window.logFilter[key] = true;
+    });
+    console.log('🔊 Todos os logs foram ativados (modo debug)');
+};
+
+/**
+ * Resetar filtros para configuração padrão
+ */
+window.resetLogFilters = () => {
+    window.logFilter = {
+        firestore: false,      // Desabilitado (muito verboso)
+        serviceWorker: false,  // Desabilitado (muito verboso)
+        uiManager: true,       // Ativado
+        apiService: true,      // Ativado
+        renderer: true,        // Ativado
+        gptManager: true,      // Ativado
+        presence: true,        // Ativado
+        stateManager: true,    // Ativado
+        chatManager: true,     // Ativado
+        verbose: false         // Desabilitado
+    };
+    console.log('🔄 Filtros de log resetados para configuração padrão');
+    window.showLogStatus();
+};
+
+// Inicializar com logs verbosos desabilitados
+if (isDevelopment) {
+    setTimeout(() => {
+        console.log('🔧 Sistema de controle de logs inicializado');
+        console.log('💡 Comandos disponíveis:');
+        console.log('   • disableVerboseLogs() - Desabilitar logs verbosos');
+        console.log('   • enableAllLogs() - Habilitar todos os logs');
+        console.log('   • showLogStatus() - Ver status dos filtros');
+        console.log('   • toggleFirestoreLogs() - Controle logs Firestore');
+        console.log('   • toggleServiceWorkerLogs() - Controle logs SW');
+
+        // Aplicar configuração padrão
+        window.disableVerboseLogs();
+    }, 1000);
 } 

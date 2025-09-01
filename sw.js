@@ -1,5 +1,5 @@
 // SERVICE WORKER ULTRA-SIMPLES PARA LEXIDECIS PWA
-const CACHE_NAME = 'lexidecis-v3.0.0';
+const CACHE_NAME = 'lexidecis-v3.2.0';
 const CACHE_TIMESTAMP = Date.now();
 
 // TODOS os recursos críticos que DEVEM funcionar offline
@@ -90,6 +90,33 @@ self.addEventListener('fetch', (event) => {
   // Ignora Chrome DevTools
   if (request.url.includes('chrome-extension:')) return;
 
+  // ✅ CORREÇÃO: Para CSS, sempre buscar da rede primeiro (evita cache corrompido)
+  if (request.url.includes('.css') || request.url.includes('bootstrap') || request.url.includes('font')) {
+    console.log('[SW] 🎨 CSS detectado - buscando da rede primeiro:', request.url);
+    event.respondWith(
+      fetch(request)
+        .then((networkResponse) => {
+          if (networkResponse.ok && networkResponse.status === 200) {
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME)
+              .then((cache) => {
+                cache.put(request, responseClone);
+                console.log('[SW] 💾 CSS atualizado no cache:', request.url);
+              })
+              .catch((error) => {
+                console.warn('[SW] Erro ao armazenar CSS no cache:', error);
+              });
+          }
+          return networkResponse;
+        })
+        .catch((error) => {
+          console.log('[SW] ❌ Erro ao buscar CSS da rede, tentando cache:', request.url);
+          return caches.match(request);
+        })
+    );
+    return;
+  }
+
   // ESTRATÉGIA ULTRA-SIMPLES: CACHE FIRST PARA TUDO!
   event.respondWith(
     caches.match(request)
@@ -103,8 +130,8 @@ self.addEventListener('fetch', (event) => {
         console.log('[SW] 🔄 Buscando da rede:', request.url);
         return fetch(request)
           .then((networkResponse) => {
-            // Se a resposta da rede é OK, armazena no cache
-            if (networkResponse.ok) {
+            // ✅ CORREÇÃO: Só armazena no cache se for status 200 (não 206)
+            if (networkResponse.ok && networkResponse.status === 200) {
               const responseClone = networkResponse.clone();
               caches.open(CACHE_NAME)
                 .then((cache) => {
@@ -114,6 +141,10 @@ self.addEventListener('fetch', (event) => {
                 .catch((error) => {
                   console.warn('[SW] Erro ao armazenar no cache:', error);
                 });
+            } else if (networkResponse.status === 206) {
+              console.log('[SW] ⚠️ Ignorando resposta parcial (206):', request.url);
+            } else {
+              console.log('[SW] ⚠️ Status não 200:', networkResponse.status, request.url);
             }
 
             return networkResponse;
@@ -180,6 +211,38 @@ self.addEventListener('message', (event) => {
       .then(() => event.ports[0]?.postMessage({ success: true }))
       .catch((error) => event.ports[0]?.postMessage({ success: false, error }));
   }
+
+  if (event.data?.type === 'CLEAR_CSS_CACHE') {
+    console.log('[SW] Limpando cache de CSS...');
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.keys())
+      .then((requests) => {
+        const cssRequests = requests.filter(req => 
+          req.url.includes('.css') || 
+          req.url.includes('bootstrap') || 
+          req.url.includes('font')
+        );
+        console.log('[SW] Removendo', cssRequests.length, 'arquivos CSS do cache');
+        return Promise.all(cssRequests.map(req => cache.delete(req)));
+      })
+      .then(() => event.ports[0]?.postMessage({ success: true }))
+      .catch((error) => event.ports[0]?.postMessage({ success: false, error }));
+  }
+
+  if (event.data?.type === 'GET_CACHE_INFO') {
+    console.log('[SW] Informações do cache solicitadas...');
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.keys())
+      .then((requests) => {
+        const cacheInfo = {
+          name: CACHE_NAME,
+          size: requests.length,
+          urls: requests.map(req => req.url).slice(0, 10) // Primeiros 10 URLs
+        };
+        event.ports[0]?.postMessage({ success: true, data: cacheInfo });
+      })
+      .catch((error) => event.ports[0]?.postMessage({ success: false, error }));
+  }
 });
 
 // TRATAMENTO DE ERROS
@@ -191,4 +254,4 @@ self.addEventListener('unhandledrejection', (event) => {
   console.error('[SW] Promessa rejeitada:', event.reason);
 });
 
-console.log('[SW] 🚀 Service Worker v3.0.0 inicializado com sucesso!');
+console.log('[SW] 🚀 Service Worker v3.2.0 inicializado com sucesso!');

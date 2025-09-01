@@ -228,10 +228,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         const endpoints = data?.endpoints || {};
         if (!endpoints.flowise) endpoints.flowise = {};
         if (!endpoints.apiCredentials) endpoints.apiCredentials = {};
+
+        // ✅ ADICIONAR CONFIGURAÇÕES PADRÃO QUANDO O ENDPOINT NÃO RETORNA NADA
+        const defaultApiCredentials = {
+            updateChat: 'https://webhook.power.tec.br/webhook/lexidecis/chats',
+            createChatMessage: 'https://webhook.power.tec.br/webhook/lexidecis/v2/chatmessage',
+            readChat: 'https://webhook.power.tec.br/webhook/v1/chats',
+            readGPT: 'https://webhook.power.tec.br/webhook/lexidecis/gpt/list',
+            createChat: 'https://webhook.power.tec.br/webhook/v1/chats',
+            deleteChat: 'https://webhook.power.tec.br/webhook/v1/chats',
+            overrideConfig: 'https://webhook.power.tec.br/webhook/lexidecis/gpt/configs'
+        };
+
+        // Aplicar configurações padrão para qualquer endpoint faltante
+        Object.keys(defaultApiCredentials).forEach(key => {
+            if (!endpoints.apiCredentials[key]) {
+                endpoints.apiCredentials[key] = defaultApiCredentials[key];
+                debugLog(`[Renderer] Usando URL padrão para ${key}: ${defaultApiCredentials[key]}`);
+            }
+        });
+
         CONFIG.flowise = { ...endpoints.flowise };
         CONFIG.apiCredentials = { ...endpoints.apiCredentials };
         debugLog("[Renderer] CONFIG atualizado com endpoints:", CONFIG);
         debugLog("[Renderer] apiCredentials disponíveis:", Object.keys(CONFIG.apiCredentials));
+        debugLog("[Renderer] updateChat endpoint:", CONFIG.apiCredentials.updateChat);
 
         // ETAPA 4: Pré-carregar GPTs e Inicializar Serviços
         debugLog("[Renderer] Inicializando serviços e pré-carregando GPTs...");

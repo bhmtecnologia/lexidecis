@@ -1,5 +1,5 @@
 // SERVICE WORKER ULTRA-SIMPLES PARA LEXIDECIS PWA
-const CACHE_NAME = 'lexidecis-v3.3.0';
+const CACHE_NAME = 'lexidecis-v3.4.0';
 const CACHE_TIMESTAMP = Date.now();
 
 // TODOS os recursos críticos que DEVEM funcionar offline
@@ -37,16 +37,14 @@ const CRITICAL_ASSETS = [
 
 // INSTALAÇÃO - Cache todos os recursos críticos OBRIGATORIAMENTE
 self.addEventListener('install', (event) => {
-  console.log('[SW] Instalando e cacheando recursos críticos...');
+  // Cacheando recursos críticos silenciosamente...
 
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('[SW] Cacheando TODOS os recursos críticos...');
         return cache.addAll(CRITICAL_ASSETS);
       })
       .then(() => {
-        console.log('[SW] ✅ Todos os recursos críticos cacheados com sucesso!');
         return self.skipWaiting();
       })
       .catch((error) => {
@@ -59,7 +57,7 @@ self.addEventListener('install', (event) => {
 
 // ATIVAÇÃO - Limpa caches antigos e assume controle
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Ativando Service Worker...');
+  // Ativando Service Worker silenciosamente...
 
   event.waitUntil(
     caches.keys()
@@ -67,14 +65,12 @@ self.addEventListener('activate', (event) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
             if (cacheName !== CACHE_NAME) {
-              console.log('[SW] Removendo cache antigo:', cacheName);
               return caches.delete(cacheName);
             }
           })
         );
       })
       .then(() => {
-        console.log('[SW] ✅ Service Worker ativado e no controle!');
         return self.clients.claim();
       })
   );
@@ -92,7 +88,6 @@ self.addEventListener('fetch', (event) => {
 
   // ✅ CORREÇÃO: Para CSS, sempre buscar da rede primeiro (evita cache corrompido)
   if (request.url.includes('.css') || request.url.includes('bootstrap') || request.url.includes('font')) {
-    console.log('[SW] 🎨 CSS detectado - buscando da rede primeiro:', request.url);
     event.respondWith(
       fetch(request)
         .then((networkResponse) => {
@@ -101,7 +96,6 @@ self.addEventListener('fetch', (event) => {
             caches.open(CACHE_NAME)
               .then((cache) => {
                 cache.put(request, responseClone);
-                console.log('[SW] 💾 CSS atualizado no cache:', request.url);
               })
               .catch((error) => {
                 console.warn('[SW] Erro ao armazenar CSS no cache:', error);
@@ -110,7 +104,6 @@ self.addEventListener('fetch', (event) => {
           return networkResponse;
         })
         .catch((error) => {
-          console.log('[SW] ❌ Erro ao buscar CSS da rede, tentando cache:', request.url);
           return caches.match(request);
         })
     );
@@ -120,11 +113,9 @@ self.addEventListener('fetch', (event) => {
   // ✅ CORREÇÃO: Para vídeos, sempre buscar da rede (nunca cachear)
   if (request.url.includes('.mp4') || request.url.includes('.avi') || request.url.includes('.mov') || 
       request.url.includes('.wmv') || request.url.includes('.flv') || request.url.includes('.webm')) {
-    console.log('[SW] 🎥 Vídeo detectado - buscando da rede (sem cache):', request.url);
     event.respondWith(
       fetch(request)
         .catch((error) => {
-          console.warn('[SW] ❌ Erro ao buscar vídeo da rede:', request.url, error);
           // Retorna uma resposta vazia para vídeos que falharam
           return new Response('', {
             status: 404,
@@ -137,11 +128,9 @@ self.addEventListener('fetch', (event) => {
 
   // ✅ CORREÇÃO: Para recursos externos problemáticos, ignorar erros silenciosamente
   if (request.url.includes('googletagmanager.com') || request.url.includes('openai-original.svg')) {
-    console.log('[SW] 🌐 Recurso externo detectado - buscando da rede (ignorando erros):', request.url);
     event.respondWith(
       fetch(request)
         .catch((error) => {
-          console.log('[SW] ⚠️ Recurso externo indisponível (ignorado):', request.url);
           // Retorna uma resposta vazia para não quebrar a aplicação
           return new Response('', {
             status: 200,
@@ -152,17 +141,46 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // ✅ CORREÇÃO: Para Firestore, não logar (muito verboso)
+  if (request.url.includes('firestore.googleapis.com')) {
+    event.respondWith(
+      caches.match(request)
+        .then((cachedResponse) => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          return fetch(request)
+            .then((networkResponse) => {
+              if (networkResponse.ok && networkResponse.status === 200) {
+                const responseClone = networkResponse.clone();
+                caches.open(CACHE_NAME)
+                  .then((cache) => {
+                    cache.put(request, responseClone);
+                  })
+                  .catch((error) => {
+                    console.warn('[SW] Erro ao armazenar Firestore no cache:', error);
+                  });
+              }
+              return networkResponse;
+            })
+            .catch((error) => {
+              console.error('[SW] ❌ Erro Firestore:', error);
+              return new Response('', { status: 500 });
+            });
+        })
+    );
+    return;
+  }
+
   // ESTRATÉGIA ULTRA-SIMPLES: CACHE FIRST PARA TUDO!
   event.respondWith(
     caches.match(request)
       .then((cachedResponse) => {
         if (cachedResponse) {
-          console.log('[SW] ✅ Servindo do cache:', request.url);
           return cachedResponse;
         }
 
         // Se não está no cache, tenta buscar da rede
-        console.log('[SW] 🔄 Buscando da rede:', request.url);
         return fetch(request)
           .then((networkResponse) => {
             // ✅ CORREÇÃO: Só armazena no cache se for status 200 (não 206)
@@ -171,15 +189,10 @@ self.addEventListener('fetch', (event) => {
               caches.open(CACHE_NAME)
                 .then((cache) => {
                   cache.put(request, responseClone);
-                  console.log('[SW] 💾 Armazenado no cache:', request.url);
                 })
                 .catch((error) => {
                   console.warn('[SW] Erro ao armazenar no cache:', error);
                 });
-            } else if (networkResponse.status === 206) {
-              console.log('[SW] ⚠️ Ignorando resposta parcial (206):', request.url);
-            } else {
-              console.log('[SW] ⚠️ Status não 200:', networkResponse.status, request.url);
             }
 
             return networkResponse;
@@ -289,4 +302,4 @@ self.addEventListener('unhandledrejection', (event) => {
   console.error('[SW] Promessa rejeitada:', event.reason);
 });
 
-console.log('[SW] 🚀 Service Worker v3.3.0 inicializado com sucesso!');
+console.log('[SW] 🚀 Service Worker v3.4.0 ativo');

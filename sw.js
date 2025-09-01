@@ -1,5 +1,5 @@
 // SERVICE WORKER ULTRA-SIMPLES PARA LEXIDECIS PWA
-const CACHE_NAME = 'lexidecis-v3.4.0';
+const CACHE_NAME = 'lexidecis-v3.5.0';
 const CACHE_TIMESTAMP = Date.now();
 
 // TODOS os recursos críticos que DEVEM funcionar offline
@@ -57,11 +57,11 @@ self.addEventListener('install', (event) => {
 
 // ATIVAÇÃO - Limpa caches antigos e assume controle
 self.addEventListener('activate', (event) => {
-  // Ativando Service Worker silenciosamente...
-
+  // Força atualização imediata
   event.waitUntil(
-    caches.keys()
-      .then((cacheNames) => {
+    Promise.all([
+      // Limpa todos os caches antigos
+      caches.keys().then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
             if (cacheName !== CACHE_NAME) {
@@ -69,10 +69,12 @@ self.addEventListener('activate', (event) => {
             }
           })
         );
-      })
-      .then(() => {
-        return self.clients.claim();
-      })
+      }),
+      // Assume controle imediatamente
+      self.clients.claim(),
+      // Força skipWaiting
+      self.skipWaiting()
+    ])
   );
 });
 
@@ -302,4 +304,4 @@ self.addEventListener('unhandledrejection', (event) => {
   console.error('[SW] Promessa rejeitada:', event.reason);
 });
 
-console.log('[SW] 🚀 Service Worker v3.4.0 ativo');
+console.log('[SW] 🚀 Service Worker v3.5.0 ativo');

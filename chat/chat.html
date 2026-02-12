@@ -1168,12 +1168,12 @@
         // If no previous history exists, start chat without streaming
         const extKey = `${cfg.chatflowid}_EXTERNAL`;
         if (!localStorage.getItem(extKey)) {
-          await import('./assets/js/web.js').then(mod => mod.default.initFull(cfg));
+          await import('https://cdn.jsdelivr.net/npm/flowise-embed/dist/web.js').then(mod => mod.default.initFull(cfg));
           spinner.remove();
           return;
         }
         // Import Flowise web component from local assets
-        await import('./assets/js/web.js').then(mod => mod.default.initFull(cfg));
+        await import('https://cdn.jsdelivr.net/npm/flowise-embed/dist/web.js').then(mod => mod.default.initFull(cfg));
         } catch (err) {
           console.error('Erro ao carregar histórico:', err);
           spinner.remove();
@@ -1384,11 +1384,11 @@ document.getElementById('new-conversation').addEventListener('click', () => {
         // Guard: If no previous history exists, start chat without streaming
         const extKeyDefault = `${cfg.chatflowid}_EXTERNAL`;
         if (!localStorage.getItem(extKeyDefault)) {
-          await import('./assets/js/web.js').then(mod => mod.default.initFull(cfg));
+          await import('https://cdn.jsdelivr.net/npm/flowise-embed/dist/web.js').then(mod => mod.default.initFull(cfg));
           return;
         }
         // Import Flowise web component from local assets
-        await import('./assets/js/web.js').then(mod => mod.default.initFull(cfg));
+        await import('https://cdn.jsdelivr.net/npm/flowise-embed/dist/web.js').then(mod => mod.default.initFull(cfg));
       } catch (err) {
         console.error('Erro inicializando chat padrão:', err);
       }

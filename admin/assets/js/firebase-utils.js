@@ -6,6 +6,7 @@
  */
 
 import { auth } from './firebase.js';
+import { firebaseConfig } from '../../../config/firebase.config.js';
 import { createUserWithEmailAndPassword, signOut, signInWithEmailAndPassword, deleteUser } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
 
 /**
@@ -49,7 +50,7 @@ export async function createFirebaseUser(email, password) {
     
     console.log('[createFirebaseUser] 🔧 Usando Firebase REST API para evitar logout...');
     
-    const apiKey = "AIzaSyD7Gh-UfV-LyueKtlUcY9nny_o-UWmlmJM"; // API key correta do Firebase
+    const apiKey = firebaseConfig.apiKey;
     const url = `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`;
     
     console.log('[createFirebaseUser] 📡 Fazendo requisição para:', url);

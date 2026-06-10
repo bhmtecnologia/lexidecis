@@ -5,6 +5,7 @@
  */
 
 import { auth } from './firebase.js';
+import { firebaseConfig } from '../../../config/firebase.config.js';
 
 /**
  * Cria usuário no Firebase usando REST API PURA
@@ -29,7 +30,7 @@ export async function createFirebaseUserV2(email, password) {
     console.log('[createFirebaseUserV2] 👤 Admin atual:', adminEmail);
     
     // Usa REST API pura - NÃO afeta o usuário logado
-    const apiKey = "AIzaSyD7Gh-UfV-LyueKtlUcY9nny_o-UWmlmJM";
+    const apiKey = firebaseConfig.apiKey;
     const url = `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`;
     
     console.log('[createFirebaseUserV2] 📡 Chamando REST API...');

@@ -12,6 +12,7 @@ function debugLog(...args) {
  */
 
 import { showRenamePrompt, showAlert, showDeleteConfirmation } from './alertManager.js';
+import { flowiseConfig } from '../config/flowise.config.js';
 import ApiService from './apiService.js';
 import StateManager from './stateManager.js';
 import { LoadingUtils } from './unifiedLoadingManager.js';
@@ -649,8 +650,8 @@ class ChatManager {
             // Usar configuração do GPT com chatflowId correto
             const dynamicConfig = {
                 flowise: {
-                    apiHost: 'https://flowise.power.tec.br',
-                    token: '0d1S97hx7o2pLVe5grVpkvUNW-RR_TTWYeGuKGK2ALs',
+                    apiHost: flowiseConfig.apiHost,
+                    token: flowiseConfig.token,
                     chatflowId: chatflowId
                 }
             };
@@ -959,7 +960,7 @@ class ChatManager {
         
         // API CORRETA do Flowise: GET /chatmessage/{chatflowId}?sessionId={sessionId}
         // O ID na rota é o chatflowId, sessionId é parâmetro de query
-        const apiHost = 'https://flowise.power.tec.br';
+        const apiHost = flowiseConfig.apiHost;
         const chatflowId = 'efe59701-afe2-4f4c-8448-bb8e3a32161a'; // ChatflowId correto
         
         const apiURL = `${apiHost}/api/v1/chatmessage/${chatflowId}?sessionId=${sessionId}`;

@@ -7,6 +7,8 @@ import ProfileManager from './profileManager.js';
 import { logout } from './auth.js';
 import { getJwt } from './auth.js';
 import { showAlert } from './alertManager.js';
+import { firebaseConfig } from '../config/firebase.config.js';
+import { flowiseConfig } from '../config/flowise.config.js';
 import { createMessageLoading, replaceWithMessageLoading, withMessageLoading, setMessageLoadingEnabled, isMessageLoadingEnabled, toggleMessageLoading } from './messageLoading.js';
 
 class UIManager {
@@ -2310,9 +2312,9 @@ window.checkSystemHealth = async () => {
     console.log('==================================');
 
     const checks = [
-        { name: 'Flowise Ping', url: 'https://flowise.power.tec.br/ping', critical: true },
+        { name: 'Flowise Ping', url: `${flowiseConfig.apiHost}/ping`, critical: true },
         { name: 'Webhook API', url: 'https://webhook.power.tec.br/webhook/lexidecis/endpoints', critical: true },
-        { name: 'Firebase Auth', url: 'https://www.googleapis.com/identitytoolkit/v3/relyingparty/getProjectConfig?key=AIzaSyD7Gh-UfV-LyueKtlUcY9nny_o-UWmlmJM', critical: false },
+        { name: 'Firebase Auth', url: `https://www.googleapis.com/identitytoolkit/v3/relyingparty/getProjectConfig?key=${firebaseConfig.apiKey}`, critical: false },
         { name: 'Firestore', url: 'https://firestore.googleapis.com/google.firestore.v1.Firestore/Write/channel', critical: false }
     ];
 

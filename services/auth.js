@@ -35,16 +35,9 @@ import {
     serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// Configuração do Firebase
-export const firebaseConfig = {
-    apiKey: "AIzaSyD7Gh-UfV-LyueKtlUcY9nny_o-UWmlmJM",
-    authDomain: "lexidecis.firebaseapp.com",
-    projectId: "lexidecis",
-    storageBucket: "lexidecis.firebasestorage.app",
-    messagingSenderId: "267899611161",
-    appId: "1:267899611161:web:6d1160f5ade72515ee6288",
-    measurementId: "G-0QSNF8MKR1"
-};
+// Configuração do Firebase (fonte única em /config/firebase.config.js)
+import { firebaseConfig } from "../config/firebase.config.js";
+export { firebaseConfig };
 
 // Inicialização do Firebase
 const app = initializeApp(firebaseConfig);
